@@ -1,0 +1,482 @@
+{
+ "landscape": {
+  "n": "Paysage de la fonction de perte (loss landscape)",
+  "d": "Le paysage de la perte est la surface décrite par la perte d'un modèle en fonction de ses paramètres, et sa forme détermine la facilité avec laquelle un entraînement par gradient peut trouver de bonnes solutions. Avec des millions de poids, cette surface compte des millions de dimensions ; les chercheurs l'étudient donc à travers des coupes de faible dimension : la perte le long d'une droite reliant deux checkpoints, ou sur un plan 2D engendré par des directions aléatoires normalisées par filtre, afin que les différences d'échelle entre couches ne faussent pas l'image.\n\nCes visualisations expliquent plusieurs effets pratiques. Les connexions résiduelles (skip connections) et la batch normalization produisent des surfaces visiblement plus lisses, les réseaux plus larges ont tendance à présenter des régions de faible perte mieux connectées, et les grands taux d'apprentissage rebondissent hors des vallées étroites. L'analyse du paysage est utile pour comparer des architectures, diagnostiquer un entraînement instable et étudier la connectivité de modes entre solutions. Sa principale limite est qu'une coupe 2D d'un espace immense peut sembler convexe ou chaotique selon les directions choisies : les conclusions tirées d'un seul graphique doivent donc être prises avec prudence.",
+  "u": [
+   "Comparaison de la régularité d'architectures avec et sans connexions résiduelles",
+   "Diagnostic des divergences et des pics de perte pendant l'entraînement",
+   "Étude de la connectivité de modes entre checkpoints entraînés indépendamment"
+  ],
+  "x": "Une équipe de recherche qui évalue une nouvelle couche de normalisation trace des coupes 2D de la perte autour des checkpoints finaux du modèle de référence et du nouveau modèle. Le bassin plus lisse et plus large de la nouvelle variante plaide pour son adoption, et l'équipe complète ces graphiques par des balayages du taux d'apprentissage, car une coupe seule n'est pas concluante."
+ },
+ "saddle": {
+  "n": "Points selles",
+  "d": "Un point selle est un point où le gradient est nul mais où la surface se courbe vers le haut dans certaines directions et vers le bas dans d'autres : ce n'est donc ni un minimum ni un maximum. Formellement, la hessienne en ce point possède des valeurs propres à la fois positives et négatives.\n\nDans les fonctions de perte de grande dimension des réseaux de neurones, les points selles sont bien plus fréquents que les mauvais minima locaux : pour qu'un point critique soit un minimum, chacune des millions de directions de courbure doit être orientée vers le haut, ce qui est improbable pour des valeurs de perte élevées. Près d'un point selle, le gradient devient minuscule, si bien qu'une descente de gradient simple peut ralentir sur de longs plateaux alors même qu'une direction de descente existe. Le bruit du gradient et le momentum aident à s'en échapper en poussant les paramètres le long des directions de courbure négative. Les plateaux d'entraînement sont plus souvent dus à des points selles et à des régions plates qu'à de mauvais minima locaux. La méthode de Newton pure est attirée par les points selles, ce qui explique en partie qu'elle soit rarement utilisée telle quelle en deep learning.",
+  "u": [
+   "Explication des longs plateaux d'entraînement des réseaux profonds",
+   "Justification des optimiseurs bruités ou à momentum",
+   "Analyse des points critiques via les valeurs propres de la hessienne"
+  ],
+  "x": "Une équipe qui entraîne un modèle de recommandation profond voit la perte stagner pendant des milliers d'étapes avant de recommencer à baisser. Le calcul des valeurs propres extrêmes de la hessienne à l'aide de produits hessienne-vecteur révèle une direction de courbure négative ; l'équipe ajoute donc du momentum et un court warmup du taux d'apprentissage au lieu de relancer l'entraînement avec une nouvelle initialisation."
+ },
+ "sharpflat": {
+  "n": "Minima pointus et minima plats",
+  "d": "Les minima pointus (sharp) et plats (flat) se distinguent par la rapidité avec laquelle la perte augmente lorsque les paramètres sont perturbés : dans un minimum plat, la perte reste faible sur un large voisinage, tandis que dans un minimum pointu, une petite modification provoque une forte hausse. Le caractère pointu se mesure généralement par la plus grande valeur propre de la hessienne ou par la pire augmentation de la perte dans une petite boule autour des poids.\n\nL'intuition courante est que les minima plats généralisent mieux, car la surface de la perte de test est une version légèrement décalée de celle d'entraînement, et un bassin large tolère ce décalage. Le SGD à petits batchs, les grands taux d'apprentissage et la Sharpness-Aware Minimization (SAM) orientent tous l'entraînement vers des régions plus plates. Cette idée est utile pour choisir la taille de batch, le calendrier du taux d'apprentissage et l'optimiseur. Une réserve importante est que le caractère pointu n'est pas invariant par reparamétrisation : remettre à l'échelle les poids d'un réseau ReLU peut rendre un minimum arbitrairement pointu sans changer la fonction calculée. La platitude est donc une heuristique utile plutôt qu'un prédicteur garanti de la généralisation.",
+  "u": [
+   "Choix conjoint de la taille de batch et du taux d'apprentissage",
+   "Entraînement avec Sharpness-Aware Minimization pour la robustesse",
+   "Comparaison de la généralisation de checkpoints concurrents"
+  ],
+  "x": "Une équipe de classification d'images constate qu'augmenter la taille de batch pour accélérer l'entraînement fait baisser la précision en test. Elle passe à SAM avec un petit rayon de voisinage, en acceptant un calcul à peu près doublé par étape, puisque chaque mise à jour nécessite deux passes avant-arrière, et récupère la précision perdue."
+ },
+ "convex": {
+  "n": "Optimisation convexe",
+  "d": "L'optimisation convexe étudie la minimisation d'une fonction convexe sur un ensemble convexe, cadre dans lequel tout minimum local est aussi un minimum global. Une fonction est convexe lorsque le segment reliant deux points quelconques de son graphe se situe sur ou au-dessus du graphe, ce qui, pour une fonction deux fois différentiable, signifie que la hessienne est semi-définie positive partout.\n\nCette propriété rend les problèmes convexes fiables : la descente de gradient, la méthode de Newton et les solveurs de points intérieurs convergent vers l'optimum global avec des vitesses démontrables, et la dualité fournit des certificats d'optimalité. La régression linéaire, la régression logistique, les SVM linéaires, le LASSO et de nombreux problèmes de portefeuille et de planification sont convexes : on peut donc les résoudre exactement et de façon reproductible. L'entraînement des réseaux de neurones profonds n'est pas convexe, mais l'analyse convexe guide toujours le choix du taux d'apprentissage et les preuves de convergence. Une erreur fréquente est de supposer qu'une perte convexe garantit une solution unique ; le minimiseur n'est unique que si la fonction est strictement convexe, ce qui explique en partie l'ajout d'une régularisation L2 aux problèmes sous-déterminés.",
+  "u": [
+   "Entraînement de régressions logistiques et de SVM linéaires",
+   "Optimisation de portefeuille sous contraintes de risque",
+   "Allocation de ressources et planification sous contraintes linéaires"
+  ],
+  "x": "Une équipe de gestion d'actifs résout chaque nuit un problème de portefeuille moyenne-variance sous forme de programme quadratique convexe. Le problème étant convexe, le solveur renvoie l'optimum global accompagné d'un certificat de saut de dualité, ce qui rend l'allocation auditable et reproductible pour le contrôle de conformité."
+ },
+ "newton": {
+  "n": "Méthodes du second ordre (Newton)",
+  "d": "Les méthodes du second ordre exploitent l'information de courbure de la hessienne, et pas seulement le gradient, pour choisir à la fois la direction et la taille de chaque pas d'optimisation. La méthode de Newton ajuste un modèle quadratique local de la perte et saute directement à son minimum, ce qui donne la mise à jour θ ← θ − H⁻¹∇L.\n\nPrès d'un minimum bien conditionné, elle converge quadratiquement, souvent en quelques itérations, et remet automatiquement à l'échelle les directions mal conditionnées qui font zigzaguer la descente de gradient. C'est pourquoi Newton et les variantes quasi-Newton comme L-BFGS sont standard pour la régression logistique, les GLM et d'autres problèmes convexes de taille petite à moyenne. Pour les réseaux profonds, la hessienne compte n² coefficients et son inversion coûte O(n³), ce qui est irréalisable avec des millions de paramètres ; les méthodes pratiques utilisent donc des approximations comme K-FAC, Shampoo ou des produits hessienne-vecteur. Autre écueil : sur des pertes non convexes, le pas de Newton brut se dirige vers n'importe quel point critique, y compris les points selles et les maxima, d'où la nécessité d'un amortissement ou de régions de confiance.",
+  "u": [
+   "Ajustement de régressions logistiques et de GLM par IRLS",
+   "Optimisation full-batch avec L-BFGS",
+   "Entraînement préconditionné avec K-FAC ou Shampoo"
+  ],
+  "x": "Une équipe de risque de crédit ajuste une régression logistique régularisée sur quelques centaines de variables avec le solveur lbfgs ou newton-cg de scikit-learn. Le solveur quasi-Newton converge en quelques dizaines d'itérations, bien plus vite que le SGD, et fournit des coefficients déterministes que l'équipe de validation des modèles peut reproduire à l'identique."
+ },
+ "gridsearch": {
+  "n": "Recherche par grille (grid search)",
+  "d": "La recherche par grille règle les hyperparamètres en évaluant toutes les combinaisons issues d'une liste fixe de valeurs candidates pour chacun d'eux. Chaque combinaison est généralement notée par validation croisée, puis le meilleur réglage est réajusté sur l'ensemble des données d'entraînement.\n\nLa méthode est simple, exhaustive au sein de sa grille, trivialement parallélisable et entièrement reproductible, ce qui en fait un bon choix lorsqu'il n'y a qu'un à trois hyperparamètres, avec quelques valeurs pertinentes chacun, comme la force de régularisation C et la largeur de noyau gamma d'une SVM. Son coût croît exponentiellement avec le nombre d'hyperparamètres : cinq paramètres à cinq valeurs chacun exigent déjà 3 125 ajustements par pli. Elle gaspille aussi le budget : lorsque seuls un ou deux hyperparamètres comptent, la plupart des points de la grille répètent les mêmes valeurs. Les échelles comptent également : des valeurs comme les taux d'apprentissage doivent être espacées logarithmiquement. Enfin, le score de validation croisée du gagnant est biaisé de manière optimiste ; il faut utiliser un jeu de test mis de côté ou une validation croisée imbriquée pour obtenir une estimation honnête.",
+  "u": [
+   "Réglage de C et gamma pour une SVM",
+   "Choix de la force de régularisation des modèles linéaires",
+   "Petits balayages reproductibles pour des rapports de référence"
+  ],
+  "x": "Une équipe d'analyse de la fraude règle une SVM à noyau RBF avec une grille logarithmique de 6 par 6 sur C et gamma, en validation croisée stratifiée à cinq plis notée par la PR-AUC. Les 180 ajustements s'exécutent en parallèle sur une seule machine, et la métrique finale est rapportée sur un jeu de test temporel distinct afin d'éviter le biais de sélection."
+ },
+ "randsearch": {
+  "n": "Recherche aléatoire (random search)",
+  "d": "La recherche aléatoire règle les hyperparamètres en tirant un nombre fixe de configurations dans des distributions spécifiées, au lieu d'énumérer une grille. Chaque configuration tirée est évaluée, généralement par validation croisée, et la meilleure est conservée.\n\nSon avantage, mis en évidence par Bergstra et Bengio, tient au fait que seuls quelques hyperparamètres influencent généralement fortement la performance. Une grille de 25 points ne teste que 5 valeurs distinctes de chaque paramètre, tandis que 25 tirages aléatoires testent 25 valeurs distinctes de chacun : les paramètres importants sont donc explorés bien plus densément pour le même budget. La recherche aléatoire permet aussi de spécifier des distributions continues et log-uniformes, peut s'arrêter à tout moment et se parallélise parfaitement, ce qui en fait un choix par défaut solide pour les modèles comportant de nombreux hyperparamètres, comme le gradient boosting ou les réseaux de neurones. Sa limite est d'ignorer les résultats antérieurs : elle ne concentre pas les tirages dans les régions prometteuses ; l'optimisation bayésienne ou Hyperband peuvent être plus efficaces lorsque chaque évaluation est coûteuse.",
+  "u": [
+   "Réglage du gradient boosting aux nombreux hyperparamètres",
+   "Balayages de référence rapides pour l'entraînement de réseaux de neurones",
+   "Exploration de plages continues comme les taux d'apprentissage"
+  ],
+  "x": "Une équipe d'analyse marketing règle un modèle d'attrition LightGBM en tirant 60 configurations aléatoires, avec des taux d'apprentissage log-uniformes et des plages entières pour le nombre de feuilles et la profondeur. Le balayage tourne pendant la nuit sur un petit cluster et, comme chaque essai est indépendant, les tâches en échec sont simplement ignorées sans affecter les autres."
+ },
+ "bayesopt": {
+  "n": "Optimisation bayésienne",
+  "d": "L'optimisation bayésienne trouve de bons hyperparamètres en peu d'évaluations en ajustant un modèle de substitution probabiliste de l'objectif, qu'elle utilise pour décider de la configuration à essayer ensuite. Ce modèle de substitution, souvent un processus gaussien ou un tree-structured Parzen estimator (TPE), prédit pour chaque candidat à la fois le score attendu et son incertitude.\n\nUne fonction d'acquisition, comme l'Expected Improvement ou l'Upper Confidence Bound, arbitre entre l'exploitation des régions prédites comme bonnes et l'exploration des régions incertaines. Après chaque essai, le modèle de substitution est mis à jour, si bien que l'échantillonnage se concentre dans les zones prometteuses. La méthode convient donc bien aux objectifs boîte noire coûteux : entraîner un grand modèle, exécuter une simulation ou régler un procédé physique, lorsque l'on ne peut se permettre que quelques dizaines à quelques centaines d'évaluations. Des bibliothèques comme Optuna ajoutent l'élagage (pruning) pour arrêter tôt les essais peu prometteurs. Ses principales limites sont que sa nature séquentielle réduit le parallélisme, que les modèles de substitution par processus gaussien passent mal à l'échelle au-delà d'une vingtaine de dimensions, et que des objectifs bruités peuvent induire le modèle en erreur.",
+  "u": [
+   "Réglage d'hyperparamètres de deep learning avec un budget limité",
+   "Optimisation de paramètres de simulations ou d'expériences",
+   "Configuration automatisée de pipelines de machine learning"
+  ],
+  "x": "Une équipe de traitement de la parole règle le taux d'apprentissage, la durée de warmup, le dropout et le weight decay d'un modèle dont chaque entraînement prend plusieurs heures GPU. Avec Optuna, un échantillonneur TPE et un median pruner, elle arrête les essais faibles après quelques epochs et atteint une configuration solide avec bien moins d'entraînements complets qu'un balayage aléatoire n'en aurait demandé."
+ },
+ "neuron": {
+  "n": "Neurone artificiel",
+  "d": "Un neurone artificiel calcule une somme pondérée de ses entrées, y ajoute un biais et fait passer le résultat par une fonction d'activation non linéaire. C'est la brique de base de toute couche de réseau de neurones.\n\nLes poids déterminent l'influence de chaque entrée sur la sortie, et le biais déplace le point à partir duquel le neurone réagit. Géométriquement, la somme pondérée définit un hyperplan, et l'activation détermine comment la sortie évolue lorsqu'une entrée le traverse. Un neurone unique avec une activation sigmoïde correspond exactement à la régression logistique, et avec une fonction échelon, au perceptron classique. Empiler de nombreux neurones en couches, chacune dotée d'une non-linéarité, permet aux réseaux de représenter des fonctions complexes. Une limite essentielle est qu'un neurone seul ne peut séparer les classes que par une frontière linéaire : il ne peut donc pas résoudre des problèmes comme le XOR. L'analogie biologique reste lâche : les vrais neurones communiquent par des impulsions temporisées et ont une dynamique bien plus riche que cette formule simple.",
+  "u": [
+   "Brique de base des couches denses et convolutives",
+   "Classification binaire sous forme de régression logistique",
+   "Enseignement de la séparabilité linéaire et des frontières de décision"
+  ],
+  "x": "Une équipe de paiement déploie un neurone sigmoïde unique, c'est-à-dire une régression logistique, comme filtre antifraude léger de premier niveau qui s'exécute en quelques microsecondes sur chaque transaction. Ses poids étant directement interprétables, les analystes risque peuvent examiner quelles variables font monter le score avant qu'un modèle plus lourd n'analyse les cas signalés."
+ },
+ "mlp": {
+  "n": "Perceptron multicouche (MLP)",
+  "d": "Un perceptron multicouche est un réseau de neurones à propagation avant (feedforward) composé de couches entièrement connectées, chacune appliquant une transformation linéaire suivie d'une activation non linéaire. Les données circulent de la couche d'entrée vers une ou plusieurs couches cachées puis vers une couche de sortie, sans boucle.\n\nChaque couche cachée apprend de nouvelles caractéristiques comme combinaisons des sorties de la couche précédente, si bien que les couches profondes peuvent capter des motifs de plus en plus abstraits. L'entraînement utilise la rétropropagation et un optimiseur par gradient pour minimiser une perte comme l'entropie croisée ou l'erreur quadratique moyenne. Les MLP fonctionnent bien sur des vecteurs de variables de taille fixe, comme têtes de classification ou de régression au-dessus d'encodeurs pré-entraînés, et comme blocs feed-forward à l'intérieur de chaque couche Transformer. Sans activations non linéaires, tout empilement de couches linéaires se réduit à une seule application linéaire : l'activation est donc essentielle. Sur des données tabulaires brutes, les MLP sont souvent moins performants que les arbres en gradient boosting, à moins que les variables soient soigneusement mises à l'échelle et le réseau bien régularisé, et ils ignorent la structure spatiale ou séquentielle qu'exploitent les CNN et les Transformers.",
+  "u": [
+   "Têtes de classification au-dessus d'embeddings pré-entraînés",
+   "Régression sur des vecteurs de variables numériques standardisées",
+   "Sous-couches feed-forward à l'intérieur des blocs Transformer"
+  ],
+  "x": "Une équipe de recommandation injecte des embeddings d'utilisateurs et d'articles dans un MLP à trois couches qui prédit la probabilité de clic. Le MLP est assez petit pour noter des milliers de candidats par requête dans un budget de latence serré, et l'équipe surveille la calibration chaque semaine, car la dérive des variables décale les probabilités prédites."
+ },
+ "backprop": {
+  "n": "Rétropropagation (backpropagation)",
+  "d": "La rétropropagation est l'algorithme qui calcule le gradient d'une perte par rapport à chaque paramètre d'un réseau de neurones en appliquant la règle de dérivation en chaîne à rebours depuis la sortie. Elle rend praticable l'entraînement par gradient des réseaux profonds.\n\nPendant la passe avant, chaque couche calcule ses sorties et stocke les valeurs intermédiaires dont elle aura besoin. Pendant la passe arrière, le gradient de la perte par rapport à la sortie est propagé couche par couche : chaque couche multiplie le gradient reçu par sa jacobienne locale pour obtenir les gradients de ses propres poids et de ses entrées, qui sont transmis à la couche précédente. Comme les résultats intermédiaires sont réutilisés, le gradient complet coûte environ deux à trois fois une passe avant, et non une passe par paramètre. La rétropropagation ne fait que calculer les gradients ; c'est l'optimiseur, comme SGD ou Adam, qui décide de la mise à jour des poids. Les activations stockées dominent la mémoire d'entraînement, ce qui explique que des techniques comme le gradient checkpointing en recalculent une partie pour économiser de la mémoire.",
+  "u": [
+   "Entraînement de tout réseau de neurones différentiable",
+   "Calcul des gradients par rapport à l'entrée pour les cartes de saillance",
+   "Gradient checkpointing pour réduire la mémoire d'entraînement"
+  ],
+  "x": "Une équipe de modèles de langage manque de mémoire GPU, car les activations stockées pour les longues séquences sont trop volumineuses. Elle active le checkpointing des activations, qui supprime la plupart des activations pendant la passe avant et les recalcule pendant la rétropropagation, échangeant environ un tiers de calcul supplémentaire contre la possibilité d'entraîner sur des contextes plus longs."
+ },
+ "autograd": {
+  "n": "Dérivation en chaîne et autograd",
+  "d": "La différentiation automatique, ou autograd, calcule les dérivées exactes de programmes en enregistrant les opérations élémentaires et en leur appliquant la règle de dérivation en chaîne. Celle-ci énonce que la dérivée d'une fonction composée est le produit des dérivées de ses composantes.\n\nDes frameworks comme PyTorch et JAX construisent un graphe de calcul au fil de l'exécution du code. Chaque opération connaît sa dérivée locale ; la différentiation en mode inverse parcourt donc le graphe à rebours en multipliant des produits vecteur-jacobienne, et obtient le gradient d'une perte scalaire par rapport à toutes les entrées pour un coût égal à un petit multiple constant de la passe avant. Cette efficacité explique l'usage du mode inverse pour les réseaux de neurones, qui ont de nombreux paramètres et une seule perte. Le mode direct est moins coûteux lorsqu'il y a peu d'entrées et beaucoup de sorties. L'autograd n'est ni la différentiation symbolique, qui manipule des expressions, ni les différences finies numériques, qui sont approchées. Parmi les pièges courants figurent les opérations en place qui écrasent des tenseurs sauvegardés et l'oubli de remettre à zéro les gradients accumulés entre deux étapes.",
+  "u": [
+   "Entraînement de réseaux de neurones sans gradients calculés à la main",
+   "Calcul de produits hessienne-vecteur pour l'analyse",
+   "Différentiation de simulations physiques et de pertes personnalisées"
+  ],
+  "x": "Une équipe de robotique écrit son simulateur de corps rigides en PyTorch afin que l'autograd puisse différentier l'erreur de trajectoire par rapport aux paramètres du contrôleur. Cela supprime le besoin de dériver les gradients à la main, et l'équipe vérifie les gradients par rapport aux différences finies avec torch.autograd.gradcheck avant chaque version."
+ },
+ "relu": {
+  "n": "ReLU",
+  "d": "La Rectified Linear Unit (ReLU) est une fonction d'activation qui renvoie son entrée lorsqu'elle est positive et zéro sinon. C'est la non-linéarité par défaut de nombreux réseaux convolutifs et entièrement connectés.\n\nPour les entrées positives, sa dérivée vaut exactement 1 : les gradients traversent les unités actives sans s'atténuer, ce qui a grandement facilité l'entraînement des réseaux profonds par rapport à la sigmoïde et à tanh. Elle est aussi très peu coûteuse à calculer et produit des activations creuses, puisqu'environ la moitié des unités renvoient zéro pour une entrée typique. ReLU s'associe naturellement à l'initialisation de He, qui compense la moitié du signal qu'elle écarte. Sa principale faiblesse est le problème des « ReLU mortes » (dying ReLU) : si la pré-activation d'une unité devient négative pour toutes les entrées, par exemple après une forte mise à jour, son gradient est nul et elle ne se rétablit jamais. Leaky ReLU, ELU et GELU y répondent en autorisant une petite réponse pour les entrées négatives. En zéro, les frameworks utilisent 0 comme gradient.",
+  "u": [
+   "Couches cachées des CNN pour la reconnaissance d'images",
+   "Activation par défaut des réseaux entièrement connectés",
+   "Inférence rapide sur matériel mobile et embarqué"
+  ],
+  "x": "Une équipe de vision mobile utilise des blocs convolutifs à base de ReLU dans un détecteur d'objets embarqué, car l'opération se fusionne proprement avec la convolution en inférence quantifiée sur entiers. Elle surveille la proportion de canaux morts après l'entraînement et abaisse le taux d'apprentissage lorsque trop d'unités cessent de s'activer."
+ },
+ "sigmoid": {
+  "n": "Sigmoïde",
+  "d": "La sigmoïde, ou fonction logistique, associe à tout nombre réel une valeur comprise entre 0 et 1 selon une courbe lisse en forme de S. C'est la manière standard de transformer un logit unique en probabilité.\n\nEn classification binaire et dans les problèmes multi-étiquettes, chaque logit de sortie passe par une sigmoïde pour donner une probabilité indépendante, et le modèle est entraîné avec l'entropie croisée binaire. Les sigmoïdes servent aussi de portes dans les LSTM et les GRU, où une valeur proche de 0 bloque l'information et une valeur proche de 1 la laisse passer. Comme activation de couche cachée, en revanche, la sigmoïde a été largement remplacée : sa dérivée vaut au plus 0,25 et tend vers zéro pour les grandes entrées positives ou négatives, si bien que les gradients s'atténuent rapidement à travers de nombreuses couches, et ses sorties ne sont pas centrées en zéro, ce qui ralentit l'optimisation. Un piège numérique consiste à appliquer une sigmoïde puis un logarithme séparément ; il faut utiliser une fonction combinée et stable comme BCEWithLogitsLoss.",
+  "u": [
+   "Couche de sortie pour la classification binaire",
+   "Probabilités indépendantes pour l'étiquetage multi-étiquettes",
+   "Mécanismes de porte dans les cellules LSTM et GRU"
+  ],
+  "x": "Une équipe de modération de contenus entraîne un classifieur multi-étiquettes où une même publication peut être à la fois du spam et offensante ; chacune de ses étiquettes dispose donc de sa propre sortie sigmoïde. Des seuils par étiquette sont réglés sur un jeu de validation pour atteindre des objectifs de précision différents selon chaque catégorie de politique."
+ },
+ "tanh": {
+  "n": "Tanh",
+  "d": "La tangente hyperbolique (tanh) est une fonction d'activation en forme de S qui envoie les entrées dans l'intervalle de −1 à 1 et est centrée en zéro. C'est une sigmoïde remise à l'échelle : tanh(x) = 2σ(2x) − 1.\n\nComme ses sorties sont symétriques autour de zéro, les entrées de la couche suivante ont une moyenne à peu près nulle, ce qui tend à rendre l'optimisation mieux conditionnée qu'avec la sigmoïde. Sa dérivée maximale vaut 1 à l'origine, soit quatre fois celle de la sigmoïde. Tanh reste courante dans les réseaux récurrents, où elle comprime l'état de cellule candidat et l'état caché des LSTM et des GRU, maintenant les valeurs bornées sur de nombreux pas de temps. On la trouve aussi en sortie de modèles qui prédisent des valeurs dans une plage fixe, comme des actions normalisées en apprentissage par renforcement ou des valeurs de pixels dans certains générateurs de GAN. Son principal inconvénient est la saturation : pour de grandes entrées, le gradient tend vers zéro, si bien que les empilements profonds de couches tanh souffrent de l'évanouissement des gradients.",
+  "u": [
+   "Mise à jour des états caché et de cellule dans les LSTM",
+   "Actions continues bornées en apprentissage par renforcement",
+   "Sorties de générateurs ramenées à l'intervalle de −1 à 1"
+  ],
+  "x": "Une équipe de robotique entraîne un réseau de politique pour un bras robotisé dont les commandes articulaires doivent rester dans des limites fixes. Une couche de sortie tanh ramène chaque action dans l'intervalle de −1 à 1, qui est ensuite mis à l'échelle des limites physiques de couple, si bien que le contrôleur ne peut jamais demander une valeur dangereuse."
+ },
+ "gelu": {
+  "n": "GELU",
+  "d": "La Gaussian Error Linear Unit (GELU) est une fonction d'activation lisse qui multiplie chaque entrée par la probabilité qu'une variable normale centrée réduite lui soit inférieure. Les grandes entrées positives passent presque inchangées, les grandes entrées négatives sont ramenées vers zéro, et les valeurs proches de zéro sont mises à l'échelle en douceur.\n\nContrairement à ReLU, GELU a un gradient non nul pour les entrées modérément négatives et un léger creux sous zéro, ce qui tend à donner une optimisation plus régulière. Elle est devenue l'activation standard de BERT, GPT-2 et des Vision Transformers, généralement à l'intérieur du bloc feed-forward de chaque couche. Les implémentations proposent une version exacte fondée sur la fonction d'erreur et une approximation plus rapide par tanh ; les mélanger entre entraînement et inférence provoque de petites différences numériques, si bien que les checkpoints doivent être exécutés avec la variante utilisée à l'entraînement. GELU est plus coûteuse à calculer que ReLU, même si l'écart reste faible face aux multiplications matricielles. De nombreux grands modèles de langage récents sont passés à des variantes à porte comme SwiGLU.",
+  "u": [
+   "Blocs feed-forward des modèles de type BERT et GPT",
+   "Couches MLP à l'intérieur des Vision Transformers",
+   "Activation lisse pour les encodeurs affinés par fine-tuning"
+  ],
+  "x": "Une équipe de recherche web fait le fine-tuning d'un reranker fondé sur BERT et l'exporte vers un runtime d'inférence optimisé. Elle vérifie que le runtime utilise la même GELU exacte que le checkpoint d'origine, car le passage à l'approximation par tanh avait produit de petits décalages, mais mesurables, des scores de classement lors de la validation."
+ },
+ "swiglu": {
+  "n": "SwiGLU",
+  "d": "SwiGLU est une couche feed-forward à porte utilisée dans les Transformers modernes : une projection linéaire de l'entrée, passée par l'activation Swish (SiLU), est multipliée élément par élément par une seconde projection linéaire. Une troisième projection ramène ensuite le résultat à la dimension du modèle.\n\nLa porte permet au réseau de contrôler, pour chaque unité cachée et chaque token, la part du signal qui passe, ce qui améliore empiriquement la qualité de modélisation du langage par rapport aux blocs feed-forward ReLU ou GELU à calcul égal. LLaMA, Mistral, PaLM et de nombreux autres grands modèles de langage l'utilisent. Comme SwiGLU comporte trois matrices de poids au lieu de deux, les implémentations réduisent généralement la dimension cachée à environ deux tiers de l'expansion habituelle de 4×, souvent arrondie à un multiple adapté au matériel, afin de garder un nombre de paramètres comparable. SwiGLU n'est pas une simple fonction d'activation mais une couche complète à poids appris, et son bénéfice vient de la porte multiplicative plutôt que de la seule forme de Swish.",
+  "u": [
+   "Blocs feed-forward des modèles de langage de type LLaMA",
+   "Remplacement des MLP GELU dans le pré-entraînement de Transformers",
+   "Couches MLP à porte dans les Transformers de vision et de parole"
+  ],
+  "x": "Une équipe qui pré-entraîne un modèle de code interne adopte la conception de bloc de LLaMA avec des couches feed-forward SwiGLU et fixe la dimension cachée à environ 8/3 de la largeur du modèle, arrondie à un multiple de 256. Cet arrondi garde des formes de matrices efficaces sur ses GPU tout en respectant le budget de paramètres de l'ancien modèle de référence à GELU."
+ },
+ "softmax": {
+  "n": "Softmax",
+  "d": "Le softmax convertit un vecteur de scores réels, appelés logits, en distribution de probabilité : chaque sortie est positive et la somme de toutes les sorties vaut 1. Il prend l'exponentielle de chaque score et la divise par la somme des exponentielles.\n\nL'exponentiation amplifie les écarts : le logit le plus élevé reçoit l'essentiel de la masse de probabilité, tandis que l'ordre des classes est préservé. Le softmax sert de couche de sortie pour la classification multiclasse, normalise les scores d'attention dans les Transformers et produit les distributions du token suivant dans les modèles de langage, où diviser les logits par une température rend la distribution plus piquée ou plus plate. Ajouter la même constante à tous les logits ne change pas le résultat, propriété exploitée pour la stabilité numérique : les implémentations soustraient le logit maximal avant l'exponentiation pour éviter les dépassements. À l'entraînement, le softmax doit être fusionné avec le logarithme au sein de la perte d'entropie croisée plutôt qu'appliqué séparément. Une idée reçue courante veut que les sorties du softmax soient des probabilités calibrées ; les réseaux modernes sont souvent surconfiants et nécessitent une calibration, comme le temperature scaling.",
+  "u": [
+   "Couches de sortie pour la classification multiclasse",
+   "Normalisation des poids d'attention dans les Transformers",
+   "Échantillonnage contrôlé par la température dans les modèles de langage"
+  ],
+  "x": "Une équipe de routage documentaire classe les tickets de support entrants dans vingt files à l'aide d'une sortie softmax. Les probabilités brutes étant surconfiantes, elle ajuste un unique paramètre de température sur un jeu de validation, ce qui améliore la calibration et garantit que les tickets sous un seuil de confiance sont bien transmis à un humain."
+ },
+ "xent": {
+  "n": "Perte d'entropie croisée",
+  "d": "La perte d'entropie croisée mesure l'adéquation entre les probabilités de classe prédites et les vraies étiquettes en prenant l'opposé du logarithme de la probabilité attribuée à la bonne classe. La minimiser équivaut à une estimation du maximum de vraisemblance pour un modèle catégoriel.\n\nLa perte est proche de zéro lorsque le modèle attribue une forte probabilité à la bonne réponse et croît sans limite lorsque cette probabilité tend vers zéro : les erreurs commises avec assurance sont donc lourdement sanctionnées. Combinée au softmax, son gradient par rapport aux logits est simplement la différence entre les probabilités prédites et la cible one-hot, ce qui donne des mises à jour propres et bien mises à l'échelle. C'est la perte standard pour la classification et pour la prédiction du token suivant dans les modèles de langage, où son exponentielle est la perplexité. Parmi les variantes pratiques figurent les poids de classe pour le déséquilibre, le label smoothing pour réduire la surconfiance et la focal loss pour les exemples difficiles. Un bug fréquent consiste à appliquer un softmax avant la CrossEntropyLoss de PyTorch, qui attend déjà des logits bruts et applique un log-softmax en interne ; cela affaiblit silencieusement les gradients.",
+  "u": [
+   "Entraînement de classifieurs d'images et de texte",
+   "Prédiction du token suivant lors du pré-entraînement de modèles de langage",
+   "Distillation de connaissances avec des cibles souples issues du modèle enseignant"
+  ],
+  "x": "Une équipe qui entraîne un modèle de catégorisation de produits sur des milliers de catégories utilise l'entropie croisée avec un label smoothing de 0,1, car de nombreux produits pourraient raisonnablement relever de catégories voisines. Elle suit conjointement la perte et l'exactitude de validation, car la perte révèle une surconfiance croissante avant que l'exactitude ne change."
+ },
+ "vanishing": {
+  "n": "Évanouissement et explosion des gradients",
+  "d": "L'évanouissement (vanishing) et l'explosion (exploding) des gradients se produisent lorsque les gradients tendent vers zéro ou croissent sans limite en se propageant à rebours à travers de nombreuses couches ou de nombreux pas de temps. Dans les deux cas, l'entraînement des premières couches cesse d'être efficace.\n\nLa rétropropagation multiplie une jacobienne par couche. Si ces facteurs sont généralement inférieurs à 1 en norme, le produit décroît exponentiellement et les premières couches n'apprennent presque rien ; s'ils sont supérieurs à 1, il croît exponentiellement et les mises à jour deviennent instables, produisant des pertes NaN. Les activations saturantes comme la sigmoïde, de mauvaises échelles de poids et les longs réseaux récurrents déroulés aggravent le problème. Les remèdes standard sont les activations de la famille ReLU, l'initialisation de Xavier ou de He, les couches de normalisation, les connexions résiduelles, les architectures à portes comme le LSTM, et l'écrêtage du gradient, qui plafonne la norme du gradient et traite surtout l'explosion. Surveiller la norme des gradients par couche pendant l'entraînement est le diagnostic le plus direct. Notons que l'écrêtage ne corrige pas l'évanouissement des gradients ; celui-ci exige des changements d'architecture.",
+  "u": [
+   "Diagnostic d'un entraînement profond bloqué ou instable",
+   "Choix des seuils d'écrêtage du gradient pour les RNN",
+   "Justification des architectures résiduelles et à portes"
+  ],
+  "x": "Une équipe qui entraîne un Transformer en précision mixte observe des pics de perte occasionnels suivis de NaN. Elle journalise la norme des gradients par couche, ajoute un écrêtage de la norme globale du gradient à 1,0 et utilise un warmup du taux d'apprentissage, ce qui supprime les pics sans ralentir la convergence."
+ },
+ "residual": {
+  "n": "Connexions résiduelles",
+  "d": "Une connexion résiduelle, aussi appelée skip connection, ajoute directement l'entrée d'un bloc à sa sortie, si bien que le bloc n'a qu'à apprendre une correction de l'identité : y = x + F(x). C'est l'ingrédient clé qui rend les réseaux très profonds entraînables.\n\nLe chemin identité offre aux gradients une route directe vers l'arrière : la dérivée de y par rapport à x vaut I plus la dérivée de F, si bien que le signal n'a jamais à traverser uniquement un long produit de petites jacobiennes. Si une couche n'est pas utile, le bloc peut apprendre F ≈ 0 et laisser la représentation inchangée, ce qui rend l'ajout de profondeur moins pénalisant. Les connexions résiduelles se retrouvent dans les ResNet, dans chaque couche Transformer, dans les U-Net et dans les modèles de diffusion. Un détail pratique concerne la place de la normalisation : les Transformers pre-norm appliquent la LayerNorm à l'intérieur de la branche, avant l'attention ou le MLP, ce qui s'entraîne de façon plus stable en profondeur que le post-norm, même si l'amplitude du flux résiduel peut croître avec la profondeur.",
+  "u": [
+   "Entraînement de CNN très profonds comme ResNet",
+   "Flux résiduels pre-norm dans les couches Transformer",
+   "Chemins de contournement dans les backbones U-Net et de diffusion"
+  ],
+  "x": "Une équipe qui fait passer un Transformer de 12 à 48 couches constate que la version post-norm diverge tôt dans l'entraînement. Passer à des blocs résiduels pre-norm, où chaque sous-couche ajoute sa sortie à un flux résiduel intact, permet au modèle plus profond de s'entraîner de façon stable avec le même calendrier de taux d'apprentissage."
+ },
+ "init": {
+  "n": "Initialisation des poids (Xavier / He)",
+  "d": "L'initialisation des poids fixe les valeurs de départ des poids d'un réseau de sorte que les activations et les gradients conservent une échelle stable d'une couche à l'autre. Les initialisations de Xavier (Glorot) et de He (Kaiming) choisissent la variance des poids en fonction du nombre d'entrées et de sorties de chaque couche.\n\nSi les poids sont trop grands, les signaux croissent de couche en couche et explosent ; s'ils sont trop petits, ils s'amenuisent vers zéro. L'initialisation de Xavier utilise une variance de 2/(fan_in + fan_out), qui maintient la variance à peu près constante pour des activations symétriques comme tanh. L'initialisation de He utilise 2/fan_in, doublant la variance pour compenser le fait que ReLU met à zéro environ la moitié de ses entrées. Les poids doivent aussi être aléatoires : initialiser tous les poids d'une couche à la même valeur fait calculer la même chose à toutes les unités et leur donne le même gradient, si bien que la symétrie n'est jamais brisée. Les biais sont généralement initialisés à zéro. Les modèles profonds modernes ajoutent une normalisation et mettent parfois à l'échelle les sorties des branches résiduelles en fonction de la profondeur, car une bonne initialisation ne garantit pas à elle seule la stabilité.",
+  "u": [
+   "Initialisation de réseaux convolutifs ReLU profonds",
+   "Échelles de départ stables pour les réseaux tanh",
+   "Couches personnalisées dans des implémentations de modèles from scratch"
+  ],
+  "x": "Une équipe qui implémente une architecture convolutive personnalisée pour l'imagerie médicale constate que l'entraînement stagne dès le départ. Remplacer l'initialisation normale de faible variance par défaut par l'initialisation de He pour toutes les couches ReLU maintient la variance des activations stable en profondeur, et la perte diminue dès la première epoch."
+ },
+ "uat": {
+  "n": "Théorème d'approximation universelle",
+  "d": "Le théorème d'approximation universelle énonce qu'un réseau à propagation avant doté d'une seule couche cachée et d'une activation non linéaire adaptée peut approcher n'importe quelle fonction continue sur un domaine fermé et borné avec une précision arbitraire, pourvu qu'il ait suffisamment d'unités cachées.\n\nIntuitivement, chaque unité cachée apporte une simple bosse ou marche, et une somme pondérée suffisamment grande de ces morceaux peut reproduire n'importe quelle forme continue. Le résultat vaut pour la sigmoïde, ReLU et la plupart des autres activations non polynomiales. Il explique pourquoi les réseaux de neurones sont en principe assez expressifs pour la régression et la classification. Le théorème ne porte toutefois que sur l'existence. Il ne dit pas combien d'unités sont nécessaires, nombre qui peut croître exponentiellement avec la dimension d'entrée, ni que la descente de gradient trouvera les bons poids, ni que la solution généralisera à partir de données finies. La profondeur aide en pratique, car les réseaux profonds peuvent représenter de nombreuses fonctions avec bien moins de paramètres que les réseaux peu profonds. Une idée reçue fréquente veut que le théorème justifie l'usage d'une seule couche cachée très large.",
+  "u": [
+   "Justification des réseaux de neurones comme approximateurs de fonctions flexibles",
+   "Enseignement de la différence entre expressivité et apprenabilité en entretien",
+   "Motivation des modèles de substitution pour les simulations physiques"
+  ],
+  "x": "Une équipe de simulation en ingénierie remplace un solveur de mécanique des fluides lent par un modèle de substitution neuronal qui associe les paramètres de conception à la traînée. Le théorème lui assure qu'un réseau peut représenter cette relation, mais elle valide tout de même sur des conceptions mises de côté, car le théorème ne dit rien de la quantité de données ou d'entraînement nécessaire pour être précis."
+ },
+ "embedding": {
+  "n": "Couche d'embedding",
+  "d": "Une couche d'embedding associe à chaque identifiant discret, comme un token, un utilisateur ou un identifiant de produit, un vecteur dense appris. C'est une table de correspondance comportant une ligne entraînable par élément.\n\nSélectionner une ligne est mathématiquement identique à multiplier un vecteur one-hot par la matrice de poids, mais la consultation est bien moins coûteuse. Pendant l'entraînement, seules les lignes utilisées dans un batch reçoivent des gradients, et les éléments qui apparaissent dans des contextes similaires finissent par avoir des vecteurs similaires, si bien que les distances dans l'espace d'embedding captent des relations utiles. Les couches d'embedding constituent l'étage d'entrée de tout modèle de langage et le cœur des systèmes de recommandation comptant des millions d'utilisateurs et d'articles, où les tables peuvent dominer la taille du modèle. Parmi les problèmes pratiques figurent les identifiants inconnus, généralement gérés par un index réservé ou par hachage, et les éléments rares aux vecteurs mal entraînés. Les modèles de langage lient souvent l'embedding d'entrée et la projection de sortie (weight tying) pour économiser des paramètres. Les embeddings ne conviennent à la recherche sémantique que s'ils sont entraînés avec un objectif adapté.",
+  "u": [
+   "Embeddings de tokens dans les modèles de langage",
+   "Vecteurs d'utilisateurs et d'articles dans les systèmes de recommandation",
+   "Encodage de variables catégorielles à forte cardinalité dans les modèles tabulaires"
+  ],
+  "x": "Un service de streaming entraîne un système de recommandation à deux tours (two-tower) où les identifiants d'utilisateurs et de programmes passent chacun par des tables d'embedding. Les vecteurs des programmes sont exportés vers un index de plus proches voisins approximatifs pour une récupération rapide des candidats, et les nouveaux programmes sans historique se rabattent sur des embeddings fondés sur le contenu jusqu'à ce qu'ils accumulent des interactions."
+ },
+ "cnn": {
+  "n": "Réseau de neurones convolutif (CNN)",
+  "d": "Un réseau de neurones convolutif est un réseau construit principalement à partir de couches convolutives, qui font glisser de petits filtres appris sur une entrée structurée en grille comme une image, un spectrogramme ou une série temporelle. Des convolutions empilées, des non-linéarités et des sous-échantillonnages transforment les pixels bruts en cartes de caractéristiques de plus en plus abstraites, suivies d'une tête de classification, de détection ou de segmentation.\n\nDeux choix de conception rendent les CNN efficaces. La connectivité locale signifie que chaque sortie ne dépend que d'un petit voisinage, et le partage des poids signifie que le même filtre est appliqué à chaque position : le nombre de paramètres ne croît donc pas avec la taille de l'image, et un motif est détecté où qu'il apparaisse. Les premières couches apprennent des contours et des textures ; les couches plus profondes les combinent en parties puis en objets à mesure que le champ récepteur s'élargit. Les CNN restent performants en vision avec peu de données et sur les appareils embarqués. Une idée reçue courante veut qu'ils soient totalement invariants par translation ; la convolution est équivariante par translation, et le sous-échantillonnage avec pas (stride) brise même cette propriété, si bien que de petits décalages peuvent modifier les prédictions.",
+  "u": [
+   "Classification d'images et inspection visuelle de défauts",
+   "Backbones de détection d'objets pour caméras",
+   "Classification audio à partir de spectrogrammes"
+  ],
+  "x": "Une entreprise industrielle entraîne un CNN compact pour détecter les rayures et les bosses sur des pièces photographiées sur une chaîne de montage. Le modèle s'exécute sur un GPU embarqué à côté de la caméra, dans le temps de cycle de la chaîne, et les nouvelles images de défauts signalées par les inspecteurs sont ajoutées chaque mois au jeu d'entraînement."
+ },
+ "convolution": {
+  "n": "Convolution",
+  "d": "La convolution, telle qu'utilisée en deep learning, fait glisser un petit noyau de poids appris sur une entrée et calcule un produit scalaire à chaque position, produisant une carte de caractéristiques qui indique où apparaît le motif du noyau. À strictement parler, la plupart des bibliothèques calculent une corrélation croisée, sans retourner le noyau, mais comme les poids sont appris, la différence n'a pas d'importance.\n\nLa taille de sortie dépend de la taille de noyau k, du padding p et du pas (stride) s : out = ⌊(n + 2p − k)/s⌋ + 1. Chaque canal de sortie a son propre noyau couvrant tous les canaux d'entrée, si bien qu'une couche compte k·k·C_in·C_out poids plus les biais. Parmi les variantes figurent les convolutions dilatées, qui élargissent le champ récepteur sans paramètres supplémentaires, les convolutions séparables en profondeur (depthwise separable), qui réduisent le calcul dans les modèles mobiles, et les convolutions 1×1, qui mélangent les canaux. Les convolutions s'appliquent aussi aux signaux 1D et aux volumes 3D. Une erreur courante est de mal calculer les formes de sortie ; padding = k // 2 avec un pas de 1 préserve la taille spatiale pour les noyaux de taille impaire.",
+  "u": [
+   "Extraction de caractéristiques à partir d'images et de trames vidéo",
+   "Filtrage de signaux de capteurs et audio en 1D",
+   "Mélange des canaux avec des convolutions 1×1"
+  ],
+  "x": "Une équipe de maintenance prédictive applique des convolutions 1D dilatées aux signaux de vibration de pompes industrielles. La dilatation permet à chaque sortie de voir plusieurs secondes d'historique avec peu de couches, ce qui garde l'inférence assez légère pour tourner sur une passerelle qui surveille de nombreuses pompes simultanément."
+ },
+ "pooling": {
+  "n": "Pooling",
+  "d": "Le pooling réduit la taille spatiale des cartes de caractéristiques en résumant de petits voisinages par une seule valeur, typiquement le maximum ou la moyenne. Il n'a aucun paramètre appris.\n\nLe max pooling conserve la réponse la plus forte de chaque fenêtre, ce qui préserve l'information de détection d'une caractéristique tout en écartant sa position exacte, et apporte une légère robustesse aux décalages. L'average pooling lisse la réponse. Le sous-échantillonnage élargit aussi le champ récepteur des couches suivantes et réduit le calcul. Le global average pooling réduit chaque canal à un seul nombre ; il remplace les grandes couches entièrement connectées dans les CNN modernes et autorise des tailles d'entrée variables. Dans les modèles de séquences, un pooling par moyenne ou par maximum sur les embeddings de tokens produit des vecteurs de phrase de taille fixe, à condition de masquer les tokens de padding. De nombreuses architectures récentes remplacent le pooling par des convolutions avec pas, qui apprennent comment sous-échantillonner. Le pooling écarte bel et bien des détails spatiaux, ce qui pénalise les tâches de prédiction dense comme la segmentation ; les modèles de type U-Net les restaurent donc à l'aide de connexions de contournement.",
+  "u": [
+   "Sous-échantillonnage des cartes de caractéristiques dans les backbones CNN",
+   "Global average pooling avant une tête de classification",
+   "Construction d'embeddings de phrases à partir de vecteurs de tokens"
+  ],
+  "x": "Une équipe de recherche sémantique construit des embeddings de phrases par mean pooling des sorties de tokens d'un encodeur Transformer, en excluant les tokens de padding grâce au masque d'attention. Lors de son évaluation hors ligne, le mean pooling a donné une qualité de récupération plus stable que l'utilisation du seul vecteur du premier token."
+ },
+ "resnet": {
+  "n": "ResNet",
+  "d": "ResNet (Residual Network) est une architecture convolutive qui empile des blocs résiduels, chacun ajoutant son entrée à la sortie de quelques couches convolutives. Introduite en 2015, elle a rendu entraînables des réseaux de plus d'une centaine de couches et a remporté la compétition ImageNet de cette année-là.\n\nAvant ResNet, ajouter simplement des couches augmentait souvent l'erreur d'entraînement, un problème de dégradation dû à la difficulté d'optimisation et non au surapprentissage. Les blocs résiduels le résolvent, car chaque bloc n'apprend qu'une correction F(x) de l'identité, et les gradients circulent directement par les chemins de contournement. ResNet-18 et ResNet-34 utilisent des blocs de base composés de deux convolutions 3×3 ; ResNet-50 et les versions plus profondes utilisent des blocs bottleneck avec des convolutions 1×1, 3×3 et 1×1 pour réduire le coût. Lorsque la forme change, le raccourci utilise une convolution 1×1 avec pas. Les ResNet restent très utilisés comme backbones pour la détection, la segmentation et le transfer learning. Leurs couches BatchNorm se comportent toutefois différemment en mode entraînement et en mode évaluation : oublier model.eval() est une source fréquente de prédictions incohérentes.",
+  "u": [
+   "Backbone de transfer learning pour la classification d'images",
+   "Extracteur de caractéristiques pour la détection et la segmentation",
+   "Architecture de référence pour les benchmarks de vision"
+  ],
+  "x": "Une enseigne de distribution fait le fine-tuning d'un ResNet-50 pré-entraîné sur ImageNet pour classer des photos de produits dans les catégories de son catalogue. Partir de poids pré-entraînés lui permet d'atteindre une bonne précision avec peu de données annotées, et elle exporte le modèle en ONNX pour l'inférence par lots sur les nouvelles fiches produits."
+ },
+ "rnn": {
+  "n": "Réseau de neurones récurrent (RNN)",
+  "d": "Un réseau de neurones récurrent traite une séquence pas à pas tout en conservant un état caché qui résume tout ce qui a été vu jusque-là. À chaque pas, les mêmes poids combinent l'entrée courante et l'état caché précédent pour produire un nouvel état caché.\n\nLe partage des poids dans le temps permet à un RNN de traiter des séquences de n'importe quelle longueur avec un nombre fixe de paramètres, et sa mémoire constante par pas convient aux données en flux. L'entraînement utilise la rétropropagation à travers le temps (BPTT), qui déroule le réseau sur toute la séquence. Les RNN simples (d'Elman) peinent avec les dépendances à longue portée, car les gradients sont multipliés par la jacobienne récurrente à chaque pas et ont tendance à s'évanouir ou à exploser ; les LSTM et les GRU ajoutent des portes pour y remédier. Les RNN ne peuvent pas non plus être parallélisés sur les pas de temps pendant l'entraînement, principale raison pour laquelle les Transformers les ont remplacés pour la modélisation du langage à grande échelle. Les modèles à espace d'états modernes comme Mamba revisitent l'idée récurrente avec des conceptions qui s'entraînent en parallèle.",
+  "u": [
+   "Modélisation de flux de capteurs et de séries temporelles",
+   "Génération de texte caractère par caractère pour de petits modèles",
+   "Traitement de séquences à faible latence sur l'appareil"
+  ],
+  "x": "Un fabricant d'objets connectés portables exécute un petit RNN sur l'appareil pour détecter des activités comme la marche ou la course à partir des données de l'accéléromètre. L'état récurrent est mis à jour à chaque nouvel échantillon, si bien que la mémoire utilisée reste constante et qu'aucune fenêtre de données passées n'a besoin d'être stockée."
+ },
+ "lstm": {
+  "n": "LSTM",
+  "d": "La Long Short-Term Memory (LSTM) est une cellule de réseau récurrent qui ajoute un état de cellule distinct et trois portes pour contrôler ce qui est écrit en mémoire, ce qui est conservé et ce qui est lu en sortie. Elle a été conçue pour apprendre des dépendances sur beaucoup plus de pas de temps qu'un RNN simple.\n\nLa porte d'oubli décide quelle part de l'état de cellule précédent conserver, la porte d'entrée décide quelle part du nouveau candidat ajouter, et la porte de sortie décide quelle part de l'état de cellule exposer comme état caché. Comme l'état de cellule est mis à jour de manière additive, avec la porte d'oubli comme multiplicateur proche de 1 si nécessaire, les gradients peuvent circuler sur de longues durées sans s'évanouir. Les LSTM étaient la norme pour la reconnaissance vocale, la traduction et la prévision de séries temporelles avant les Transformers, et restent pratiques pour les tâches de séquences en flux ou à faibles volumes de données. Elles traitent toujours les pas séquentiellement, ce qui ralentit l'entraînement sur de longues séquences, et leur mémoire effective est plus courte que ne le suggère la théorie.",
+  "u": [
+   "Prévision de séries temporelles de demande et de trafic",
+   "Reconnaissance vocale et de mots-clés en flux",
+   "Détection d'anomalies dans des séquences de capteurs"
+  ],
+  "x": "L'équipe transports d'une ville prévoit la vitesse du trafic sur des tronçons routiers pour l'heure suivante avec une LSTM alimentée par les vitesses des dernières heures, des variables d'heure de la journée et des indicateurs d'événements. Le modèle est réentraîné chaque semaine, et l'erreur de prévision est surveillée par tronçon afin qu'une dérive consécutive à des modifications de voirie déclenche une revue."
+ },
+ "gru": {
+  "n": "GRU",
+  "d": "La Gated Recurrent Unit (GRU) est une cellule récurrente qui utilise deux portes, de mise à jour et de réinitialisation, pour contrôler l'évolution de l'état caché au fil du temps. C'est une alternative plus simple à la LSTM, sans état de cellule distinct.\n\nLa porte de mise à jour interpole entre l'état caché précédent et un nouvel état candidat, jouant à elle seule le rôle des portes d'oubli et d'entrée de la LSTM. La porte de réinitialisation décide quelle part de l'état précédent est utilisée pour calculer ce candidat, ce qui permet à l'unité d'ignorer un historique non pertinent. Avec moins de paramètres par unité, environ trois quarts de ceux d'une LSTM de même taille, les GRU s'entraînent un peu plus vite et obtiennent souvent des performances comparables, en particulier sur des jeux de données de petite et moyenne taille. Aucune des deux cellules n'est systématiquement meilleure : le choix se fait généralement de façon empirique. Comme tous les RNN classiques, les GRU traitent les pas de temps séquentiellement et peinent toujours avec les très longues dépendances. La GRU de PyTorch applique la porte de réinitialisation légèrement différemment de l'article d'origine.",
+  "u": [
+   "Recommandation du prochain article par session en e-commerce",
+   "Modèles légers de prévision de séries temporelles",
+   "Encodage de séquences sur des appareils aux ressources limitées"
+  ],
+  "x": "Une équipe d'e-commerce utilise un modèle de session fondé sur une GRU pour prédire le prochain produit sur lequel un visiteur cliquera, à partir de la séquence d'articles consultés au cours de la session. La GRU a été préférée à une LSTM car elle s'entraînait plus vite pour une précision similaire, et l'état caché est mis à jour de façon incrémentale après chaque clic pour maintenir une faible latence."
+ },
+ "bidir": {
+  "n": "RNN bidirectionnel",
+  "d": "Un RNN bidirectionnel exécute deux couches récurrentes sur la même séquence, l'une du début vers la fin et l'autre de la fin vers le début, et combine leurs états cachés à chaque position. Chaque sortie dispose ainsi d'un contexte issu à la fois du passé et du futur.\n\nLes états cachés avant et arrière sont généralement concaténés, ce qui double la taille des caractéristiques. C'est précieux pour les tâches d'étiquetage où le sens d'un token dépend des mots qui le suivent, comme la reconnaissance d'entités nommées, l'étiquetage morphosyntaxique et la reconnaissance vocale sur des énoncés complets. Les LSTM bidirectionnelles combinées à une couche CRF étaient le modèle standard d'étiquetage de séquences avant les encodeurs Transformer comme BERT, qui obtiennent un contexte bidirectionnel grâce à l'auto-attention. Leur limite essentielle est que la séquence entière doit être disponible avant de produire la moindre sortie : les modèles bidirectionnels ne peuvent donc pas servir à la prédiction en flux temps réel ni à la génération autorégressive. En utiliser un pour la prévision ferait fuir de l'information future dans les prédictions.",
+  "u": [
+   "Reconnaissance d'entités nommées et étiquetage morphosyntaxique",
+   "Reconnaissance vocale hors ligne sur des enregistrements complets",
+   "Encodage des phrases sources pour la traduction"
+  ],
+  "x": "Une entreprise de legal tech extrait les noms des parties, les dates et les montants de contrats avec un étiqueteur LSTM bidirectionnel exécuté sur un parc de CPU. Comme les documents entiers sont traités hors ligne, le modèle peut utiliser le contexte des deux côtés de chaque token, et il est moins coûteux à servir qu'un grand Transformer."
+ },
+ "seq2seq": {
+  "n": "Seq2Seq",
+  "d": "Les modèles séquence-à-séquence (Seq2Seq) transforment une séquence d'entrée en une séquence de sortie de longueur éventuellement différente à l'aide d'un encodeur et d'un décodeur. L'encodeur convertit l'entrée en représentations internes, et le décodeur génère la sortie token par token, en se conditionnant sur ces représentations et sur les tokens qu'il a déjà produits.\n\nLes modèles d'origine de 2014 utilisaient des LSTM et compressaient toute l'entrée en un unique vecteur de taille fixe, qui devenait un goulot d'étranglement pour les phrases longues. L'attention l'a supprimé en permettant au décodeur de consulter tous les états de l'encodeur à chaque pas, et les encodeurs-décodeurs Transformer comme T5 et BART ont généralisé cette conception. Pendant l'entraînement, le teacher forcing fournit au décodeur le vrai token précédent ; à l'inférence, le modèle réinjecte ses propres prédictions, généralement avec une recherche en faisceau ou un échantillonnage. Ce décalage, appelé biais d'exposition (exposure bias), signifie que les erreurs précoces peuvent s'accumuler. Les modèles Seq2Seq conviennent à la traduction, au résumé, à la reconnaissance vocale et à la conversion texte-SQL, où entrée et sortie sont des séquences distinctes.",
+  "u": [
+   "Traduction automatique entre langues",
+   "Résumé abstractif de longs documents",
+   "Conversion de questions en langage naturel en SQL"
+  ],
+  "x": "Une plateforme de support client fait le fine-tuning d'un encodeur-décodeur de type T5 pour résumer de longues transcriptions de chat en courtes notes de dossier destinées aux agents. La génération utilise une recherche en faisceau avec une limite de longueur, et les résumés sont vérifiés par sondage chaque semaine, car le modèle omet parfois des détails importants."
+ },
+ "word2vec": {
+  "n": "Word2Vec",
+  "d": "Word2Vec apprend des représentations vectorielles denses des mots à partir de texte brut en entraînant un réseau peu profond à prédire des mots à partir de leurs voisins. Les mots qui apparaissent dans des contextes similaires obtiennent des vecteurs similaires.\n\nIl existe en deux variantes. Skip-gram prédit les mots environnants à partir d'un mot central et fonctionne bien pour les mots rares, tandis que CBOW prédit le mot central à partir de la moyenne de son contexte et s'entraîne plus vite. Au lieu d'un softmax complet sur le vocabulaire, l'entraînement utilise généralement le negative sampling : le modèle apprend à donner un score plus élevé aux vraies paires mot-contexte qu'à des paires tirées au hasard. Les vecteurs obtenus captent des régularités sémantiques et syntaxiques, l'exemple classique étant que roi − homme + femme tombe près de reine. Il reste utile pour les vocabulaires propres à un domaine et pour des embeddings d'articles tirés de sessions. Sa principale limite est que chaque mot reçoit un unique vecteur statique, quel que soit le contexte : « avocat » a le même embedding dans une phrase sur la cuisine ou sur la justice ; les modèles contextuels comme BERT répondent à ce problème.",
+  "u": [
+   "Embeddings de mots propres à un domaine à partir de textes internes",
+   "Embeddings d'articles à partir des sessions de navigation des utilisateurs",
+   "Recherche de termes similaires pour l'expansion de requêtes"
+  ],
+  "x": "Un site de réservation de voyages traite la séquence d'annonces consultées par chaque utilisateur comme une phrase et entraîne Word2Vec en skip-gram sur des millions de sessions. Les embeddings d'annonces obtenus alimentent une fonctionnalité d'annonces similaires, et le modèle est réentraîné chaque jour, car les nouvelles annonces ont rapidement besoin de vecteurs."
+ },
+ "unet": {
+  "n": "U-Net",
+  "d": "U-Net est un réseau convolutif encodeur-décodeur pour la prédiction dense qui relie chaque niveau de l'encodeur au niveau correspondant du décodeur par des connexions de contournement, d'où sa forme caractéristique en U. Il a été introduit en 2015 pour la segmentation d'images biomédicales.\n\nL'encodeur sous-échantillonne l'image de façon répétée pour capter le contexte, et le décodeur la suréchantillonne jusqu'à la pleine résolution. Comme le sous-échantillonnage écarte les détails spatiaux fins, les connexions de contournement concatènent les caractéristiques haute résolution de l'encodeur dans le décodeur, si bien que la sortie peut tracer des contours précis tout en exploitant le contexte global. U-Net s'entraîne bien sur de petits jeux de données, surtout avec une forte augmentation, et produit une prédiction pour chaque pixel. Au-delà de la segmentation en imagerie médicale, en imagerie satellite et dans l'industrie, un U-Net doté de couches d'attention et d'un conditionnement sur le pas de temps est le réseau standard de prédiction du bruit dans de nombreux modèles de diffusion. Un piège pratique concerne la taille d'entrée : les dimensions doivent être divisibles par 2 à la puissance du nombre d'étapes de sous-échantillonnage, faute de quoi les caractéristiques ne s'aligneront pas au niveau des connexions de contournement.",
+  "u": [
+   "Segmentation de tumeurs et d'organes dans les examens médicaux",
+   "Extraction de bâtiments et de routes à partir d'images satellite",
+   "Backbone de prédiction du bruit dans les modèles de diffusion"
+  ],
+  "x": "L'équipe d'un éditeur de logiciels de radiologie entraîne un U-Net à segmenter les lésions hépatiques sur des coupes de scanner, en combinant perte de Dice et entropie croisée pour gérer la petite surface des lésions. Les prédictions sont relues par des radiologues, et les entrées sont complétées par padding jusqu'à un multiple de 16 pour que les connexions de contournement s'alignent à chaque niveau."
+ },
+ "gnn": {
+  "n": "Réseau de neurones sur graphes (GNN)",
+  "d": "Un réseau de neurones sur graphes apprend des représentations de nœuds, d'arêtes ou de graphes entiers en échangeant de façon répétée des messages entre nœuds connectés. À chaque couche, chaque nœud agrège l'information de ses voisins et la combine avec ses propres caractéristiques pour produire un embedding mis à jour.\n\nAprès k couches, l'embedding d'un nœud reflète son voisinage à k sauts. Les fonctions d'agrégation comme la somme, la moyenne ou l'attention doivent être invariantes par permutation, car les voisins n'ont pas d'ordre naturel. Parmi les variantes populaires figurent GCN, qui utilise une matrice d'adjacence normalisée ; GraphSAGE, qui échantillonne les voisins pour que l'entraînement passe à l'échelle sur de grands graphes ; et GAT, qui apprend des poids d'attention sur les voisins. Les GNN conviennent aux données dont les relations comptent autant que les caractéristiques : molécules, réseaux sociaux et de transactions, graphes de connaissances et réseaux routiers. Une limite essentielle est le sur-lissage (over-smoothing) : avec de nombreuses couches, les embeddings des nœuds deviennent presque identiques, si bien que la plupart des GNN en pratique n'utilisent que deux ou trois couches. Les nœuds de très fort degré rendent aussi coûteuse l'agrégation sur le voisinage complet, d'où le recours fréquent à l'échantillonnage.",
+  "u": [
+   "Détection de réseaux de fraude dans les graphes de transactions",
+   "Prédiction de propriétés moléculaires pour la découverte de médicaments",
+   "Recommandation d'amis et de produits sur des graphes"
+  ],
+  "x": "Une entreprise de paiement construit un graphe reliant comptes, appareils et cartes, et entraîne un modèle GraphSAGE pour signaler les comptes susceptibles d'appartenir à des réseaux de fraude. L'échantillonnage des voisins rend l'entraînement faisable sur un très grand graphe, et les embeddings sont recalculés toutes les heures pour que les comptes nouvellement liés soient rapidement notés."
+ },
+ "vit": {
+  "n": "Vision Transformer (ViT)",
+  "d": "Le Vision Transformer applique un encodeur Transformer standard aux images en découpant chaque image en patchs de taille fixe et en traitant chaque patch comme un token. Une configuration typique découpe une image de 224×224 en patchs de 16×16, ce qui donne 196 tokens.\n\nChaque patch est aplati et projeté linéairement vers un embedding, un embedding de position appris est ajouté, et un token de classe spécial est souvent placé en tête, son état final alimentant le classifieur. L'auto-attention permet à chaque patch d'interagir avec tous les autres dès la première couche : le modèle capte donc directement les relations globales au lieu de les construire progressivement par des convolutions locales. Les ViT intègrent moins d'hypothèses sur la localité que les CNN : ils ont besoin de grands jeux de pré-entraînement ou d'une forte augmentation pour égaler les CNN, mais ils passent très bien à l'échelle et servent d'encodeurs d'images à CLIP et à de nombreux modèles de langage multimodaux. Le coût de l'attention croît quadratiquement avec le nombre de patchs, si bien que les entrées haute résolution sont coûteuses, et changer de résolution exige d'interpoler les embeddings de position.",
+  "u": [
+   "Classification d'images avec de grands backbones pré-entraînés",
+   "Encodeur d'images pour les modèles de langage multimodaux",
+   "Caractéristiques visuelles auto-supervisées pour la recherche"
+  ],
+  "x": "Une enseigne de distribution utilise un backbone ViT auto-supervisé pour calculer les embeddings de photos de produits dans une recherche d'articles visuellement similaires. Les caractéristiques pré-entraînées fonctionnent sur toutes les catégories sans étiquettes, et l'équipe redimensionne toutes les images à la résolution de pré-entraînement pour éviter la dégradation de qualité due à l'interpolation des embeddings de position."
+ },
+ "clip": {
+  "n": "CLIP",
+  "d": "CLIP (Contrastive Language-Image Pretraining), publié par OpenAI en 2021, entraîne conjointement un encodeur d'images et un encodeur de texte pour que les images et les légendes correspondantes soient projetées vers des vecteurs proches dans un espace d'embedding commun. Il a été entraîné sur des centaines de millions de paires image-texte collectées sur le web.\n\nPour un batch de N paires, le modèle calcule les N×N similarités cosinus et applique une perte d'entropie croisée symétrique qui rapproche chaque image de sa propre légende et l'éloigne des autres légendes, et inversement, avec une température apprise. Après l'entraînement, la classification zero-shot consiste à calculer l'embedding de prompts comme « une photo de chien » pour chaque classe et à choisir la classe dont l'embedding textuel est le plus proche de l'image. Les embeddings CLIP alimentent la recherche d'images par texte, le filtrage de contenus et le conditionnement textuel des générateurs d'images. Parmi ses limites figurent un raisonnement faible sur le comptage et l'espace, une sensibilité à la formulation des prompts et des biais sociaux hérités des données du web.",
+  "u": [
+   "Classification d'images zero-shot à l'aide de prompts textuels",
+   "Recherche d'images par texte et par image",
+   "Filtrage et déduplication de grands jeux de données d'images"
+  ],
+  "x": "Une banque d'images calcule les embeddings de sa photothèque avec l'encodeur d'images de CLIP et stocke les vecteurs dans un index de plus proches voisins approximatifs. Au moment de la recherche, les requêtes textuelles des utilisateurs sont encodées par l'encodeur de texte, ce qui permet une recherche en langage naturel sans tags rédigés à la main."
+ },
+ "contrastive": {
+  "n": "Apprentissage contrastif",
+  "d": "L'apprentissage contrastif entraîne un encodeur à placer près les uns des autres, dans l'espace d'embedding, des exemples liés, appelés paires positives, et loin les exemples sans rapport, appelés négatifs. Les positifs peuvent être deux vues augmentées d'une même image, une requête et son document pertinent, ou une image et sa légende.\n\nL'objectif le plus courant est InfoNCE : pour chaque ancre, un softmax sur les similarités avec un positif et de nombreux négatifs est entraîné à sélectionner le positif, une température contrôlant la sévérité avec laquelle les négatifs difficiles sont pénalisés. Des méthodes comme SimCLR et MoCo apprennent des caractéristiques visuelles sans étiquettes, tandis que CLIP et les modèles de récupération dense apprennent des embeddings intermodaux ou requête-document. Les négatifs intra-batch rendent l'entraînement efficace, si bien que des batchs plus grands aident généralement. L'approche est puissante car les étiquettes sont souvent gratuites, mais la qualité dépend fortement de la définition des positifs : les augmentations déterminent les invariances apprises, et les faux négatifs, comme des documents quasi dupliqués traités comme négatifs, peuvent dégrader les résultats.",
+  "u": [
+   "Entraînement de modèles de récupération dense pour la recherche sémantique",
+   "Pré-entraînement auto-supervisé d'encodeurs d'images",
+   "Apprentissage d'embeddings d'utilisateurs et d'articles pour la recommandation"
+  ],
+  "x": "Une équipe de recherche en entreprise fait le fine-tuning d'un modèle d'embeddings de phrases avec des négatifs intra-batch, sur des paires associant des questions d'utilisateurs aux articles d'aide qui les ont résolues. Elle extrait des négatifs difficiles des meilleurs résultats du modèle de récupération actuel, mais écarte les quasi-doublons du véritable article pour éviter les faux négatifs."
+ },
+ "gan": {
+  "n": "Réseau antagoniste génératif (GAN)",
+  "d": "Un réseau antagoniste génératif entraîne deux réseaux l'un contre l'autre : un générateur qui transforme du bruit aléatoire en échantillons synthétiques, et un discriminateur qui tente de distinguer les échantillons réels des échantillons générés. À mesure que le discriminateur s'améliore, le générateur reçoit des gradients qui poussent ses sorties vers la distribution des données réelles.\n\nLe dispositif est un jeu minimax à deux joueurs. En pratique, le générateur maximise généralement log D(G(z)), la perte non saturante, car l'objectif d'origine donne des gradients évanescents en début d'entraînement. Les GAN produisent des images nettes et génèrent un échantillon en une seule passe avant : ils sont donc rapides à l'inférence ; StyleGAN a établi la référence pour les visages photoréalistes. On les utilise pour la synthèse d'images, la super-résolution et l'augmentation de données. Leur entraînement est notoirement instable : l'effondrement de modes (mode collapse), où le générateur ne couvre que quelques modes des données, et les oscillations entre les deux joueurs sont fréquents. Des techniques comme la normalisation spectrale, les pertes de Wasserstein avec pénalité de gradient et un équilibrage soigneux des taux d'apprentissage aident. Les modèles de diffusion ont largement remplacé les GAN pour la génération d'images à forte diversité.",
+  "u": [
+   "Super-résolution et amélioration d'images",
+   "Images d'entraînement synthétiques pour des classes de défauts rares",
+   "Génération d'images rapide en une seule étape à l'inférence"
+  ],
+  "x": "Une équipe logicielle d'appareils photo utilise un modèle de super-résolution à base de GAN pour agrandir sur l'appareil des photos prises en faible luminosité. La perte antagoniste produit des textures plus nettes qu'une perte purement pixel, et la passe avant unique respecte le budget de latence ; l'équipe surveille de près les détails inventés qui n'existent pas dans la scène."
+ },
+ "vae": {
+  "n": "Autoencodeur variationnel (VAE)",
+  "d": "Un autoencodeur variationnel est un modèle génératif qui encode chaque entrée sous forme d'une distribution de probabilité sur un espace latent, plutôt que d'un point unique, et décode des échantillons de cette distribution en données. Comme l'espace latent est régularisé vers une loi a priori simple, échantillonner selon cette loi puis décoder produit de nouvelles données.\n\nL'encodeur produit une moyenne et une variance pour chaque dimension latente. L'astuce de reparamétrisation, z = μ + σ·ε avec ε tiré d'une loi normale centrée réduite, garde l'échantillonnage différentiable afin que le modèle s'entraîne par rétropropagation. La perte, l'opposé de la borne inférieure de l'évidence (ELBO), combine un terme de reconstruction et une divergence KL qui rapproche chaque distribution encodée d'une loi normale centrée réduite. Les VAE offrent des espaces latents réguliers, utiles pour l'interpolation, la détection d'anomalies et la compression, et la diffusion latente utilise une variante de VAE. Leurs échantillons ont tendance à être plus flous que ceux des GAN ou des modèles de diffusion, et avec des décodeurs puissants, le terme KL peut s'effondrer, laissant le code latent inutilisé.",
+  "u": [
+   "Détection d'anomalies à partir de l'erreur de reconstruction",
+   "Compression d'images en latents pour la diffusion",
+   "Génération et interpolation de structures moléculaires"
+  ],
+  "x": "Une équipe de surveillance industrielle entraîne un VAE sur des fenêtres de données de capteurs provenant de machines en fonctionnement normal. En production, les fenêtres présentant une erreur de reconstruction élevée ou une ELBO faible sont signalées comme anomalies, et les seuils sont fixés sur une période de validation pour que le taux d'alertes reste gérable pour les opérateurs."
+ },
+ "diffusion": {
+  "n": "Modèles de diffusion",
+  "d": "Les modèles de diffusion génèrent des données en apprenant à inverser un processus de bruitage progressif. Pendant l'entraînement, un bruit gaussien est ajouté aux échantillons réels à un niveau de bruit choisi au hasard, et un réseau apprend à prédire ce bruit ; la génération part d'un bruit pur et le retire pas à pas.\n\nLe processus direct admet une forme analytique : un échantillon bruité à n'importe quel pas de temps t peut donc être produit directement à partir des données propres à l'aide d'un calendrier ᾱₜ. L'objectif d'entraînement est une simple erreur quadratique moyenne entre le bruit réel et le bruit prédit, bien plus stable que l'entraînement antagoniste. L'échantillonnage exécute le débruiteur de nombreuses fois ; DDPM utilise des centaines de pas, tandis que DDIM et les solveurs modernes les réduisent à quelques dizaines, et la distillation peut descendre à quelques pas. La classifier-free guidance renforce le respect d'un prompt textuel au prix d'une certaine diversité. Ces modèles dominent en qualité de génération d'images, de vidéo et d'audio. Leur principal inconvénient est un échantillonnage lent et gourmand en calcul comparé aux générateurs en une seule passe.",
+  "u": [
+   "Génération et édition d'images à partir de texte",
+   "Synthèse audio et vocale",
+   "Génération de structures de molécules et de protéines"
+  ],
+  "x": "Un éditeur d'outils de design propose la génération d'images à partir de texte avec un modèle de diffusion servi sur GPU. Il utilise un échantillonneur rapide d'une vingtaine à une trentaine de pas et la classifier-free guidance, en réglant l'échelle de guidage pour équilibrer fidélité au prompt et variété des images, et applique des classifieurs de sécurité à chaque sortie."
+ },
+ "latentdiff": {
+  "n": "Diffusion latente",
+  "d": "La diffusion latente exécute le processus de diffusion dans l'espace latent compressé d'un autoencodeur pré-entraîné plutôt que directement sur les pixels. Stable Diffusion en est l'exemple le plus connu.\n\nUn autoencodeur variationnel compresse d'abord une image, par exemple de 512×512×3 pixels en un latent de 64×64×4, soit une réduction de 8× par côté. Le modèle de diffusion, typiquement un U-Net ou un Transformer de diffusion, apprend à débruiter ces latents, et le décodeur reconvertit le latent final en image. Comme le latent est bien plus petit et que l'autoencodeur a déjà éliminé les détails haute fréquence imperceptibles, l'entraînement et l'échantillonnage coûtent bien moins de calcul qu'une diffusion dans l'espace des pixels, à qualité similaire. Le conditionnement textuel passe par une cross-attention vers les embeddings d'un encodeur de texte comme CLIP ou T5. L'approche prend aussi en charge l'édition image-à-image, l'inpainting et des méthodes de fine-tuning comme LoRA et DreamBooth. Son plafond de qualité est fixé par l'autoencodeur : petits textes, visages fins et textures précises peuvent être déformés par le décodeur même si le modèle de diffusion est parfait.",
+  "u": [
+   "Génération d'images à partir de texte sur des GPU grand public",
+   "Inpainting et édition image-à-image",
+   "Styles personnalisés par fine-tuning LoRA"
+  ],
+  "x": "Une équipe marketing fait le fine-tuning d'un modèle Stable Diffusion avec LoRA sur des visuels de marque validés afin de générer des concepts de campagne. Comme la diffusion s'exécute dans l'espace latent, l'entraînement comme la génération tiennent sur un seul GPU, et toutes les sorties passent par une relecture humaine avant utilisation."
+ },
+ "flowmatch": {
+  "n": "Flow matching",
+  "d": "Le flow matching entraîne un modèle génératif à apprendre un champ de vitesses qui transporte continûment des échantillons d'une distribution de bruit simple vers la distribution des données. La génération intègre ensuite ce champ comme une équation différentielle ordinaire, du bruit vers les données.\n\nDans la variante courante du rectified flow, un exemple d'entraînement se construit en tirant un point de données x₁ et un point de bruit x₀, en interpolant linéairement xₜ = (1−t)x₀ + t·x₁ à un instant t aléatoire, et en régressant la sortie du réseau sur la vitesse constante x₁ − x₀. La perte est une simple erreur quadratique moyenne, sans jeu antagoniste ni simulation d'EDO pendant l'entraînement. Les trajectoires rectilignes permettent un échantillonnage en moins de pas que la diffusion classique, et le cadre généralise la diffusion, qui utilise des trajectoires courbes. Stable Diffusion 3 et plusieurs modèles de vidéo et de parole l'utilisent. Les trajectoires apprises ne sont pas exactement rectilignes : le champ de vitesses fait la moyenne sur des paires qui se croisent, si bien que les trajectoires se courbent à moins d'une rectification supplémentaire.",
+  "u": [
+   "Génération d'images à partir de texte en moins de pas d'échantillonnage",
+   "Modèles de génération de parole et d'audio",
+   "Génération de conformations de molécules et de protéines"
+  ],
+  "x": "Une équipe de synthèse vocale remplace son décodeur acoustique à base de diffusion par un modèle de flow matching. La perte d'entraînement est plus simple et plus stable, et un solveur d'EDO avec un petit nombre de pas produit une qualité audio comparable avec une latence plus faible pour les réponses vocales en temps réel."
+ },
+ "autoregressive": {
+  "n": "Modèles autorégressifs",
+  "d": "Un modèle autorégressif génère une séquence élément par élément, en prédisant chaque élément à partir de tous ceux qui le précèdent. Il factorise la probabilité jointe d'une séquence en un produit de probabilités conditionnelles à l'aide de la règle de la chaîne.\n\nLes modèles de langage de type GPT en sont l'exemple le plus marquant : un Transformer causal prédit une distribution sur le token suivant, un token est choisi par décodage glouton ou par échantillonnage, ajouté à l'entrée, et le processus se répète. L'entraînement est efficace car, grâce au masquage causal et au teacher forcing, les pertes de toutes les positions d'une séquence sont calculées en une seule passe parallèle. La même idée sous-tend les modèles AR classiques pour les séries temporelles, PixelCNN pour les images et WaveNet pour l'audio. Les modèles autorégressifs fournissent des vraisemblances exactes et sont très flexibles, mais la génération est intrinsèquement séquentielle, si bien que la latence croît avec la longueur de sortie ; le KV cache et le décodage spéculatif réduisent ce coût. Les erreurs peuvent aussi s'accumuler, car chaque prédiction est conditionnée par les sorties antérieures du modèle lui-même.",
+  "u": [
+   "Génération de texte avec des modèles de langage de type GPT",
+   "Prévision de séries temporelles avec des modèles AR et ARIMA",
+   "Complétion de code dans les outils de développement"
+  ],
+  "x": "Un éditeur d'outils de développement sert un modèle de code autorégressif pour la complétion en ligne. Les tokens étant générés un par un, il plafonne la longueur des complétions, réutilise le KV cache d'une frappe à l'autre et emploie le décodage spéculatif avec un petit modèle brouillon pour que les suggestions respectent un budget de latence interactif."
+ },
+ "dlm": {
+  "n": "Modèles de langage par diffusion",
+  "d": "Les modèles de langage par diffusion génèrent du texte en partant d'une séquence entièrement masquée ou bruitée et en affinant de nombreuses positions en parallèle sur plusieurs étapes, au lieu de produire un token à la fois de gauche à droite. La plupart utilisent un masquage discret plutôt qu'un bruit gaussien.\n\nPendant l'entraînement, une fraction aléatoire des tokens est remplacée par un token de masque, et un Transformer bidirectionnel apprend à prédire les tokens d'origine aux positions masquées, la perte étant pondérée selon le taux de masquage. À l'inférence, le modèle part d'une séquence entièrement masquée, prédit chaque position, conserve les prédictions les plus confiantes et remasque les autres, en répétant jusqu'à ce que le texte soit complet. Parmi les exemples figurent LLaDA, Mercury et Gemini Diffusion. Valider plusieurs tokens par étape avec un contexte entièrement visible permet un décodage plus rapide et l'édition de texte au milieu d'une séquence. Parmi les limites : des longueurs de sortie fixes ou estimées, la difficulté à réutiliser le KV cache standard, et une qualité encore inférieure à celle de modèles autorégressifs comparables sur de nombreux benchmarks.",
+  "u": [
+   "Génération parallèle de texte et de code à faible latence",
+   "Remplissage (infilling) et édition de texte au milieu d'une séquence",
+   "Recherche sur le décodage non autorégressif"
+  ],
+  "x": "Une équipe d'assistant de programmation expérimente un modèle de langage par diffusion pour le remplissage rapide de code, où le modèle comble un trou entre le code existant avant et après le curseur. Le décodage parallèle réduit la latence pour les courts fragments, mais l'équipe garde un modèle autorégressif en repli pour les longues complétions, où sa qualité reste supérieure."
+ },
+ "attention": {
+  "n": "Mécanisme d'attention",
+  "d": "L'attention permet à un modèle de calculer chaque sortie comme une moyenne pondérée d'un ensemble de vecteurs valeurs, où les poids dépendent de la correspondance entre une requête et chaque clé associée. Le modèle peut ainsi se concentrer sur les parties les plus pertinentes d'une entrée.\n\nDans la scaled dot-product attention, les produits scalaires requête-clé sont divisés par la racine carrée de la dimension des clés, ce qui empêche le softmax de saturer, puis normalisés par softmax en poids dont la somme vaut 1. L'attention a été introduite pour permettre aux décodeurs de traduction de consulter tous les états de l'encodeur au lieu d'un unique vecteur compressé, et c'est l'opération centrale des Transformers. La cross-attention utilise des requêtes issues d'une séquence et des clés et valeurs issues d'une autre, comme dans les modèles encodeur-décodeur ou la génération d'images conditionnée par du texte. L'attention standard a un coût en temps et en mémoire quadratique en la longueur de séquence ; FlashAttention réduit la mémoire en la calculant par tuiles sans stocker la matrice de poids complète. Les poids d'attention ne constituent pas une explication fiable des décisions d'un modèle.",
+  "u": [
+   "Alignement des mots source et cible en traduction",
+   "Cross-attention des prompts textuels vers les caractéristiques d'image",
+   "Agrégation d'entrées de longueur variable avec des poids appris"
+  ],
+  "x": "Une équipe de traduction automatique sert un Transformer encodeur-décodeur dans lequel chaque couche du décodeur applique une cross-attention à la phrase source encodée. Elle utilise un noyau d'attention fusionné pour réduire la mémoire GPU, ce qui permet des batchs plus grands et un débit plus élevé sur les longs documents."
+ },
+ "selfattn": {
+  "n": "Auto-attention (self-attention)",
+  "d": "L'auto-attention est une attention dans laquelle les requêtes, les clés et les valeurs proviennent toutes de la même séquence : chaque token construit sa nouvelle représentation en considérant tous les autres tokens de cette séquence. C'est la brique principale des couches Transformer.\n\nLe vecteur de chaque token est projeté par trois matrices apprises en une requête, une clé et une valeur. La requête du token i est comparée aux clés de tous les tokens pour produire des poids d'attention, et la sortie du token i est la somme pondérée de leurs valeurs. L'auto-attention multi-têtes exécute plusieurs de ces opérations en parallèle sur des projections de plus faible dimension, si bien que les têtes peuvent suivre des relations différentes. Contrairement à un RNN, deux positions quelconques interagissent en une seule étape, et la séquence entière est traitée en parallèle. L'auto-attention est équivariante par permutation : elle a donc besoin d'encodages positionnels pour connaître l'ordre des mots. Les modèles décodeurs ajoutent un masque causal pour que chaque token ne voie que les positions antérieures. Le coût croît quadratiquement avec la longueur de séquence.",
+  "u": [
+   "Représentations contextuelles des tokens dans les modèles de langage",
+   "Modélisation des dépendances à longue portée dans les documents",
+   "Mise en relation des patchs d'image dans les Vision Transformers"
+  ],
+  "x": "Une équipe de documents juridiques fait le fine-tuning d'un encodeur Transformer dont les couches d'auto-attention permettent à chaque clause de prêter attention aux définitions situées ailleurs dans le contrat. Comme le coût croît quadratiquement avec la longueur, elle découpe les contrats en fenêtres chevauchantes d'un nombre fixe de tokens et fusionne ensuite les prédictions."
+ }
+}

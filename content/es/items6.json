@@ -1,0 +1,462 @@
+{
+ "gradckpt": {
+  "n": "Gradient checkpointing",
+  "d": "El gradient checkpointing intercambia cómputo adicional por menos memoria: durante la pasada hacia delante solo almacena algunas activaciones intermedias y recalcula el resto durante la pasada hacia atrás. La retropropagación normalmente conserva las activaciones de todas las capas para poder calcular los gradientes, y en redes profundas con secuencias largas esta memoria de activaciones suele superar a la que ocupan los propios pesos.\n\nCon checkpointing, la red se divide en segmentos y solo se guardan las entradas de cada segmento. Cuando la pasada hacia atrás llega a un segmento, se vuelve a ejecutar su cálculo hacia delante para reconstruir sus activaciones, y después los gradientes fluyen a través de él. Aplicar checkpointing a cada bloque Transformer suele costar aproximadamente una pasada hacia delante adicional, alrededor de un 20–35 % más de tiempo de entrenamiento, a cambio de una reducción drástica de la memoria de activaciones. Es la forma estándar de meter lotes más grandes o contextos más largos en una GPU fija. Un malentendido frecuente es creer que ahorra memoria de pesos o del optimizador; solo reduce la memoria de activaciones, por lo que suele combinarse con sharding o precisión mixta.",
+  "u": [
+   "Fine-tuning de grandes LLM en una sola GPU",
+   "Entrenar con secuencias largas",
+   "Aumentar el tamaño del lote con una memoria fija"
+  ],
+  "x": "Un equipo de investigación hace fine-tuning de un modelo de 13B de parámetros con documentos de 8K tokens en GPU con memoria limitada. Activar el gradient checkpointing en cada bloque decodificador permite que la ejecución quepa sin reducir la longitud de secuencia, a costa de pasos más lentos. Aceptan el mayor tiempo total porque la alternativa era alquilar aceleradores más grandes."
+ },
+ "parallelism": {
+  "n": "Paralelismo de datos, de tensores y de pipeline",
+  "d": "Los modelos grandes se entrenan en muchos aceleradores repartiendo los datos, las matrices de pesos individuales o la secuencia de capas. En el paralelismo de datos, cada dispositivo tiene una réplica completa del modelo, procesa una porción distinta del lote y los gradientes se promedian con un all-reduce antes de cada actualización. Variantes con sharding como ZeRO y FSDP también reparten los estados del optimizador, los gradientes y los pesos, de modo que ningún dispositivo almacena una copia completa.\n\nEl paralelismo de tensores divide una única multiplicación de matrices entre dispositivos, por ejemplo por columnas en la primera capa del MLP y por filas en la segunda, de modo que cada dispositivo calcula una parte de cada capa; necesita una interconexión rápida porque se comunica dentro de cada capa. El paralelismo de pipeline asigna capas consecutivas a dispositivos distintos y hace fluir micro-lotes a través de ellos. Los sistemas reales combinan los tres. Una trampa clave del paralelismo de pipeline es la burbuja del pipeline: los dispositivos quedan ociosos mientras el pipeline se llena y se vacía, por lo que hacen falta suficientes micro-lotes para mantener un uso alto.",
+  "u": [
+   "Preentrenar modelos demasiado grandes para una sola GPU",
+   "Escalar el rendimiento de entrenamiento en un clúster",
+   "Servir modelos enormes repartidos en varias GPU"
+  ],
+  "x": "Un equipo de modelos fundacionales entrena un gran LLM en miles de GPU usando paralelismo de tensores dentro de cada nodo de 8 GPU, paralelismo de pipeline entre nodos y paralelismo de datos entre réplicas. Esta disposición mantiene el tráfico intensivo del paralelismo de tensores en los enlaces rápidos internos de cada nodo. Ajustan el número de micro-lotes para que la burbuja del pipeline sea pequeña."
+ },
+ "greedy": {
+  "n": "Decodificación voraz (greedy decoding)",
+  "d": "La decodificación voraz genera texto eligiendo en cada paso el único token siguiente más probable. El modelo produce una distribución de probabilidad sobre el vocabulario, el token argmax se añade a la secuencia y el proceso se repite hasta llegar a un token de fin o a un límite de longitud.\n\nComo no interviene el azar, la decodificación voraz es determinista para un modelo y un prompt fijos (salvo pequeñas diferencias numéricas en GPU), lo que la hace útil para evaluación, autocompletado de código, tareas de extracción y cualquier situación en la que importe la reproducibilidad. También es la estrategia de decodificación más barata. Su principal limitación es que las mejores elecciones locales no garantizan la secuencia completa más probable: un token algo menos probable al principio puede llevar a una continuación mucho mejor. En la generación abierta, la decodificación voraz también tiende a producir bucles repetitivos y texto anodino, y por eso para salidas creativas o conversacionales se suelen preferir los métodos de muestreo con temperatura, top-k o top-p.",
+  "u": [
+   "Salidas deterministas para evaluar benchmarks",
+   "Extracción estructurada en formatos JSON fijos",
+   "Autocompletados de código cortos en un IDE"
+  ],
+  "x": "Una aseguradora usa un LLM para extraer campos como el número de póliza y la fecha del siniestro de formularios escaneados. El equipo usa decodificación voraz para que el mismo documento dé siempre la misma salida, lo que simplifica las pruebas y la auditoría. Aun así, añaden una comprobación de repeticiones porque las salidas largas entran de vez en cuando en bucle."
+ },
+ "beam": {
+  "n": "Búsqueda en haz (beam search)",
+  "d": "La búsqueda en haz es un algoritmo de decodificación que conserva en cada paso las B secuencias parciales más probables en lugar de solo la mejor. En cada paso, cada uno de los B haces se amplía con tokens siguientes candidatos, todas las ampliaciones se puntúan por su log-probabilidad acumulada y solo se conservan las B mejores. Cuando los haces terminan con un token de fin, se devuelve la secuencia completa con mayor puntuación.\n\nMantener varias hipótesis permite a la búsqueda recuperarse de una elección temprana que parecía buena localmente pero no llevaba a ninguna parte, por lo que la búsqueda en haz suele encontrar secuencias con mayor verosimilitud total que la decodificación voraz. Funciona bien en tareas con una respuesta mayormente correcta, como la traducción automática, el resumen y el reconocimiento de voz. La log-probabilidad bruta favorece las salidas cortas, por lo que normalmente se aplica una penalización por longitud. Una limitación bien conocida es que una mayor verosimilitud no significa un texto mejor: en la generación abierta, la búsqueda en haz produce salidas genéricas y repetitivas, y los haces más grandes pueden incluso reducir la calidad.",
+  "u": [
+   "Decodificar la salida de la traducción automática neuronal",
+   "Resumen abstractivo de documentos",
+   "Decodificar transcripciones en reconocimiento de voz"
+  ],
+  "x": "Un servicio de traducción decodifica su modelo secuencia a secuencia con un tamaño de haz de 4 y una penalización por longitud ajustada en un conjunto reservado. Los haces más grandes no mejoraban la calidad y aumentaban la latencia, así que el equipo mantuvo un haz pequeño. Además, las salidas se filtran para eliminar n-gramas repetidos."
+ },
+ "temperature": {
+  "n": "Temperatura",
+  "d": "La temperatura es un escalar que controla lo aleatorio que es el muestreo de un modelo de lenguaje, dividiendo los logits antes del softmax. Una temperatura inferior a 1 agudiza la distribución, de modo que los tokens probables se vuelven aún más probables; una temperatura superior a 1 la aplana, de modo que los tokens improbables reciben más masa de probabilidad. Cuando la temperatura tiende a 0, el muestreo equivale a la decodificación voraz, y con exactamente 1 se usa la distribución original del modelo.\n\nEn la práctica se baja la temperatura para la respuesta a preguntas factuales, el código y la extracción, donde importa la coherencia, y se sube para la lluvia de ideas o la escritura creativa, donde la diversidad es útil. La temperatura suele combinarse con el truncamiento top-k o top-p, que elimina la larga cola de tokens muy improbables que una temperatura alta dejaría al descubierto. Un malentendido frecuente es pensar que la temperatura cambia lo que sabe el modelo o lo hace más creativo en un sentido profundo; solo remodela la distribución existente, y los valores muy altos producen sobre todo texto incoherente.",
+  "u": [
+   "Menos aleatoriedad para responder preguntas factuales",
+   "Candidatos diversos para herramientas de escritura creativa",
+   "Calibrar la confianza de las probabilidades de un clasificador"
+  ],
+  "x": "Una herramienta de textos de marketing genera cinco titulares de anuncio candidatos por petición con temperatura 0,9 para que las sugerencias difieran de forma significativa. El asistente de atención al cliente de la misma empresa funciona con temperatura 0,2 para que las respuestas sean coherentes con la política. Ambos valores se eligieron comparando valoraciones humanas de salidas muestreadas."
+ },
+ "topk": {
+  "n": "Muestreo top-k",
+  "d": "El muestreo top-k restringe cada paso de generación a los k tokens más probables, renormaliza sus probabilidades y muestrea de ese conjunto reducido. Todos los demás tokens reciben probabilidad cero, de modo que el modelo nunca puede elegir un token de la larga cola del vocabulario, donde se encuentran muchos tokens sin sentido que son poco frecuentes por separado pero frecuentes en conjunto.\n\nEste truncamiento sencillo produce un texto más coherente que muestrear de la distribución completa sin dejar de permitir variedad, lo que lo hizo popular en los primeros sistemas de generación abierta. Los valores típicos van aproximadamente de 20 a 100, a menudo combinados con una temperatura. Su principal debilidad es que k es fijo, sea cual sea la forma de la distribución. Cuando el modelo está muy seguro, por ejemplo tras «La capital de Francia es», un k grande sigue admitiendo malos candidatos; cuando hay muchas continuaciones razonables, un k pequeño descarta opciones válidas. El muestreo top-p se introdujo en gran parte para resolver esto, adaptando el tamaño del conjunto de candidatos a la confianza del modelo.",
+  "u": [
+   "Generación abierta de historias y diálogos",
+   "Generar datos de entrenamiento sintéticos diversos",
+   "Limitar los tokens de la cola en asistentes conversacionales"
+  ],
+  "x": "Un estudio de videojuegos usa un LLM para generar líneas de diálogo variadas para personajes secundarios. El muestreo top-k con k = 40 y una temperatura moderada mantiene la variedad de las líneas evitando tokens raros y deformados. El equipo revisa una muestra de generaciones en cada versión para ajustar k."
+ },
+ "topp": {
+  "n": "Muestreo top-p (nucleus sampling)",
+  "d": "El muestreo top-p, también llamado muestreo de núcleo (nucleus sampling), muestrea el siguiente token del conjunto más pequeño de tokens cuya probabilidad acumulada alcanza un umbral p. Los tokens se ordenan por probabilidad y se añaden uno a uno hasta que su masa total es al menos p; el resto se descarta y las probabilidades conservadas se renormalizan antes de muestrear.\n\nLa ventaja clave frente a top-k es su adaptabilidad. Cuando el modelo está seguro, el núcleo puede contener solo uno o dos tokens, de modo que la salida se mantiene precisa; cuando muchas continuaciones son plausibles, el núcleo crece y permite variedad. Son habituales los valores entre 0,8 y 0,95, normalmente junto con una temperatura, y es la opción por defecto en muchas API de chat. Un malentendido frecuente es el orden de las operaciones: la temperatura se aplica primero a los logits, lo que cambia la distribución y, por tanto, el tamaño del núcleo. Además, p = 1 desactiva por completo el truncamiento, y un p muy bajo se comporta casi como la decodificación voraz.",
+  "u": [
+   "Muestreo por defecto en asistentes conversacionales",
+   "Escritura creativa con diversidad controlada",
+   "Generar paráfrasis para el aumento de datos"
+  ],
+  "x": "Un producto de asistencia a la escritura muestrea sugerencias con top-p = 0,9 y temperatura 0,7. Como el núcleo se reduce cuando el modelo está seguro, las correcciones gramaticales se mantienen estables mientras que las reescrituras abiertas siguen variando. El equipo registra el tamaño medio del núcleo para detectar prompts en los que las salidas se vuelven erráticas."
+ },
+ "specdec": {
+  "n": "Decodificación especulativa",
+  "d": "La decodificación especulativa acelera la generación de los LLM dejando que un modelo borrador pequeño y rápido proponga varios tokens, que el gran modelo objetivo verifica después en una sola pasada hacia delante. La decodificación autorregresiva suele estar limitada por el ancho de banda de memoria más que por el cómputo, así que comprobar en paralelo k tokens propuestos cuesta aproximadamente lo mismo que generar uno.\n\nCada token del borrador se acepta con probabilidad min(1, p(x)/q(x)), donde p es la probabilidad del modelo objetivo y q la del borrador. En el primer rechazo, se muestrea un token de sustitución de la distribución residual normalizada max(0, p − q) y el borrador vuelve a empezar. Este esquema de rechazo garantiza que la salida tiene exactamente la misma distribución que muestrear solo del modelo objetivo, de modo que la calidad no cambia. Son habituales aceleraciones de 2–3x cuando el modelo borrador coincide a menudo con el objetivo. El beneficio se reduce cuando las tasas de aceptación son bajas, cuando los lotes son lo bastante grandes como para que el sistema quede limitado por el cómputo, o cuando la latencia del propio modelo borrador no es pequeña.",
+  "u": [
+   "Reducir la latencia de las respuestas de chat interactivas",
+   "Autocompletado de código más rápido con modelos grandes",
+   "Servir modelos grandes de forma más barata con lotes pequeños"
+  ],
+  "x": "Un equipo de asistentes de programación combina un gran modelo de código con un modelo borrador pequeño de la misma familia que comparte su tokenizador. Como el código es muy predecible, la mayoría de los tokens del borrador se aceptan y la latencia de los autocompletados baja de forma apreciable. Monitorizan la tasa de aceptación por lenguaje, ya que cae en los lenguajes menos comunes."
+ },
+ "pagedattn": {
+  "n": "PagedAttention",
+  "d": "PagedAttention es una implementación de la atención que almacena la caché key-value en bloques de tamaño fijo que no necesitan ser contiguos en la memoria de la GPU, de forma parecida a las páginas de memoria virtual de un sistema operativo.\n\nSin paginación, un servidor debe reservar para cada petición una región contigua de KV cache dimensionada para la máxima longitud de salida posible, lo que desperdicia buena parte de la memoria por sobrerreserva y fragmentación. Con PagedAttention, cada secuencia tiene una tabla de bloques que asigna las posiciones lógicas de los tokens a bloques físicos, y los bloques nuevos solo se asignan a medida que se generan tokens. El kernel de atención lee las keys y los values a través de esta tabla. Un desperdicio casi nulo significa que caben más peticiones a la vez en memoria, lo que aumenta considerablemente el rendimiento. Los bloques también pueden compartirse entre secuencias, como un prompt de sistema común, con copia en escritura (copy-on-write) cuando divergen. PagedAttention no reduce el tamaño de la KV cache por token; solo elimina el espacio desperdiciado, así que los contextos largos siguen consumiendo mucha memoria.",
+  "u": [
+   "Servicio de LLM de alto rendimiento con muchos usuarios",
+   "Compartir prompts de sistema entre peticiones simultáneas",
+   "Compartir memoria en el muestreo paralelo y la búsqueda en haz"
+  ],
+  "x": "Una empresa que aloja un chatbot interno pasa de una pila de servicio sencilla a vLLM. Como PagedAttention elimina la fragmentación de la KV cache, las mismas GPU atienden muchas más conversaciones simultáneas. El equipo ajusta la fracción de memoria de la GPU reservada para la caché y monitoriza las expulsiones (preemptions) cuando se agota la memoria."
+ },
+ "contbatch": {
+  "n": "Continuous batching",
+  "d": "El continuous batching, también llamado batching en vuelo o a nivel de iteración, planifica la inferencia de los LLM paso de decodificación a paso de decodificación, de modo que en cada paso pueden incorporarse peticiones nuevas al lote en curso y salir de él las que han terminado. El batching estático, en cambio, espera a que todas las secuencias de un lote hayan terminado antes de empezar el siguiente lote.\n\nComo las longitudes de salida varían mucho, el batching estático deja huecos de GPU ociosos mientras las peticiones cortas esperan a que termine la más larga, y entretanto las peticiones nuevas hacen cola. Con continuous batching, el planificador comprueba tras cada pasada hacia delante qué secuencias han emitido un token de fin, las retira e inserta las peticiones en espera. Esto mantiene ocupada la GPU y aumenta mucho el rendimiento, a la vez que reduce el tiempo medio de espera en cola. Requiere una gestión cuidadosa de la memoria de la KV cache, y por eso suele combinarse con PagedAttention. Una limitación es que mezclar prefills largos con pasos de decodificación puede provocar picos de latencia en las peticiones en curso, algo que el prefill por fragmentos (chunked prefill) está pensado para reducir.",
+  "u": [
+   "Servir API de chat con salidas de longitud variable",
+   "Maximizar el rendimiento de la GPU en inferencia por lotes",
+   "Reducir la espera en cola con tráfico a ráfagas"
+  ],
+  "x": "Un proveedor de API de LLM sirve sus modelos con un motor que usa continuous batching y chunked prefill. Las respuestas cortas ya no esperan a los textos largos del mismo lote, de modo que el tiempo hasta el primer token mejora bajo carga. El equipo limita el número máximo de secuencias simultáneas para proteger la latencia por token."
+ },
+ "longctx": {
+  "n": "Ampliación del contexto largo",
+  "d": "La ampliación del contexto largo se refiere a las técnicas que permiten a un LLM preentrenado manejar secuencias mucho más largas que su longitud de entrenamiento original. Los modelos con embeddings posicionales rotatorios (RoPE) fallan más allá de su longitud entrenada sobre todo porque se encuentran con ángulos de rotación que nunca vieron, así que la mayoría de los métodos reescalan las posiciones o las frecuencias a un rango conocido.\n\nPosition Interpolation comprime linealmente las posiciones según el factor de ampliación. El escalado NTK-aware, en cambio, aumenta la base de RoPE para que las dimensiones de alta frecuencia, que codifican el orden local, apenas cambien mientras se estiran las de baja frecuencia. YaRN combina una programación de interpolación por frecuencia con un ajuste de la temperatura de la atención. Estos métodos funcionan mejor con una breve fase de fine-tuning sobre documentos largos. Una limitación clave es que un modelo que acepta 128K tokens no tiene por qué usarlos bien: la precisión de recuperación suele caer para la información situada en mitad del contexto, por lo que la capacidad de contexto largo debe medirse con tareas realistas, no solo con la perplejidad.",
+  "u": [
+   "Responder preguntas sobre contratos jurídicos largos",
+   "Comprensión y edición de código a nivel de repositorio",
+   "Resumir transcripciones de reuniones y libros largos"
+  ],
+  "x": "Una empresa de tecnología jurídica amplía un modelo abierto de 8K de contexto a 64K tokens mediante escalado YaRN seguido de un breve fine-tuning con contratos largos. Esto permite a los abogados consultar un acuerdo completo sin dividirlo en fragmentos. El equipo lo valida con pruebas de aguja en un pajar (needle-in-a-haystack) y con preguntas reales de búsqueda de cláusulas situadas en distintas posiciones."
+ },
+ "prompting": {
+  "n": "Ingeniería de prompts",
+  "d": "La ingeniería de prompts (prompt engineering) es la práctica de diseñar el texto de entrada que se da a un modelo de lenguaje para que produzca de forma fiable la salida deseada sin cambiar sus pesos. Un prompt suele combinar una instrucción, el contexto relevante, restricciones de formato y, a veces, unos pocos ejemplos resueltos (few-shot prompting).\n\nLos prompts eficaces enuncian la tarea de forma explícita, definen el público y el formato de salida, separan las instrucciones de los datos con delimitadores claros y ofrecen ejemplos que cubren los casos límite. Pedir una salida estructurada, como JSON, hace que el procesamiento posterior sea robusto. La ingeniería de prompts es la forma más rápida y barata de adaptar un modelo, por lo que suele probarse antes que la recuperación o el fine-tuning. La principal trampa es dar los prompts por terminados tras unas pocas pruebas manuales. Pequeños cambios de redacción pueden alterar el comportamiento, y los prompts ajustados para un modelo a menudo se transfieren mal a otro, así que deben versionarse y evaluarse frente a un conjunto de prueba fijo como cualquier otro código.",
+  "u": [
+   "Clasificación few-shot de tickets de soporte",
+   "Forzar una salida JSON para el procesamiento posterior",
+   "Definir el personaje y el tono de los asistentes"
+  ],
+  "x": "Un equipo de atención al cliente construye un prompt de triaje de tickets con una descripción del rol, definiciones de las categorías, tres ejemplos etiquetados y un esquema JSON obligatorio. Cada cambio en el prompt se ejecuta contra unos cientos de tickets etiquetados antes de publicarlo. Esta comprobación de regresiones detectó varias ediciones que mejoraban una categoría a costa de empeorar otras."
+ },
+ "cot": {
+  "n": "Cadena de pensamiento (chain-of-thought, CoT)",
+  "d": "El prompting de cadena de pensamiento pide a un modelo de lenguaje que escriba los pasos intermedios de razonamiento antes de dar una respuesta final. Puede activarse con ejemplos few-shot que incluyan soluciones resueltas o simplemente con una instrucción como «piensa paso a paso».\n\nComo un Transformer dedica una cantidad fija de cómputo a cada token generado, escribir pasos intermedios da al modelo más cómputo y permite que los tokens posteriores se condicionen a resultados parciales anteriores, como un subtotal ya calculado. Esto mejora sustancialmente la precisión en problemas de aritmética, lógica y planificación con varios pasos, sobre todo en modelos grandes; en modelos pequeños las mejoras son mucho más débiles. En la práctica importan dos limitaciones. Las salidas más largas aumentan la latencia y el coste. Y, lo que es más importante, no hay garantía de que el razonamiento escrito refleje fielmente cómo llegó el modelo a su respuesta: los modelos pueden producir pasos plausibles que en realidad no determinan el resultado, así que una cadena de pensamiento no debe tratarse como una explicación fiable.",
+  "u": [
+   "Resolver problemas matemáticos de enunciado con varios pasos",
+   "Razonamiento complejo sobre reglas de negocio",
+   "Depurar y planificar cambios de código"
+  ],
+  "x": "Un equipo de software de declaración de impuestos pide a un LLM que razone paso a paso sobre si se puede aplicar una deducción antes de dar la respuesta final en un campo etiquetado aparte. A los usuarios solo se les muestra el campo final, mientras que el razonamiento se registra para los revisores. La precisión en sus casos de prueba internos mejoró respecto a las respuestas directas, a costa de respuestas más largas."
+ },
+ "selfcons": {
+  "n": "Autoconsistencia (self-consistency)",
+  "d": "La autoconsistencia mejora el razonamiento de cadena de pensamiento muestreando varios caminos de razonamiento independientes para la misma pregunta y eligiendo la respuesta final que aparece con más frecuencia. En lugar de confiar en una única cadena voraz, el modelo se ejecuta N veces con una temperatura distinta de cero, se extrae cada respuesta final y decide una votación por mayoría.\n\nLa intuición es que un problema difícil puede tener muchos caminos de razonamiento válidos que convergen en la misma respuesta correcta, mientras que los errores tienden a dispersarse entre distintas respuestas incorrectas. Marginalizar sobre los caminos de razonamiento da, por tanto, una estimación más fiable que cualquier camino individual. Aporta grandes mejoras en benchmarks de aritmética y de sentido común. El coste evidente es multiplicar por N la inferencia. También requiere respuestas que puedan compararse exactamente, como números o etiquetas de opción múltiple; en el texto libre, la votación necesita una medida de similitud o un LLM como juez, y si el modelo se equivoca de forma sistemática, más muestras solo refuerzan el mismo error.",
+  "u": [
+   "Aumentar la precisión en tareas de razonamiento matemático",
+   "Estimar la confianza a partir del acuerdo entre respuestas",
+   "Respuesta robusta a preguntas de opción múltiple"
+  ],
+  "x": "Una plataforma educativa califica soluciones matemáticas generadas muestreando diez caminos de razonamiento y votando el número final. Cuando el acuerdo cae por debajo de un umbral, el problema se deriva a un tutor humano en lugar de responderse automáticamente. El coste adicional de inferencia es limitado porque solo los problemas señalados usan las diez muestras completas."
+ },
+ "tot": {
+  "n": "Árbol de pensamientos (Tree of Thoughts, ToT)",
+  "d": "Tree of Thoughts es un marco de prompting en el que un modelo de lenguaje explora muchos pasos de razonamiento parciales como un árbol de búsqueda, en lugar de seguir una única cadena lineal. Cada nodo es un «pensamiento», un paso intermedio coherente como una ecuación candidata o un fragmento de plan.\n\nEn cada nodo, el modelo propone varios pensamientos siguientes y después los evalúa puntuándolos o votando. Un algoritmo de búsqueda, como la búsqueda en anchura con una anchura de haz fija o la búsqueda en profundidad con vuelta atrás, expande los estados más prometedores y poda el resto. Esto permite anticipar y retroceder, algo que la cadena de pensamiento simple no puede hacer, y da grandes mejoras en rompecabezas con comprobaciones intermedias claras, como el Juego del 24 o los crucigramas. El coste es un número mucho mayor de llamadas al modelo por problema, y el enfoque depende de que el modelo sea capaz de juzgar de forma fiable el progreso parcial. Para la mayoría de las tareas cotidianas, un muestreo más sencillo con autoconsistencia es más barato y suficiente.",
+  "u": [
+   "Resolver rompecabezas combinatorios como el Juego del 24",
+   "Planificación en varios pasos con vuelta atrás",
+   "Explorar diseños alternativos antes de decidirse"
+  ],
+  "x": "Un equipo de investigación en logística usa un bucle de árbol de pensamientos para elaborar calendarios de entrega, en el que el modelo propone asignaciones parciales y un verificador basado en reglas puntúa las violaciones de restricciones. Combinar las propuestas del modelo con un evaluador determinista hizo la poda mucho más fiable que la autoevaluación sola. El enfoque se usa offline porque cada plan necesita muchas llamadas al modelo."
+ },
+ "rag": {
+  "n": "Generación aumentada por recuperación (RAG)",
+  "d": "La generación aumentada por recuperación (Retrieval-Augmented Generation) responde a una consulta recuperando primero documentos relevantes de una fuente de conocimiento externa y dándoselos después a un modelo de lenguaje como contexto para generar la respuesta. Permite que un modelo use información privada o actualizada que no estaba en sus datos de entrenamiento, sin reentrenarlo.\n\nUn pipeline típico divide los documentos en fragmentos (chunks), calcula el embedding de cada uno y almacena los vectores en un índice. En el momento de la consulta, se calcula el embedding de la pregunta, se recuperan los fragmentos más cercanos (a menudo combinándolo con búsqueda por palabras clave como BM25), se reordenan opcionalmente con un cross-encoder y se insertan en el prompt con la instrucción de responder solo a partir de las fuentes proporcionadas y citarlas. RAG reduce las alucinaciones en tareas intensivas en conocimiento y hace que las respuestas sean trazables. Su calidad está limitada por la recuperación: si no se recupera el fragmento correcto, el modelo no puede usarlo, y un tamaño de fragmento mal elegido o la falta de metadatos provocan muchos fallos. Por eso, el recall de la recuperación y la fidelidad de la respuesta deben evaluarse por separado.",
+  "u": [
+   "Responder preguntas sobre documentos internos de la empresa",
+   "Bots de atención al cliente basados en artículos de ayuda",
+   "Búsqueda con respuestas resumidas y citadas"
+  ],
+  "x": "El departamento de TI de una gran empresa construye un asistente RAG sobre documentos de políticas y runbooks, con búsqueda híbrida y un reranker antes de la generación. Las respuestas deben citar el fragmento de origen para que los empleados puedan verificarlas. El equipo mide el recall de la recuperación sobre un conjunto de preguntas etiquetadas por separado de la calidad de las respuestas, lo que mostró que la mayoría de los errores procedían de la recuperación."
+ },
+ "vectordb": {
+  "n": "Búsqueda vectorial y ANN",
+  "d": "La búsqueda vectorial encuentra los vectores almacenados más similares a un vector de consulta, y los algoritmos de vecinos más cercanos aproximados (ANN) la hacen rápida a gran escala renunciando a la exactitud. La búsqueda exacta compara la consulta con todos los vectores, lo que es demasiado lento para millones o miles de millones de embeddings con baja latencia.\n\nLas principales familias de ANN se basan en grafos, en particiones o en compresión. HNSW construye un grafo de proximidad por capas y lo recorre de forma voraz desde las capas gruesas hasta las finas. IVF agrupa los vectores con k-means y busca solo en los pocos clústeres más cercanos a la consulta. La cuantización de producto (product quantization) comprime cada vector en códigos cortos para que las distancias puedan estimarse de forma barata y los índices quepan en memoria. Cada índice expone un parámetro, como efSearch o nprobe, que intercambia recall por velocidad. Un error frecuente es suponer que los resultados de ANN son exactos: el recall@k debe medirse frente a la búsqueda por fuerza bruta, y los filtros de metadatos aplicados después del paso ANN pueden devolver, sin avisar, menos resultados de los necesarios.",
+  "u": [
+   "Búsqueda semántica sobre embeddings de documentos",
+   "Recuperación para recomendar productos y contenidos",
+   "Eliminar duplicados de imágenes o textos casi idénticos"
+  ],
+  "x": "Una empresa de comercio electrónico sirve recomendaciones de artículos visualmente similares a partir de un índice HNSW de embeddings de imágenes de producto. El equipo ajustó efSearch para que el recall frente a la búsqueda exacta siga siendo alto sin salirse del presupuesto de carga de la página. El índice se reconstruye cada noche, y durante el día los productos nuevos se añaden de forma incremental."
+ },
+ "embedmodel": {
+  "n": "Embeddings de texto",
+  "d": "Un modelo de embeddings de texto transforma un fragmento de texto en un vector de longitud fija de forma que los textos con un significado similar queden cerca, normalmente medido con la similitud del coseno. Los modelos de embeddings modernos son codificadores Transformer cuyas salidas por token se agregan (pooling) en un único vector, por ejemplo promediándolas o tomando un token especial.\n\nSe entrenan con aprendizaje contrastivo: los pares de textos relacionados, como una pregunta y su respuesta, se acercan, mientras que los demás textos del lote actúan como negativos y se alejan. Los embeddings impulsan la búsqueda semántica, la recuperación para RAG, el clustering, la eliminación de duplicados y sirven como variables para clasificadores ligeros. Detalles prácticos importantes son que los embeddings de las consultas y de los documentos deben proceder del mismo modelo, que algunos modelos requieren prefijos de tarea como «query:» y «passage:», y que las entradas más largas que la longitud máxima del modelo se truncan. Las puntuaciones de similitud solo tienen sentido en relación unas con otras dentro de un mismo modelo, no como probabilidades absolutas.",
+  "u": [
+   "Búsqueda semántica y recuperación para RAG",
+   "Agrupar por temas los comentarios de los clientes",
+   "Detectar preguntas duplicadas en foros"
+  ],
+  "x": "Una empresa de software calcula los embeddings de todos los tickets de soporte entrantes y los agrupa cada semana para detectar problemas emergentes. Un pico en un clúster nuevo tras una versión alertó al equipo de una regresión antes de que el volumen de tickets fuera grande. Eligieron un modelo de embeddings multilingüe porque los tickets llegan en varios idiomas."
+ },
+ "rerank": {
+  "n": "Reranking (reordenación)",
+  "d": "El reranking es una segunda etapa de recuperación que vuelve a puntuar un pequeño conjunto de documentos candidatos con un modelo más preciso pero más costoso. Una primera etapa rápida, como BM25 o la búsqueda vectorial, devuelve quizá entre 50 y 200 candidatos, y el reranker los reordena para que los mejores se pasen al usuario o a un LLM.\n\nEl reranker más habitual es un cross-encoder, un Transformer que lee juntos la consulta y un documento y produce una puntuación de relevancia. Como la atención opera sobre ambos textos a la vez, capta interacciones finas como la negación o las coincidencias exactas de entidades que los embeddings independientes de un bi-encoder pasan por alto. El reranking suele aportar una gran mejora de precisión en pipelines de RAG y de búsqueda con una latencia adicional modesta. Su limitación es que solo puede reordenar lo que recuperó la primera etapa: no puede recuperar un documento relevante que nunca estuvo en el conjunto de candidatos, y su coste crece linealmente con el número de candidatos.",
+  "u": [
+   "Mejorar los primeros resultados en pipelines de RAG",
+   "Ordenar por relevancia los resultados de búsqueda de comercio electrónico",
+   "Priorizar documentos jurídicos o de patentes"
+  ],
+  "x": "Un equipo de búsqueda en una base de conocimiento recupera 100 candidatos con búsqueda híbrida y los reordena con un cross-encoder antes de enviar los 5 primeros a un LLM. El reranker mejoró sustancialmente la calidad de las respuestas en su evaluación. Para controlar la latencia, limitan el número de candidatos y ejecutan el reranker en GPU con entradas por lotes."
+ },
+ "agent": {
+  "n": "Agentes basados en LLM",
+  "d": "Un agente basado en LLM es un sistema en el que un modelo de lenguaje decide repetidamente qué acción realizar a continuación, la ejecuta mediante herramientas, observa el resultado y continúa hasta alcanzar un objetivo. En lugar de producir una única respuesta, el modelo funciona en un bucle con memoria de los pasos anteriores y acceso a funciones como la búsqueda, la ejecución de código, las bases de datos o las API.\n\nLos componentes típicos son un prompt de sistema que describe el objetivo y las herramientas disponibles, un bucle que devuelve al contexto los resultados de las herramientas y una condición de parada. Los agentes se adaptan a tareas abiertas cuyos pasos no pueden fijarse de antemano, como depurar código o investigar en varias fuentes. La principal limitación es la fiabilidad: los errores se acumulan a lo largo de muchos pasos, de modo que una pequeña tasa de fallo por paso se convierte en una gran tasa de fallo por tarea. Por eso los agentes en producción necesitan límites de pasos, presupuestos de coste, herramientas aisladas en sandbox, aprobación humana para las acciones arriesgadas y registro de las trayectorias completas para su evaluación, ya que la inyección de prompts a través de las salidas de las herramientas es un riesgo de seguridad real.",
+  "u": [
+   "Programación y corrección de bugs autónomas",
+   "Investigación en varias fuentes y redacción de informes",
+   "Automatizar flujos de trabajo administrativos de varios pasos"
+  ],
+  "x": "Una empresa de software despliega un agente de programación que lee una incidencia, busca en el repositorio, edita archivos y ejecuta las pruebas en un sandbox antes de abrir una pull request. Personas revisan cada pull request antes de fusionarla. El equipo limita el número de pasos por tarea y registra las trayectorias completas para analizar los fallos."
+ },
+ "tooluse": {
+  "n": "Uso de herramientas y llamada a funciones",
+  "d": "La llamada a funciones (function calling) permite a un modelo de lenguaje solicitar la ejecución de funciones externas emitiendo una llamada estructurada, normalmente un JSON con el nombre de la función y sus argumentos, en lugar de texto plano. La aplicación declara las herramientas disponibles con nombres, descripciones y parámetros en JSON Schema; el modelo decide si llama a alguna, la aplicación la ejecuta y el resultado se devuelve al modelo como un nuevo mensaje.\n\nLos modelos se ajustan con fine-tuning para producir llamadas bien formadas y elegir las herramientas según sus descripciones, por lo que unos nombres de herramienta claros, unas descripciones precisas y unos esquemas estrictos influyen mucho en la precisión. La llamada a funciones conecta los LLM con bases de datos, calculadoras, buscadores y API de negocio, y es el componente básico de los agentes. Un malentendido clave es pensar que el modelo ejecuta la función por sí mismo; solo propone la llamada, y la aplicación es responsable de validar los argumentos, aplicar los permisos y gestionar los errores, porque los modelos pueden producir argumentos erróneos o inventados.",
+  "u": [
+   "Consultar bases de datos a partir de preguntas en lenguaje natural",
+   "Acciones de reserva y pedido en asistentes",
+   "Extracción de datos estructurados mediante esquemas de argumentos"
+  ],
+  "x": "El asistente de una empresa de viajes expone herramientas para buscar vuelos, bloquear un asiento y consultar los detalles de una reserva. El modelo elige la herramienta y rellena los argumentos, mientras que el backend valida las fechas y exige una confirmación explícita del usuario antes de cualquier paso de pago. Los registros de llamadas a herramientas se revisan para mejorar las descripciones en los casos en que el modelo eligió mal."
+ },
+ "react": {
+  "n": "ReAct (razonar + actuar)",
+  "d": "ReAct (Reason + Act) es un patrón de prompting en el que un modelo de lenguaje intercala trazas de razonamiento con acciones, alternando pasos de «Pensamiento», «Acción» y «Observación». El modelo escribe primero un pensamiento sobre lo que necesita, después emite una acción, como una consulta de búsqueda o una llamada a una herramienta, recibe una observación del entorno y la usa en el pensamiento siguiente.\n\nCombinar ambas cosas corrige las debilidades de cada una por separado. El razonamiento puro de cadena de pensamiento puede inventar hechos porque nunca contrasta con el mundo exterior, mientras que las secuencias de acciones puras carecen de plan y tienen dificultades para recuperarse de resultados inesperados. Con ReAct, el razonamiento orienta qué acciones realizar y las observaciones anclan el razonamiento en hechos recuperados. Se demostró que mejora la respuesta a preguntas multisalto y las tareas interactivas, y su estructura en bucle es la base de la mayoría de los frameworks de agentes modernos. Entre sus limitaciones están los contextos cada vez más largos a medida que crecen las trayectorias, los bucles en los que el modelo repite la misma acción y la sensibilidad a observaciones ruidosas, por lo que se necesitan límites de pasos y salvaguardas en el análisis de las salidas.",
+  "u": [
+   "Respuesta a preguntas multisalto con búsqueda web",
+   "Resolución interactiva de incidencias con herramientas de diagnóstico",
+   "Verificación fundamentada de afirmaciones generadas"
+  ],
+  "x": "Un equipo de operaciones de TI usa un asistente de estilo ReAct que razona sobre una alerta, consulta registros y métricas mediante herramientas y resume la causa raíz probable. Las observaciones de sistemas reales mantienen anclado el razonamiento, y todas las acciones son de solo lectura. Los ingenieros ven la traza completa de pensamientos y acciones, lo que les facilita juzgar si pueden fiarse de la conclusión."
+ },
+ "ttc": {
+  "n": "Modelos de razonamiento y cómputo en tiempo de prueba",
+  "d": "Los modelos de razonamiento son modelos de lenguaje entrenados para dedicar cómputo adicional en el momento de la inferencia, normalmente generando una larga cadena de pensamiento interna antes de responder, y el cómputo en tiempo de prueba (test-time compute) se refiere a escalar ese esfuerzo de inferencia para mejorar la precisión. En lugar de limitarse a hacer los modelos más grandes, la calidad se eleva dejándoles pensar más tiempo en los problemas más difíciles.\n\nEstos modelos suelen entrenarse con aprendizaje por refuerzo en tareas con recompensas verificables, como problemas matemáticos con respuesta conocida o código con pruebas unitarias. Gracias a este entrenamiento, en la traza de razonamiento surgen comportamientos como descomponer los problemas, comprobar resultados intermedios y volver atrás. El cómputo en tiempo de prueba también puede escalarse de forma externa con muestreo en paralelo y votación por mayoría, o con selección best-of-N mediante un verificador. La precisión en matemáticas y programación suele aumentar de forma sostenida con más tokens de razonamiento. Las contrapartidas son una mayor latencia y un mayor coste por consulta, y el exceso de reflexión (overthinking): en preguntas sencillas, un razonamiento largo añade gasto sin beneficio e incluso puede introducir errores, por lo que muchos sistemas permiten al usuario fijar un presupuesto de esfuerzo de razonamiento.",
+  "u": [
+   "Problemas de matemáticas y ciencias de nivel de competición",
+   "Generación compleja de código en varios archivos",
+   "Consultas analíticas y de planificación difíciles"
+  ],
+  "x": "Un producto de analítica de datos envía las consultas sencillas a un modelo estándar rápido y las preguntas de análisis complejo en varios pasos a un modelo de razonamiento con un nivel de esfuerzo alto. Este enrutamiento mantiene bajos el coste y la latencia medios a la vez que mejora la precisión en las consultas difíciles. El equipo registra el número de tokens de razonamiento por petición para controlar el gasto."
+ },
+ "llmeval": {
+  "n": "Evaluación de LLM y benchmarks",
+  "d": "La evaluación de LLM mide lo bien que un modelo de lenguaje rinde en las tareas de interés, usando benchmarks estandarizados, conjuntos de prueba específicos de la tarea, juicios humanos y jueces basados en modelos. Los benchmarks públicos cubren el conocimiento (MMLU), las matemáticas (GSM8K, MATH), el código (HumanEval, SWE-bench) y la clasificación basada en preferencias (Chatbot Arena), y ofrecen puntos de referencia comunes para comparar modelos.\n\nLos métodos de evaluación varían según el tipo de tarea. Los benchmarks de opción múltiple comparan log-probabilidades o letras extraídas; el código se comprueba ejecutando pruebas unitarias y se informa como pass@k; las respuestas abiertas las puntúan personas o un LLM como juez (LLM-as-a-judge) con una rúbrica, a menudo mediante comparación por pares. En los sistemas en producción, la evaluación más valiosa es un conjunto de prueba propio construido a partir de consultas reales de usuarios con criterios de aprobación claros, que se ejecuta automáticamente en cada cambio de modelo o de prompt. Las trampas clave son la contaminación de datos, en la que elementos del benchmark aparecieron en los datos de entrenamiento e inflan las puntuaciones, la sensibilidad al formato del prompt y los sesgos del juez a favor de las respuestas más largas o de una posición fija, que deben controlarse intercambiando el orden y calibrando frente a etiquetas humanas.",
+  "u": [
+   "Comparar modelos candidatos antes del despliegue",
+   "Pruebas de regresión tras cambios de prompt o de modelo",
+   "Medir la corrección del código con pruebas unitarias"
+  ],
+  "x": "Un banco que evalúa LLM para un asistente interno construye un conjunto de prueba con preguntas reales y anonimizadas de empleados, con respuestas de referencia y rúbricas de calificación. Los modelos candidatos los puntúa un LLM como juez cuyos veredictos se contrastaron primero con evaluadores humanos. Las puntuaciones de los benchmarks públicos solo se usaron para la preselección inicial."
+ },
+ "moe": {
+  "n": "Mixture of Experts (MoE)",
+  "d": "Una capa Mixture of Experts (mezcla de expertos) sustituye una gran red feed-forward por muchas redes expertas más pequeñas y un router que envía cada token solo a unas pocas. El número total de parámetros crece con el número de expertos, pero el cómputo por token se mantiene cercano al de un modelo denso mucho más pequeño, porque solo se ejecutan los expertos seleccionados.\n\nEn los LLM basados en Transformer, la capa MoE suele sustituir al MLP en algunos bloques o en todos. Para cada token, un router aprendido puntúa todos los expertos, se activan los top-k (a menudo 1, 2 u 8 de entre muchos) y sus salidas se combinan con los pesos del router. Mixtral y DeepSeek-V3 usan este diseño para ganar calidad con los mismos FLOPs. Los principales costes son la memoria y la comunicación: hay que almacenar todos los expertos, aunque se usen pocos por token, y el paralelismo de expertos requiere tráfico all-to-all entre dispositivos. El entrenamiento también necesita mecanismos de equilibrio de carga; de lo contrario, el router colapsa sobre unos pocos expertos.",
+  "u": [
+   "Escalar la capacidad de un LLM con un cómputo fijo",
+   "Servir de forma eficiente modelos de lenguaje muy grandes",
+   "Especialización multilingüe o multidominio del modelo"
+  ],
+  "x": "Mixtral 8x7B, de Mistral AI, activa dos de sus ocho expertos por token, de modo que se ejecuta aproximadamente con el coste de un modelo denso mucho más pequeño pese a tener muchos más parámetros. Los equipos que sirven estos modelos siguen teniendo que meter todos los pesos de los expertos en la memoria de la GPU. A menudo usan paralelismo de expertos entre GPU y monitorizan la carga por experto durante el servicio."
+ },
+ "router": {
+  "n": "Router y gating top-k",
+  "d": "El router, o red de gating, es el pequeño componente aprendido de una capa Mixture of Experts que decide qué expertos procesan cada token. Suele ser una única capa lineal que produce una puntuación por experto; se seleccionan los k expertos con mayor puntuación y sus salidas se ponderan con las puntuaciones normalizadas del router.\n\nEl gating top-k hace que el cómputo sea disperso, ya que solo se ejecutan k expertos por token. Las variantes se diferencian en el momento en que normalizan: algunas aplican softmax sobre todos los expertos y conservan las k probabilidades mayores, y otras aplican softmax solo sobre los k seleccionados. El gating top-k ruidoso añade ruido durante el entrenamiento para fomentar la exploración, y el enrutamiento por elección del experto (expert-choice) invierte la dirección para que cada experto elija sus mejores tokens. Cada experto tiene un límite de capacidad por lote; los tokens que lo superan pueden descartarse y pasar solo por la conexión residual. Una sutileza clave es que la propia selección top-k no es diferenciable, por lo que los expertos solo reciben gradiente a través de los pesos de gating de los tokens que realmente procesaron.",
+  "u": [
+   "Enrutamiento de tokens en Transformers MoE dispersos",
+   "Cómputo condicional en grandes modelos de visión",
+   "Especializar expertos por dominio o idioma"
+  ],
+  "x": "Un equipo que entrena un modelo de lenguaje MoE registra, en cada capa, la fracción de tokens que recibe cada experto y el número de tokens descartados. Cuando unos pocos expertos empezaron a recibir la mayoría de los tokens, aumentaron el peso de la pérdida auxiliar de equilibrio y el factor de capacidad. Los logits del router también se mantienen en mayor precisión para evitar inestabilidades."
+ },
+ "loadbal": {
+  "n": "Pérdida de equilibrio de carga",
+  "d": "Una pérdida de equilibrio de carga (load-balancing loss) es un objetivo de entrenamiento auxiliar de los modelos Mixture of Experts que anima al router a repartir los tokens de forma uniforme entre los expertos. Sin ella, el enrutamiento tiende a colapsar: unos pocos expertos reciben la mayoría de los tokens al principio del entrenamiento, mejoran y, por tanto, atraen todavía más tokens, mientras que los demás quedan infraentrenados.\n\nLa forma habitual de Switch Transformer multiplica, para cada experto, la fracción de tokens que realmente se le envían por la probabilidad media que le asigna el router, suma sobre los expertos y escala por el número de expertos. La fracción de envío no es diferenciable, pero el término de probabilidad sí, de modo que los gradientes alejan la probabilidad de los expertos sobrecargados. La pérdida alcanza su mínimo de 1 con un enrutamiento perfectamente uniforme y se suma con un coeficiente pequeño, a menudo en torno a 0,01. La principal contrapartida es que un término de equilibrio fuerte impone un uso uniforme y puede perjudicar la calidad, lo que motivó enfoques sin pérdida auxiliar, como el ajuste de sesgo por experto de DeepSeek-V3, que solo afecta a la selección.",
+  "u": [
+   "Evitar el colapso de expertos en el entrenamiento MoE",
+   "Mejorar el uso del hardware entre los dispositivos de los expertos",
+   "Reducir los tokens descartados por los límites de capacidad"
+  ],
+  "x": "Durante el preentrenamiento de un modelo MoE, un equipo de ingeniería monitoriza la fracción de tokens por experto junto con la pérdida de equilibrio. Cuando aparece desequilibrio en las capas más profundas, comparan aumentar el coeficiente de la pérdida con un esquema de equilibrio basado en sesgos, comprobando la perplejidad de validación para asegurarse de que el equilibrio no se consigue a costa de la calidad."
+ },
+ "finegrained": {
+  "n": "Expertos de grano fino y compartidos",
+  "d": "Los expertos de grano fino y los expertos compartidos son dos refinamientos del diseño Mixture of Experts, popularizados por DeepSeekMoE, que mejoran el grado de especialización de los expertos. La segmentación de grano fino divide cada experto estándar en varios más pequeños y activa proporcionalmente más de ellos, manteniendo el mismo cómputo por token a la vez que aumenta mucho el número de combinaciones de expertos posibles.\n\nLos expertos compartidos son unos pocos expertos que procesan todos los tokens con independencia del enrutamiento. Captan el conocimiento común que necesita cualquier token, como la sintaxis básica, de modo que los expertos enrutados no tienen que aprenderlo cada uno de forma redundante y pueden especializarse más. En DeepSeek-V3, por ejemplo, cada capa MoE tiene un experto compartido y 256 pequeños expertos enrutados, de los que se seleccionan 8 por token. Las contrapartidas son de ingeniería: muchos expertos diminutos implican multiplicaciones de matrices pequeñas que aprovechan peor las GPU, más sobrecarga de enrutamiento y más comunicación all-to-all, por lo que cobran importancia los kernels grouped-GEMM eficientes y una colocación cuidadosa de los expertos.",
+  "u": [
+   "Preentrenar grandes modelos de lenguaje dispersos",
+   "Aumentar la especialización de los expertos con cómputo fijo",
+   "Reducir el conocimiento redundante entre expertos"
+  ],
+  "x": "Los modelos V2 y V3 de DeepSeek combinan expertos compartidos con muchos expertos enrutados de grano fino. Los equipos que adoptan este diseño en su propio preentrenamiento MoE recurren a kernels de multiplicación de matrices agrupada para que las GPU sigan siendo eficientes con expertos pequeños. También limitan entre cuántos dispositivos pueden repartirse los expertos de cada token para controlar el coste de comunicación."
+ },
+ "ssm": {
+  "n": "Modelos de espacio de estados (S4)",
+  "d": "Un modelo de espacio de estados (state space model) procesa una secuencia manteniendo un estado oculto que evoluciona mediante una recurrencia lineal, y S4 (Structured State Space for Sequences) hizo práctico este enfoque para el deep learning con secuencias muy largas. El modelo se define mediante matrices de tiempo continuo A, B y C que se discretizan con un tamaño de paso Δ, lo que da h_t = Ā h_{t−1} + B̄ x_t e y_t = C h_t.\n\nComo el sistema es lineal e invariante en el tiempo, el mismo cálculo puede hacerse de dos formas: como una recurrencia, para una inferencia rápida, o como una convolución larga sobre toda la secuencia, calculada de forma eficiente con FFT para un entrenamiento en paralelo. S4 inicializa A con la matriz HiPPO para que el estado almacene una historia comprimida de la entrada. Destacó en los benchmarks de largo alcance. Su limitación clave es que los parámetros no dependen de la entrada, por lo que el modelo no puede ignorar o centrarse selectivamente en ciertos tokens, lo que perjudica su rendimiento con lenguaje; Mamba se diseñó para corregirlo.",
+  "u": [
+   "Modelar señales de series temporales muy largas",
+   "Modelado de audio en bruto y de formas de onda de voz",
+   "Tareas de clasificación de secuencias de largo alcance"
+  ],
+  "x": "Un equipo de investigación de dispositivos médicos clasifica registros largos de ECG muestreados a alta frecuencia con un modelo basado en S4. Su modo de entrenamiento convolucional maneja secuencias de decenas de miles de pasos que serían demasiado costosas para la atención completa. Para el uso en streaming, el mismo modelo se ejecuta en modo recurrente con memoria constante por muestra."
+ },
+ "mamba": {
+  "n": "Mamba (SSM selectivo)",
+  "d": "Mamba es un modelo de secuencias construido sobre un modelo de espacio de estados selectivo, en el que los parámetros del SSM B y C y el tamaño de paso Δ se calculan a partir de la entrada actual en lugar de ser fijos. Esta dependencia de la entrada permite al modelo decidir, token a token, qué escribir en su estado y qué olvidar.\n\nLa selectividad rompe la invarianza en el tiempo que permitía entrenar los SSM anteriores, como S4, como una convolución global. Mamba usa en su lugar un scan paralelo consciente del hardware que mantiene el estado expandido en la memoria rápida del chip, con un tiempo de entrenamiento lineal en la longitud de la secuencia. En inferencia funciona como una recurrencia con un estado de tamaño fijo, de modo que la memoria no crece con la longitud del contexto y el coste de generación por token es constante. Su principal limitación es que un estado de tamaño fijo no puede almacenar cantidades arbitrarias de información exacta, por lo que las tareas que requieren copiar o recordar detalles concretos muy atrás en el contexto siguen siendo más difíciles que con atención.",
+  "u": [
+   "Modelado de secuencias largas con entrenamiento en tiempo lineal",
+   "Generación autorregresiva rápida con memoria constante",
+   "Genómica y modelado de secuencias largas de ADN"
+  ],
+  "x": "Un grupo de investigación en genómica modela secuencias largas de ADN con una arquitectura basada en Mamba, porque el coste de la atención crecería de forma cuadrática con la longitud de la secuencia. El estado recurrente de tamaño constante también mantiene estable la memoria de inferencia. Aun así, evalúan por separado las tareas que dependen mucho de la recuperación, ya que son un punto débil conocido de los SSM puros."
+ },
+ "rwkv": {
+  "n": "RWKV",
+  "d": "RWKV es una arquitectura de red neuronal que combina el entrenamiento en paralelo al estilo de los Transformers con la inferencia de las redes recurrentes, usando un mecanismo de atención lineal con un decaimiento temporal exponencial aprendido en lugar de la atención softmax. Su nombre procede de los cuatro elementos principales de cada bloque: Receptance, Weight (decaimiento), Key y Value.\n\nEn el bloque de mezcla temporal, cada canal mantiene una suma ponderada acumulada de los valores pasados, en la que los tokens más antiguos se descuentan con un decaimiento aprendido por canal, y una compuerta de receptancia controla qué parte de este resumen se transmite. Como esta suma puede actualizarse de forma incremental, la inferencia funciona como una RNN con un estado de tamaño constante por capa, de modo que la memoria y el coste por token no crecen con la longitud del contexto. Durante el entrenamiento, el mismo cálculo puede paralelizarse a lo largo de la secuencia. Versiones posteriores, como RWKV-6 y RWKV-7, hacen que el decaimiento dependa de los datos. Como en otros diseños recurrentes, el estado fijo limita la recuperación precisa de detalles situados muy atrás en contextos largos.",
+  "u": [
+   "Inferencia eficiente de LLM en dispositivos edge",
+   "Generación con contexto largo y memoria constante",
+   "Modelado de lenguaje multilingüe de código abierto"
+  ],
+  "x": "Un equipo de una app móvil que evalúa la generación de texto en el dispositivo elige un modelo RWKV porque su uso de memoria se mantiene constante con independencia de la duración de la conversación. Así evita la KV cache creciente que limita a los Transformers en los teléfonos. Aceptan un rendimiento algo peor en las tareas que requieren recordar con exactitud pasajes largos anteriores."
+ },
+ "hybrid": {
+  "n": "Arquitecturas híbridas (Jamba)",
+  "d": "Las arquitecturas híbridas intercalan en un mismo modelo capas de atención con capas de espacio de estados u otras capas recurrentes, con el objetivo de combinar la recuperación precisa en contexto de la atención con la eficiencia de las capas de secuencia de tiempo lineal. Jamba, de AI21 Labs, es un ejemplo conocido que mezcla capas Mamba y capas de atención Transformer, aproximadamente una capa de atención por cada siete capas Mamba, y añade capas feed-forward Mixture of Experts.\n\nLa intuición es que la mayoría de las capas pueden procesar la información de la secuencia de forma barata con un estado recurrente de tamaño fijo, mientras que unas pocas capas de atención se encargan de las tareas que requieren consultar con exactitud tokens anteriores, como copiar o recuperar. Como solo una pequeña parte de las capas usa atención, la KV cache es varias veces más pequeña que en un Transformer puro de tamaño similar, lo que permite contextos muy largos con poca memoria de GPU y un buen rendimiento. Los principales retos son elegir la proporción y la posición de las capas, y la necesidad de kernels especializados y de soporte en el servicio para ambos tipos de capa.",
+  "u": [
+   "Procesamiento de documentos largos con menos memoria",
+   "Servicio de alto rendimiento de modelos de contexto largo",
+   "Combinar recuperación exacta con capas de tiempo lineal"
+  ],
+  "x": "Un equipo empresarial de procesamiento de documentos evalúa un modelo Jamba para analizar contratos largos, porque su pequeña KV cache permite que entradas muy largas quepan en una sola GPU. Frente a un Transformer de calidad similar, admite más peticiones largas simultáneas. Comprueban que su motor de servicio tiene kernels optimizados para las capas Mamba."
+ },
+ "mla": {
+  "n": "Atención latente multicabeza (MLA)",
+  "d": "La atención latente multicabeza (Multi-Head Latent Attention) es una variante de la atención introducida en DeepSeek-V2 que reduce mucho el tamaño de la KV cache almacenando por token un único vector latente de baja dimensión en lugar de las keys y values completos de cada cabeza. Las keys y los values de todas las cabezas se reconstruyen a partir de este latente compartido mediante matrices de proyección ascendente aprendidas.\n\nEl estado oculto de cada token se proyecta hacia abajo a un latente comprimido c, que es lo único que hay que almacenar en caché. En inferencia, la proyección ascendente de las keys puede absorberse en la proyección de las queries y la de los values en la proyección de salida, de modo que la atención puede operar directamente sobre los latentes en caché sin materializar las keys y los values completos. Los embeddings posicionales rotatorios no conmutan con esta absorción, por lo que MLA usa un diseño desacoplado: una pequeña componente adicional de la key lleva RoPE y se almacena por separado. MLA logra una caché más pequeña que la atención de consultas agrupadas igualando la calidad de la atención estándar. El coste es una implementación más compleja y un cómputo adicional de proyecciones.",
+  "u": [
+   "Reducir la KV cache al servir con contexto largo",
+   "Mayor rendimiento por lotes en la inferencia de LLM",
+   "Atención eficiente en grandes modelos MoE"
+  ],
+  "x": "DeepSeek-V2 y V3 usan MLA para que la entrada de caché de cada token sea un latente compacto en lugar de keys y values completos por cabeza. Los equipos que sirven estos modelos dependen de que el motor admita kernels específicos para MLA. La caché más pequeña les permite mantener más secuencias largas simultáneas por GPU."
+ },
+ "mtp": {
+  "n": "Predicción multitoken (MTP)",
+  "d": "La predicción multitoken (Multi-Token Prediction) entrena un modelo de lenguaje para predecir varios tokens futuros en cada posición, en lugar de solo el siguiente. Cabezas de salida adicionales o pequeños módulos Transformer extra, conectados al tronco compartido, predicen los tokens t+2, t+3, etc., y sus pérdidas se suman a la pérdida estándar del siguiente token.\n\nLos objetivos adicionales dan una señal de entrenamiento más densa y empujan a las representaciones ocultas a planificar más allá, lo que, según se ha informado, mejora la eficiencia en muestras y el rendimiento en tareas posteriores. DeepSeek-V3 usa módulos MTP secuenciales que mantienen la cadena causal condicionando cada predicción adicional a la representación de la profundidad anterior y al embedding del siguiente token real. Un segundo beneficio aparece en inferencia: las cabezas adicionales pueden actuar como un modelo borrador integrado para la decodificación especulativa, proponiendo varios tokens que la cabeza principal verifica, lo que acelera la generación. Las mejoras no son universales; los modelos pequeños pueden obtener poco beneficio o incluso peores resultados.",
+  "u": [
+   "Mejorar la eficiencia en muestras del preentrenamiento de LLM",
+   "Borradores integrados para la decodificación especulativa",
+   "Señales de planificación más fuertes para modelos de código"
+  ],
+  "x": "DeepSeek-V3 se preentrenó con un módulo MTP adicional que predice el token posterior al siguiente. En inferencia, ese módulo puede servir como predictor borrador para la decodificación especulativa, y DeepSeek informó de una tasa de aceptación alta para el segundo token. Los equipos que no usan esa vía de servicio simplemente descartan el módulo tras el entrenamiento."
+ },
+ "mod": {
+  "n": "Mixture of Depths (MoD)",
+  "d": "Mixture of Depths es una técnica en la que cada bloque Transformer procesa solo un subconjunto seleccionado de tokens, mientras que el resto se salta el bloque a través de la conexión residual. Un router aprendido asigna a cada token una puntuación escalar, y solo los top-k tokens de la secuencia pasan por la atención y el MLP del bloque.\n\nComo k se fija de antemano, el grafo de cómputo tiene formas de tensor estáticas y un presupuesto de FLOPs conocido, lo que conviene a los aceleradores, y aun así el modelo aprende a dedicar más cómputo a los tokens más difíciles o informativos. La salida del bloque para los tokens seleccionados se multiplica por la puntuación del router, lo que mantiene al router en el camino del gradiente. El principal problema práctico es que el top-k sobre la secuencia no es causal, ya que depende de tokens futuros, por lo que el muestreo autorregresivo necesita un predictor o clasificador auxiliar que decida, solo a partir del token actual, si será seleccionado.",
+  "u": [
+   "Reducir los FLOPs por token en los LLM",
+   "Asignación adaptativa del cómputo entre tokens",
+   "Entrenamiento más rápido con la misma calidad"
+  ],
+  "x": "Un equipo de investigación que entrena modelos de lenguaje con un presupuesto de cómputo fijo sustituye uno de cada dos bloques por un bloque MoD que enruta una pequeña fracción de los tokens. Alcanzan una pérdida de validación similar con menos FLOPs por paso. Para la generación, entrenan un pequeño predictor causal que aproxima la decisión de enrutamiento top-k."
+ },
+ "ringattn": {
+  "n": "Ring Attention",
+  "d": "Ring Attention calcula la atención exacta sobre secuencias demasiado largas para un solo dispositivo dividiendo la secuencia en bloques repartidos entre dispositivos dispuestos en anillo y haciendo circular los bloques key-value por ese anillo. Cada dispositivo mantiene fijo su propio bloque de queries y, en pasos sucesivos, recibe el bloque de keys y values del dispositivo siguiente mientras envía el que tiene en ese momento.\n\nEn cada paso, un dispositivo calcula la atención por bloques entre sus queries y el bloque key-value que tiene, combinando exactamente los resultados parciales con el softmax en línea que usa FlashAttention. Tras tantos pasos como dispositivos haya, cada bloque de queries ha atendido a toda la secuencia. La comunicación del bloque siguiente se solapa con el cálculo sobre el actual. La memoria por dispositivo escala con el tamaño del bloque, no con la secuencia completa, lo que permite contextos de millones de tokens. En los modelos causales, una división ingenua provoca desequilibrio de carga porque los bloques posteriores atienden a más tokens, algo que se corrige con ordenaciones en franjas (striped) o en zigzag.",
+  "u": [
+   "Entrenar modelos con contextos de millones de tokens",
+   "Modelado de secuencias largas de vídeo y multimodales",
+   "Paralelismo de secuencia en clústeres de GPU"
+  ],
+  "x": "Un laboratorio de investigación entrena un modelo de contexto largo con secuencias del tamaño de un libro y de fotogramas de vídeo repartiendo cada secuencia entre muchas GPU con Ring Attention. El enfoque mantiene la atención exacta y la memoria por GPU acotada. Usan una ordenación de tokens en zigzag para que la máscara causal no deje algunas GPU ociosas."
+ },
+ "multimodal": {
+  "n": "LLM multimodales",
+  "d": "Un LLM multimodal es un modelo de lenguaje que puede recibir entradas de más de una modalidad, como imágenes, audio o vídeo, además de texto, y razonar sobre ellas de forma conjunta. El diseño más habitual conecta un codificador de visión preentrenado con un LLM preentrenado mediante un proyector que transforma las características de los parches de imagen al espacio de embeddings de tokens del LLM.\n\nLa imagen se convierte en una secuencia de tokens visuales que se sitúan en el prompt junto a los tokens de texto, de modo que el LLM atiende a ambos con su mecanismo habitual. El entrenamiento suele tener dos etapas: alinear el proyector con pares imagen-pie de foto y después hacer instruction tuning con datos de respuesta visual a preguntas, documentos y gráficos. Algunos modelos se entrenan en cambio de forma nativamente multimodal desde el principio, o usan capas de atención cruzada para inyectar las características visuales. Entre las debilidades habituales están alucinar objetos que no existen, las dificultades con los detalles finos cuando las imágenes se reducen y un razonamiento espacial y de recuento débil, por lo que importan el troceado en alta resolución (tiling) y una evaluación cuidadosa.",
+  "u": [
+   "Extraer campos de documentos escaneados",
+   "Responder preguntas sobre gráficos y capturas de pantalla",
+   "Asistencia visual y descripción de imágenes"
+  ],
+  "x": "Un equipo de cuentas por pagar usa un LLM multimodal para leer facturas con formatos variados y devolver campos estructurados como el proveedor, el total y la fecha de vencimiento. Sustituyó a un pipeline de OCR basado en plantillas que se rompía cada vez que un proveedor cambiaba su formato. Las extracciones con baja confianza se envían a un revisor humano."
+ },
+ "vla": {
+  "n": "Modelos visión-lenguaje-acción (VLA)",
+  "d": "Un modelo visión-lenguaje-acción es una política robótica construida sobre un modelo de visión y lenguaje preentrenado que recibe imágenes de cámara y una instrucción en lenguaje natural y produce acciones del robot. Algunos ejemplos son RT-2, OpenVLA y π0 de Physical Intelligence.\n\nLa idea clave es reutilizar para el control el conocimiento visual y semántico de un gran modelo entrenado con datos web. Las acciones, como los cambios de posición del efector final y el estado de la pinza, se discretizan en intervalos y se emiten como tokens especiales, igual que las palabras, o las produce una cabeza de acción continua, como un decodificador de difusión o de flow matching, que maneja mejor los movimientos suaves y de alta frecuencia. Los modelos se ajustan con fine-tuning sobre grandes conjuntos de demostraciones robóticas recogidas en muchos robots y tareas. Esto da una mejor generalización a objetos e instrucciones nuevos que las políticas entrenadas desde cero. Las principales limitaciones son la latencia de inferencia en relación con las frecuencias de control, por lo que a menudo se predicen a la vez fragmentos de acciones (action chunks), el alto coste de recoger datos de demostración y los riesgos de seguridad de desplegar políticas aprendidas en hardware físico.",
+  "u": [
+   "Recoger y colocar objetos con robots siguiendo instrucciones en lenguaje natural",
+   "Tareas de manipulación domésticas de propósito general para robots",
+   "Manipulación de objetos no vistos en almacenes"
+  ],
+  "x": "Una empresa de robótica hace fine-tuning de un modelo VLA abierto con demostraciones teleoperadas para clasificar artículos en un almacén. La base preentrenada de visión y lenguaje ayuda al robot a manejar productos que nunca vio durante el entrenamiento. Predecir fragmentos cortos de acciones en cada paso de inferencia mantiene un control suave pese a la latencia del modelo."
+ },
+ "worldmodel": {
+  "n": "Modelos del mundo (world models)",
+  "d": "Un modelo del mundo es un modelo aprendido de la dinámica de un entorno que predice cómo cambiará el estado del mundo en respuesta a las acciones, lo que permite a un agente simular resultados antes de actuar. Normalmente, un codificador comprime las observaciones en un estado latente, un modelo de dinámica predice el siguiente estado latente dada una acción, y unos decodificadores predicen las recompensas o reconstruyen las observaciones.\n\nLos agentes pueden entonces planificar o aprender políticas dentro de este entorno imaginado. La familia Dreamer entrena las redes actor y crítico enteramente con trayectorias latentes imaginadas, lo que es mucho más eficiente en muestras que aprender solo de la interacción real, y MuZero planifica con un modelo aprendido mediante búsqueda en árbol. Los grandes modelos de generación de vídeo también se estudian como modelos del mundo. La limitación central es la acumulación de errores: los pequeños errores de predicción se acumulan en horizontes imaginados largos, y los agentes pueden explotar las imprecisiones del modelo, aprendiendo comportamientos que solo funcionan en la simulación imperfecta.",
+  "u": [
+   "Aprendizaje por refuerzo eficiente en muestras para robots",
+   "Simular escenarios de conducción para vehículos autónomos",
+   "Planificación en juegos y tareas de control"
+  ],
+  "x": "Un equipo de conducción autónoma usa un modelo del mundo aprendido para generar fotogramas de cámara futuros plausibles en escenarios poco frecuentes, como un peatón que sale entre coches aparcados. Estas simulaciones amplían la cobertura de entrenamiento y de pruebas para situaciones escasas en los datos grabados. Los ingenieros siguen validando el comportamiento final en pruebas en circuito cerrado, porque las trayectorias imaginadas pueden ser poco realistas."
+ },
+ "jepa": {
+  "n": "JEPA (arquitectura predictiva de embeddings conjuntos)",
+  "d": "Una arquitectura predictiva de embeddings conjuntos (Joint-Embedding Predictive Architecture) es un enfoque de aprendizaje autosupervisado, propuesto en Meta, que predice la representación de una parte ausente de la entrada a partir de la representación de una parte visible, en lugar de reconstruir píxeles o tokens en bruto. I-JEPA lo aplica a imágenes y V-JEPA a vídeo.\n\nUn codificador de contexto procesa las regiones visibles, un codificador objetivo, que es una media móvil exponencial del codificador de contexto, calcula el embedding de las regiones objetivo enmascaradas, y un predictor transforma los embeddings de contexto más las posiciones objetivo en embeddings objetivo predichos. La pérdida es la distancia entre los embeddings objetivo predichos y los reales. Como el modelo predice en un espacio de representación abstracto, puede ignorar los detalles de bajo nivel impredecibles, como la textura exacta, y centrarse en la estructura semántica, lo que da características potentes para tareas posteriores con un entrenamiento eficiente. El principal riesgo es el colapso de la representación, en el que todas las entradas se proyectan en el mismo embedding y la pérdida se anula de forma trivial; para evitarlo se usan el codificador objetivo EMA y el stop-gradient.",
+  "u": [
+   "Preentrenamiento autosupervisado de codificadores de visión",
+   "Aprender representaciones de vídeo sin etiquetas",
+   "Extracción de características para tareas posteriores con pocas etiquetas"
+  ],
+  "x": "Meta publicó los modelos I-JEPA y V-JEPA entrenados con este objetivo, que producen características útiles de imagen y vídeo sin aumentos de datos diseñados a mano. Un equipo de fabricación podría preentrenar un codificador JEPA con grabaciones de cámara sin etiquetar de las líneas de producción y después entrenar un pequeño clasificador de tipos de defecto con pocas etiquetas. Esto reduce el esfuerzo de etiquetado necesario para cada nueva línea de producto."
+ },
+ "kan": {
+  "n": "Redes de Kolmogórov-Arnold (KAN)",
+  "d": "Una red de Kolmogórov-Arnold (Kolmogorov–Arnold Network) es una red neuronal en la que las funciones no lineales aprendibles se sitúan en las aristas entre neuronas, en lugar de ser activaciones fijas en los nodos. Cada arista aplica su propia función univariante aprendida, y cada nodo simplemente suma las salidas de sus aristas de entrada.\n\nEl diseño se inspira en el teorema de representación de Kolmogórov-Arnold, que establece que cualquier función multivariante continua puede escribirse como sumas y composiciones de funciones univariantes. Un MLP, en cambio, aprende pesos lineales en las aristas con activaciones fijas en los nodos. Como cada función aprendida en una arista es una curva unidimensional, las KAN pueden visualizarse, podarse y, a veces, hacerse corresponder con fórmulas simbólicas, lo que las hace atractivas para el descubrimiento científico en problemas pequeños y suaves, como el ajuste de leyes físicas. Sus principales limitaciones son prácticas: evaluar splines es más lento y se adapta peor a las GPU que la multiplicación de matrices, y en tareas a gran escala como el lenguaje o la visión las KAN no han mostrado ventajas claras frente a los MLP con el mismo presupuesto de parámetros o de cómputo.",
+  "u": [
+   "Regresión simbólica de fórmulas físicas",
+   "Ajuste interpretable de datos científicos suaves",
+   "Aproximación de funciones a pequeña escala y resolución de EDP"
+  ],
+  "x": "Un grupo de investigación en física ajusta una pequeña KAN a datos de simulación y examina las funciones aprendidas en las aristas, varias de las cuales coinciden mucho con formas sencillas como senos y cuadrados. Después sustituyen esas aristas por expresiones simbólicas para recuperar una fórmula compacta. En sus modelos de predicción más grandes siguen usando MLP estándar por velocidad."
+ },
+ "ttt": {
+  "n": "Entrenamiento en tiempo de prueba (TTT)",
+  "d": "El entrenamiento en tiempo de prueba (test-time training) actualiza algunos de los parámetros de un modelo con cada entrada de prueba, usando un objetivo autosupervisado, antes de hacer una predicción o mientras la hace. Como en el momento de la prueba no hay etiquetas, el modelo minimiza una pérdida auxiliar, y después se usan los pesos adaptados para la tarea real.\n\nLa idea surgió como forma de afrontar el cambio de distribución: si una imagen de prueba está degradada de forma distinta a los datos de entrenamiento, unos pocos pasos de gradiente en una tarea de predicción de rotación o de reconstrucción enmascarada adaptan a ella las características compartidas. Más tarde, en las capas TTT, el estado oculto de una capa de secuencia es en sí mismo un pequeño modelo cuyos pesos se actualizan con pasos de gradiente en cada token. En tareas de razonamiento como ARC, los modelos se ajustan con fine-tuning sobre los ejemplos dados en cada problema antes de responder. Los costes son cómputo y latencia adicionales por entrada, y si la tarea auxiliar está mal alineada con la tarea principal, la adaptación puede empeorar las predicciones.",
+  "u": [
+   "Adaptar modelos de visión a entradas degradadas",
+   "Capas recurrentes expresivas para secuencias largas",
+   "Fine-tuning por tarea para rompecabezas de razonamiento abstracto"
+  ],
+  "x": "Un equipo de imagen médica despliega un modelo de segmentación en hospitales cuyos escáneres producen imágenes con distinto contraste y ruido. Antes de predecir, el modelo da unos pocos pasos de gradiente sobre una pérdida de reconstrucción para cada nuevo escáner y así adapta su codificador. La validación en centros reservados protege frente a los casos en que la adaptación empeora los resultados."
+ },
+ "merging": {
+  "n": "Fusión de modelos (model merging)",
+  "d": "La fusión de modelos combina en un único modelo los pesos de varios modelos ajustados con fine-tuning a partir del mismo modelo base, sin entrenamiento adicional, para que herede las capacidades de cada uno. La forma más sencilla promedia los pesos; los métodos más eficaces operan sobre vectores de tarea (task vectors), la diferencia entre los pesos de un modelo con fine-tuning y los pesos base.\n\nLa aritmética de tareas suma al modelo base los vectores de tarea escalados. TIES-Merging reduce la interferencia recortando los cambios pequeños, resolviendo los conflictos de signo entre vectores de tarea por el signo mayoritario y promediando solo los valores que coinciden. DARE descarta al azar una gran parte de los parámetros delta y reescala el resto antes de fusionar. La fusión es barata, no necesita datos de entrenamiento y es popular para combinar habilidades en modelos abiertos. El requisito clave es un modelo base compartido: los modelos entrenados a partir de inicializaciones distintas suelen encontrarse en regiones diferentes del espacio de pesos, y promediarlos produce un modelo roto. Incluso con una base compartida, las habilidades fusionadas a menudo compiten entre sí, por lo que es esencial evaluar cada tarea.",
+  "u": [
+   "Combinar fine-tunings de programación y de matemáticas",
+   "Fusionar adaptadores LoRA de varios dominios",
+   "Promediar checkpoints para ganar robustez (model soups)"
+  ],
+  "x": "Un equipo de código abierto fusiona con TIES-Merging, mediante mergekit, un fine-tuning de matemáticas y otro de programación del mismo modelo base. Antes de publicarlo, el modelo fusionado se evalúa con ambas baterías de benchmarks y con la calidad de chat general. Prueban varias ponderaciones de fusión, ya que los mejores valores cambian según la combinación de tareas."
+ },
+ "bitnet": {
+  "n": "LLM de 1 bit (BitNet)",
+  "d": "BitNet es una familia de arquitecturas de modelos de lenguaje que entrenan Transformers con pesos de precisión extremadamente baja desde cero, en lugar de cuantizar después un modelo de precisión completa. BitNet b1.58 restringe cada peso de sus capas lineales a uno de tres valores, −1, 0 o +1, lo que equivale a unos 1,58 bits de información por peso.\n\nDurante el entrenamiento se conservan pesos latentes de precisión completa para el optimizador, y en la pasada hacia delante se escalan por su valor absoluto medio, se redondean y se recortan al conjunto ternario; los gradientes atraviesan el redondeo con un estimador straight-through. Las activaciones se cuantizan a 8 bits. Con pesos ternarios, la multiplicación de matrices se reduce principalmente a sumas y restas, lo que disminuye mucho la memoria, el ancho de banda y la energía. Los resultados publicados muestran que BitNet b1.58 se acerca a la calidad de precisión completa con miles de millones de parámetros. Las principales limitaciones son que los modelos deben entrenarse así desde el principio y que las GPU actuales carecen de aritmética ternaria nativa, por lo que las aceleraciones dependen de kernels especializados o de hardware futuro.",
+  "u": [
+   "Ejecutar LLM de forma eficiente en CPU",
+   "Inferencia en el dispositivo con presupuestos de memoria ajustados",
+   "Servicio de modelos a gran escala con eficiencia energética"
+  ],
+  "x": "Microsoft publicó BitNet b1.58 2B4T, un modelo abierto entrenado de forma nativa con pesos ternarios, junto con el framework de inferencia bitnet.cpp. Un equipo de dispositivos edge podría usar un modelo así para ejecutar un asistente local en la CPU de un portátil sin GPU. Compararían su calidad en sus tareas con la de un modelo convencional cuantizado de tamaño de memoria similar."
+ },
+ "mechinterp": {
+  "n": "Interpretabilidad mecanicista",
+  "d": "La interpretabilidad mecanicista es el estudio de la ingeniería inversa de las redes neuronales para convertirlas en algoritmos comprensibles para los humanos, identificando las características que representa un modelo y los circuitos de componentes que las calculan. En lugar de limitarse a explicar qué entradas importaron para una predicción, se pregunta cómo se lleva a cabo realmente el cálculo dentro de los pesos y las activaciones.\n\nEntre sus herramientas centrales están el activation patching, en el que las activaciones de una entrada se sustituyen en una ejecución con otra entrada para localizar qué componentes causan un comportamiento, la logit lens y las sondas lineales para leer información de las capas intermedias, y los autoencoders dispersos para descomponer las activaciones en características interpretables. Entre los hallazgos conocidos están las cabezas de inducción, que implementan la copia en contexto, y los circuitos para tareas como la identificación del objeto indirecto. Este trabajo sirve a la seguridad de la IA, la depuración y la edición de modelos. Una limitación importante es que las neuronas suelen ser polisemánticas, ya que responden a varios conceptos no relacionados debido a la superposición, y que los análisis de circuitos pequeños no escalan fácilmente a los modelos de frontera completos.",
+  "u": [
+   "Localizar los circuitos que hay detrás de comportamientos concretos",
+   "Auditar modelos en busca de características inseguras o engañosas",
+   "Depurar y editar asociaciones factuales"
+  ],
+  "x": "El equipo de interpretabilidad de Anthropic ha publicado trabajos sobre circuitos en modelos Transformer y sobre la extracción de millones de características interpretables de modelos Claude a escala de producción mediante autoencoders dispersos. Los investigadores de seguridad usan estas técnicas para buscar características relacionadas con el engaño o el contenido dañino. Después, el activation patching comprueba si esas características afectan causalmente al comportamiento."
+ },
+ "sae": {
+  "n": "Autoencoders dispersos (SAE) para interpretabilidad",
+  "d": "En la investigación sobre interpretabilidad, un autoencoder disperso se entrena para reescribir las activaciones internas de un modelo como una combinación dispersa de muchas direcciones de características aprendidas, con el objetivo de que cada característica corresponda a un único concepto interpretable por humanos. El diccionario suele ser mucho mayor que la dimensión de las activaciones.\n\nEl codificador transforma un vector de activación en activaciones de características no negativas, y el decodificador reconstruye la activación original como una suma ponderada de direcciones de características. El entrenamiento minimiza el error de reconstrucción más una penalización de dispersión, normalmente un término L1 sobre las activaciones de las características o una restricción TopK estricta, de modo que solo unas pocas características estén activas por token. Esto aborda la superposición, en la que los modelos empaquetan más conceptos que neuronas tienen usando direcciones solapadas. Las características también pueden fijarse (clamping) para dirigir el comportamiento. Entre sus limitaciones están una reconstrucción imperfecta, que deja sin explicar parte del cálculo del modelo, las características muertas o redundantes, y el hecho de que el diccionario aprendido depende del tamaño y de las decisiones de entrenamiento.",
+  "u": [
+   "Encontrar características interpretables en las activaciones de un LLM",
+   "Dirigir el comportamiento del modelo fijando características",
+   "Detectar conceptos relevantes para la seguridad dentro de los modelos"
+  ],
+  "x": "Tanto Anthropic como OpenAI han publicado autoencoders dispersos entrenados con activaciones de grandes modelos de lenguaje en producción, en los que han encontrado millones de características interpretables. Google DeepMind publicó Gemma Scope, un conjunto de SAE abiertos para los modelos Gemma 2. Los investigadores usan estas publicaciones para buscar características ligadas a comportamientos concretos y ponerlas a prueba dirigiendo el modelo."
+ }
+}

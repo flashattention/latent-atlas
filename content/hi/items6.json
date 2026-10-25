@@ -1,0 +1,462 @@
+{
+ "gradckpt": {
+  "n": "Gradient Checkpointing",
+  "d": "Gradient checkpointing अतिरिक्त computation के बदले memory कम करने की तकनीक है: forward pass के दौरान केवल कुछ intermediate activations सहेजे जाते हैं और बाकी को backward pass के दौरान दोबारा गणना करके बनाया जाता है। सामान्य backpropagation हर layer के activations रखता है ताकि gradients निकाले जा सकें, और लंबे sequences वाले गहरे networks में यह activation memory अक्सर स्वयं weights की memory से भी अधिक हो जाती है।\n\nCheckpointing में network को segments में बाँटा जाता है और केवल हर segment के inputs सहेजे जाते हैं। जब backward pass किसी segment तक पहुँचता है, तो उस segment का forward computation फिर से चलाकर उसके activations दोबारा बनाए जाते हैं, और फिर उसके माध्यम से gradients प्रवाहित होते हैं। हर transformer block पर checkpointing करने की लागत आमतौर पर लगभग एक अतिरिक्त forward pass होती है, यानी training समय में मोटे तौर पर 20–35% की वृद्धि, जबकि activation memory में भारी कमी आती है। तय GPU पर बड़े batches या लंबे contexts फ़िट करने का यह मानक तरीका है। एक आम गलतफ़हमी यह है कि इससे weights या optimizer की memory बचती है; यह केवल activation memory घटाता है, इसलिए इसे आमतौर पर sharding या mixed precision के साथ जोड़ा जाता है।",
+  "u": [
+   "एक ही GPU पर बड़े LLMs की fine-tuning",
+   "लंबी sequence lengths के साथ training",
+   "तय memory में batch size बढ़ाना"
+  ],
+  "x": "एक research टीम सीमित memory वाले GPUs पर 8K-token दस्तावेज़ों के साथ 13B-parameter मॉडल को fine-tune करती है। हर decoder block पर gradient checkpointing चालू करने से sequence length घटाए बिना run फ़िट हो जाता है, हालाँकि हर step धीमा हो जाता है। टीम लंबा wall-clock समय स्वीकार कर लेती है क्योंकि विकल्प बड़े accelerators किराए पर लेना था।"
+ },
+ "parallelism": {
+  "n": "Data, Tensor और Pipeline Parallelism",
+  "d": "बड़े मॉडलों को कई accelerators पर train करने के लिए या तो data को, या अलग-अलग weight matrices को, या layers के क्रम को बाँटा जाता है। Data parallelism में हर device के पास मॉडल की पूरी प्रति होती है, वह batch का अलग हिस्सा प्रोसेस करता है, और हर update से पहले all-reduce के ज़रिए gradients का औसत लिया जाता है। ZeRO और FSDP जैसे sharded रूप optimizer states, gradients और weights को भी बाँट देते हैं ताकि किसी भी device पर पूरी प्रति न रहे।\n\nTensor parallelism एक ही matrix multiplication को कई devices में बाँटता है, उदाहरण के लिए पहली MLP layer को columns के अनुसार और दूसरी को rows के अनुसार, ताकि हर device हर layer का एक हिस्सा गणना करे; चूँकि इसमें हर layer के भीतर communication होता है, इसे तेज़ interconnect चाहिए। Pipeline parallelism लगातार layers को अलग-अलग devices को सौंपता है और micro-batches को उनमें से क्रम से गुज़ारता है। वास्तविक systems तीनों को मिलाकर इस्तेमाल करते हैं। Pipeline parallelism की एक मुख्य समस्या pipeline bubble है: pipeline के भरने और खाली होने के दौरान devices निष्क्रिय रहते हैं, इसलिए utilization ऊँचा रखने के लिए पर्याप्त micro-batches ज़रूरी हैं।",
+  "u": [
+   "एक GPU में न समाने वाले मॉडलों की pretraining",
+   "पूरे cluster में training throughput बढ़ाना",
+   "कई GPUs पर विशाल मॉडलों की serving"
+  ],
+  "x": "एक foundation-model टीम हज़ारों GPUs पर एक बड़ा LLM train करती है: हर 8-GPU node के भीतर tensor parallelism, nodes के बीच pipeline parallelism, और replicas के बीच data parallelism। इस व्यवस्था से भारी communication वाला tensor-parallel traffic तेज़ intra-node links पर ही रहता है। Pipeline bubble को छोटा रखने के लिए टीम micro-batches की संख्या tune करती है।"
+ },
+ "greedy": {
+  "n": "Greedy Decoding",
+  "d": "Greedy decoding हर step पर सबसे अधिक संभावित अगला token चुनकर text उत्पन्न करता है। मॉडल vocabulary पर एक probability distribution देता है, argmax token को sequence में जोड़ दिया जाता है, और यह प्रक्रिया end token या length सीमा तक दोहराई जाती है।\n\nइसमें कोई randomness नहीं होती, इसलिए तय मॉडल और prompt के लिए greedy decoding deterministic होता है (GPUs पर छोटे numerical अंतरों को छोड़कर)। यही कारण है कि यह evaluation, code completion, extraction कार्यों और हर उस स्थिति में उपयोगी है जहाँ reproducibility मायने रखती है। यह सबसे सस्ती decoding रणनीति भी है। इसकी मुख्य सीमा यह है कि स्थानीय रूप से सबसे अच्छे चुनाव से सबसे संभावित पूरा sequence मिलने की गारंटी नहीं होती: शुरुआत में थोड़ा कम संभावित token आगे चलकर कहीं बेहतर continuation दे सकता है। Open-ended generation में greedy decoding दोहराव वाले loops और नीरस text भी पैदा करता है, इसलिए रचनात्मक या संवादात्मक output के लिए आमतौर पर temperature, top-k या top-p वाले sampling तरीके पसंद किए जाते हैं।",
+  "u": [
+   "Benchmark evaluation के लिए deterministic outputs",
+   "तय JSON formats में structured extraction",
+   "IDE में छोटे code completions"
+  ],
+  "x": "एक बीमा कंपनी scan किए गए फ़ॉर्मों से policy number और claim की तारीख जैसे fields निकालने के लिए LLM का उपयोग करती है। टीम greedy decoding इस्तेमाल करती है ताकि एक ही दस्तावेज़ से हमेशा एक जैसा output मिले, जिससे testing और auditing आसान हो जाती है। फिर भी एक repetition check जोड़ा गया है, क्योंकि लंबे outputs कभी-कभी loop में फँस जाते हैं।"
+ },
+ "beam": {
+  "n": "Beam Search",
+  "d": "Beam search एक decoding algorithm है जो हर step पर केवल एक सर्वश्रेष्ठ के बजाय B सबसे संभावित आंशिक sequences रखता है। हर step पर B beams में से प्रत्येक को संभावित अगले tokens से आगे बढ़ाया जाता है, सभी विस्तारों को उनकी संचयी log-probability से score किया जाता है, और केवल शीर्ष B रखे जाते हैं। जब beams end token पर समाप्त होते हैं, तो सबसे ऊँचे score वाला पूरा sequence लौटाया जाता है।\n\nकई hypotheses रखने से search उस शुरुआती चुनाव से उबर सकता है जो स्थानीय रूप से अच्छा लगा था पर कहीं नहीं पहुँचा, इसलिए beam search आमतौर पर greedy decoding की तुलना में अधिक कुल likelihood वाले sequences खोजता है। यह उन कार्यों में अच्छा काम करता है जिनका लगभग एक ही सही उत्तर होता है, जैसे machine translation, summarization और speech recognition। कच्ची log-probability छोटे outputs को तरजीह देती है, इसलिए सामान्यतः length penalty लगाई जाती है। एक प्रसिद्ध सीमा यह है कि अधिक likelihood का मतलब बेहतर text नहीं होता: open-ended generation में beam search सामान्य और दोहराव भरा output देता है, और बड़े beams गुणवत्ता को घटा भी सकते हैं।",
+  "u": [
+   "Neural machine translation output की decoding",
+   "दस्तावेज़ों का abstractive summarization",
+   "Speech recognition transcript की decoding"
+  ],
+  "x": "एक translation सेवा अपने sequence-to-sequence मॉडल को beam size 4 और held-out set पर tune की गई length penalty के साथ decode करती है। बड़े beams से गुणवत्ता में कोई लाभ नहीं हुआ जबकि latency बढ़ी, इसलिए टीम ने beam छोटा रखा। Outputs में दोहराए गए n-grams को भी filter किया जाता है।"
+ },
+ "temperature": {
+  "n": "Temperature",
+  "d": "Temperature एक scalar है जो softmax से पहले logits को उससे भाग देकर नियंत्रित करता है कि language model से sampling कितनी random होगी। 1 से कम temperature distribution को तीखा बनाता है, जिससे संभावित tokens और भी संभावित हो जाते हैं; 1 से अधिक temperature उसे सपाट करता है, जिससे असंभावित tokens को अधिक probability मिलती है। Temperature के 0 के करीब पहुँचने पर sampling greedy decoding के बराबर हो जाती है, और ठीक 1 पर मॉडल की मूल distribution का उपयोग होता है।\n\nPractitioners तथ्यात्मक question answering, code और extraction में, जहाँ consistency मायने रखती है, temperature कम रखते हैं, और brainstorming या रचनात्मक लेखन में, जहाँ विविधता उपयोगी है, उसे बढ़ाते हैं। Temperature को अक्सर top-k या top-p truncation के साथ जोड़ा जाता है, जो बहुत असंभावित tokens की उस लंबी tail को हटा देता है जिसे ऊँचा temperature अन्यथा सामने ले आता। एक आम गलतफ़हमी यह है कि temperature मॉडल के ज्ञान को बदलता है या उसे गहरे अर्थ में अधिक रचनात्मक बनाता है; यह केवल मौजूदा distribution का आकार बदलता है, और बहुत ऊँचे मान ज़्यादातर असंगत text पैदा करते हैं।",
+  "u": [
+   "तथ्यात्मक question answering के लिए कम randomness",
+   "रचनात्मक लेखन tools के लिए विविध विकल्प",
+   "Classifier probabilities के confidence का calibration"
+  ],
+  "x": "एक marketing-copy tool हर request पर temperature 0.9 पर पाँच विज्ञापन headline विकल्प बनाता है ताकि सुझाव सार्थक रूप से अलग हों। उसी कंपनी का customer-support assistant temperature 0.2 पर चलता है ताकि उत्तर नीति के अनुरूप एक जैसे रहें। दोनों settings sample किए गए outputs पर मानवीय ratings की तुलना करके चुनी गई थीं।"
+ },
+ "topk": {
+  "n": "Top-k Sampling",
+  "d": "Top-k sampling हर generation step को k सबसे संभावित tokens तक सीमित करता है, उनकी probabilities को फिर से normalize करता है, और उसी छोटे set से sample करता है। बाकी सभी tokens को शून्य probability मिलती है, इसलिए मॉडल vocabulary की लंबी tail से कभी token नहीं चुन सकता, जहाँ ऐसे बहुत से निरर्थक tokens होते हैं जो अलग-अलग दुर्लभ होते हैं पर मिलकर अक्सर चुने जा सकते हैं।\n\nयह सरल truncation पूरी distribution से sampling की तुलना में अधिक सुसंगत text देता है और फिर भी विविधता बनाए रखता है, इसलिए यह शुरुआती open-ended generation systems में लोकप्रिय हुआ। सामान्य मान लगभग 20 से 100 तक होते हैं, अक्सर temperature के साथ। इसकी मुख्य कमज़ोरी यह है कि distribution के आकार की परवाह किए बिना k तय रहता है। जब मॉडल बहुत आश्वस्त होता है, उदाहरण के लिए \"The capital of France is\" के बाद, तब बड़ा k भी खराब विकल्पों को अंदर आने देता है; और जब कई continuations उचित हों, तब छोटा k मान्य विकल्पों को काट देता है। Top-p sampling मुख्यतः इसी समस्या को हल करने के लिए लाया गया था, जो candidate set के आकार को मॉडल के confidence के अनुसार ढालता है।",
+  "u": [
+   "Open-ended कहानी और संवाद generation",
+   "विविध synthetic training data बनाना",
+   "Chat assistants में tail tokens को सीमित करना"
+  ],
+  "x": "एक game studio पृष्ठभूमि पात्रों के लिए विविध संवाद पंक्तियाँ बनाने हेतु LLM का उपयोग करता है। k = 40 और मध्यम temperature के साथ top-k sampling पंक्तियों को विविध रखता है और दुर्लभ, बिगड़े हुए tokens से बचाता है। टीम हर release में generations का एक sample देखकर k को समायोजित करती है।"
+ },
+ "topp": {
+  "n": "Top-p (Nucleus) Sampling",
+  "d": "Top-p sampling, जिसे nucleus sampling भी कहते हैं, अगला token tokens के उस सबसे छोटे set से sample करता है जिसकी संचयी probability एक threshold p तक पहुँचती है। Tokens को probability के अनुसार क्रमबद्ध किया जाता है, उन्हें एक-एक करके तब तक जोड़ा जाता है जब तक उनका कुल योग कम से कम p न हो जाए, बाकी हटा दिए जाते हैं, और sampling से पहले बचे हुए tokens की probabilities फिर से normalize की जाती हैं।\n\nTop-k की तुलना में इसका मुख्य लाभ adaptivity है। जब मॉडल आश्वस्त होता है, तो nucleus में केवल एक या दो tokens हो सकते हैं, इसलिए output सटीक रहता है; जब कई continuations संभव हों, तो nucleus बड़ा हो जाता है और विविधता की गुंजाइश देता है। 0.8 से 0.95 के बीच के मान आम हैं, आमतौर पर temperature के साथ, और कई chat APIs में यह default है। एक आम गलतफ़हमी operations के क्रम को लेकर है: temperature पहले logits पर लगाया जाता है, जो distribution को और इसलिए nucleus के आकार को बदल देता है। साथ ही, p = 1 truncation को पूरी तरह बंद कर देता है, और बहुत कम p लगभग greedy decoding जैसा व्यवहार करता है।",
+  "u": [
+   "संवादात्मक assistants के लिए default sampling",
+   "नियंत्रित विविधता के साथ रचनात्मक लेखन",
+   "Data augmentation के लिए paraphrases बनाना"
+  ],
+  "x": "एक writing-assistant product top-p = 0.9 और temperature 0.7 के साथ सुझाव sample करता है। चूँकि मॉडल के आश्वस्त होने पर nucleus सिकुड़ जाता है, व्याकरण सुधार स्थिर रहते हैं जबकि open-ended rewrites फिर भी अलग-अलग होते हैं। टीम उन prompts का पता लगाने के लिए औसत nucleus size log करती है जहाँ outputs अनियमित हो जाते हैं।"
+ },
+ "specdec": {
+  "n": "Speculative Decoding",
+  "d": "Speculative decoding LLM generation को तेज़ करता है: एक छोटा, तेज़ draft मॉडल कई tokens प्रस्तावित करता है, जिन्हें बड़ा target मॉडल एक ही forward pass में verify करता है। Autoregressive decoding आमतौर पर compute से नहीं बल्कि memory bandwidth से सीमित होता है, इसलिए k प्रस्तावित tokens को समानांतर रूप से जाँचने की लागत लगभग एक token generate करने जितनी होती है।\n\nहर drafted token को min(1, p(x)/q(x)) probability के साथ स्वीकार किया जाता है, जहाँ p target मॉडल की probability है और q draft की। पहली अस्वीकृति पर normalized residual distribution max(0, p − q) से एक replacement token sample किया जाता है, और drafting फिर से शुरू होती है। यह rejection scheme गारंटी देती है कि output की distribution बिल्कुल वैसी ही है जैसी अकेले target मॉडल से sampling करने पर होती, इसलिए गुणवत्ता नहीं बदलती। जब draft मॉडल target से अक्सर सहमत होता है, तो 2–3x speedup आम है। Acceptance rate कम होने पर, batch sizes इतने बड़े होने पर कि system compute-bound हो जाए, या draft मॉडल की अपनी latency कम न होने पर लाभ घट जाता है।",
+  "u": [
+   "Interactive chat responses की latency घटाना",
+   "बड़े मॉडलों के साथ तेज़ code completion",
+   "कम batch पर बड़े मॉडलों की सस्ती serving"
+  ],
+  "x": "एक coding-assistant टीम एक बड़े code मॉडल को उसी family के एक छोटे draft मॉडल के साथ जोड़ती है जो वही tokenizer साझा करता है। Code बहुत predictable होता है, इसलिए अधिकांश drafted tokens स्वीकार हो जाते हैं और completion latency काफ़ी घट जाती है। टीम हर programming language के लिए acceptance rate पर नज़र रखती है, क्योंकि कम प्रचलित languages में यह गिर जाता है।"
+ },
+ "pagedattn": {
+  "n": "PagedAttention",
+  "d": "PagedAttention एक attention implementation है जो key-value cache को तय आकार के blocks में संग्रहीत करता है, जिनका GPU memory में लगातार (contiguous) होना ज़रूरी नहीं है—बिल्कुल operating system के virtual memory pages की तरह।\n\nPaging के बिना server को हर request के लिए अधिकतम संभव output length के हिसाब से एक contiguous KV-cache क्षेत्र आरक्षित करना पड़ता है, जिससे over-reservation और fragmentation के कारण memory का बड़ा हिस्सा बर्बाद होता है। PagedAttention में हर sequence की एक block table होती है जो logical token positions को physical blocks से map करती है, और नए blocks केवल tokens generate होने पर ही आवंटित किए जाते हैं। Attention kernel इसी table के माध्यम से keys और values पढ़ता है। लगभग शून्य बर्बादी का मतलब है कि एक साथ अधिक requests memory में समा जाती हैं, जिससे throughput काफ़ी बढ़ता है। Blocks को sequences के बीच साझा भी किया जा सकता है, जैसे एक साझा system prompt, और अलग होने पर copy-on-write लागू होता है। PagedAttention प्रति token KV cache का आकार कम नहीं करता; यह केवल बर्बाद जगह हटाता है, इसलिए लंबे contexts अब भी बहुत memory लेते हैं।",
+  "u": [
+   "कई users के साथ high-throughput LLM serving",
+   "समवर्ती requests में system prompts साझा करना",
+   "Parallel sampling और beam search में memory साझा करना"
+  ],
+  "x": "एक internal chatbot host करने वाली कंपनी एक साधारण serving stack से vLLM पर जाती है। चूँकि PagedAttention KV-cache fragmentation को हटा देता है, वही GPUs कहीं अधिक समवर्ती बातचीत संभाल लेते हैं। टीम cache के लिए आरक्षित GPU memory के अंश को tune करती है और memory खत्म होने पर होने वाले preemptions पर नज़र रखती है।"
+ },
+ "contbatch": {
+  "n": "Continuous Batching",
+  "d": "Continuous batching, जिसे in-flight या iteration-level batching भी कहते हैं, LLM inference को एक-एक decoding step करके schedule करता है, ताकि हर step पर नई requests चल रहे batch में शामिल हो सकें और पूरी हो चुकी requests बाहर निकल सकें। इसके विपरीत static batching अगला batch शुरू करने से पहले batch के हर sequence के पूरा होने का इंतज़ार करता है।\n\nचूँकि output lengths बहुत अलग-अलग होती हैं, static batching में छोटी requests के सबसे लंबी request के खत्म होने का इंतज़ार करते समय GPU slots खाली पड़े रहते हैं, और इस बीच नई requests queue में रहती हैं। Continuous batching में scheduler हर forward pass के बाद देखता है कि किन sequences ने end token दिया है, उन्हें हटाता है और प्रतीक्षारत requests को शामिल करता है। इससे GPU व्यस्त रहता है, throughput बहुत बढ़ता है और औसत queueing delay भी घटता है। इसके लिए KV-cache memory का सावधान प्रबंधन चाहिए, इसलिए इसे आमतौर पर PagedAttention के साथ जोड़ा जाता है। एक सीमा यह है कि लंबे prefills को decodes के साथ मिलाने से चल रही requests की latency में उछाल आ सकता है, जिसे कम करने के लिए chunked prefill बनाया गया है।",
+  "u": [
+   "अलग-अलग लंबाई के outputs वाले chat APIs की serving",
+   "Batch inference के लिए GPU throughput अधिकतम करना",
+   "अचानक बढ़े traffic में queueing delay घटाना"
+  ],
+  "x": "एक LLM API provider ऐसे engine से मॉडल serve करता है जो continuous batching और chunked prefill का उपयोग करता है। अब छोटे उत्तरों को उसी batch के लंबे निबंधों का इंतज़ार नहीं करना पड़ता, इसलिए load के दौरान time-to-first-token बेहतर होता है। प्रति-token latency की रक्षा के लिए टीम समवर्ती sequences की अधिकतम संख्या पर सीमा लगाती है।"
+ },
+ "longctx": {
+  "n": "Long Context Extension",
+  "d": "Long context extension उन तकनीकों को कहते हैं जो किसी pretrained LLM को उसकी मूल training length से कहीं लंबे sequences संभालने देती हैं। Rotary position embeddings (RoPE) वाले मॉडल अपनी trained length से आगे मुख्यतः इसलिए विफल होते हैं क्योंकि उनका सामना ऐसे rotation angles से होता है जो उन्होंने कभी नहीं देखे, इसलिए अधिकांश तरीके positions या frequencies को एक परिचित range में rescale करते हैं।\n\nPosition Interpolation extension factor के अनुसार positions को रैखिक रूप से संकुचित करता है। NTK-aware scaling इसके बजाय RoPE base को बढ़ाता है, ताकि स्थानीय क्रम को encode करने वाले high-frequency dimensions लगभग न बदलें जबकि low-frequency dimensions खिंच जाएँ। YaRN प्रति-frequency interpolation schedule को attention temperature समायोजन के साथ जोड़ता है। ये तरीके लंबे दस्तावेज़ों पर एक छोटे fine-tuning चरण के साथ सबसे अच्छा काम करते हैं। एक मुख्य सीमा यह है कि 128K tokens स्वीकार करने वाला मॉडल ज़रूरी नहीं कि उनका अच्छा उपयोग भी करे: context के बीच में रखी जानकारी के लिए retrieval accuracy अक्सर गिर जाती है, इसलिए long-context क्षमता को केवल perplexity से नहीं बल्कि यथार्थवादी कार्यों से मापना चाहिए।",
+  "u": [
+   "लंबे कानूनी अनुबंधों पर question answering",
+   "Repository-स्तर पर code को समझना और edit करना",
+   "लंबी meeting transcripts और किताबों का सारांश"
+  ],
+  "x": "एक legal-tech कंपनी YaRN scaling और उसके बाद लंबे अनुबंधों पर संक्षिप्त fine-tuning के ज़रिए एक open 8K-context मॉडल को 64K tokens तक बढ़ाती है। इससे वकील chunking के बिना पूरे समझौते पर प्रश्न पूछ सकते हैं। टीम needle-in-a-haystack tests और अलग-अलग positions पर रखे गए वास्तविक clause-lookup प्रश्नों से इसे validate करती है।"
+ },
+ "prompting": {
+  "n": "Prompt Engineering",
+  "d": "Prompt engineering किसी language model को दिए जाने वाले input text को इस तरह डिज़ाइन करने का अभ्यास है कि वह अपने weights बदले बिना भरोसेमंद ढंग से वांछित output दे। एक prompt में आमतौर पर एक निर्देश, प्रासंगिक context, format से जुड़ी शर्तें, और कभी-कभी कुछ हल किए गए उदाहरण (few-shot prompting) शामिल होते हैं।\n\nप्रभावी prompts कार्य को स्पष्ट रूप से बताते हैं, audience और output format परिभाषित करते हैं, स्पष्ट delimiters से निर्देशों को data से अलग रखते हैं, और edge cases को कवर करने वाले उदाहरण देते हैं। JSON जैसा structured output माँगने से आगे की parsing मज़बूत बनती है। Prompt engineering किसी मॉडल को ढालने का सबसे तेज़ और सस्ता तरीका है, इसलिए retrieval या fine-tuning से पहले आमतौर पर इसे ही आज़माया जाता है। मुख्य गलती कुछ manual tests के बाद prompts को पूरा मान लेना है। शब्दों में छोटे बदलाव भी व्यवहार बदल सकते हैं, और एक मॉडल के लिए tune किए गए prompts अक्सर दूसरे मॉडल पर ठीक से काम नहीं करते, इसलिए prompts को किसी भी अन्य code की तरह version किया जाना चाहिए और एक तय test set पर evaluate किया जाना चाहिए।",
+  "u": [
+   "Support tickets का few-shot classification",
+   "आगे की parsing के लिए JSON output लागू करना",
+   "Assistants के लिए persona और tone तय करना"
+  ],
+  "x": "एक customer-support टीम role विवरण, category परिभाषाओं, तीन labeled उदाहरणों और एक अनिवार्य JSON schema के साथ ticket triage prompt बनाती है। हर prompt बदलाव को release से पहले कुछ सौ labeled tickets पर चलाया जाता है। इस regression check ने ऐसे कई edits पकड़े जिन्होंने एक category को सुधारा लेकिन दूसरों को बिगाड़ दिया।"
+ },
+ "cot": {
+  "n": "Chain-of-Thought (CoT)",
+  "d": "Chain-of-thought prompting में language model से अंतिम उत्तर देने से पहले बीच के reasoning steps लिखने को कहा जाता है। इसे हल किए गए समाधानों वाले few-shot उदाहरणों से, या बस \"think step by step\" जैसे किसी निर्देश से शुरू किया जा सकता है।\n\nचूँकि transformer हर generate किए गए token पर तय मात्रा में computation खर्च करता है, बीच के steps लिखने से मॉडल को अधिक computation मिलता है और बाद के tokens पहले के आंशिक परिणामों, जैसे गणना किए गए subtotal, पर निर्भर हो पाते हैं। इससे बहु-चरणीय अंकगणित, logic और planning समस्याओं पर accuracy काफ़ी बढ़ती है, खासकर बड़े मॉडलों में; छोटे मॉडलों में लाभ बहुत कम होता है। व्यवहार में दो सीमाएँ अहम हैं। लंबे outputs latency और लागत बढ़ाते हैं। इससे भी महत्वपूर्ण, लिखा गया reasoning इस बात का विश्वसनीय विवरण होने की गारंटी नहीं देता कि मॉडल अपने उत्तर तक कैसे पहुँचा: मॉडल ऐसे विश्वसनीय दिखने वाले steps लिख सकते हैं जो वास्तव में परिणाम तय नहीं करते, इसलिए chain of thought को भरोसेमंद व्याख्या नहीं मानना चाहिए।",
+  "u": [
+   "बहु-चरणीय गणित शब्द-समस्याएँ हल करना",
+   "Business rules पर जटिल reasoning",
+   "Code बदलावों की debugging और planning"
+  ],
+  "x": "एक tax-preparation software टीम LLM से कहती है कि वह deduction की पात्रता पर step by step reasoning करे और फिर अंतिम उत्तर एक अलग tagged field में दे। Users को केवल अंतिम field दिखाया जाता है, जबकि reasoning समीक्षकों के लिए log की जाती है। सीधे उत्तरों की तुलना में उनके internal test cases पर accuracy बढ़ी, हालाँकि responses लंबे हो गए।"
+ },
+ "selfcons": {
+  "n": "Self-Consistency",
+  "d": "Self-consistency एक ही प्रश्न के लिए कई स्वतंत्र reasoning paths sample करके और सबसे अधिक बार आने वाले अंतिम उत्तर को चुनकर chain-of-thought reasoning को बेहतर बनाता है। एक greedy chain पर भरोसा करने के बजाय मॉडल को शून्य से अधिक temperature पर N बार चलाया जाता है, हर अंतिम उत्तर निकाला जाता है, और बहुमत (majority vote) से फ़ैसला होता है।\n\nइसके पीछे का अंतर्ज्ञान यह है कि किसी कठिन समस्या के कई वैध reasoning रास्ते एक ही सही उत्तर पर पहुँच सकते हैं, जबकि गलतियाँ अलग-अलग गलत उत्तरों में बिखर जाती हैं। इसलिए reasoning paths पर marginalize करने से किसी एक path की तुलना में अधिक विश्वसनीय अनुमान मिलता है। अंकगणित और commonsense benchmarks पर इससे बड़े लाभ मिलते हैं। स्पष्ट लागत N गुना अधिक inference है। इसके लिए ऐसे उत्तर भी चाहिए जिनकी सटीक तुलना हो सके, जैसे संख्याएँ या multiple-choice labels; free-form text के लिए voting को किसी similarity माप या LLM judge की ज़रूरत होती है, और यदि मॉडल व्यवस्थित रूप से गलत है, तो अधिक samples उसी गलती को और पक्का करते हैं।",
+  "u": [
+   "गणितीय reasoning कार्यों पर accuracy बढ़ाना",
+   "उत्तरों की सहमति से confidence का अनुमान",
+   "मज़बूत multiple-choice question answering"
+  ],
+  "x": "एक education platform generate किए गए गणित समाधानों को दस reasoning paths sample करके और अंतिम संख्या पर voting करके grade करता है। जब सहमति एक threshold से नीचे गिरती है, तो समस्या स्वतः उत्तर देने के बजाय किसी मानव tutor को भेज दी जाती है। अतिरिक्त inference लागत सीमित रहती है क्योंकि केवल flag की गई समस्याओं पर ही पूरे दस samples चलते हैं।"
+ },
+ "tot": {
+  "n": "Tree of Thoughts (ToT)",
+  "d": "Tree of Thoughts एक prompting framework है जिसमें language model एक रैखिक chain का पालन करने के बजाय कई आंशिक reasoning steps को एक search tree के रूप में खोजता है। हर node एक \"thought\" होता है, यानी एक सुसंगत मध्यवर्ती step, जैसे कोई candidate समीकरण या योजना का एक हिस्सा।\n\nहर node पर मॉडल कई अगले thoughts प्रस्तावित करता है, फिर scoring या voting से उनका मूल्यांकन करता है। तय beam width वाला breadth-first search या backtracking वाला depth-first search जैसा कोई search algorithm सबसे आशाजनक states को आगे बढ़ाता है और बाकी को prune कर देता है। इससे lookahead और backtracking संभव होते हैं, जो साधारण chain-of-thought नहीं कर सकता, और Game of 24 या crosswords जैसी पहेलियों पर, जिनमें स्पष्ट मध्यवर्ती जाँच होती है, बड़े सुधार मिलते हैं। इसकी लागत प्रति समस्या कहीं अधिक model calls है, और यह तरीका इस पर निर्भर है कि मॉडल आंशिक प्रगति को विश्वसनीय रूप से आँक सके। अधिकांश रोज़मर्रा के कार्यों के लिए self-consistency के साथ सरल sampling सस्ता और पर्याप्त होता है।",
+  "u": [
+   "Game of 24 जैसी combinatorial पहेलियाँ हल करना",
+   "Backtracking के साथ बहु-चरणीय planning",
+   "अंतिम निर्णय से पहले वैकल्पिक designs की खोज"
+  ],
+  "x": "एक logistics research टीम delivery schedules का मसौदा बनाने के लिए tree-of-thoughts loop का उपयोग करती है, जिसमें मॉडल आंशिक assignments प्रस्तावित करता है और एक rule-based checker constraint उल्लंघनों को score करता है। मॉडल के प्रस्तावों को एक deterministic evaluator के साथ जोड़ने से pruning केवल self-evaluation की तुलना में कहीं अधिक विश्वसनीय हो गई। चूँकि हर योजना के लिए कई model calls चाहिए, यह तरीका offline इस्तेमाल होता है।"
+ },
+ "rag": {
+  "n": "Retrieval-Augmented Generation (RAG)",
+  "d": "Retrieval-augmented generation किसी query का उत्तर देने के लिए पहले किसी बाहरी knowledge source से प्रासंगिक दस्तावेज़ retrieve करता है और फिर उन्हें उत्तर generate करने के लिए context के रूप में language model को देता है। इससे मॉडल retraining के बिना ऐसी निजी या नवीनतम जानकारी का उपयोग कर पाता है जो उसके training data में नहीं थी।\n\nएक सामान्य pipeline दस्तावेज़ों को chunks में बाँटती है, हर chunk का embedding बनाती है और vectors को एक index में संग्रहीत करती है। Query के समय प्रश्न का embedding बनाया जाता है, सबसे निकट के chunks retrieve किए जाते हैं (अक्सर BM25 जैसे keyword search के साथ मिलाकर), वैकल्पिक रूप से cross-encoder से rerank किए जाते हैं, और prompt में इस निर्देश के साथ डाले जाते हैं कि केवल दिए गए स्रोतों से उत्तर दो और उन्हें cite करो। RAG ज्ञान-प्रधान कार्यों में hallucination घटाता है और उत्तरों को traceable बनाता है। इसकी गुणवत्ता retrieval से सीमित होती है: यदि सही chunk retrieve नहीं हुआ, तो मॉडल उसका उपयोग नहीं कर सकता, और गलत chunk sizes या गायब metadata कई विफलताओं का कारण बनते हैं। इसलिए retrieval recall और answer faithfulness का अलग-अलग मूल्यांकन करना चाहिए।",
+  "u": [
+   "कंपनी के internal दस्तावेज़ों पर question answering",
+   "Help articles पर आधारित customer support bots",
+   "Cite किए गए, सारांशित उत्तरों के साथ search"
+  ],
+  "x": "एक enterprise IT विभाग नीति दस्तावेज़ों और runbooks पर एक RAG assistant बनाता है, जो generation से पहले hybrid search और एक reranker का उपयोग करता है। उत्तरों में स्रोत chunk cite करना अनिवार्य है ताकि कर्मचारी उन्हें सत्यापित कर सकें। टीम एक labeled प्रश्न-set पर retrieval recall को उत्तर की गुणवत्ता से अलग track करती है, जिससे पता चला कि अधिकांश त्रुटियाँ retrieval से आ रही थीं।"
+ },
+ "vectordb": {
+  "n": "Vector Search और ANN",
+  "d": "Vector search किसी query vector से सबसे अधिक मिलते-जुलते संग्रहीत vectors खोजता है, और approximate nearest neighbor (ANN) algorithms सटीकता का कुछ त्याग करके बड़े पैमाने पर इसे तेज़ बनाते हैं। Exact search query की तुलना हर vector से करता है, जो कम latency पर लाखों या अरबों embeddings के लिए बहुत धीमा है।\n\nमुख्य ANN परिवार graph-based, partition-based और compression-based हैं। HNSW एक बहु-स्तरीय proximity graph बनाता है और उस पर मोटे से बारीक स्तरों की ओर greedy ढंग से चलता है। IVF vectors को k-means से clusters में बाँटता है और केवल query के सबसे नज़दीकी कुछ clusters में खोजता है। Product quantization हर vector को छोटे codes में संपीड़ित करता है ताकि दूरियों का अनुमान सस्ते में लगाया जा सके और indexes memory में समा सकें। हर index एक parameter देता है, जैसे efSearch या nprobe, जो speed के बदले recall का संतुलन तय करता है। एक आम गलती यह मान लेना है कि ANN परिणाम सटीक हैं: recall@k को brute-force search के सापेक्ष मापना चाहिए, और ANN step के बाद लगाए गए metadata filters चुपचाप बहुत कम परिणाम लौटा सकते हैं।",
+  "u": [
+   "दस्तावेज़ embeddings पर semantic search",
+   "Product और content recommendation के लिए retrieval",
+   "लगभग समान images या text का deduplication"
+  ],
+  "x": "एक e-commerce कंपनी product image embeddings के HNSW index से दृश्य रूप से मिलते-जुलते items की recommendations देती है। टीम ने efSearch को इस तरह tune किया कि exact search के सापेक्ष recall ऊँचा रहे और latency page-load budget के भीतर रहे। Index हर रात फिर से बनाया जाता है, और दिन के दौरान नए products क्रमिक रूप से जोड़े जाते हैं।"
+ },
+ "embedmodel": {
+  "n": "Text Embeddings",
+  "d": "Text embedding मॉडल text के किसी अंश को तय लंबाई के vector में map करता है, ताकि समान अर्थ वाले texts एक-दूसरे के पास हों, जिसे आमतौर पर cosine similarity से मापा जाता है। आधुनिक embedding मॉडल transformer encoders होते हैं, जिनके token outputs को pooling से, उदाहरण के लिए औसत लेकर या किसी विशेष token को लेकर, एक vector में बदला जाता है।\n\nइन्हें contrastive learning से train किया जाता है: संबंधित texts के जोड़ों, जैसे कोई प्रश्न और उसका उत्तर, को पास खींचा जाता है, जबकि batch के अन्य texts negatives के रूप में काम करते हैं और दूर धकेले जाते हैं। Embeddings semantic search, RAG के लिए retrieval, clustering और deduplication में काम आते हैं, और हल्के classifiers के लिए features के रूप में भी। महत्वपूर्ण व्यावहारिक बातें: query और document embeddings एक ही मॉडल से आने चाहिए, कुछ मॉडलों को \"query:\" और \"passage:\" जैसे task prefixes चाहिए, और मॉडल की अधिकतम लंबाई से लंबे inputs truncate हो जाते हैं। Similarity scores केवल एक ही मॉडल के भीतर एक-दूसरे के सापेक्ष सार्थक होते हैं, absolute probabilities के रूप में नहीं।",
+  "u": [
+   "Semantic search और RAG retrieval",
+   "Customer feedback को विषय के अनुसार cluster करना",
+   "Forums में duplicate प्रश्नों का पता लगाना"
+  ],
+  "x": "एक software कंपनी आने वाले सभी support tickets के embeddings बनाती है और नई उभरती समस्याओं को पकड़ने के लिए उन्हें हर हफ़्ते cluster करती है। एक release के बाद एक नए cluster में अचानक उछाल ने ticket volume बड़ा होने से पहले ही टीम को एक regression के बारे में सचेत कर दिया। Tickets कई भाषाओं में आते हैं, इसलिए उन्होंने एक multilingual embedding मॉडल चुना।"
+ },
+ "rerank": {
+  "n": "Reranking",
+  "d": "Reranking retrieval का दूसरा चरण है, जो candidate दस्तावेज़ों के एक छोटे set को अधिक सटीक लेकिन अधिक महँगे मॉडल से फिर से score करता है। BM25 या vector search जैसा तेज़ पहला चरण लगभग 50–200 candidates लौटाता है, और reranker उन्हें फिर से क्रमबद्ध करता है ताकि सबसे अच्छे कुछ दस्तावेज़ user या LLM तक पहुँचें।\n\nसबसे आम reranker cross-encoder है, एक transformer जो query और एक दस्तावेज़ को साथ पढ़ता है और relevance score देता है। चूँकि attention दोनों texts पर एक साथ काम करता है, यह negation या सटीक entity matches जैसी बारीक परस्पर क्रियाओं को पकड़ लेता है, जिन्हें स्वतंत्र bi-encoder embeddings चूक जाते हैं। Reranking आमतौर पर थोड़ी अतिरिक्त latency पर RAG और search pipelines में precision में बड़ा सुधार लाता है। इसकी सीमा यह है कि यह केवल वही दोबारा क्रमबद्ध कर सकता है जो पहले चरण ने retrieve किया: जो प्रासंगिक दस्तावेज़ candidate set में कभी आया ही नहीं, उसे यह वापस नहीं ला सकता, और इसकी लागत candidates की संख्या के साथ रैखिक रूप से बढ़ती है।",
+  "u": [
+   "RAG pipelines में शीर्ष परिणामों को बेहतर बनाना",
+   "E-commerce search परिणामों को relevance के अनुसार rank करना",
+   "कानूनी या patent दस्तावेज़ों को प्राथमिकता देना"
+  ],
+  "x": "एक knowledge-base search टीम hybrid search से 100 candidates retrieve करती है और शीर्ष 5 को LLM को भेजने से पहले cross-encoder से rerank करती है। उनके evaluation में reranker ने उत्तर की गुणवत्ता में उल्लेखनीय सुधार किया। Latency नियंत्रित रखने के लिए वे candidates की संख्या सीमित रखते हैं और reranker को batched inputs के साथ GPU पर चलाते हैं।"
+ },
+ "agent": {
+  "n": "LLM Agents",
+  "d": "LLM agent ऐसा system है जिसमें language model बार-बार तय करता है कि आगे कौन-सा action लेना है, उसे tools के माध्यम से execute करता है, परिणाम देखता है, और लक्ष्य पूरा होने तक जारी रखता है। एक उत्तर देने के बजाय मॉडल एक loop में चलता है, जिसमें उसे पिछले steps की memory और search, code execution, databases या APIs जैसे functions तक पहुँच होती है।\n\nसामान्य घटक हैं: लक्ष्य और उपलब्ध tools का वर्णन करने वाला system prompt, tool परिणामों को वापस context में डालने वाला loop, और एक stopping condition। Agents ऐसे open-ended कार्यों के लिए उपयुक्त हैं जिनके steps पहले से तय नहीं किए जा सकते, जैसे code debugging या कई स्रोतों वाला research। मुख्य सीमा विश्वसनीयता है: कई steps में त्रुटियाँ जुड़ती जाती हैं, इसलिए प्रति step छोटी विफलता दर पूरे कार्य की बड़ी विफलता दर बन जाती है। इसलिए production agents को step limits, cost budgets, sandboxed tools, जोखिम भरे actions के लिए मानवीय मंज़ूरी, और evaluation के लिए पूरी trajectories की logging चाहिए, क्योंकि tool outputs के ज़रिए prompt injection एक वास्तविक security जोखिम है।",
+  "u": [
+   "स्वायत्त coding और bug fixing",
+   "कई स्रोतों से research और report लेखन",
+   "बहु-चरणीय back-office workflows का automation"
+  ],
+  "x": "एक software कंपनी एक coding agent तैनात करती है जो issue पढ़ता है, repository में खोज करता है, files edit करता है और pull request खोलने से पहले sandbox में tests चलाता है। Merge से पहले हर pull request की समीक्षा इंसान करते हैं। टीम प्रति कार्य steps की संख्या सीमित करती है और विफलताओं के विश्लेषण के लिए पूरी trajectories record करती है।"
+ },
+ "tooluse": {
+  "n": "Tool Use और Function Calling",
+  "d": "Function calling से language model सादा text देने के बजाय एक structured call, आमतौर पर function नाम और arguments वाला JSON, emit करके बाहरी functions के execution का अनुरोध कर पाता है। Application उपलब्ध tools को नाम, विवरण और JSON Schema parameters के साथ घोषित करता है; मॉडल तय करता है कि किसी tool को call करना है या नहीं, application उसे चलाता है, और परिणाम एक नए message के रूप में मॉडल को लौटाया जाता है।\n\nमॉडलों को सही ढंग से बने calls देने और विवरणों के आधार पर tools चुनने के लिए fine-tune किया जाता है, इसलिए स्पष्ट tool नाम, सटीक विवरण और कसे हुए schemas accuracy को बहुत प्रभावित करते हैं। Function calling LLMs को databases, calculators, search engines और business APIs से जोड़ता है, और यह agents का बुनियादी building block है। एक प्रमुख गलतफ़हमी यह है कि मॉडल स्वयं function execute करता है; वह केवल call प्रस्तावित करता है, और arguments को validate करने, permissions लागू करने और errors संभालने की ज़िम्मेदारी application की होती है, क्योंकि मॉडल गलत या hallucinated arguments दे सकते हैं।",
+  "u": [
+   "प्राकृतिक भाषा के प्रश्नों से databases query करना",
+   "Assistants में booking और order actions",
+   "Argument schemas के ज़रिए structured data extraction"
+  ],
+  "x": "एक travel कंपनी का assistant flights खोजने, seat hold करने और booking विवरण लाने के लिए tools उपलब्ध कराता है। मॉडल tool चुनता है और arguments भरता है, जबकि backend तारीखों को validate करता है और किसी भी भुगतान step से पहले user की स्पष्ट पुष्टि माँगता है। जहाँ मॉडल ने गलत tool चुना, वहाँ tool विवरणों को सुधारने के लिए tool calls के logs की समीक्षा की जाती है।"
+ },
+ "react": {
+  "n": "ReAct (Reason + Act)",
+  "d": "ReAct एक prompting pattern है जिसमें language model reasoning traces और actions को बारी-बारी से जोड़ता है, यानी \"Thought\", \"Action\" और \"Observation\" steps के बीच घूमता है। मॉडल पहले इस बारे में एक thought लिखता है कि उसे क्या चाहिए, फिर search query या tool call जैसा कोई action देता है, environment से observation प्राप्त करता है, और अगले thought में उसका उपयोग करता है।\n\nदोनों को मिलाने से हर एक की अलग-अलग कमज़ोरियाँ दूर होती हैं। केवल chain-of-thought reasoning तथ्यों को hallucinate कर सकता है क्योंकि वह बाहरी दुनिया से कभी जाँच नहीं करता, जबकि केवल actions के क्रम में योजना नहीं होती और अप्रत्याशित परिणामों से उबरना कठिन होता है। ReAct में reasoning तय करता है कि कौन-से actions लेने हैं, और observations reasoning को retrieve किए गए तथ्यों पर आधारित रखते हैं। इसे multi-hop question answering और interactive कार्यों में सुधार करते दिखाया गया है, और इसकी loop संरचना अधिकांश आधुनिक agent frameworks का आधार है। सीमाओं में trajectories बढ़ने पर लंबे contexts, ऐसे loops जिनमें मॉडल एक ही action दोहराता रहता है, और noisy observations के प्रति संवेदनशीलता शामिल हैं, इसलिए step limits और output parsing safeguards ज़रूरी हैं।",
+  "u": [
+   "Web search के साथ multi-hop question answering",
+   "Diagnostic tools के साथ interactive troubleshooting",
+   "Generate किए गए दावों की तथ्य-आधारित जाँच"
+  ],
+  "x": "एक IT operations टीम ReAct-शैली के assistant का उपयोग करती है जो किसी alert पर reasoning करता है, tools के माध्यम से logs और metrics query करता है, और संभावित root cause का सारांश देता है। वास्तविक systems से आए observations reasoning को ज़मीन से जोड़े रखते हैं, और हर action read-only होता है। Engineers पूरा thought-action trace देख सकते हैं, जिससे यह तय करना आसान होता है कि निष्कर्ष पर भरोसा किया जाए या नहीं।"
+ },
+ "ttc": {
+  "n": "Reasoning Models और Test-Time Compute",
+  "d": "Reasoning models ऐसे language models हैं जिन्हें inference के समय अतिरिक्त computation खर्च करने के लिए train किया जाता है, आमतौर पर उत्तर देने से पहले एक लंबा आंतरिक chain of thought generate करके; test-time compute का अर्थ accuracy सुधारने के लिए इसी inference प्रयास को बढ़ाना है। केवल मॉडलों को बड़ा करने के बजाय, कठिन समस्याओं पर उन्हें अधिक देर सोचने देकर गुणवत्ता बढ़ाई जाती है।\n\nइन मॉडलों को आमतौर पर verifiable rewards वाले कार्यों पर reinforcement learning से train किया जाता है, जैसे ज्ञात उत्तरों वाली गणित समस्याएँ या unit tests वाला code। इस training के दौरान reasoning trace में समस्याओं को तोड़ना, मध्यवर्ती परिणामों की जाँच करना और backtracking जैसे व्यवहार उभरते हैं। Test-time compute को बाहरी रूप से भी बढ़ाया जा सकता है, जैसे parallel sampling और majority voting, या verifier के साथ best-of-N चयन। गणित और coding पर accuracy अक्सर अधिक reasoning tokens के साथ लगातार बढ़ती है। Trade-offs हैं प्रति query अधिक latency और लागत, और overthinking: सरल प्रश्नों पर लंबा reasoning बिना लाभ के खर्च बढ़ाता है और त्रुटियाँ भी ला सकता है, इसलिए कई systems users को reasoning-effort budget तय करने देते हैं।",
+  "u": [
+   "प्रतियोगिता-स्तर की गणित और विज्ञान समस्याएँ",
+   "जटिल multi-file code generation",
+   "कठिन विश्लेषणात्मक और planning queries"
+  ],
+  "x": "एक data-analytics product सरल lookups को एक तेज़ standard मॉडल पर भेजता है और जटिल बहु-चरणीय विश्लेषण प्रश्नों को high effort setting वाले reasoning मॉडल पर। इस routing से औसत लागत और latency कम रहती है, जबकि कठिन queries पर accuracy बढ़ती है। खर्च पर नज़र रखने के लिए टीम प्रति request reasoning-token की संख्या log करती है।"
+ },
+ "llmeval": {
+  "n": "LLM Evaluation और Benchmarks",
+  "d": "LLM evaluation यह मापता है कि language model रुचि के कार्यों पर कितना अच्छा प्रदर्शन करता है, जिसके लिए standardized benchmarks, कार्य-विशिष्ट test sets, मानवीय आकलन और model-based judges का उपयोग होता है। सार्वजनिक benchmarks ज्ञान (MMLU), गणित (GSM8K, MATH), code (HumanEval, SWE-bench) और preference-आधारित ranking (Chatbot Arena) को कवर करते हैं, जिससे मॉडलों की तुलना के लिए साझा संदर्भ बिंदु मिलते हैं।\n\nEvaluation के तरीके कार्य के प्रकार के अनुसार अलग होते हैं। Multiple-choice benchmarks log-probabilities या निकाले गए अक्षरों की तुलना करते हैं; code की जाँच unit tests चलाकर होती है, जिसे pass@k के रूप में बताया जाता है; open-ended उत्तरों को इंसान या rubric के साथ LLM-as-a-judge score करते हैं, अक्सर pairwise तुलना के ज़रिए। Production systems के लिए सबसे मूल्यवान evaluation वास्तविक user queries से बना custom test set है, जिसमें pass के स्पष्ट मानदंड हों और जो हर मॉडल या prompt बदलाव पर स्वचालित रूप से चले। मुख्य खतरे हैं data contamination, जिसमें benchmark items training data में आ चुके होते हैं और scores बढ़ा देते हैं; prompt format के प्रति संवेदनशीलता; और judge का लंबे उत्तरों या किसी तय position की ओर झुकाव, जिसे क्रम बदलकर और मानवीय labels के सापेक्ष calibrate करके नियंत्रित करना चाहिए।",
+  "u": [
+   "Deployment से पहले candidate मॉडलों की तुलना",
+   "Prompt या मॉडल बदलाव के बाद regression testing",
+   "Unit tests से code की सही-गलत की जाँच"
+  ],
+  "x": "एक internal assistant के लिए LLMs का मूल्यांकन कर रहा एक बैंक कर्मचारियों के वास्तविक, anonymized प्रश्नों से संदर्भ उत्तरों और grading rubrics सहित एक test set बनाता है। Candidate मॉडलों को एक LLM judge score करता है, जिसके फ़ैसलों को पहले मानव graders के सापेक्ष जाँचा गया था। सार्वजनिक benchmark scores का उपयोग केवल शुरुआती shortlist के लिए किया गया।"
+ },
+ "moe": {
+  "n": "Mixture of Experts (MoE)",
+  "d": "Mixture of Experts layer एक बड़े feed-forward network की जगह कई छोटे expert networks और एक router रखता है, जो हर token को उनमें से केवल कुछ के पास भेजता है। Experts की संख्या के साथ कुल parameters बढ़ते हैं, लेकिन प्रति token compute कहीं छोटे dense मॉडल के करीब रहता है, क्योंकि केवल चुने गए experts ही चलते हैं।\n\nTransformer LLMs में MoE layer आमतौर पर कुछ या सभी blocks में MLP की जगह लेता है। हर token के लिए एक learned router सभी experts को score करता है, top-k (अक्सर कई में से 1, 2 या 8) सक्रिय किए जाते हैं, और उनके outputs को router weights के साथ जोड़ा जाता है। Mixtral और DeepSeek-V3 समान FLOPs पर बेहतर गुणवत्ता पाने के लिए इसी design का उपयोग करते हैं। मुख्य लागत memory और communication की है: सभी experts को संग्रहीत करना पड़ता है, भले ही प्रति token कुछ ही उपयोग हों, और expert parallelism के लिए devices के बीच all-to-all traffic चाहिए। Training में load-balancing तंत्र भी ज़रूरी हैं, वरना router कुछ ही experts पर सिमट जाता है।",
+  "u": [
+   "तय compute पर LLM की क्षमता बढ़ाना",
+   "बहुत बड़े language models की कुशल serving",
+   "Multilingual या multi-domain मॉडल specialization"
+  ],
+  "x": "Mistral AI का Mixtral 8x7B प्रति token आठ में से दो experts सक्रिय करता है, इसलिए कहीं अधिक parameters होने के बावजूद यह लगभग एक बहुत छोटे dense मॉडल की लागत पर चलता है। ऐसे मॉडल serve करने वाली टीमों को फिर भी सभी expert weights GPU memory में समाने होते हैं। वे अक्सर GPUs में expert parallelism का उपयोग करती हैं और serving के दौरान हर expert के load पर नज़र रखती हैं।"
+ },
+ "router": {
+  "n": "Router और Top-k Gating",
+  "d": "Router, या gating network, Mixture of Experts layer का वह छोटा learned घटक है जो तय करता है कि हर token को कौन-से experts प्रोसेस करेंगे। यह आमतौर पर एक single linear layer होता है जो हर expert के लिए एक score देता है; सबसे ऊँचे score वाले k experts चुने जाते हैं और उनके outputs को normalized router scores से weight किया जाता है।\n\nTop-k gating computation को sparse बनाता है, क्योंकि प्रति token केवल k experts चलते हैं। Variants इस बात में अलग हैं कि normalization कब होता है: कुछ सभी experts पर softmax लगाकर top-k probabilities रखते हैं, जबकि अन्य केवल चुने गए k पर softmax लगाते हैं। Noisy top-k gating exploration को बढ़ावा देने के लिए training के दौरान noise जोड़ता है, और expert-choice routing दिशा उलट देता है ताकि हर expert अपने शीर्ष tokens चुने। हर expert की प्रति batch एक capacity सीमा होती है; उससे अधिक tokens drop हो सकते हैं और केवल residual connection से गुज़रते हैं। एक अहम बारीकी यह है कि top-k चयन स्वयं differentiable नहीं है, इसलिए experts को gradient केवल उन tokens के gate weights के माध्यम से मिलता है जिन्हें उन्होंने वास्तव में प्रोसेस किया।",
+  "u": [
+   "Sparse MoE transformers में token routing",
+   "बड़े vision मॉडलों में conditional computation",
+   "Domain या भाषा के अनुसार experts का specialization"
+  ],
+  "x": "MoE language model train कर रही एक टीम हर layer के लिए log करती है कि हर expert को tokens का कितना हिस्सा मिलता है और कितने tokens drop हुए। जब कुछ experts को अधिकांश tokens मिलने लगे, तो उन्होंने auxiliary balancing loss का weight और capacity factor बढ़ा दिया। अस्थिरता से बचने के लिए router logits को भी उच्च precision में रखा जाता है।"
+ },
+ "loadbal": {
+  "n": "Load-Balancing Loss",
+  "d": "Load-balancing loss Mixture of Experts मॉडलों में एक सहायक training उद्देश्य है जो router को tokens को experts में समान रूप से बाँटने के लिए प्रेरित करता है। इसके बिना routing ढह जाती है: training की शुरुआत में कुछ experts को अधिकांश tokens मिलते हैं, वे बेहतर होते जाते हैं और इसलिए और भी अधिक tokens खींचते हैं, जबकि बाकी experts कम-trained रह जाते हैं।\n\nआम Switch Transformer रूप में हर expert के लिए उसे वास्तव में भेजे गए tokens के अंश को उसे दी गई औसत router probability से गुणा किया जाता है, सभी experts पर जोड़ा जाता है, और experts की संख्या से scale किया जाता है। Dispatch अंश differentiable नहीं है, लेकिन probability वाला पद है, इसलिए gradients probability को अधिक भार वाले experts से दूर धकेलते हैं। पूरी तरह समान routing पर loss अपने न्यूनतम मान 1 पर पहुँचता है, और इसे एक छोटे coefficient, अक्सर लगभग 0.01, के साथ जोड़ा जाता है। मुख्य trade-off यह है कि मज़बूत balancing पद समान उपयोग के लिए बाध्य करता है और गुणवत्ता को नुकसान पहुँचा सकता है; इसी कारण auxiliary-loss-free तरीके आए, जैसे DeepSeek-V3 का प्रति-expert bias समायोजन, जो केवल चयन को प्रभावित करता है।",
+  "u": [
+   "MoE training में expert collapse रोकना",
+   "Expert devices में hardware utilization सुधारना",
+   "Capacity सीमाओं में dropped tokens घटाना"
+  ],
+  "x": "एक MoE मॉडल की pretraining के दौरान एक engineering टीम balancing loss के साथ-साथ प्रति-expert token अंशों पर नज़र रखती है। जब गहरी layers में असंतुलन दिखता है, तो वे loss coefficient बढ़ाने की तुलना bias-आधारित balancing योजना से करते हैं, और validation perplexity जाँचते हैं ताकि संतुलन गुणवत्ता की कीमत पर न आए।"
+ },
+ "finegrained": {
+  "n": "Fine-Grained और Shared Experts",
+  "d": "Fine-grained और shared experts Mixture of Experts design के दो परिष्कार हैं, जिन्हें DeepSeekMoE ने लोकप्रिय बनाया, और जो experts को अधिक विशेषीकृत बनाते हैं। Fine-grained segmentation हर मानक expert को कई छोटे experts में बाँटता है और अनुपात में अधिक experts सक्रिय करता है, जिससे प्रति token compute वही रहता है लेकिन संभावित expert संयोजनों की संख्या बहुत बढ़ जाती है।\n\nShared experts कुछ ऐसे experts हैं जो routing से स्वतंत्र होकर हर token को प्रोसेस करते हैं। वे बुनियादी syntax जैसे साझा ज्ञान को पकड़ते हैं जिसकी हर token को ज़रूरत होती है, ताकि routed experts को इसे अलग-अलग दोहराकर न सीखना पड़े और वे अधिक तीखे ढंग से specialize कर सकें। उदाहरण के लिए DeepSeek-V3 में हर MoE layer में एक shared expert और 256 छोटे routed experts हैं, जिनमें से प्रति token 8 चुने जाते हैं। Trade-offs engineering से जुड़े हैं: बहुत से छोटे experts का मतलब है छोटे matrix multiplications जो GPUs का कम कुशल उपयोग करते हैं, अधिक routing overhead और अधिक all-to-all communication, इसलिए कुशल grouped-GEMM kernels और सावधानीपूर्ण expert placement महत्वपूर्ण हो जाते हैं।",
+  "u": [
+   "बड़े sparse language models की pretraining",
+   "तय compute पर expert specialization बढ़ाना",
+   "Experts में दोहराए गए ज्ञान को घटाना"
+  ],
+  "x": "DeepSeek के V2 और V3 मॉडल shared experts को कई fine-grained routed experts के साथ जोड़ते हैं। अपनी MoE pretraining में यह design अपनाने वाली टीमें छोटे experts के साथ GPUs को कुशल रखने के लिए grouped matrix-multiplication kernels पर निर्भर करती हैं। Communication लागत नियंत्रित करने के लिए वे यह भी सीमित करती हैं कि किसी token के experts कितने devices पर फैले हो सकते हैं।"
+ },
+ "ssm": {
+  "n": "State Space Models (S4)",
+  "d": "State space model एक hidden state बनाए रखकर sequence को प्रोसेस करता है, जो एक linear recurrence के माध्यम से विकसित होती है, और S4 (Structured State Space for Sequences) ने इस दृष्टिकोण को बहुत लंबे sequences पर deep learning के लिए व्यावहारिक बनाया। मॉडल continuous-time matrices A, B, C से परिभाषित होता है, जिन्हें step size Δ के साथ discretize किया जाता है, जिससे h_t = Ā h_{t−1} + B̄ x_t और y_t = C h_t मिलते हैं।\n\nचूँकि system linear और time-invariant है, वही computation दो तरीकों से किया जा सकता है: तेज़ inference के लिए recurrence के रूप में, या parallel training के लिए पूरे sequence पर एक लंबे convolution के रूप में, जिसे FFTs से कुशलता से गणना किया जाता है। S4 A को HiPPO matrix से initialize करता है ताकि state input इतिहास का संपीड़ित रूप संग्रहीत करे। इसने long-range benchmarks पर उत्कृष्ट प्रदर्शन किया। इसकी मुख्य सीमा यह है कि parameters input पर निर्भर नहीं करते, इसलिए मॉडल चुनिंदा रूप से tokens को अनदेखा या उन पर ध्यान केंद्रित नहीं कर सकता, जिससे भाषा पर प्रदर्शन प्रभावित होता है; Mamba इसी को ठीक करने के लिए बनाया गया।",
+  "u": [
+   "बहुत लंबे time series signals की modeling",
+   "Raw audio और speech waveform की modeling",
+   "Long-range sequence classification कार्य"
+  ],
+  "x": "एक medical-device research टीम उच्च frequency पर sample की गई लंबी ECG recordings को S4-आधारित मॉडल से classify करती है। इसका convolutional training mode दसियों हज़ार steps वाले sequences संभाल लेता है, जो full attention के लिए बहुत महँगे होते। Streaming उपयोग के लिए वही मॉडल प्रति sample स्थिर memory के साथ recurrent mode में चलता है।"
+ },
+ "mamba": {
+  "n": "Mamba (Selective SSM)",
+  "d": "Mamba एक selective state space model पर बना sequence मॉडल है, जिसमें SSM parameters B, C और step size Δ तय रहने के बजाय वर्तमान input से गणना किए जाते हैं। Input पर यह निर्भरता मॉडल को token-दर-token तय करने देती है कि अपनी state में क्या लिखना है और क्या भूलना है।\n\nSelectivity उस time-invariance को तोड़ देती है जिसकी वजह से S4 जैसे पुराने SSMs को global convolution के रूप में train किया जा सकता था। इसके बजाय Mamba एक hardware-aware parallel scan का उपयोग करता है जो विस्तारित state को तेज़ on-chip memory में रखता है, जिससे training समय sequence length में रैखिक रहता है। Inference के समय यह तय आकार की state के साथ recurrence के रूप में चलता है, इसलिए context length के साथ memory नहीं बढ़ती और प्रति token generation लागत स्थिर रहती है। इसकी मुख्य सीमा यह है कि तय आकार की state मनमानी मात्रा में सटीक जानकारी संग्रहीत नहीं कर सकती, इसलिए context में बहुत पीछे के विशिष्ट विवरणों को copy या याद करने वाले कार्य attention की तुलना में अब भी कठिन रहते हैं।",
+  "u": [
+   "Linear-time training के साथ लंबे sequences की modeling",
+   "तेज़, स्थिर-memory autoregressive generation",
+   "Genomics और लंबे DNA sequences की modeling"
+  ],
+  "x": "एक genomics research समूह लंबे DNA sequences को Mamba-आधारित architecture से model करता है, क्योंकि attention की लागत sequence length के साथ quadratic रूप से बढ़ती। स्थिर आकार की recurrent state inference memory को भी सपाट रखती है। फिर भी वे recall-प्रधान कार्यों का अलग से मूल्यांकन करते हैं, क्योंकि ये शुद्ध SSMs की ज्ञात कमज़ोरी हैं।"
+ },
+ "rwkv": {
+  "n": "RWKV",
+  "d": "RWKV एक neural network architecture है जो transformer-शैली की parallel training को recurrent network जैसे inference के साथ जोड़ता है, और softmax attention के बजाय learned exponential time decay वाला linear attention तंत्र उपयोग करता है। इसका नाम हर block के चार मुख्य तत्वों से आता है: Receptance, Weight (decay), Key और Value।\n\nTime-mixing block में हर channel पिछले values का एक चलता हुआ weighted योग रखता है, जिसमें पुराने tokens को एक learned प्रति-channel decay से घटाया जाता है, और एक receptance gate नियंत्रित करता है कि इस सारांश का कितना हिस्सा आगे भेजा जाए। चूँकि इस योग को क्रमिक रूप से update किया जा सकता है, inference प्रति layer स्थिर आकार की state वाले RNN की तरह चलता है, इसलिए memory और प्रति token लागत context length के साथ नहीं बढ़ती। Training के दौरान वही computation पूरे sequence पर parallel किया जा सकता है। RWKV-6 और RWKV-7 जैसे बाद के संस्करण decay को data-dependent बनाते हैं। अन्य recurrent designs की तरह, तय state लंबे contexts में बहुत पीछे के विवरणों को सटीक रूप से याद करने की क्षमता सीमित करती है।",
+  "u": [
+   "Edge devices पर कुशल LLM inference",
+   "स्थिर memory के साथ long-context generation",
+   "बहुभाषी open-source language modeling"
+  ],
+  "x": "On-device text generation का मूल्यांकन कर रही एक mobile app टीम RWKV मॉडल चुनती है, क्योंकि बातचीत की लंबाई चाहे जितनी हो, इसका memory उपयोग स्थिर रहता है। इससे वह बढ़ता KV cache टल जाता है जो phones पर transformers को सीमित करता है। वे उन कार्यों पर कुछ कमज़ोर प्रदर्शन स्वीकार करते हैं जिनमें लंबे पिछले अंशों को सटीक रूप से याद करना पड़ता है।"
+ },
+ "hybrid": {
+  "n": "Hybrid Architectures (Jamba)",
+  "d": "Hybrid architectures एक ही मॉडल में attention layers को state space या अन्य recurrent layers के साथ बारी-बारी से रखते हैं, ताकि attention की सटीक in-context recall को linear-time sequence layers की दक्षता के साथ जोड़ा जा सके। AI21 Labs का Jamba इसका एक प्रसिद्ध उदाहरण है, जो Mamba layers और transformer attention layers को मिलाता है—मोटे तौर पर हर सात Mamba layers पर एक attention layer—और Mixture of Experts feed-forward layers भी जोड़ता है।\n\nइसके पीछे का विचार यह है कि अधिकांश layers तय आकार की recurrent state के साथ sequence जानकारी को सस्ते में प्रोसेस कर सकती हैं, जबकि कुछ attention layers उन कार्यों को संभालती हैं जिनमें पहले के tokens का सटीक lookup चाहिए, जैसे copying या retrieval। चूँकि केवल थोड़ी-सी layers attention उपयोग करती हैं, KV cache समान आकार के शुद्ध transformer की तुलना में कई गुना छोटा होता है, जिससे सीमित GPU memory पर अच्छे throughput के साथ बहुत लंबे contexts संभव होते हैं। मुख्य चुनौतियाँ हैं layers का अनुपात और स्थान चुनना, और दोनों प्रकार की layers के लिए विशेष kernels तथा serving support की आवश्यकता।",
+  "u": [
+   "कम memory में लंबे दस्तावेज़ों की processing",
+   "Long-context मॉडलों की high-throughput serving",
+   "सटीक recall को linear-time layers के साथ जोड़ना"
+  ],
+  "x": "एक enterprise document-processing टीम लंबे अनुबंधों के विश्लेषण के लिए Jamba मॉडल का मूल्यांकन करती है, क्योंकि इसका छोटा KV cache बहुत लंबे inputs को एक ही GPU पर समाने देता है। समान गुणवत्ता वाले transformer की तुलना में यह अधिक समवर्ती लंबी requests संभालता है। वे सुनिश्चित करते हैं कि उनके serving engine में Mamba layers के लिए optimized kernels हों।"
+ },
+ "mla": {
+  "n": "Multi-Head Latent Attention (MLA)",
+  "d": "Multi-Head Latent Attention DeepSeek-V2 में पेश किया गया एक attention variant है, जो हर head के लिए पूरे keys और values के बजाय प्रति token एक कम-आयामी latent vector संग्रहीत करके KV-cache का आकार बहुत घटा देता है। सभी heads के keys और values इसी साझा latent से learned up-projection matrices के ज़रिए फिर से बनाए जाते हैं।\n\nहर token की hidden state को एक संपीड़ित latent c में down-project किया जाता है, और केवल इसी को cache करना होता है। Inference के समय keys का up-projection query projection में और values का up-projection output projection में समाहित (absorb) किया जा सकता है, ताकि attention पूरे keys और values बनाए बिना सीधे cached latents पर काम कर सके। Rotary position embeddings इस absorption के साथ commute नहीं करते, इसलिए MLA एक decoupled design अपनाता है: एक छोटा अतिरिक्त key घटक RoPE वहन करता है और उसे अलग से cache किया जाता है। MLA मानक attention की गुणवत्ता से मेल खाते हुए grouped-query attention से भी छोटा cache हासिल करता है। इसकी कीमत अधिक जटिल implementation और अतिरिक्त projection computation है।",
+  "u": [
+   "Long-context serving के लिए KV cache छोटा करना",
+   "LLM inference में अधिक batch throughput",
+   "बड़े MoE मॉडलों में कुशल attention"
+  ],
+  "x": "DeepSeek-V2 और V3 MLA का उपयोग करते हैं ताकि हर token की cache entry पूरे प्रति-head keys और values के बजाय एक संक्षिप्त latent हो। इन मॉडलों को चलाने वाली serving टीमें MLA-विशिष्ट kernels के लिए engine support पर निर्भर करती हैं। छोटे cache के कारण वे प्रति GPU अधिक समवर्ती लंबे sequences रख पाती हैं।"
+ },
+ "mtp": {
+  "n": "Multi-Token Prediction (MTP)",
+  "d": "Multi-token prediction language model को हर position पर केवल अगले token के बजाय कई भविष्य के tokens predict करने के लिए train करता है। साझा trunk से जुड़े अतिरिक्त output heads या छोटे अतिरिक्त transformer modules tokens t+2, t+3 आदि predict करते हैं, और उनके losses को मानक next-token loss में जोड़ा जाता है।\n\nअतिरिक्त targets सघन training signal देते हैं और hidden representations को आगे की योजना बनाने के लिए प्रेरित करते हैं, जिससे sample efficiency और downstream प्रदर्शन में सुधार बताया गया है। DeepSeek-V3 क्रमिक MTP modules उपयोग करता है, जो हर अतिरिक्त prediction को पिछली depth के representation और अगले वास्तविक token के embedding पर आधारित करके causal chain बनाए रखते हैं। दूसरा लाभ inference में दिखता है: अतिरिक्त heads speculative decoding के लिए एक built-in draft मॉडल की तरह काम कर सकते हैं, जो कई tokens प्रस्तावित करते हैं जिन्हें मुख्य head verify करता है, और इससे generation तेज़ होता है। लाभ सार्वभौमिक नहीं हैं; छोटे मॉडलों को बहुत कम लाभ या बदतर परिणाम भी मिल सकते हैं।",
+  "u": [
+   "LLM pretraining में sample efficiency सुधारना",
+   "Speculative decoding के लिए built-in drafts",
+   "Code मॉडलों के लिए मज़बूत planning signals"
+  ],
+  "x": "DeepSeek-V3 को एक अतिरिक्त MTP module के साथ pretrain किया गया था जो अगले के बाद वाले token को predict करता है। Inference के समय यह module speculative decoding के लिए draft predictor का काम कर सकता है, और DeepSeek ने दूसरे token के लिए ऊँची acceptance rate बताई। जिन टीमों के पास यह serving path नहीं है, वे training के बाद module को बस हटा देती हैं।"
+ },
+ "mod": {
+  "n": "Mixture of Depths (MoD)",
+  "d": "Mixture of Depths एक तकनीक है जिसमें हर transformer block tokens के केवल एक चुने हुए उपसमूह को प्रोसेस करता है, जबकि बाकी tokens residual connection के ज़रिए block को छोड़ देते हैं। एक learned router हर token को एक scalar score देता है, और sequence के केवल top-k tokens ही block के attention और MLP से गुज़रते हैं।\n\nचूँकि k पहले से तय होता है, computation graph के tensor shapes static रहते हैं और FLOP budget ज्ञात होता है, जो accelerators के अनुकूल है, जबकि मॉडल फिर भी कठिन या अधिक जानकारीपूर्ण tokens पर अधिक compute खर्च करना सीखता है। चुने गए tokens के लिए block output को router score से गुणा किया जाता है, जिससे router gradient path पर बना रहता है। मुख्य व्यावहारिक समस्या यह है कि sequence पर top-k non-causal है, क्योंकि यह भविष्य के tokens पर निर्भर करता है, इसलिए autoregressive sampling के लिए एक सहायक predictor या classifier चाहिए जो केवल वर्तमान token से तय करे कि वह चुना जाएगा या नहीं।",
+  "u": [
+   "LLMs में प्रति token FLOPs घटाना",
+   "Tokens में adaptive compute आवंटन",
+   "तय गुणवत्ता पर तेज़ training"
+  ],
+  "x": "तय compute budget में language models train कर रही एक research टीम हर दूसरे block को एक MoD block से बदल देती है जो tokens के छोटे अंश को route करता है। वे प्रति step कम FLOPs के साथ समान validation loss तक पहुँचते हैं। Generation के लिए वे top-k routing निर्णय का अनुमान लगाने हेतु एक छोटा causal predictor train करते हैं।"
+ },
+ "ringattn": {
+  "n": "Ring Attention",
+  "d": "Ring Attention एक device के लिए बहुत लंबे sequences पर exact attention की गणना करता है: sequence को blocks में बाँटकर एक ring में व्यवस्थित devices पर रखा जाता है और key-value blocks को उसी ring में आगे-आगे भेजा जाता है। हर device अपना query block स्थिर रखता है और लगातार steps में अगले device का key और value block प्राप्त करता है, जबकि अपना वर्तमान block आगे भेज देता है।\n\nहर step पर device अपनी queries और उस समय मौजूद key-value block के बीच blockwise attention की गणना करता है, और FlashAttention में उपयोग होने वाले online softmax से आंशिक परिणामों को सटीक रूप से जोड़ता है। Devices की संख्या जितने steps के बाद हर query block पूरे sequence पर attend कर चुका होता है। अगले block का communication वर्तमान block पर computation के साथ overlap किया जाता है। प्रति device memory पूरे sequence से नहीं बल्कि block size से scale होती है, जिससे लाखों tokens के contexts संभव होते हैं। Causal मॉडलों में सीधा-सादा विभाजन load असंतुलन पैदा करता है, क्योंकि बाद के blocks अधिक tokens पर attend करते हैं; इसे ठीक करने के लिए striped या zigzag orderings उपयोग की जाती हैं।",
+  "u": [
+   "दस लाख-token contexts पर मॉडलों की training",
+   "लंबे video और multimodal sequences की modeling",
+   "GPU clusters में sequence parallelism"
+  ],
+  "x": "एक research lab ring attention की मदद से हर sequence को कई GPUs में shard करके किताब-लंबाई और video-frame sequences पर एक long-context मॉडल train करती है। यह तरीका attention को exact रखता है जबकि प्रति GPU memory सीमित रहती है। वे zigzag token ordering उपयोग करते हैं ताकि causal masking की वजह से कुछ GPUs निष्क्रिय न रहें।"
+ },
+ "multimodal": {
+  "n": "Multimodal LLMs",
+  "d": "Multimodal LLM ऐसा language model है जो text के साथ-साथ images, audio या video जैसी एक से अधिक modalities में inputs ले सकता है और उन पर संयुक्त रूप से reasoning कर सकता है। सबसे आम design एक pretrained vision encoder को एक projector के माध्यम से pretrained LLM से जोड़ता है, जो image patch features को LLM के token embedding space में map करता है।\n\nImage visual tokens का एक sequence बन जाती है, जिसे prompt में text tokens के बगल में रखा जाता है, ताकि LLM अपने सामान्य तंत्र से दोनों पर attend कर सके। Training आमतौर पर दो चरणों में होती है: पहले image-caption जोड़ों पर projector का alignment, फिर visual question answering, दस्तावेज़ और chart data पर instruction tuning। कुछ मॉडल शुरुआत से ही natively multimodal train होते हैं, या visual features डालने के लिए cross-attention layers उपयोग करते हैं। आम कमज़ोरियों में ऐसी वस्तुओं को hallucinate करना जो मौजूद नहीं हैं, images को downscale करने पर बारीक विवरण में कठिनाई, और कमज़ोर गिनती या spatial reasoning शामिल हैं, इसलिए high-resolution tiling और सावधानीपूर्ण evaluation मायने रखते हैं।",
+  "u": [
+   "Scan किए गए दस्तावेज़ों से fields निकालना",
+   "Charts और screenshots के बारे में प्रश्नों के उत्तर",
+   "दृश्य सहायता और image का विवरण"
+  ],
+  "x": "एक accounts-payable टीम अलग-अलग layouts वाले invoices पढ़ने और vendor, कुल राशि तथा due date जैसे structured fields लौटाने के लिए multimodal LLM का उपयोग करती है। इसने template-आधारित OCR pipeline की जगह ली, जो किसी supplier के layout बदलते ही टूट जाती थी। कम confidence वाले extractions मानव reviewer को भेजे जाते हैं।"
+ },
+ "vla": {
+  "n": "Vision-Language-Action Models (VLA)",
+  "d": "Vision-language-action मॉडल एक pretrained vision-language model पर बनी robot policy है, जो camera images और प्राकृतिक भाषा के निर्देश को input के रूप में लेती है और robot actions output करती है। उदाहरणों में RT-2, OpenVLA और Physical Intelligence का π0 शामिल हैं।\n\nमुख्य विचार web पर train हुए बड़े मॉडल के दृश्य और अर्थ संबंधी ज्ञान को control के लिए दोबारा उपयोग करना है। End-effector की position में बदलाव और gripper state जैसे actions को या तो bins में discretize करके शब्दों की तरह विशेष tokens के रूप में emit किया जाता है, या diffusion या flow-matching decoder जैसे continuous action head से बनाया जाता है, जो smooth, high-frequency गति को बेहतर संभालता है। मॉडलों को कई robots और कार्यों से एकत्र robot demonstrations के बड़े datasets पर fine-tune किया जाता है। इससे शून्य से train की गई policies की तुलना में नई वस्तुओं और निर्देशों पर बेहतर generalization मिलता है। प्रमुख सीमाएँ हैं control rates की तुलना में inference latency—इसी कारण अक्सर action chunks एक साथ predict किए जाते हैं—demonstration data एकत्र करने की ऊँची लागत, और physical hardware पर learned policies तैनात करने के safety जोखिम।",
+  "u": [
+   "भाषा-निर्देशित robotic pick-and-place",
+   "Robots के लिए सामान्य घरेलू manipulation कार्य",
+   "Warehouse में अनदेखी वस्तुओं की handling"
+  ],
+  "x": "एक robotics कंपनी warehouse में items छाँटने के लिए teleoperated demonstrations पर एक open VLA मॉडल को fine-tune करती है। Pretrained vision-language backbone robot को उन products को संभालने में मदद करता है जिन्हें उसने training में कभी नहीं देखा। हर inference step में actions के छोटे chunks predict करने से मॉडल की latency के बावजूद control smooth रहता है।"
+ },
+ "worldmodel": {
+  "n": "World Models",
+  "d": "World model किसी environment की dynamics का learned मॉडल है, जो predict करता है कि actions के जवाब में दुनिया की state कैसे बदलेगी, जिससे agent action लेने से पहले परिणामों का simulation कर सकता है। आमतौर पर एक encoder observations को एक latent state में संपीड़ित करता है, एक dynamics मॉडल किसी action के आधार पर अगली latent state predict करता है, और decoders rewards predict करते हैं या observations को पुनर्निर्मित करते हैं।\n\nइसके बाद agents इस कल्पित environment के भीतर planning कर सकते हैं या policies सीख सकते हैं। Dreamer परिवार actor और critic networks को पूरी तरह कल्पित latent rollouts पर train करता है, जो केवल वास्तविक interaction से सीखने की तुलना में कहीं अधिक sample-efficient है, और MuZero tree search के ज़रिए learned मॉडल से planning करता है। बड़े video-generation मॉडलों का भी world models के रूप में अध्ययन किया जा रहा है। केंद्रीय सीमा compounding error है: लंबे कल्पित horizons में छोटी prediction गलतियाँ जमा होती जाती हैं, और agents मॉडल की अशुद्धियों का फ़ायदा उठाकर ऐसे व्यवहार सीख सकते हैं जो केवल अपूर्ण simulation में ही काम करते हैं।",
+  "u": [
+   "Robots के लिए sample-efficient reinforcement learning",
+   "Autonomous vehicles के लिए driving परिदृश्यों का simulation",
+   "Games और control कार्यों में planning"
+  ],
+  "x": "एक autonomous-driving टीम दुर्लभ परिदृश्यों, जैसे खड़ी कारों के बीच से अचानक निकलता पैदल यात्री, के लिए विश्वसनीय भविष्य के camera frames बनाने हेतु एक learned world model का उपयोग करती है। ये simulations उन स्थितियों के लिए training और test coverage बढ़ाते हैं जो recorded data में दुर्लभ हैं। Engineers अंतिम व्यवहार को फिर भी closed-course tests में validate करते हैं, क्योंकि कल्पित rollouts अवास्तविक हो सकते हैं।"
+ },
+ "jepa": {
+  "n": "JEPA (Joint-Embedding Predictive Architecture)",
+  "d": "Joint-Embedding Predictive Architecture Meta में प्रस्तावित एक self-supervised learning तरीका है, जो raw pixels या tokens को पुनर्निर्मित करने के बजाय input के दिखाई देने वाले हिस्से के representation से गायब हिस्से के representation को predict करता है। I-JEPA इसे images पर और V-JEPA video पर लागू करता है।\n\nएक context encoder दिखाई देने वाले क्षेत्रों को प्रोसेस करता है, एक target encoder—जो context encoder का exponential moving average है—masked target क्षेत्रों का embedding बनाता है, और एक predictor context embeddings और target positions को predicted target embeddings में map करता है। Loss predicted और वास्तविक target embeddings के बीच की दूरी है। चूँकि मॉडल अमूर्त representation space में prediction करता है, वह सटीक texture जैसे अप्रत्याशित निम्न-स्तरीय विवरणों को अनदेखा करके अर्थपूर्ण संरचना पर ध्यान दे सकता है, जिससे कुशल training के साथ downstream कार्यों के लिए मज़बूत features मिलते हैं। मुख्य जोखिम representation collapse है, जिसमें सभी inputs एक ही embedding पर map हो जाते हैं और loss तुच्छ रूप से शून्य हो जाता है; इसे रोकने के लिए EMA target encoder और stop-gradient का उपयोग किया जाता है।",
+  "u": [
+   "Vision encoders की self-supervised pretraining",
+   "Labels के बिना video representations सीखना",
+   "कम labels वाले downstream कार्यों के लिए feature extraction"
+  ],
+  "x": "Meta ने इस उद्देश्य से train किए गए I-JEPA और V-JEPA मॉडल जारी किए, जो hand-crafted augmentations के बिना उपयोगी image और video features देते हैं। एक manufacturing टीम production lines की बिना label वाली camera footage पर JEPA encoder को pretrain कर सकती है, और फिर कुछ ही labels के साथ defect प्रकारों के लिए एक छोटा classifier train कर सकती है। इससे हर नई product line के लिए labeling का प्रयास घटता है।"
+ },
+ "kan": {
+  "n": "Kolmogorov–Arnold Networks (KAN)",
+  "d": "Kolmogorov–Arnold Network एक neural network है जिसमें सीखने योग्य nonlinear functions nodes पर तय activations के रूप में नहीं, बल्कि neurons के बीच के edges पर होते हैं। हर edge अपना learned univariate function लागू करता है, और हर node बस अपने आने वाले edge outputs का योग करता है।\n\nयह design Kolmogorov–Arnold representation theorem से प्रेरित है, जो कहता है कि किसी भी continuous multivariate function को univariate functions के योगों और संयोजनों के रूप में लिखा जा सकता है। इसके विपरीत MLP तय node activations के साथ linear edge weights सीखता है। चूँकि हर learned edge function एक-आयामी curve है, KANs को visualize, prune किया जा सकता है और कभी-कभी symbolic सूत्रों से मिलाया जा सकता है, जिससे वे भौतिक नियमों को fit करने जैसी छोटी, smooth समस्याओं पर वैज्ञानिक खोज के लिए आकर्षक बनते हैं। उनकी मुख्य सीमाएँ व्यावहारिक हैं: spline evaluation matrix multiplication की तुलना में धीमा और कम GPU-अनुकूल है, और भाषा या vision जैसे बड़े पैमाने के कार्यों पर समान parameter या compute budget में KANs ने MLPs पर स्पष्ट बढ़त नहीं दिखाई है।",
+  "u": [
+   "भौतिक सूत्रों का symbolic regression",
+   "Smooth वैज्ञानिक data की interpretable fitting",
+   "छोटे पैमाने पर function approximation और PDE हल करना"
+  ],
+  "x": "एक physics research समूह simulation data पर एक छोटा KAN fit करता है और learned edge functions का निरीक्षण करता है, जिनमें से कई sine और square जैसे सरल रूपों से काफ़ी मेल खाते हैं। फिर वे उन edges को symbolic expressions से बदलकर एक संक्षिप्त सूत्र प्राप्त करते हैं। अपने बड़े prediction मॉडलों के लिए वे speed के कारण अब भी मानक MLPs उपयोग करते हैं।"
+ },
+ "ttt": {
+  "n": "Test-Time Training (TTT)",
+  "d": "Test-time training prediction करने से पहले या उसके दौरान, एक self-supervised उद्देश्य का उपयोग करके हर test input पर मॉडल के कुछ parameters को update करता है। चूँकि test के समय labels उपलब्ध नहीं होते, मॉडल एक सहायक loss को minimize करता है, और फिर अनुकूलित weights का उपयोग वास्तविक कार्य के लिए किया जाता है।\n\nयह विचार distribution shift से निपटने के तरीके के रूप में शुरू हुआ: यदि कोई test image training data से अलग तरीके से विकृत है, तो rotation-prediction या masked-reconstruction कार्य पर कुछ gradient steps साझा features को उसके अनुरूप ढाल देते हैं। बाद में TTT layers में sequence layer की hidden state स्वयं एक छोटा मॉडल होती है, जिसके weights हर token पर gradient steps से update होते हैं। ARC जैसे reasoning कार्यों में मॉडलों को उत्तर देने से पहले हर समस्या में दिए गए उदाहरणों पर fine-tune किया जाता है। लागत है प्रति input अतिरिक्त computation और latency, और यदि सहायक कार्य मुख्य कार्य से ठीक से मेल नहीं खाता, तो adaptation predictions को बदतर बना सकता है।",
+  "u": [
+   "Vision मॉडलों को विकृत inputs के अनुरूप ढालना",
+   "लंबे sequences के लिए अभिव्यंजक recurrent layers",
+   "अमूर्त reasoning पहेलियों के लिए प्रति-कार्य fine-tuning"
+  ],
+  "x": "एक medical imaging टीम ऐसे अस्पतालों में segmentation मॉडल तैनात करती है जिनके scanners अलग contrast और noise वाली images बनाते हैं। Prediction से पहले मॉडल हर नए scan के लिए reconstruction loss पर कुछ gradient steps लेकर अपने encoder को ढालता है। Held-out sites पर validation उन मामलों से बचाता है जहाँ adaptation परिणामों को बिगाड़ देता है।"
+ },
+ "merging": {
+  "n": "Model Merging",
+  "d": "Model merging एक ही base model से fine-tune किए गए कई मॉडलों के weights को बिना अतिरिक्त training के एक मॉडल में जोड़ता है, ताकि वह हर मॉडल की क्षमताएँ विरासत में पाए। सबसे सरल रूप weights का औसत लेना है; अधिक प्रभावी तरीके task vectors पर काम करते हैं, यानी fine-tuned मॉडल के weights और base weights का अंतर।\n\nTask arithmetic scale किए गए task vectors को base model में जोड़ता है। TIES-Merging छोटे बदलावों को काटकर, task vectors के बीच sign के टकराव को बहुमत sign से सुलझाकर, और केवल सहमत मानों का औसत लेकर interference घटाता है। DARE merging से पहले delta parameters के बड़े हिस्से को random रूप से हटा देता है और बाकी को rescale करता है। Merging सस्ता है, इसके लिए training data नहीं चाहिए, और open मॉडलों में skills को जोड़ने के लिए यह लोकप्रिय है। मुख्य आवश्यकता एक साझा base model है: अलग-अलग initializations से train किए गए मॉडल आमतौर पर weight space के अलग क्षेत्रों में होते हैं, और उनका औसत लेने से टूटा हुआ मॉडल बनता है। साझा base होने पर भी merged skills में अक्सर trade-off होता है, इसलिए हर कार्य पर evaluation आवश्यक है।",
+  "u": [
+   "Coding और math fine-tunes को जोड़ना",
+   "कई domains के LoRA adapters को merge करना",
+   "Robustness के लिए checkpoints का औसत (model soups)"
+  ],
+  "x": "एक open-source टीम mergekit की मदद से TIES-Merging के ज़रिए एक ही base model के math fine-tune और coding fine-tune को merge करती है। Release से पहले merged मॉडल का दोनों benchmark suites और सामान्य chat गुणवत्ता पर मूल्यांकन किया जाता है। कई merge weightings आज़माई जाती हैं, क्योंकि सबसे अच्छे मान अलग-अलग कार्य संयोजनों में भिन्न होते हैं।"
+ },
+ "bitnet": {
+  "n": "1-bit LLMs (BitNet)",
+  "d": "BitNet language model architectures का एक परिवार है जो किसी full-precision मॉडल को बाद में quantize करने के बजाय शुरुआत से ही अत्यंत कम-precision weights के साथ transformers को train करता है। BitNet b1.58 अपनी linear layers के हर weight को तीन मानों −1, 0 या +1 में से एक तक सीमित करता है, जो प्रति weight लगभग 1.58 bits जानकारी रखता है।\n\nTraining के दौरान optimizer के लिए full-precision latent weights रखे जाते हैं, और forward pass में उन्हें उनके औसत absolute मान से scale करके round और ternary set तक clip किया जाता है; gradients straight-through estimator के साथ rounding से होकर गुज़रते हैं। Activations को 8 bits में quantize किया जाता है। Ternary weights के साथ matrix multiplication मुख्यतः जोड़ और घटाव तक सिमट जाता है, जिससे memory, bandwidth और ऊर्जा बहुत घटती है। बताए गए परिणाम दिखाते हैं कि अरबों parameters पर BitNet b1.58 full-precision गुणवत्ता के करीब पहुँचता है। मुख्य सीमाएँ ये हैं कि मॉडलों को शुरुआत से ही इसी तरह train करना पड़ता है, और मौजूदा GPUs में native ternary arithmetic नहीं है, इसलिए speedups विशेष kernels या भविष्य के hardware पर निर्भर करते हैं।",
+  "u": [
+   "CPUs पर LLMs को कुशलता से चलाना",
+   "सख़्त memory budgets में on-device inference",
+   "ऊर्जा-कुशल बड़े पैमाने की model serving"
+  ],
+  "x": "Microsoft ने BitNet b1.58 2B4T जारी किया, जो ternary weights के साथ natively train किया गया एक open मॉडल है, और साथ में bitnet.cpp inference framework भी। एक edge-device टीम ऐसे मॉडल से GPU के बिना laptop CPUs पर एक local assistant चला सकती है। वे अपने कार्यों पर इसकी गुणवत्ता की तुलना समान memory आकार वाले एक quantized पारंपरिक मॉडल से करेंगे।"
+ },
+ "mechinterp": {
+  "n": "Mechanistic Interpretability",
+  "d": "Mechanistic interpretability neural networks को reverse-engineer करके मानव-समझने योग्य algorithms में बदलने का अध्ययन है, जिसमें यह पहचाना जाता है कि मॉडल कौन-से features represent करता है और कौन-से घटकों के circuits उनकी गणना करते हैं। केवल यह समझाने के बजाय कि किसी prediction के लिए कौन-से inputs मायने रखते थे, यह पूछता है कि weights और activations के भीतर computation वास्तव में कैसे होता है।\n\nमुख्य tools में activation patching शामिल है, जिसमें एक input के activations को दूसरे input के run में बदलकर यह पता लगाया जाता है कि कौन-से घटक किसी व्यवहार का कारण हैं; मध्यवर्ती layers से जानकारी पढ़ने के लिए logit lens और linear probes; और activations को interpretable features में विघटित करने के लिए sparse autoencoders। प्रसिद्ध खोजों में in-context copying लागू करने वाले induction heads और indirect object identification जैसे कार्यों के circuits शामिल हैं। यह काम AI safety, debugging और model editing में सहायक है। एक बड़ी सीमा यह है कि neurons अक्सर polysemantic होते हैं, यानी superposition के कारण कई असंबंधित concepts पर प्रतिक्रिया देते हैं, और छोटे circuits के विश्लेषण पूरे frontier मॉडलों तक आसानी से scale नहीं होते।",
+  "u": [
+   "विशिष्ट model व्यवहारों के पीछे के circuits खोजना",
+   "असुरक्षित या भ्रामक features के लिए मॉडलों का audit",
+   "तथ्यात्मक associations की debugging और editing"
+  ],
+  "x": "Anthropic की interpretability टीम ने transformer मॉडलों में circuits पर, और sparse autoencoders से production-स्तर के Claude मॉडलों से लाखों interpretable features निकालने पर काम प्रकाशित किया है। Safety शोधकर्ता ऐसी तकनीकों से deception या हानिकारक content से जुड़े features खोजते हैं। इसके बाद activation patching से जाँचा जाता है कि क्या वे features व्यवहार को causally प्रभावित करते हैं।"
+ },
+ "sae": {
+  "n": "Interpretability के लिए Sparse Autoencoders (SAE)",
+  "d": "Interpretability research में sparse autoencoder को इसलिए train किया जाता है कि वह मॉडल के आंतरिक activations को कई learned feature directions के sparse संयोजन के रूप में फिर से लिखे, इस लक्ष्य के साथ कि हर feature एक ही मानव-समझने योग्य concept से मेल खाए। Dictionary आमतौर पर activation dimension से कहीं बड़ी होती है।\n\nEncoder एक activation vector को nonnegative feature activations में map करता है, और decoder मूल activation को feature directions के weighted योग के रूप में पुनर्निर्मित करता है। Training reconstruction error और एक sparsity penalty—आमतौर पर feature activations पर L1 पद या एक सख़्त TopK constraint—को minimize करती है, ताकि प्रति token केवल कुछ features सक्रिय हों। यह superposition की समस्या को संबोधित करता है, जिसमें मॉडल overlapping directions का उपयोग करके अपने neurons से अधिक concepts समा लेते हैं। व्यवहार को steer करने के लिए features को clamp भी किया जा सकता है। सीमाओं में अपूर्ण reconstruction शामिल है, जो मॉडल के computation का एक हिस्सा अस्पष्ट छोड़ देता है; dead या redundant features; और यह तथ्य कि learned dictionary आकार और training विकल्पों पर निर्भर करती है।",
+  "u": [
+   "LLM activations में interpretable features खोजना",
+   "Features को clamp करके model व्यवहार को steer करना",
+   "मॉडलों के भीतर safety से जुड़े concepts का पता लगाना"
+  ],
+  "x": "Anthropic और OpenAI दोनों ने बड़े production language models के activations पर train किए गए sparse autoencoders प्रकाशित किए हैं, जिनमें लाखों interpretable features मिले। Google DeepMind ने Gemma 2 मॉडलों के लिए open SAEs का एक set, Gemma Scope, जारी किया। शोधकर्ता इन releases का उपयोग विशिष्ट व्यवहारों से जुड़े features खोजने और steering के ज़रिए उनकी जाँच करने के लिए करते हैं।"
+ }
+}

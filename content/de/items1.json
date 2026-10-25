@@ -1,0 +1,482 @@
+{
+ "eda": {
+  "n": "Explorative Datenanalyse (EDA)",
+  "d": "Die explorative Datenanalyse ist die systematische erste Untersuchung eines Datensatzes, um dessen Struktur, Qualität und Zusammenhänge zu verstehen, bevor ein Modell gebaut wird. Man prüft Spaltentypen, Zeilenanzahl, Muster fehlender Werte, Duplikate, Wertebereiche und die Verteilung jedes Features und untersucht dann die Beziehungen zwischen den Features und zur Zielgröße mithilfe von Kennzahlen, Histogrammen, Boxplots, Streudiagrammen und Korrelationsmatrizen.\n\nZiel ist es, Hypothesen zu bilden und Probleme früh zu erkennen: schiefe Features, die eine Transformation brauchen, kategoriale Spalten mit Tausenden von Ausprägungen, Labelfehler, unmögliche Werte wie negative Altersangaben oder eine Spalte, die verdächtig gut vorhersagt, weil sie die Antwort bereits enthält. EDA leitet auch die Wahl des Validierungsschemas, etwa indem sie eine zeitliche Ordnung oder gruppierte Datensätze aufdeckt. Ein häufiger Fehler ist, die EDA auf dem gesamten Datensatz einschließlich des Testsets durchzuführen und daraus Entscheidungen zur Vorverarbeitung abzuleiten; so sickern unbemerkt Informationen aus dem Testset in die Modellierungsentscheidungen.",
+  "u": [
+   "Datenqualität vor dem Modelltraining prüfen",
+   "Schiefe, Ausreißer und Muster fehlender Werte entdecken",
+   "Leakage-verdächtige oder zielkodierende Spalten früh finden"
+  ],
+  "x": "Ein Retail-Analytics-Team, das einen neuen Export aus dem Kassensystem erhält, profiliert zuerst jede Spalte, plottet die wöchentlichen Umsätze pro Filiale und prüft die Fehlquoten nach Region. Die Analyse zeigt, dass eine Region Rückerstattungen als negative Umsätze meldet und dass eine Filial-ID mitten im Jahr ihr Format geändert hat – beides wird behoben, bevor ein Modell zur Nachfrageprognose trainiert wird."
+ },
+ "supervised": {
+  "n": "Überwachtes Lernen (Supervised Learning)",
+  "d": "Beim überwachten Lernen wird ein Modell darauf trainiert, Eingaben auf bekannte Ausgaben abzubilden, und zwar anhand von Beispielen, die mit der richtigen Antwort gelabelt sind. Ausgehend von Paaren (x, y) passt der Algorithmus seine Parameter so an, dass ein Verlust minimiert wird, der misst, wie weit die Vorhersagen von den Labels abweichen, und wendet die gelernte Funktion dann auf neue, ungelabelte Eingaben an.\n\nDie Probleme gliedern sich in Klassifikation, bei der y eine Kategorie ist, etwa Spam oder kein Spam, und Regression, bei der y ein stetiger Wert wie ein Preis ist. Typische Algorithmen reichen von linearer und logistischer Regression bis zu Gradient-Boosted Trees und tiefen neuronalen Netzen. Überwachtes Lernen ist die Standardwahl, wann immer verlässliche Labels existieren und die Zielgröße klar definiert ist.\n\nSeine wichtigste Einschränkung sind Kosten und Qualität der Labels: Modelle lernen Labelrauschen und Annotator-Bias genauso getreu wie das echte Signal. Die Leistung muss auf zurückgehaltenen Daten gemessen werden, die aus derselben Verteilung stammen wie der Produktivverkehr, denn ein niedriger Trainingsfehler allein sagt nichts über die Generalisierung aus.",
+  "u": [
+   "Spam-Klassifikation von E-Mails anhand gelabelter Nachrichten",
+   "Hauspreisvorhersage aus Immobilienmerkmalen",
+   "Medizinische Bilddiagnose anhand annotierter Aufnahmen"
+  ],
+  "x": "Eine Versicherung trainiert einen Gradient-Boosting-Klassifikator auf jahrelangen historischen Schadensfällen, die von Ermittlern als betrügerisch oder legitim gelabelt wurden. Das Modell bewertet jeden neuen Schadensfall innerhalb von Millisekunden, und das Team trainiert es vierteljährlich neu, weil sich Betrugsmuster ändern und neu bestätigte Labels verzögert eintreffen."
+ },
+ "unsupervised": {
+  "n": "Unüberwachtes Lernen (Unsupervised Learning)",
+  "d": "Unüberwachtes Lernen findet Struktur in Daten ohne Labels. Statt eine bekannte Zielgröße vorherzusagen, modelliert der Algorithmus die Daten selbst: Er gruppiert ähnliche Punkte, komprimiert sie auf weniger Dimensionen, schätzt ihre Dichte oder markiert Punkte, die nicht ins Bild passen.\n\nDie wichtigsten Familien sind Clustering (k-Means, DBSCAN, Gaußsche Mischmodelle, hierarchisches Clustering), Dimensionsreduktion (PCA, UMAP, Autoencoder) sowie Dichteschätzung bzw. Anomalieerkennung (Isolation Forest, Kerndichteschätzung). Diese Methoden sind nützlich, wenn Labels teuer oder nicht definiert sind, zur Erkundung eines neuen Datensatzes, zur Erzeugung von Features für ein späteres überwachtes Modell und zur Erkennung ungewöhnlichen Verhaltens.\n\nDie zentrale Schwierigkeit ist die Evaluation. Ohne Ground Truth gibt es keine eindeutig richtige Antwort, daher hängen die Ergebnisse stark von der Feature-Skalierung, der Distanzmetrik und Hyperparametern wie der Clusterzahl ab. Interne Kennzahlen wie der Silhouettenkoeffizient messen geometrische Trennung, nicht geschäftlichen Nutzen; Cluster müssen daher von Fachexperten oder anhand ihrer nachgelagerten Wirkung validiert werden.",
+  "u": [
+   "Kundensegmentierung anhand des Kaufverhaltens",
+   "Anomalieerkennung in Server- oder Sensormetriken",
+   "Embeddings für Visualisierung und Suche komprimieren"
+  ],
+  "x": "Ein Abo-Streamingdienst clustert Nutzer nach Sehzeitmustern, Genres und Gerätenutzung, um Zielgruppensegmente zu entdecken, die das Marketing bisher nicht definiert hatte. Analysten prüfen das Profil jedes Clusters, bevor sie ihn benennen; die Segmentlabels dienen anschließend als Features in Churn-Modellen und zur Kampagnenausrichtung."
+ },
+ "selfsup": {
+  "n": "Selbstüberwachtes Lernen (Self-Supervised Learning)",
+  "d": "Selbstüberwachtes Lernen erzeugt sein Trainingssignal selbst aus ungelabelten Daten, indem ein Teil einer Eingabe verborgen oder transformiert wird und ein Modell lernt, ihn wiederherzustellen. Da die Labels aus den Daten selbst stammen, ist keine menschliche Annotation nötig.\n\nGängige Pretext-Aufgaben sind die Vorhersage des nächsten Tokens (Sprachmodelle im Stil von GPT), die Vorhersage maskierter Tokens (BERT), die Rekonstruktion maskierter Bild-Patches (MAE) und Contrastive Learning, bei dem zwei augmentierte Ansichten desselben Beispiels im Embedding-Raum zusammengezogen und Ansichten verschiedener Beispiele auseinandergedrückt werden (SimCLR, CLIP). Das vortrainierte Netz wird dann feingetunt oder als eingefrorener Feature-Extraktor für nachgelagerte Aufgaben mit wenigen Labels eingesetzt.\n\nDieses Paradigma liegt modernen Foundation Models zugrunde. Ein häufiges Missverständnis ist, es sei dasselbe wie unüberwachtes Clustering; tatsächlich verwendet es einen gewöhnlichen überwachten Verlust auf automatisch erzeugten Zielwerten. Die Wahl der Pretext-Aufgabe und der Augmentierungen bestimmt maßgeblich, welche Features gelernt werden, und eine schlechte Wahl kann Abkürzungen (Shortcuts) antrainieren, die sich nicht übertragen lassen.",
+  "u": [
+   "Sprachmodelle auf rohem Webtext vortrainieren",
+   "Bildmerkmale ohne manuelle Labels lernen",
+   "Embeddings für Retrieval und Transfer Learning aufbauen"
+  ],
+  "x": "Eine Gruppe für medizinische Bildgebung verfügt über Hunderttausende ungelabelter Thorax-Röntgenbilder, aber nur über wenige tausend mit Labels von Radiologen. Sie trainiert einen Vision-Encoder mit einem Masked-Autoencoder-Ziel auf allen Bildern vor und feintunt ihn dann auf der gelabelten Teilmenge – das liefert eine höhere Genauigkeit als ein Training von Grund auf mit dem kleinen gelabelten Set."
+ },
+ "rl": {
+  "n": "Bestärkendes Lernen (Reinforcement Learning)",
+  "d": "Reinforcement Learning trainiert einen Agenten, durch Versuch und Irrtum in der Interaktion mit einer Umgebung Aktionen zu wählen, die die kumulierte Belohnung maximieren. In jedem Schritt beobachtet der Agent einen Zustand, führt eine Aktion aus, erhält eine skalare Belohnung und gelangt in einen neuen Zustand; er muss eine Policy lernen, ohne dass ihm gesagt wird, welche Aktion richtig war.\n\nWertbasierte Verfahren wie Q-Learning und DQN schätzen den erwarteten Ertrag jeder Aktion und handeln gierig (greedy) nach diesen Schätzungen. Policy-Gradient-Verfahren wie REINFORCE und PPO passen die Policy direkt in die Richtung an, die den erwarteten Ertrag erhöht. Ein Diskontfaktor γ gewichtet kurzfristige gegen langfristige Belohnung, und der Agent muss zwischen der Erkundung unbekannter Aktionen (Exploration) und der Nutzung bekannter guter Aktionen (Exploitation) abwägen.\n\nReinforcement Learning eignet sich für sequenzielle Entscheidungsprobleme: Spiele, Robotik und die Ausrichtung von Sprachmodellen an menschlichen Präferenzen (RLHF). Es ist sample-ineffizient, empfindlich gegenüber dem Belohnungsdesign und oft instabil. Eine schlecht spezifizierte Belohnung wird leicht ausgenutzt: Agenten lernen Verhalten, das gut punktet, aber das eigentliche Ziel verfehlt.",
+  "u": [
+   "Spielagenten und Simulatoren",
+   "Robotersteuerung und Fortbewegungs-Policies",
+   "Fine-Tuning von LLMs mit Belohnungen aus menschlichen Präferenzen"
+  ],
+  "x": "Ein Rechenzentrumsbetreiber trainiert in einem Simulator einen Reinforcement-Learning-Regler, der Sollwerte der Kühlung anhand von Temperatur- und Lastmesswerten anpasst; die Belohnung ist an Energieverbrauch und Sicherheitsgrenzen gekoppelt. Vor dem Einsatz läuft die gelernte Policy im Empfehlungsmodus, und harte Constraints übersteuern jede Aktion außerhalb der freigegebenen Betriebsbereiche."
+ },
+ "split": {
+  "n": "Train-/Validierungs-/Test-Split",
+  "d": "Ein Train-, Validierungs- und Test-Split teilt die Daten in drei disjunkte Mengen mit getrennten Aufgaben: Das Modell lernt seine Parameter auf dem Trainingsset, Hyperparameter und Designentscheidungen werden auf dem Validierungsset abgestimmt, und das Testset wird am Ende einmalig genutzt, um die Leistung auf ungesehenen Daten zu schätzen.\n\nJede Entscheidung, die man anhand eines Scores trifft, passt das Modell an diese Daten an. Nach vielen Tuning-Runden auf demselben Set ist dessen Score optimistisch verzerrt, daher braucht es für eine ehrliche Schätzung ein abschließendes, unberührtes Set. Typische Verhältnisse sind 70/15/15 oder 80/10/10, bei reichlich Daten auch kleinere Holdouts.\n\nDer Split muss widerspiegeln, wie das Modell eingesetzt wird. Bei Zeitreihen wird nach Zeit gesplittet, sodass Validierung und Test nach dem Training liegen. Teilen sich mehrere Zeilen eine Entität wie einen Patienten oder Nutzer, wird nach Gruppen gesplittet, damit dieselbe Entität nie auf beiden Seiten auftaucht. Ein zufälliger Split liefert in diesen Fällen irreführend hohe Scores.",
+  "u": [
+   "Hyperparameter abstimmen, ohne die Testdaten anzurühren",
+   "Eine unverzerrte finale Leistungsschätzung berichten",
+   "Kandidatenmodelle auf einem festen Holdout vergleichen"
+  ],
+  "x": "Ein Kreditrisiko-Team trainiert auf Krediten aus früheren Jahren, stimmt auf dem folgenden Quartal ab und berichtet die finalen Metriken auf dem jüngsten Quartal – genau so, wie das Modell künftige Antragsteller bewerten wird. Das Testquartal liegt gesperrt an einem separaten Speicherort, damit Analysten es bei der Feature-Selektion nicht versehentlich verwenden."
+ },
+ "cv": {
+  "n": "Kreuzvalidierung (Cross-Validation)",
+  "d": "Die Kreuzvalidierung schätzt, wie gut ein Modell generalisiert, indem es mehrmals auf unterschiedlichen Aufteilungen der Daten trainiert und evaluiert wird. Bei der k-fachen Kreuzvalidierung werden die Daten in k Folds geteilt; jeder Fold dient einmal als Validierungsset, während das Modell auf den übrigen k − 1 Folds trainiert wird, und die k Scores werden gemittelt.\n\nAnders als bei einem einzelnen Holdout-Split wird jedes Beispiel sowohl zum Training als auch zur Validierung genutzt. Das ergibt eine weniger verrauschte Schätzung sowie eine Standardabweichung, die die Stabilität des Modells zeigt. Varianten berücksichtigen besondere Strukturen: Stratified k-Fold bewahrt die Klassenanteile, Group k-Fold hält alle Zeilen einer Entität im selben Fold, und der Time-Series-Split validiert stets auf Daten, die nach dem Trainingsfenster liegen.\n\nKreuzvalidierung kostet das k-Fache der Trainingszeit. Wird sie zur Auswahl von Hyperparametern genutzt, ist der gemittelte Score der siegreichen Konfiguration optimistisch verzerrt; für eine unverzerrte finale Schätzung braucht es eine verschachtelte (nested) Kreuzvalidierung oder ein separates Testset.",
+  "u": [
+   "Modelle auf kleinen oder mittelgroßen Datensätzen vergleichen",
+   "Hyperparametersuche mit verlässlichen Score-Schätzungen",
+   "Leistungsvarianz über Teilmengen der Daten schätzen"
+  ],
+  "x": "Ein Pharma-Analytics-Team mit nur einigen hundert Patientendatensätzen nutzt eine gruppierte 5-fache Kreuzvalidierung, damit alle Besuche eines Patienten im selben Fold bleiben. Das Team berichtet Mittelwert und Standardabweichung der AUC über die Folds – so zeigt sich, dass ein Kandidatenmodell weit weniger stabil ist, als sein Durchschnittsscore vermuten lässt."
+ },
+ "stratified": {
+  "n": "Stratifizierte Stichprobe (Stratified Sampling)",
+  "d": "Bei der stratifizierten Stichprobenziehung werden Daten so aufgeteilt oder gesampelt, dass jede Teilmenge denselben Anteil einer gewählten Variable – meist des Klassenlabels – aufweist wie der gesamte Datensatz. Die Daten werden nach dieser Variable in Schichten (Strata) eingeteilt, und aus jeder Schicht wird derselbe Anteil gezogen.\n\nMeist wird sie für Train/Test-Splits und Kreuzvalidierungs-Folds verwendet. Bei unausgewogenen Labels kann ein rein zufälliger Split durch Zufall nur sehr wenige positive Beispiele in einen Validierungs-Fold legen, was Metriken verrauscht oder sogar undefiniert macht. Stratifizierung beseitigt diese Varianzquelle, sodass die Scores über die Folds besser vergleichbar sind. Sie lässt sich auch auf andere wichtige Variablen wie Region oder Gerätetyp anwenden und bei Regression durch Stratifizierung nach gebinnten Zielwerten.\n\nStratifizierung steuert nur die Verteilung der gewählten Variable; Leakage zwischen zusammenhängenden Zeilen verhindert sie nicht. Auch das Klassenungleichgewicht selbst behebt sie nicht: Ein stratifizierter Split eines Datensatzes mit 1 % Positiven liefert in jeder Teilmenge weiterhin etwa 1 % Positive.",
+  "u": [
+   "Train/Test-Splits für unausgewogene Klassifikation",
+   "Stabile Kreuzvalidierungs-Folds für seltene Klassen",
+   "Umfragestichproben über demografische Gruppen hinweg"
+  ],
+  "x": "Ein Team zur Betrugserkennung mit einer Positivrate von 0,3 % nutzt eine stratifizierte 5-fache Kreuzvalidierung, damit jeder Fold eine vergleichbare Zahl von Betrugsfällen enthält. Ohne Stratifizierung enthielten manche Folds so wenige Positive, dass die PR-AUC zwischen Läufen stark schwankte und Modellvergleiche unzuverlässig wurden."
+ },
+ "leak": {
+  "n": "Data Leakage (Datenleck)",
+  "d": "Data Leakage liegt vor, wenn Informationen, die zum Vorhersagezeitpunkt nicht verfügbar wären, ins Modelltraining gelangen. Das führt zu Evaluationsscores, die weit besser sind als die Leistung in der realen Welt.\n\nLeakage tritt in mehreren Formen auf. Target Leakage entsteht, wenn ein Feature aus dem Label abgeleitet oder erst nach dem Ergebnis erfasst wird, etwa ein Rückerstattungs-Flag zur Vorhersage von Betrug. Train-Test-Kontamination entsteht, wenn Vorverarbeitung wie Skalierung, Imputation, Target Encoding oder Feature-Selektion vor dem Splitten auf dem gesamten Datensatz angepasst wird. Zeitliches Leakage entsteht, wenn ein zufälliger Split das Modell auf der Zukunft trainieren und die Vergangenheit vorhersagen lässt, und Gruppen-Leakage, wenn derselbe Kunde oder Patient sowohl in den Trainings- als auch in den Testdaten vorkommt.\n\nTypische Symptome sind ein verdächtig hoher Score oder ein einzelnes Feature mit überwältigender Wichtigkeit. Vorbeugen heißt: sämtliche Vorverarbeitung innerhalb einer Pipeline nur auf dem Trainings-Fold anpassen, bei Bedarf nach Zeit oder Gruppe splitten und für jedes Feature prüfen, wann genau sein Wert bekannt wird.",
+  "u": [
+   "Features auf Informationen nach dem Ergebnis prüfen",
+   "Leakage-freie Vorverarbeitungspipelines bauen",
+   "Modelle diagnostizieren, die nach dem Deployment versagen"
+  ],
+  "x": "Ein Modell für Krankenhaus-Wiederaufnahmen erreichte eine nahezu perfekte Validierungs-AUC, und ein Audit zeigte, dass ein Feature ein Entlassungscode war, der erst nach der Wiederaufnahme eines Patienten vergeben wurde. Nachdem es entfernt und die Features aus den zum Entlassungszeitpunkt verfügbaren Daten neu aufgebaut worden waren, fiel der Score auf ein realistisches Niveau und stimmte mit späteren Produktivergebnissen überein."
+ },
+ "overfit": {
+  "n": "Überanpassung (Overfitting)",
+  "d": "Overfitting tritt auf, wenn ein Modell Muster lernt, die spezifisch für seine Trainingsdaten sind – einschließlich Rauschen –, sodass es auf Trainingsbeispielen gut, auf neuen Daten aber schlecht abschneidet. Das typische Anzeichen ist eine große und wachsende Lücke zwischen Trainings- und Validierungsleistung.\n\nEs entsteht, wenn die Modellkapazität im Verhältnis zu Menge und Qualität der Daten hoch ist: tiefe Bäume, Polynome hohen Grades, viele Features bei wenigen Zeilen oder zu lange trainierte neuronale Netze. Das Modell lernt Beispiele auswendig statt des zugrunde liegenden Zusammenhangs. Abhilfe schaffen mehr Daten, einfachere Modelle, Regularisierung (L1, L2, Dropout, Weight Decay), Early Stopping, Datenaugmentierung und Bagging.\n\nOverfitting kann auch auf Ebene des Experiments passieren. Wer Hyperparameter wiederholt am selben Validierungsset abstimmt oder Features danach auswählt, passt die gesamte Pipeline an dieses Set an. Ein niedriger Trainingsverlust ist an sich kein Problem; sehr große Netze können Trainingsdaten perfekt anpassen und dennoch gut generalisieren – entscheidend ist die Validierungskurve.",
+  "u": [
+   "Lücken zwischen Training und Validierung während des Trainings diagnostizieren",
+   "Baumtiefe oder Polynomgrad wählen",
+   "Entscheiden, wann das Training eines neuronalen Netzes beendet wird"
+  ],
+  "x": "Ein Team für Nachfrageprognosen bemerkte, dass ein tiefes Gradient-Boosting-Modell auf den Trainingswochen fast perfekt abschnitt, die jüngsten Wochen aber deutlich verfehlte. Eine begrenzte Baumtiefe, eine höhere Mindestzahl an Samples pro Blatt und Early Stopping auf einem zeitbasierten Validierungsset schlossen den Großteil der Lücke."
+ },
+ "underfit": {
+  "n": "Unteranpassung (Underfitting)",
+  "d": "Underfitting liegt vor, wenn ein Modell zu einfach oder zu stark eingeschränkt ist, um die tatsächliche Struktur der Daten zu erfassen, sodass es sowohl auf dem Trainings- als auch auf dem Validierungsset schlecht abschneidet. Anders als beim Overfitting gibt es kaum eine Lücke zwischen beiden Fehlern; beide sind schlicht hoch.\n\nHäufige Ursachen sind eine Modellfamilie, die den Zusammenhang nicht ausdrücken kann (eine Gerade für ein gekrümmtes Muster), zu wenige oder wenig aussagekräftige Features, übermäßige Regularisierung, ein zu früh beendetes Training oder eine so niedrige Lernrate, dass sich der Optimierer kaum bewegt. In der Sprache des Bias-Varianz-Dilemmas hat ein unterangepasstes Modell einen hohen Bias.\n\nDie Abhilfen gehen in die entgegengesetzte Richtung wie beim Overfitting: ein flexibleres Modell nutzen, Features hinzufügen oder konstruieren, etwa Interaktionen und nichtlineare Transformationen, die Regularisierung abschwächen oder länger trainieren. Ein nützlicher Test ist, ob das Modell eine winzige Teilmenge der Daten overfitten kann; scheitert selbst das, liegt das Problem wahrscheinlich eher an einem Bug, einer ungeeigneten Lernrate oder einer defekten Datenpipeline als an echtem Underfitting.",
+  "u": [
+   "Modelle diagnostizieren, die bei hohem Trainingsfehler stagnieren",
+   "Entscheiden, ob Features oder Modellkapazität ergänzt werden",
+   "Zu starke Regularisierung abstimmen"
+  ],
+  "x": "Das lineare Modell eines Pricing-Teams für Lieferzeiten hatte auf Trainings- und Validierungsdaten einen ähnlichen, aber enttäuschenden Fehler. Interaktionsfeatures aus Entfernung und Verkehrslage sowie der Wechsel zu einem Gradient-Boosting-Modell senkten beide Fehler – ein Beleg dafür, dass dem ursprünglichen Modell Kapazität fehlte, nicht Daten."
+ },
+ "biasvar": {
+  "n": "Bias-Varianz-Dilemma (Bias–Variance Tradeoff)",
+  "d": "Das Bias-Varianz-Dilemma beschreibt, wie sich der erwartete Vorhersagefehler eines Modells aufteilt: in einen systematischen Fehler durch zu einfache Annahmen (Bias) und in die Empfindlichkeit gegenüber der konkreten Trainingsstichprobe (Varianz). Beim quadratischen Fehler ist der erwartete Fehler gleich Bias zum Quadrat plus Varianz plus irreduziblem Rauschen.\n\nDer Bias misst, wie weit die durchschnittliche Vorhersage über viele mögliche Trainingssets von der wahren Funktion entfernt ist. Die Varianz misst, wie stark sich die Vorhersagen von einem Trainingsset zum nächsten ändern. Einfache Modelle wie die lineare Regression haben tendenziell hohen Bias und geringe Varianz; flexible Modelle wie tiefe Entscheidungsbäume haben geringen Bias und hohe Varianz. Regularisierung, Ensembles und mehr Daten verschieben dieses Gleichgewicht: Bagging senkt vor allem die Varianz, Boosting vor allem den Bias.\n\nDas klassische Bild besagt, dass der Testfehler in Abhängigkeit von der Modellkomplexität U-förmig verläuft. Moderne überparametrisierte Netze können Double Descent zeigen, bei dem der Fehler jenseits des Punktes, an dem die Trainingsdaten interpoliert werden, erneut sinkt – das Dilemma ist also eher eine Richtschnur als ein striktes Gesetz.",
+  "u": [
+   "Modellkomplexität und Regularisierung wählen",
+   "Erklären, warum Bagging und Boosting helfen",
+   "Underfitting von Overfitting unterscheiden"
+  ],
+  "x": "Ein Team für Energielastprognosen verglich ein lineares Modell mit einem voll ausgewachsenen Entscheidungsbaum und stellte fest, dass das erste die Spitzen verfehlte, während sich das zweite beim Neutraining auf anderen Monaten stark veränderte. Der Wechsel zu einem Random Forest behielt den geringen Bias bei und mittelte einen Großteil der Varianz heraus, was stabilere Prognosen lieferte."
+ },
+ "curse": {
+  "n": "Fluch der Dimensionalität (Curse of Dimensionality)",
+  "d": "Der Fluch der Dimensionalität bezeichnet die Probleme, die auftreten, wenn Daten viele Features haben: Das Volumen des Raums wächst exponentiell, die Daten werden dünn verteilt, und viele Intuitionen aus zwei oder drei Dimensionen funktionieren nicht mehr.\n\nUm einen Einheitshyperwürfel mit fester Dichte abzudecken, wächst die Zahl der benötigten Samples exponentiell mit der Zahl der Dimensionen. Zudem konzentrieren sich die Distanzen: In hohen Dimensionen liegen der nächste und der fernste Nachbar eines Punktes fast gleich weit entfernt, was distanzbasierte Verfahren wie k-Nächste-Nachbarn, k-Means und Kernel-Methoden mit isotropen Kerneln schwächt. Der Großteil des Volumens einer hochdimensionalen Kugel liegt nahe ihrer Oberfläche, und Zufallsvektoren stehen nahezu orthogonal zueinander.\n\nDer Fluch motiviert Feature-Selektion, Dimensionsreduktion und Modelle mit starkem induktivem Bias. Er wirkt weniger schwer, als die Worst-Case-Theorie nahelegt, wenn reale Daten nahe einer niedrigdimensionalen Mannigfaltigkeit liegen – deshalb funktionieren tiefe Netze und Embeddings bei Bildern und Text trotz ihrer enormen nominalen Dimension gut.",
+  "u": [
+   "Erklären, warum k-NN mit vielen Features schlechter wird",
+   "Feature-Selektion und PCA begründen",
+   "Distanzmetriken für die Embedding-Suche wählen"
+  ],
+  "x": "Ein Team, das einen Nearest-Neighbor-Recommender auf rohen One-Hot-Produktmerkmalen aufbaute, stellte fest, dass sich die Ähnlichkeitswerte relevanter und irrelevanter Artikel kaum unterschieden. Die Projektion der Artikel in einen gelernten 128-dimensionalen Embedding-Raum stellte aussagekräftige Distanzen wieder her und machte die approximative Nächste-Nachbarn-Suche praktikabel."
+ },
+ "learncurve": {
+  "n": "Lernkurve (Learning Curve)",
+  "d": "Eine Lernkurve stellt die Trainings- und Validierungsleistung eines Modells in Abhängigkeit von der Menge der Trainingsdaten dar (im Deep Learning auch in Abhängigkeit von den Trainingsschritten). Sie zeigt, ob mehr Daten, mehr Kapazität oder mehr Regularisierung der vielversprechendste nächste Schritt ist.\n\nDazu wird das Modell auf wachsenden Teilmengen des Trainingssets trainiert, oft mit Kreuzvalidierung für jede Größe, und beide Scores werden festgehalten. Laufen Trainings- und Validierungsfehler auf einem hohen Wert zusammen, hat das Modell einen hohen Bias, und mehr Daten helfen wenig; nötig sind ein reichhaltigeres Modell oder bessere Features. Bleibt eine große Lücke zwischen niedrigem Trainingsfehler und höherem Validierungsfehler, die mit wachsender Datenmenge schrumpft, hat das Modell eine hohe Varianz, und das Sammeln weiterer Daten dürfte sich lohnen.\n\nPunkte mit kleinen Stichproben sind verrauscht, daher ist das Mitteln über Folds wichtig. Die Kurve muss auf Validierungsdaten berechnet werden, die dem Produktivbetrieb entsprechen; andernfalls beschreibt sie nur die Leistung auf einer anderen Verteilung.",
+  "u": [
+   "Entscheiden, ob sich das Sammeln weiterer Daten lohnt",
+   "Hohen Bias von hoher Varianz unterscheiden",
+   "Das Labeling-Budget für eine neue Aufgabe abschätzen"
+  ],
+  "x": "Ein Team für Dokumentklassifikation erwog, für 50.000 weitere gelabelte Beispiele zu bezahlen. Seine Lernkurve zeigte, dass die Validierungsgenauigkeit bereits abgeflacht war und der Trainingsgenauigkeit entsprach, also investierte das Team stattdessen in einen stärkeren vortrainierten Encoder statt in zusätzliches Labeling."
+ },
+ "drift": {
+  "n": "Data Drift und Distribution Shift",
+  "d": "Ein Distribution Shift bedeutet, dass sich die Daten, die ein Modell im Produktivbetrieb sieht, von den Trainingsdaten unterscheiden, was die Genauigkeit unbemerkt verschlechtern kann. Data Drift bezeichnet meist Veränderungen der Eingabeverteilung P(X); Concept Drift bezeichnet Veränderungen der Beziehung P(y | X), bei der dieselben Eingaben nun zu anderen Ergebnissen führen.\n\nShifts haben viele Ursachen: neue Nutzersegmente, Saisonalität, Produktänderungen, Fehler in vorgelagerten Pipelines, Neukalibrierung von Sensoren oder Rückkopplung durch das Modell selbst. Beim Monitoring werden die Feature-Verteilungen im Produktivbetrieb mit einem Referenzfenster verglichen, etwa mit dem Population Stability Index (PSI), Kolmogorow-Smirnow-Tests oder der Jensen-Shannon-Divergenz; zudem werden die Verteilungen der Vorhersagen und, sobald Labels eintreffen, die tatsächliche Leistung verfolgt.\n\nGegenmaßnahmen sind Neutraining auf aktuellen Daten, zeitgewichtetes Training und Fallback-Regeln. Ein zentraler Fallstrick ist die Annahme, erkannter Input-Drift schade immer der Genauigkeit – oder dass ohne Input-Drift alles in Ordnung sei. Concept Drift kann ohne sichtbare Veränderung von P(X) auftreten, daher bleibt labelbasiertes Monitoring unverzichtbar.",
+  "u": [
+   "Feature-Verteilungen im Produktivbetrieb überwachen",
+   "Geplantes oder alarmbasiertes Neutraining auslösen",
+   "Defekte in vorgelagerten Datenpipelines erkennen"
+  ],
+  "x": "Ein Zahlungsdienstleister berechnet täglich den PSI jedes Modell-Features gegenüber dem Trainingsfenster und löst einen Alarm aus, wenn ein Wert eine vereinbarte Schwelle überschreitet. Ein Alarm führte eine plötzliche Verschiebung beim Feature für den Transaktionsbetrag auf eine geänderte Währungsumrechnung in einem vorgelagerten System zurück, die behoben wurde, bevor der Recall der Betrugserkennung spürbar sank."
+ },
+ "minmax": {
+  "n": "Min-Max-Normalisierung",
+  "d": "Die Min-Max-Normalisierung skaliert jedes Feature linear auf einen festen Bereich, meist [0, 1], indem das Minimum des Features abgezogen und durch die Spannweite geteilt wird. Die Form der Verteilung bleibt unverändert; nur Lage und Skala verschieben sich.\n\nSie ist nützlich, wenn ein Modell oder ein nachgelagerter Schritt beschränkte Eingaben erwartet, etwa Pixelintensitäten für ein neuronales Netz, Features für distanzbasierte Verfahren wie k-Nächste-Nachbarn oder Eingaben für Algorithmen, die Werte in einem bekannten Intervall voraussetzen. Minimum und Maximum dürfen nur aus den Trainingsdaten gelernt und müssen dann unverändert auf Validierungs-, Test- und Produktivdaten angewendet werden.\n\nIhre größte Schwäche ist die Empfindlichkeit gegenüber Ausreißern: Ein einziger Extremwert bestimmt die Spannweite und presst alle anderen Werte in ein schmales Band. Neue Daten außerhalb des Trainingsbereichs landen außerhalb von [0, 1], was manche Systeme nicht erwarten. Baumbasierte Modelle sind invariant gegenüber monotoner Umskalierung und profitieren daher nicht davon.",
+  "u": [
+   "Pixelwerte von Bildern für neuronale Netze skalieren",
+   "Feature-Bereiche für k-NN und k-Means angleichen",
+   "Eingaben für sigmoidbasierte Modelle begrenzen"
+  ],
+  "x": "Ein Computer-Vision-Team teilt 8-Bit-Pixelwerte durch 255 – eine feste Min-Max-Skalierung –, bevor es ein Netz zur Fehlererkennung auf Fabrikbildern trainiert. Da der Bereich durch das Sensorformat festgelegt und nicht aus Daten gelernt ist, funktioniert dieselbe Vorverarbeitung unverändert für jede Produktionskamera."
+ },
+ "standard": {
+  "n": "Standardisierung (Z-Score)",
+  "d": "Die Standardisierung transformiert jedes Feature auf Mittelwert null und Standardabweichung eins, indem der Mittelwert abgezogen und durch die Standardabweichung geteilt wird. Das Ergebnis, der sogenannte Z-Score, drückt jeden Wert als Anzahl von Standardabweichungen vom Mittelwert aus.\n\nViele Algorithmen reagieren empfindlich auf die Skala der Features. Gradientenabstieg konvergiert schneller, wenn die Features ähnliche Skalen haben, regularisierte lineare Modelle bestrafen Koeffizienten nur dann fair, wenn die Features vergleichbar sind, und PCA, SVMs, k-Means und k-Nächste-Nachbarn hängen alle von Distanzen oder Varianzen ab, die ein Feature mit großer Skala dominieren würde. Für diese Verfahren ist die Standardisierung der übliche Standard.\n\nMittelwert und Standardabweichung dürfen nur auf den Trainingsdaten berechnet und müssen für alle späteren Daten wiederverwendet werden. Die Standardisierung macht eine Verteilung nicht normalverteilt; ein schiefes Feature bleibt schief. Zudem wird sie von Ausreißern beeinflusst, da sowohl Mittelwert als auch Standardabweichung davon betroffen sind – bei Daten mit schweren Rändern kann Robust Scaling besser sein. Baumbasierte Modelle brauchen sie nicht.",
+  "u": [
+   "Vorverarbeitung für lineare Modelle und SVMs",
+   "Features vor einer PCA vorbereiten",
+   "Konvergenz des Gradientenabstiegs beschleunigen"
+  ],
+  "x": "Ein Marketing-Analytics-Team passt eine regularisierte logistische Regression auf Features an, die vom Alter bis zu den Jahresausgaben in Tausend Dollar reichen. Die Standardisierung innerhalb einer scikit-learn-Pipeline stellt sicher, dass der L2-Strafterm jedes Feature fair behandelt und dass dieselben Skalierungsparameter gespeichert und vom Scoring-Dienst im Produktivbetrieb angewendet werden."
+ },
+ "robust": {
+  "n": "Robuste Skalierung (Robust Scaling)",
+  "d": "Robust Scaling zentriert jedes Feature auf seinen Median und teilt durch seinen Interquartilsabstand (IQR), also den Abstand zwischen dem 25. und dem 75. Perzentil. Da Median und IQR die extremen Ränder ignorieren, verzerren einige wenige Ausreißer die Skalierung der übrigen Werte nicht.\n\nBei Standardisierung oder Min-Max-Skalierung kann ein einziger riesiger Wert die Standardabweichung oder die Spannweite so stark aufblähen, dass typische Werte in ein winziges Intervall zusammenfallen. Robust Scaling hält den Großteil der Daten auf einer sinnvollen Skala, während Ausreißer nach der Transformation groß bleiben – nützlich, wenn sie Information tragen. Das Verfahren eignet sich für sprunghafte Features wie Transaktionsbeträge oder Antwortzeiten in linearen Modellen, SVMs oder neuronalen Netzen.\n\nRobust Scaling entfernt oder kappt Ausreißer nicht; es verhindert nur, dass sie die Skala bestimmen. Ist ein Modell selbst empfindlich gegenüber extremen Eingaben, können Clipping oder eine Log-Transformation weiterhin nötig sein. Wie bei jedem Scaler dürfen die Statistiken nur auf den Trainingsdaten angepasst werden.",
+  "u": [
+   "Transaktionsbeträge mit seltenen riesigen Werten skalieren",
+   "Sensordaten mit Spitzen vorverarbeiten",
+   "Lineare Modelle auf Features mit schweren Rändern"
+  ],
+  "x": "Ein Observability-Team trainiert einen Anomaliedetektor auf Latenzmetriken von Diensten, bei denen seltene Spitzen das Tausendfache des typischen Werts erreichen. Robust Scaling hält normale Latenzen gut gespreizt, sodass das Modell ihre Struktur lernen kann, während die Spitzen nach der Skalierung klar extrem bleiben."
+ },
+ "logtf": {
+  "n": "Log-Transformation",
+  "d": "Eine Log-Transformation ersetzt einen positiven Wert x durch log(x) oder, wenn Nullen vorkommen, durch log(1 + x). Sie staucht große Werte viel stärker als kleine und überführt rechtsschiefe, multiplikative Daten in eine symmetrischere, additive Form.\n\nEinkommen, Preise, Zählwerte und Dateigrößen erstrecken sich oft über mehrere Größenordnungen. Auf der logarithmischen Skala zählt ein Anstieg von 10 auf 100 genauso viel wie einer von 100 auf 1.000, Verhältnisse werden also zu Differenzen. Das linearisiert oft Zusammenhänge, stabilisiert die Varianz und bändigt sehr große Werte. Auf eine Regressionszielgröße angewendet, wird aus einem mit quadratischem Fehler trainierten Modell eines, das sich auf den relativen statt den absoluten Fehler konzentriert.\n\nDer Logarithmus ist für null und negative Werte nicht definiert, daher braucht es log1p oder eine Verschiebung, und diese Verschiebung ist eine willkürliche Wahl. Wird ein Modell auf einer logarithmierten Zielgröße trainiert, schätzt die Exponentiation seiner Vorhersagen den Median statt des Mittelwerts, was Summen ohne Korrektur nach unten verzerrt.",
+  "u": [
+   "Preise oder Einkommen mit schweren rechten Rändern modellieren",
+   "Varianz von Zähl-Features stabilisieren",
+   "Log-Umsätze vorhersagen, um auf den relativen Fehler zu fokussieren"
+  ],
+  "x": "Eine Immobilienplattform sagt Verkaufspreise mit einem Gradient-Boosting-Modell vorher, das auf log(Preis) trainiert ist, sodass ein Fehler von 10 % bei einer günstigen Wohnung und bei einer Luxusvilla ähnlich bestraft wird. Die Vorhersagen werden mit exp zurücktransformiert, und das Team prüft den aggregierten Bias auf einem Validierungsset, weil die Rücktransformation die mittleren Preise tendenziell unterschätzt."
+ },
+ "boxcox": {
+  "n": "Box-Cox-Transformation",
+  "d": "Die Box-Cox-Transformation ist eine Familie von Potenztransformationen mit einem Parameter λ, die streng positive Daten näher an eine Normalverteilung bringt. Der Wert von λ wird per Maximum Likelihood so gewählt, dass die transformierten Daten bestmöglich zu einer Normalverteilung passen.\n\nBei λ = 1 werden die Daten nur verschoben, λ = 0,5 entspricht annähernd einer Wurzeltransformation, und λ = 0 ist als natürlicher Logarithmus definiert. Durch die Suche über λ wählt Box-Cox die Stärke der Stauchung, die die Schiefe am besten reduziert und die Varianz stabilisiert, statt pauschal eine Log-Transformation anzunehmen. Sie wird auf Features und Zielgrößen in linearen Modellen sowie in der Zeitreihenprognose angewendet.\n\nBox-Cox erfordert streng positive Eingaben; für Daten mit Nullen oder negativen Werten ist die Yeo-Johnson-Transformation die übliche Alternative. Das angepasste λ darf nur aus den Trainingsdaten stammen. Wie bei der Log-Transformation liefert das Rücktransformieren von Vorhersagen auf der transformierten Skala keine unverzerrte Schätzung des ursprünglichen Mittelwerts.",
+  "u": [
+   "Schiefe Features für lineare Modelle normalisieren",
+   "Varianz in der Zeitreihenprognose stabilisieren",
+   "Normalitätsannahmen statistischer Tests erfüllen"
+  ],
+  "x": "Ein Energieversorger, der den täglichen Stromverbrauch prognostiziert, wendet Box-Cox auf die Reihe an, bevor er ein ETS-Modell anpasst, weil die saisonale Schwankung mit dem Gesamtniveau wächst. Das angepasste λ wird mit dem Modell gespeichert, und die Prognosen werden zurücktransformiert, bevor sie an die Planer gehen."
+ },
+ "impute": {
+  "n": "Imputation fehlender Werte",
+  "d": "Die Imputation fehlender Werte füllt fehlende Einträge in einem Datensatz für Modelle auf, die damit nicht umgehen können. Der Ersatz kann eine einfache Kennzahl sein, ein aus anderen Features vorhergesagter Wert oder ein modellspezifischer Standardwert.\n\nEinfache Strategien nutzen Mittelwert oder Median für numerische Spalten und den häufigsten Wert oder eine eigene Kategorie „fehlend“ für kategoriale. Fortgeschrittene Verfahren nutzen ähnliche Zeilen (k-Nächste-Nachbarn) oder regressieren jedes Feature iterativ auf die übrigen (MICE). Oft lohnt es sich, einen binären Indikator hinzuzufügen, der markiert, welche Werte fehlten, denn schon die Tatsache, dass ein Wert fehlt, kann prädiktiv sein.\n\nDie richtige Methode hängt davon ab, warum Daten fehlen: völlig zufällig, zufällig gegeben die anderen Features oder nicht zufällig, wenn das Fehlen vom unbeobachteten Wert selbst abhängt. Imputationsstatistiken dürfen nur auf den Trainingsdaten angepasst werden. Mittelwertimputation verringert die Varianz und schwächt Korrelationen ab, und Gradient-Boosting-Bibliotheken wie LightGBM und XGBoost verarbeiten fehlende Werte nativ, sodass eine Imputation nicht immer nötig ist.",
+  "u": [
+   "Fehlende Laborwerte in klinischen Daten auffüllen",
+   "Optionale Formularfelder in Anträgen behandeln",
+   "Unvollständige Sensordaten für lineare Modelle aufbereiten"
+  ],
+  "x": "Ein Kreditteam, das Kreditanträge bewertet, stellt fest, dass viele Antragsteller das Feld zur Beschäftigungsdauer leer lassen. Es imputiert den Median in einer nur auf Trainingsdaten angepassten Pipeline und ergänzt ein Feature, das das Fehlen anzeigt – dieses erweist sich als prädiktiv, weil Antragsteller, die das Feld überspringen, mit einer anderen Rate ausfallen."
+ },
+ "outlier": {
+  "n": "Umgang mit Ausreißern",
+  "d": "Der Umgang mit Ausreißern umfasst das Erkennen von Datenpunkten, die weit vom Großteil der Verteilung entfernt liegen, und die Entscheidung, ob man sie behält, korrigiert, kappt, transformiert oder entfernt. Die Entscheidung hängt davon ab, ob es sich um einen Fehler oder um ein echtes seltenes Ereignis handelt.\n\nZu den Erkennungsregeln gehören Z-Scores (zum Beispiel |z| > 3), die IQR-Regel, die Werte jenseits von 1,5 × IQR außerhalb der Quartile markiert, sowie multivariate Verfahren wie Isolation Forest, Local Outlier Factor oder die Mahalanobis-Distanz, die Punkte erfassen, die für jedes Feature einzeln normal, in Kombination aber ungewöhnlich aussehen. Eingabefehler lassen sich dann korrigieren oder entfernen, während legitime Extremwerte gekappt, logarithmiert oder mit robusten Verlustfunktionen wie Huber behandelt werden können.\n\nAusreißer zählen am meisten bei Modellen, die auf quadratischem Fehler, Mittelwerten und Distanzen beruhen, und weniger bei Bäumen. Ein häufiger Fehler ist, Ausreißer automatisch zu löschen: Bei Betrugserkennung, Fehlerüberwachung oder der Diagnose seltener Krankheiten sind die Ausreißer womöglich genau die Fälle, die das Modell lernen muss.",
+  "u": [
+   "Eingabefehler in tabellarischen Datensätzen bereinigen",
+   "Lineare Regression vor Extrempunkten schützen",
+   "Ungewöhnliche Sensormesswerte zur Prüfung markieren"
+  ],
+  "x": "Ein E-Commerce-Analytics-Team fand Bestellwerte von genau 9.999.999, verursacht durch ein Testkonto und einen Standard-Platzhalter in einem System. Diese Zeilen wurden als Fehler entfernt, echte große Geschäftsbestellungen jedoch behalten und ihr Einfluss im Umsatzprognosemodell mit einem Huber-Verlust begrenzt."
+ },
+ "clipwin": {
+  "n": "Clipping und Winsorisierung",
+  "d": "Clipping und Winsorisierung begrenzen Extremwerte, indem alles jenseits eines gewählten Schwellenwerts durch den Schwellenwert selbst ersetzt wird. Clipping nutzt feste Grenzen, etwa 0 und 1.000; die Winsorisierung legt die Grenzen an Perzentilen der Daten fest, etwa am 1. und 99., sodass sich der Schnitt jedem Feature anpasst.\n\nAnders als das Löschen von Ausreißern behalten beide Verfahren jede Zeile und ihre Rangfolge unter den nicht extremen Werten, begrenzen aber, wie stark ein einzelner Punkt einen Mittelwert, einen Regressionskoeffizienten oder einen Gradienten verschieben kann. Sie sind verbreitet für Features mit schweren Rändern in linearen Modellen und neuronalen Netzen, für robuste Kennzahlen und für Finanzkennzahlen, bei denen einige wenige Unternehmen enorme Werte haben.\n\nPerzentil-Schwellen müssen auf den Trainingsdaten berechnet und unverändert wiederverwendet werden. Das Kappen löscht die Information, wie extrem ein Wert war – schädlich, wenn gerade die Extremwerte das gesuchte Signal sind, etwa bei Betrug. Baummodelle sind von monotonen Rändern weitgehend unbeeinflusst, daher ist der Schritt für sie oft unnötig.",
+  "u": [
+   "Features mit schweren Rändern für lineare Regression begrenzen",
+   "Robuste Mittelwerte von Finanzkennzahlen",
+   "Eingaben neuronaler Netze mit seltenen Spitzen stabilisieren"
+  ],
+  "x": "Ein Team für quantitative Forschung winsorisiert Bewertungskennzahlen von Unternehmen innerhalb jedes Monats am 1. und 99. Perzentil, bevor es Querschnittsregressionen anpasst. So wird verhindert, dass eine Handvoll Unternehmen mit Gewinnen nahe null und enormen Kennzahlen die Koeffizientenschätzungen dominiert."
+ },
+ "onehot": {
+  "n": "One-Hot-Encoding",
+  "d": "One-Hot-Encoding wandelt eine kategoriale Variable mit k Kategorien in k binäre Spalten um, von denen in jeder Zeile genau eine den Wert 1 hat. So können Modelle, die numerische Eingaben benötigen, Kategorien nutzen, ohne dass eine Ordnung oder ein Abstand zwischen ihnen unterstellt wird.\n\nWürde man Ganzzahlen wie Rot = 1, Grün = 2, Blau = 3 vergeben, signalisierte das einem linearen Modell oder neuronalen Netz, Blau sei dreimal Rot und Grün liege dazwischen. One-Hot-Vektoren vermeiden das und geben jeder Kategorie einen eigenen Koeffizienten. Bei linearen Modellen mit Achsenabschnitt wird oft eine Spalte weggelassen, um perfekte Multikollinearität zu vermeiden, die sogenannte Dummy-Variablen-Falle. Encoder sollten auf den Trainingsdaten angepasst werden und mit unbekannten Kategorien umgehen können.\n\nDie wichtigste Einschränkung ist die Dimensionalität: Eine Spalte mit Zehntausenden von Werten, etwa eine Nutzer-ID oder Postleitzahl, erzeugt eine riesige dünn besetzte Matrix mit sehr wenigen Beispielen pro Spalte. Alternativen für hohe Kardinalität sind Target Encoding, Frequency Encoding, Hashing oder gelernte Embeddings.",
+  "u": [
+   "Kategorien mit niedriger Kardinalität für lineare Modelle kodieren",
+   "Produkttyp oder Wochentag darstellen",
+   "Nominale Features für neuronale Netze aufbereiten"
+  ],
+  "x": "Das Pricing-Team einer Fluggesellschaft kodiert Beförderungsklasse, Buchungskanal und Abflugwochentag als One-Hot-Features in einer logistischen Regression, die No-Shows vorhersagt. Der Encoder läuft innerhalb der ausgerollten Pipeline und ignoriert unbekannte Kategorien, sodass ein neu eingeführter Buchungskanal das Scoring nicht zum Absturz bringt."
+ },
+ "targetenc": {
+  "n": "Target Encoding",
+  "d": "Target Encoding ersetzt jede Kategorie durch eine Kennzahl der Zielgröße, die über die Zeilen dieser Kategorie berechnet wird – typischerweise den Mittelwert des Labels. So wird aus einem Feature mit hoher Kardinalität eine einzige informative numerische Spalte.\n\nBei einer binären Zielgröße wird eine Stadt zum Anteil positiver Ergebnisse in dieser Stadt. Seltene Kategorien liefern verrauschte Mittelwerte, daher wird die Schätzung zum globalen Mittelwert hin geglättet, mit einem Gewicht, das mit der Häufigkeit der Kategorie wächst. Das hält die Dimensionalität selbst bei Features wie Händler-ID oder Postleitzahl niedrig und eignet sich für lineare wie für Baummodelle.\n\nDas größte Risiko ist Target Leakage: Fließt das eigene Label einer Zeile in ihre Kodierung ein, sieht das Modell eine verzerrte Version der Antwort und overfittet. Der sichere Ansatz ist Out-of-Fold-Encoding, bei dem jede Trainingszeile nur mit Statistiken aus anderen Folds kodiert wird; anschließend wird der Encoder auf allen Trainingsdaten angepasst, um die Testdaten zu transformieren. Der TargetEncoder von scikit-learn wendet dieses Cross-Fitting in fit_transform automatisch an.",
+  "u": [
+   "Händler oder Postleitzahl für Betrugsmodelle kodieren",
+   "IDs mit hoher Kardinalität für lineare Modelle verdichten",
+   "Klickvorhersage mit vielen Werbetreibenden-Kategorien"
+  ],
+  "x": "Ein Online-Marktplatz sagt anhand der Verkäufer-ID, die Hunderttausende Werte hat, vorher, ob ein Angebot innerhalb einer Woche verkauft wird. Geglättetes Out-of-Fold-Target-Encoding macht aus der ID eine Spalte, die die historische Verkaufsquote jedes Verkäufers widerspiegelt, während starke Glättung neue Verkäufer nahe am globalen Durchschnitt hält."
+ },
+ "freqenc": {
+  "n": "Frequency Encoding",
+  "d": "Frequency Encoding ersetzt jede Kategorie durch ihre Häufigkeit in den Trainingsdaten, entweder als absolute Anzahl oder als Anteil. So wird eine kategoriale Spalte beliebiger Kardinalität zu einem einzigen numerischen Feature, ohne die Zielgröße zu verwenden.\n\nDie Intuition: Popularität ist oft schon für sich informativ – häufige Händler, verbreitete Gerätemodelle oder beliebte Produkte verhalten sich womöglich anders als seltene. Da das Verfahren keine Labels nutzt, birgt es kein Risiko von Target Leakage, ist günstig und kommt mit sehr hoher Kardinalität zurecht. Es passt gut zu Baummodellen, die an Häufigkeitsschwellen splitten können, und wird oft mit anderen Kodierungen kombiniert.\n\nSeine wichtigste Einschränkung: Kategorien mit gleicher Häufigkeit werden ununterscheidbar, auch wenn sie sich sehr unterschiedlich verhalten. Die Häufigkeiten müssen aus den Trainingsdaten stammen und gespeichert werden; unbekannte Kategorien im Produktivbetrieb erhalten typischerweise die Häufigkeit null oder einen kleinen Standardwert. Ändert sich das Datenvolumen über die Zeit, driften absolute Häufigkeiten, daher sind normierte Häufigkeiten meist sicherer.",
+  "u": [
+   "Gerätemodell oder Browser in Klick-Logs kodieren",
+   "Popularität von Händlern oder Produkten erfassen",
+   "Günstige, leakage-freie Kodierung für Gradient Boosting"
+  ],
+  "x": "Ein Ad-Tech-Team ergänzt ein LightGBM-Modell zur Klickrate um frequenzkodierte Publisher-Domains und App-IDs. Die Häufigkeiten werden aus einem festen Trainingsfenster berechnet und als Lookup-Tabelle im Feature-Service gespeichert; unbekannte Domains werden auf null abgebildet, sodass neue Publisher als selten behandelt werden."
+ },
+ "binning": {
+  "n": "Binning (Diskretisierung)",
+  "d": "Binning wandelt ein stetiges Feature in ein kategoriales um, indem sein Wertebereich in Intervalle unterteilt und jeder Wert dem Intervall zugeordnet wird, in das er fällt. Übliche Schemata sind Bins gleicher Breite, Bins gleicher Häufigkeit (Quantile) und Bins, die nach Domänenwissen oder von einem Entscheidungsbaum gewählt werden.\n\nBinning erlaubt einem linearen Modell, nichtlineare Effekte zu erfassen, weil jeder Bin seinen eigenen Koeffizienten erhält, und begrenzt den Einfluss von Ausreißern, die einfach in die Randbins fallen. Gebinnte Features sind leicht zu erklären – deshalb vergeben Kredit-Scorecards Punkte pro Bin. Quantil-Binning ist robust gegenüber Schiefe, während Binning mit gleicher Breite manche Bins nahezu leer lassen kann.\n\nDer Preis ist Informationsverlust: Werte nahe einer Grenze werden als verschieden behandelt, Werte an entgegengesetzten Enden eines Bins dagegen als identisch. Anzahl und Lage der Bins sind zusätzliche Hyperparameter, die overfitten können. Flexible Modelle wie Gradient-Boosted Trees lernen ihre eigenen Split-Punkte, daher hilft ihnen Binning selten.",
+  "u": [
+   "Punktebasierte Kredit-Scorecards aufbauen",
+   "Lineare Modelle nichtlineare Effekte erfassen lassen",
+   "Alter oder Einkommen in Berichtskategorien gruppieren"
+  ],
+  "x": "Das Kreditrisiko-Team einer Bank teilt Alter, Einkommen und Kreditauslastung der Antragsteller in quantilbasierte Gruppen ein und passt eine Scorecard per logistischer Regression an. Aufsichtsbehörden und Kreditsachbearbeiter können die jedem Bin zugewiesenen Punkte direkt ablesen – was ein Blackbox-Modell nicht erlauben würde."
+ },
+ "featureeng": {
+  "n": "Feature Engineering",
+  "d": "Feature Engineering bezeichnet das Erzeugen neuer Eingabevariablen aus Rohdaten, damit ein Modell das relevante Muster leichter lernen kann. Es kodiert Domänenwissen, für dessen Entdeckung das Modell sonst viel mehr Daten oder eine deutlich flexiblere Form bräuchte.\n\nTypische Techniken sind Verhältnisse (Schulden geteilt durch Einkommen), Interaktionen, Datumsbestandteile wie die Tageszeit, Aggregate über die Historie eines Kunden (Bestellungen der letzten 30 Tage), Distanzen zwischen Orten und Log-Transformationen. Bei tabellarischen Daten zählen gut gestaltete Features oft mehr als die Wahl zwischen starken Algorithmen, und sie machen Modelle zudem leichter erklärbar.\n\nJedes Feature muss zum Vorhersagezeitpunkt ausschließlich mit den dann verfügbaren Informationen berechenbar sein; Aggregate, die in die Zukunft blicken, sind eine klassische Quelle für Leakage. Derselbe Code sollte die Features für Training und Serving erzeugen, oft über einen Feature Store, um Training-Serving-Skew zu vermeiden. Deep Learning reduziert manuelles Feature Engineering bei Bildern und Text, nicht aber bei den meisten tabellarischen Problemen.",
+  "u": [
+   "Aggregate über die Kundenhistorie für Churn-Vorhersagen",
+   "Verhältnis- und Interaktions-Features für das Kreditscoring",
+   "Zeit- und Ortsmerkmale für Lieferzeitschätzungen"
+  ],
+  "x": "Ein Essenslieferdienst verbesserte sein Lieferzeitmodell durch Features wie die Zubereitungszeit des Restaurants in der letzten Stunde, die Entfernung des Kuriers zum Restaurant und den aktuellen Bestellrückstau. Diese Features werden in einem gemeinsamen Feature Store berechnet, sodass Trainingspipeline und Echtzeit-Vorhersagedienst exakt dieselben Definitionen verwenden."
+ },
+ "lagfeat": {
+  "n": "Lag-Features",
+  "d": "Lag-Features sind vergangene Werte einer Zeitreihe, die als Eingaben zur Vorhersage ihres aktuellen oder zukünftigen Werts dienen. Ein Lag-k-Feature zum Zeitpunkt t ist einfach der beobachtete Wert zum Zeitpunkt t − k, sodass das Modell Autokorrelation und Saisonalität aus der Historie lernen kann.\n\nSie machen aus der Prognose ein gewöhnliches überwachtes Lernproblem. Nützliche Lags spiegeln den Rhythmus der Daten wider: Lag 1 für Momentum, Lag 7 für Wochenzyklen bei Tagesdaten, Lag 24 oder 168 bei Stundendaten und Lag 52 bei Wochendaten mit jährlicher Saisonalität. Auch Lags verwandter Reihen, etwa des Preises, sind üblich.\n\nDer Prognosehorizont bestimmt, welche Lags zulässig sind. Werden Vorhersagen sieben Tage im Voraus getroffen, ist jeder Lag unter sieben Tagen zum Vorhersagezeitpunkt nicht verfügbar; ihn zu nutzen, lässt zukünftige Informationen einfließen und bläht die Validierungsscores auf. Lags erzeugen außerdem fehlende Werte am Anfang jeder Reihe, und die Splits müssen die zeitliche Reihenfolge respektieren.",
+  "u": [
+   "Tägliche Absatzprognose mit Gradient-Boosted Trees",
+   "Stündliche Stromlastvorhersage",
+   "Nachfrage des Folgetags pro Filiale und Artikel vorhersagen"
+  ],
+  "x": "Eine Supermarktkette prognostiziert die Artikelnachfrage pro Filiale 14 Tage im Voraus mit LightGBM und nutzt dafür Lags von 14, 21, 28 und 364 Tagen, berechnet pro Filiale-Artikel-Paar. Kürzere Lags wurden bewusst ausgeschlossen, weil sie zum Zeitpunkt der Nachbestellung noch nicht existieren würden."
+ },
+ "rollfeat": {
+  "n": "Rolling-Window-Features",
+  "d": "Rolling-Window-Features fassen eine Zeitreihe über ein gleitendes Fenster jüngster Beobachtungen zusammen, zum Beispiel Mittelwert, Standardabweichung, Minimum, Maximum oder Summe der letzten sieben Tage. Sie erfassen das lokale Niveau, den Trend und die Volatilität einer Reihe glatter als einzelne Lag-Werte.\n\nEin gleitender Mittelwert verringert das Rauschen und zeigt das jüngste Niveau; eine gleitende Standardabweichung misst die jüngste Volatilität; gleitende Zählungen oder Summen erfassen Aktivität, etwa Transaktionen in der letzten Stunde. Exponentiell gewichtete Mittelwerte gewichten jüngere Punkte stärker, ohne harte Abschneidegrenze. Meist werden pro Entität mehrere Fensterlängen kombiniert, etwa 7, 28 und 90 Tage.\n\nDas Fenster muss zum oder vor dem Zeitpunkt der letzten zum Vorhersagezeitpunkt verfügbaren Information enden. Ein gleitender Mittelwert, der den aktuellen Zielwert oder einen Wert innerhalb des Prognosehorizonts einschließt, verrät die Antwort. Das übliche sichere Muster ist, die Reihe zuerst um den Horizont zu verschieben und dann die gleitende Statistik zu berechnen.",
+  "u": [
+   "Features zur Transaktionsgeschwindigkeit für die Betrugserkennung",
+   "Durchschnittliche jüngste Nachfrage für die Absatzprognose",
+   "Volatilitäts-Features für finanzielle Risikomodelle"
+  ],
+  "x": "Ein Kartenherausgeber berechnet für jede Karte Anzahl und Gesamtbetrag der Transaktionen in der letzten Stunde, den letzten 24 Stunden und den letzten 7 Tagen und vergleicht den aktuellen Betrag mit dem gleitenden 30-Tage-Durchschnitt. Diese Velocity-Features werden in einem Streaming-System gepflegt, damit sie für das Echtzeit-Betrugsscoring innerhalb von Sekunden aktuell sind."
+ },
+ "imbalance": {
+  "n": "Klassenungleichgewicht (Class Imbalance)",
+  "d": "Ein Klassenungleichgewicht liegt vor, wenn eine Klasse deutlich seltener ist als die anderen, etwa Betrug, Defekte oder Krankheiten. Ein Modell kann dann eine hohe Accuracy erreichen, indem es stets die Mehrheitsklasse vorhersagt, und ist dennoch für genau die wichtigen Fälle nutzlos.\n\nIm Training dominieren Beispiele der Mehrheitsklasse den Verlust, und das Modell sagt die Minderheitsklasse womöglich kaum vorher. In der Evaluation wird Accuracy irreführend; Precision, Recall, F1, PR-AUC und kostenbasierte Metriken sind aussagekräftiger. PR-AUC ist besonders nützlich, weil ihre Zufalls-Baseline der Positivrate entspricht, wodurch kleine Verbesserungen sichtbar werden. Übliche Gegenmittel sind Klassengewichte, Resampling (Oversampling, SMOTE, Undersampling), eine kostenbasierte Wahl des Schwellenwerts und das Sammeln weiterer Beispiele der Minderheitsklasse.\n\nDas Ungleichgewicht allein ist nicht immer das Problem. Ein gut spezifiziertes probabilistisches Modell, das auf unausgewogenen Daten trainiert wurde, kann dennoch gute Rangfolgen und kalibrierte Wahrscheinlichkeiten liefern; oft muss nur der Schwellenwert angepasst werden. Resampling verändert die vorhergesagten Wahrscheinlichkeiten, daher müssen sie neu kalibriert werden, wenn die Ausgaben als echte Wahrscheinlichkeiten dienen.",
+  "u": [
+   "Betrugserkennung bei seltenen positiven Transaktionen",
+   "Erkennung von Fertigungsfehlern aus Sensordaten",
+   "Screening auf seltene Krankheiten anhand von Patientenakten"
+  ],
+  "x": "Ein Qualitätsteam in der Fertigung sagt defekte Teile vorher, die nur einen Bruchteil eines Prozents der Produktion ausmachen. Es trainiert mit Klassengewichten, evaluiert mit PR-AUC und dem Recall bei festem Prüfbudget und wählt einen Schwellenwert so, dass die Zahl markierter Teile dem entspricht, was die Prüfer pro Schicht bewältigen können."
+ },
+ "smote": {
+  "n": "SMOTE-Oversampling",
+  "d": "SMOTE (Synthetic Minority Over-sampling Technique) gleicht einen Datensatz aus, indem es neue synthetische Beispiele der Minderheitsklasse erzeugt, statt vorhandene zu duplizieren. Jeder synthetische Punkt wird an einer zufälligen Position auf der Strecke zwischen einem Minderheitsbeispiel und einem seiner k nächsten Nachbarn derselben Klasse platziert.\n\nVerglichen mit zufälligem Oversampling, das Zeilen kopiert und ein Modell zum Auswendiglernen verleitet, füllt SMOTE die Region um Minderheitsbeispiele auf und verschafft Klassifikatoren eine breitere Entscheidungsregion für die seltene Klasse. Zu den Varianten gehören Borderline-SMOTE, ADASYN und SMOTE-NC für gemischte numerische und kategoriale Features.\n\nSMOTE darf nur auf den Trainings-Fold angewendet werden, innerhalb der Kreuzvalidierungsschleife; Resampling vor dem Splitten lässt synthetische Kopien von Validierungspunkten ins Training gelangen. Die Interpolation setzt voraus, dass der Raum zwischen Minderheitspunkten ebenfalls Minderheitsgebiet ist, was bei überlappenden Klassen, verrauschten Labels oder kategorialen Features scheitern kann. In der Praxis schneiden Klassengewichte oder Schwellenwert-Tuning mit Gradient Boosting oft genauso gut ab, und SMOTE verzerrt die vorhergesagten Wahrscheinlichkeiten.",
+  "u": [
+   "Seltene Betrugsfälle für klassische Klassifikatoren ausgleichen",
+   "Minderheitsklassen in kleinen tabellarischen Datensätzen anreichern",
+   "Seltene Ausfälle anhand von Gerätesensoren vorhersagen"
+  ],
+  "x": "Ein Telekommunikationsteam, das seltene Ausfälle von Netzwerkgeräten vorhersagt, wendet SMOTE innerhalb einer imbalanced-learn-Pipeline an, sodass jeder Kreuzvalidierungs-Fold unabhängig neu gesampelt wird. Es vergleicht SMOTE mit Klassengewichtung und behält die Variante, die auf einem unberührten, zeitbasierten Testzeitraum die bessere PR-AUC liefert."
+ },
+ "undersample": {
+  "n": "Undersampling",
+  "d": "Undersampling gleicht einen unausgewogenen Datensatz aus, indem Beispiele der Mehrheitsklasse entfernt werden, statt Minderheitsbeispiele hinzuzufügen. Die einfachste Form behält alle Zeilen der Minderheitsklasse und eine zufällige Teilmenge der Mehrheitsklasse.\n\nEs verkürzt Trainingszeit und Speicherbedarf, was bei Klick-Logs mit Hunderten Millionen Zeilen zählt, und lässt die Minderheitsklasse im Verlust stärker ins Gewicht fallen. Informierte Varianten wie Tomek Links und Edited Nearest Neighbors entfernen Mehrheitspunkte nahe der Entscheidungsgrenze oder solche, die wahrscheinlich falsch gelabelt sind. Ensembles wie Balanced Random Forests oder EasyEnsemble trainieren viele Modelle auf verschiedenen untergesampelten Teilmengen, sodass insgesamt wenig Information verloren geht.\n\nDer offensichtliche Preis sind verworfene Daten, was die Varianz erhöhen und die Sicht des Modells auf die Mehrheitsklasse verschlechtern kann. Undersampling verschiebt außerdem die vorhergesagten Wahrscheinlichkeiten nach oben; werden die Scores des Modells als Wahrscheinlichkeiten genutzt, müssen sie um die Sampling-Rate korrigiert werden. Es darf nur auf Trainingsdaten angewendet werden, nie auf Validierungs- oder Testsets.",
+  "u": [
+   "Riesige Klick-Logs für CTR-Modelle verkleinern",
+   "Training auf stark unausgewogenen Daten beschleunigen",
+   "Balanced-Bagging-Ensembles für seltene Ereignisse"
+  ],
+  "x": "Eine Werbeplattform behält beim Training ihres Klickratenmodells jeden Klick, aber nur einen kleinen zufälligen Anteil der Impressions ohne Klick, was die Trainingskosten erheblich senkt. Da die ausgespielten Gebote von kalibrierten Wahrscheinlichkeiten abhängen, werden die Vorhersagen vor der Nutzung um die Negative-Sampling-Rate korrigiert."
+ },
+ "classweight": {
+  "n": "Klassengewichte (Class Weights)",
+  "d": "Klassengewichte skalieren den Beitrag jedes Beispiels zum Trainingsverlust je nach seiner Klasse, sodass Fehler bei seltenen Klassen mehr kosten als Fehler bei häufigen.\n\nEine gängige Wahl, die sogenannte ausgewogene Gewichtung, setzt jedes Klassengewicht umgekehrt proportional zur Klassenhäufigkeit, sodass jede Klasse gleich viel zum Gesamtverlust beiträgt. Gewichte können auch geschäftliche Kosten abbilden, etwa indem ein übersehener Betrugsfall zehnmal so teuer ist wie ein Fehlalarm. Die meisten Bibliotheken unterstützen das direkt: class_weight in scikit-learn, scale_pos_weight in XGBoost und LightGBM sowie Gewichtsargumente in den Verlustfunktionen von PyTorch.\n\nIm Vergleich zum Resampling nutzen Klassengewichte alle Daten und fügen keine synthetischen Punkte hinzu, was sie zu einer sauberen ersten Option macht. Sie verschieben die Entscheidungsgrenze und blähen die vorhergesagten Wahrscheinlichkeiten der Minderheitsklasse auf, sodass die Ausgaben nicht mehr kalibriert sind und eventuell neu kalibriert werden müssen. Extreme Gewichte können das Training instabil machen, besonders mit stochastischen Gradienten und sehr wenigen Minderheitsbeispielen pro Batch.",
+  "u": [
+   "Unausgewogene Klassifikation mit logistischer Regression oder SVMs",
+   "Kostensensitive Betrugs- und Churn-Modelle",
+   "Gewichtete Kreuzentropie für seltene Klassen im Deep Learning"
+  ],
+  "x": "Ein Kundensupport-Team ordnet Tickets vielen Kategorien zu, von denen einige, etwa Sicherheitsvorfälle, selten, aber dringend sind. Es trainiert einen Textklassifikator mit gewichteter Kreuzentropie, die das Übersehen dieser Kategorien verteuert, und überwacht den Recall pro Klasse statt der Gesamt-Accuracy."
+ },
+ "featsel": {
+  "n": "Feature-Selektion",
+  "d": "Die Feature-Selektion wählt eine Teilmenge der verfügbaren Eingabefeatures aus, mit dem Ziel eines einfacheren, schnelleren und oft robusteren Modells bei ähnlicher oder besserer Genauigkeit.\n\nDie Verfahren fallen in drei Gruppen. Filtermethoden bewerten jedes Feature unabhängig vom Modell anhand von Korrelation, Transinformation (Mutual Information) oder statistischen Tests; sie sind schnell, aber blind für Interaktionen. Wrapper-Methoden wie Recursive Feature Elimination oder Vorwärtsselektion trainieren wiederholt ein Modell auf Kandidaten-Teilmengen, was Interaktionen erfasst, aber teuer ist. Eingebettete Methoden wählen während des Trainings aus, etwa wenn L1-Regularisierung manche Koeffizienten exakt auf null treibt oder Baummodelle Wichtigkeitswerte liefern.\n\nSelektion verringert Overfitting durch verrauschte Features, senkt die Kosten der Datenerhebung und verbessert die Interpretierbarkeit. Sie muss innerhalb der Kreuzvalidierungsschleife erfolgen; wer Features auf dem gesamten Datensatz auswählt und erst danach kreuzvalidiert, erhält optimistische Scores. Wichtigkeitsbasierte Selektion ist bei korrelierten Features instabil, weil das Modell jedes von zwei redundanten Features nutzen kann, und impuritätsbasierte Wichtigkeiten in Bäumen bevorzugen Features mit hoher Kardinalität.",
+  "u": [
+   "Verrauschte Features aus breiten tabellarischen Daten entfernen",
+   "Kosten der Feature-Erhebung im Produktivbetrieb senken",
+   "Modelle für Interpretierbarkeit oder Regulierung vereinfachen"
+  ],
+  "x": "Ein Kreditteam begann mit mehreren hundert Kandidaten-Features aus Auskunftei- und Antragsdaten. Mit L1-regularisierter logistischer Regression und Permutation Importance innerhalb der Kreuzvalidierung behielt es einige Dutzend Features, was die Abhängigkeit von teuren Datenanbietern verringerte, ohne die Validierungs-AUC zu senken."
+ },
+ "vif": {
+  "n": "Multikollinearität und VIF",
+  "d": "Multikollinearität liegt vor, wenn zwei oder mehr Features stark linear zusammenhängen, wodurch die einzelnen Koeffizienten eines linearen Modells instabil und schwer interpretierbar werden. Der Varianzinflationsfaktor (VIF) misst, wie stark die Varianz eines Koeffizienten durch diese Redundanz aufgebläht wird.\n\nUm den VIF für Feature j zu berechnen, regressiert man es auf alle anderen Features und nimmt R²ⱼ aus dieser Regression; VIF = 1 / (1 − R²ⱼ). Ein VIF von 1 bedeutet keinen linearen Zusammenhang; Werte über etwa 5 bis 10 gelten gemeinhin als problematisch. Bei hohem VIF können kleine Datenänderungen die Vorzeichen von Koeffizienten umkehren, und Standardfehler sowie p-Werte werden unzuverlässig.\n\nAbhilfe schaffen das Weglassen oder Zusammenführen redundanter Features, fachlich motivierte Verhältnisse, PCA oder Ridge-Regression, die korrelierte Koeffizienten stabilisiert. Multikollinearität schadet vor allem der Interpretation und Inferenz; die Vorhersagegenauigkeit leidet meist nicht, solange die Korrelationsstruktur im Produktivbetrieb gleich bleibt. Berechnen Sie den VIF mit Achsenabschnitt.",
+  "u": [
+   "Regressoren prüfen, bevor Koeffizienten interpretiert werden",
+   "Features für ökonometrische oder Pricing-Modelle bereinigen",
+   "Instabile Koeffizientenvorzeichen diagnostizieren"
+  ],
+  "x": "Ein Pricing-Analytics-Team, das eine erklärende Regression für Versicherungsprämien aufbaute, stellte fest, dass Fahrzeuggewicht, Hubraum und Motorleistung VIF-Werte weit über 10 hatten und ihre Koeffizienten zwischen Quartalen das Vorzeichen wechselten. Das Team behielt die Motorleistung und ein Leistungsgewicht-Verhältnis, wodurch die Effekte des Modells stabil genug wurden, um sie Aktuaren zu präsentieren."
+ },
+ "dimred": {
+  "n": "Dimensionsreduktion",
+  "d": "Die Dimensionsreduktion bildet Daten mit vielen Features auf eine geringere Zahl von Dimensionen ab und bewahrt dabei die wesentliche Struktur, etwa Varianz, Nachbarschaften oder Klassentrennung.\n\nZu den linearen Verfahren gehören die Hauptkomponentenanalyse (PCA), die orthogonale Richtungen maximaler Varianz findet, und die trunkierte SVD, die auf dünn besetzten Matrizen wie Text arbeitet. Nichtlineare Verfahren wie t-SNE und UMAP bewahren lokale Nachbarschaften und dienen vor allem der Visualisierung, während Autoencoder mit neuronalen Netzen komprimierte Repräsentationen lernen. Überwachte Varianten wie die lineare Diskriminanzanalyse nutzen Labels, um Richtungen zu behalten, die die Klassen trennen.\n\nDimensionsreduktion hilft gegen den Fluch der Dimensionalität, entfernt Redundanz zwischen korrelierten Features, beschleunigt Training und Speicherung und macht Daten in zwei oder drei Dimensionen sichtbar. Die reduzierten Features sind schwerer zu interpretieren, und unüberwachte Reduktion kann Richtungen mit geringer Varianz verwerfen, die stark prädiktiv sind. t-SNE- und UMAP-Plots verzerren globale Distanzen und Clustergrößen und sollten daher nicht als getreue Karten der Daten gelesen werden.",
+  "u": [
+   "Embeddings oder Zelltypen in 2D visualisieren",
+   "Korrelierte Sensor-Features komprimieren",
+   "Nearest-Neighbor-Suche beschleunigen"
+  ],
+  "x": "Eine Gruppe für Single-Cell-Genomik reduziert Expressionsprofile Tausender Gene auf 50 Hauptkomponenten und führt dann UMAP auf diesen Komponenten zur Visualisierung und zum Clustering aus. Der PCA-Schritt entfernt Rauschen und macht die Berechnung des Nachbarschaftsgraphen schnell genug für Datensätze mit Millionen von Zellen."
+ },
+ "l1": {
+  "n": "L1-Regularisierung (Lasso)",
+  "d": "Die L1-Regularisierung addiert die Summe der Beträge der Modellgewichte zum Verlust. Das treibt viele Gewichte exakt auf null und bewirkt so eine automatische Feature-Selektion. In der linearen Regression heißt dieses Verfahren Lasso.\n\nDer Betragsterm hat bei null einen Knick: Sein Subgradient ist dort das gesamte Intervall [−λ, λ], sodass ein Gewicht genau bei null bleibt, solange sein Feature den Verlust nicht um mehr als λ verringert. Geometrisch berührt der rautenförmige Nebenbedingungsbereich die Höhenlinien des Verlusts an seinen Ecken, an denen einige Koordinaten null sind. Lasso wird mit Koordinatenabstieg oder proximalen Verfahren gelöst, da der Strafterm bei null nicht differenzierbar ist.\n\nL1 ist nützlich, wenn viele Features voraussichtlich irrelevant sind und ein kompaktes Modell gebraucht wird. Bei stark korrelierten Features wählt Lasso tendenziell eines eher willkürlich aus und verwirft die anderen, und die Auswahl kann sich zwischen Datenstichproben ändern. Die Features müssen vorher standardisiert werden, da der Strafterm von der Skala der Koeffizienten abhängt.",
+  "u": [
+   "Dünn besetzte lineare Modelle mit vielen Kandidaten-Features",
+   "Gene oder Biomarker aus breiten Daten auswählen",
+   "Kompakte, interpretierbare Scoring-Modelle"
+  ],
+  "x": "Ein Marketing-Analytics-Team passt ein Lasso-Modell auf Hunderte Kampagnen-, Kanal- und Saisonalitäts-Features an, um wöchentliche Anmeldungen zu erklären. Der per Kreuzvalidierung gewählte Strafterm lässt eine kleine Menge von Koeffizienten ungleich null übrig, die Analysten prüfen können, und das Team kontrolliert die Stabilität der Auswahl über Bootstrap-Stichproben, bevor es einzelnen Features vertraut."
+ },
+ "l2": {
+  "n": "L2-Regularisierung (Ridge)",
+  "d": "Die L2-Regularisierung addiert die Summe der quadrierten Gewichte zum Verlust. Das schrumpft alle Gewichte gleichmäßig in Richtung null und verringert die Varianz. In der linearen Regression heißt sie Ridge-Regression.\n\nDer Gradient des quadratischen Strafterms ist proportional zum Gewicht selbst, sodass große Gewichte stark und kleine nur leicht zurückgezogen werden; Gewichte werden selten exakt null. Ridge hat eine geschlossene Lösung, w = (XᵀX + λI)⁻¹Xᵀy, und das Addieren von λI macht die Matrix selbst dann invertierbar, wenn die Features kollinear sind oder ihre Zahl die der Samples übersteigt. Bei korrelierten Features verteilt L2 das Gewicht auf sie und schrumpft korrelierte Koeffizienten zu ähnlichen Werten, statt eines auszuwählen. Bayesianisch betrachtet entspricht L2 einer Gaußschen Prior-Verteilung auf den Gewichten.\n\nL2 ist der Standard-Regularisierer für lineare Modelle und neuronale Netze, wenn die meisten Features voraussichtlich ein wenig beitragen. Es erzeugt keine dünn besetzten Modelle und ist daher kein Feature-Selektor. Die Features sollten vorher standardisiert werden, und der Achsenabschnitt wird normalerweise nicht bestraft.",
+  "u": [
+   "Regression mit korrelierten Prädiktoren stabilisieren",
+   "Logistische Regression mit vielen Features regularisieren",
+   "Große Gewichte in neuronalen Netzen verhindern"
+  ],
+  "x": "Ein Energiehandelsdesk sagt die Preise des Folgetags aus Dutzenden stark korrelierter Wetter- und Lastprognosen vorher. Ridge-Regression behält alle Eingaben, stabilisiert aber deren Koeffizienten, sodass das tägliche Neutraining keine großen Sprünge im Modellverhalten erzeugt."
+ },
+ "elasticnet": {
+  "n": "Elastic Net",
+  "d": "Die Elastic-Net-Regularisierung kombiniert den L1- (Lasso) und den L2-Strafterm (Ridge). Sie liefert dünn besetzte Modelle wie Lasso und geht zugleich besser mit Gruppen korrelierter Features um.\n\nZwei Hyperparameter steuern sie: eine Gesamtstärke α und ein Mischungsverhältnis (l1_ratio in scikit-learn) zwischen L1 und L2. Mit l1_ratio = 1 entspricht sie Lasso, mit l1_ratio = 0 Ridge. Der L1-Anteil setzt irrelevante Gewichte exakt auf null; der L2-Anteil macht das Problem streng konvex und sorgt dafür, dass korrelierte Features gemeinsam ins Modell aufgenommen oder daraus entfernt werden, statt dass – wie bei Lasso – eines willkürlich ausgewählt wird. Zudem verhält sie sich gut, wenn es mehr Features als Samples gibt; Lasso wählt in diesem Fall höchstens n Features aus.\n\nElastic Net ist eine starke Standardwahl für breite, korrelierte Daten wie Genomik, Text-N-Gramme oder Marketing-Features. Beide Hyperparameter sollten per Kreuzvalidierung abgestimmt und die Features standardisiert werden. Der kombinierte Strafterm verzerrt die Koeffizienten ungleich null, daher wird für die Interpretation manchmal ein Refit auf den ausgewählten Features durchgeführt.",
+  "u": [
+   "Genexpressionsmodelle mit korrelierten Genen",
+   "Textregression auf vielen korrelierten N-Grammen",
+   "Breite Marketing-Mix- oder Umfragedaten"
+  ],
+  "x": "Ein Biotech-Team sagt das Ansprechen auf ein Medikament aus Tausenden von Genexpressionsmessungen bei einigen hundert Patienten vorher. Elastic Net hält Gruppen koexprimierter Gene zusammen, statt pro Gruppe nur eines auszuwählen, wodurch die ausgewählten Signaturen über Resamples hinweg konsistenter sind und sich leichter mit Biologen besprechen lassen."
+ },
+ "weightdecay": {
+  "n": "Weight Decay",
+  "d": "Weight Decay schrumpft die Gewichte eines neuronalen Netzes in jedem Optimierungsschritt um einen kleinen Anteil. Das hält die Gewichte klein und wirkt als Regularisierer. Das Update multipliziert jedes Gewicht vor oder zusammen mit dem Gradientenschritt mit (1 − ηλ).\n\nFür einfachen stochastischen Gradientenabstieg ist Weight Decay mathematisch äquivalent zum Addieren eines L2-Strafterms (λ/2)‖w‖² zum Verlust. Für adaptive Optimierer wie Adam sind beide nicht äquivalent: Ein zum Verlust addierter L2-Term wird durch Adams Skalierung pro Parameter geteilt, sodass Gewichte mit großer Gradientenhistorie kaum regularisiert werden. AdamW behebt das, indem der Decay direkt auf die Gewichte angewendet wird, getrennt vom adaptiven Gradientenschritt; AdamW ist der Standardoptimierer für das Training von Transformern.\n\nTypische Werte liegen mit AdamW bei etwa 0,01 bis 0,1. Biases und Normalisierungsparameter (Skalen und Verschiebungen von LayerNorm und BatchNorm) werden meist vom Decay ausgenommen. Da der Decay in gängigen Implementierungen mit der Lernrate multipliziert wird, ändert ein anderer Schedule auch die effektive Regularisierung.",
+  "u": [
+   "Transformer-Pretraining mit AdamW regularisieren",
+   "Generalisierung von Bildklassifikatoren verbessern",
+   "Vortrainierte Modelle feintunen, ohne weit abzudriften"
+  ],
+  "x": "Ein Team, das ein Sprachmodell für die Klassifikation von Support-Anfragen feintunt, nutzt AdamW mit Weight Decay 0,01 und nimmt Biases und LayerNorm-Gewichte vom Decay aus, wie bei Transformern üblich. Decay und Lernrate werden gemeinsam abgestimmt, da beide steuern, wie weit sich die Gewichte von den vortrainierten Werten entfernen."
+ },
+ "dropout": {
+  "n": "Dropout",
+  "d": "Dropout ist eine Regularisierungstechnik, die in jedem Trainingsschritt zufällig einen Teil der Aktivierungen einer Schicht auf null setzt. Das verhindert, dass sich Neuronen zu stark auf bestimmte andere Neuronen verlassen.\n\nBei einer Drop-Wahrscheinlichkeit p wird jede Einheit mit Wahrscheinlichkeit 1 − p beibehalten. Moderne Frameworks nutzen Inverted Dropout: Beibehaltene Aktivierungen werden im Training mit 1/(1 − p) skaliert, sodass die erwartete Aktivierung unverändert bleibt und bei der Inferenz, wenn Dropout abgeschaltet ist, keine Umskalierung nötig ist. Dropout lässt sich als Training eines Ensembles gewichtsteilender Teilnetze verstehen, deren Mittelwert das vollständige Netz zur Testzeit approximiert.\n\nTypische Raten sind 0,1 in Transformern und 0,2 bis 0,5 in vollständig verbundenen Schichten. Ein häufiger Bug ist, das Modell nicht in den Evaluationsmodus zu schalten, sodass Dropout bei der Inferenz aktiv bleibt und die Vorhersagen verrauscht sind. Dropout verlangsamt zudem die Konvergenz. Viele große Sprachmodelle, die auf riesigen Datensätzen trainiert werden, nutzen wenig oder kein Dropout, weil Overfitting nicht ihr Hauptproblem ist.",
+  "u": [
+   "Vollständig verbundene Schichten bei kleinen Datenmengen regularisieren",
+   "Attention- und Residual-Dropout in Transformern",
+   "Monte-Carlo-Dropout zur Unsicherheitsschätzung"
+  ],
+  "x": "Ein Team, das ein tabellarisches neuronales Netz für Versicherungsrisiken auf einem überschaubaren Datensatz trainiert, fügt nach jeder verborgenen Schicht Dropout von 0,3 ein, was die Lücke zwischen Trainings- und Validierungsverlust verkleinert. Für Unsicherheitsschätzungen nutzt es zudem Monte-Carlo-Dropout bei der Inferenz, lässt Dropout also aktiv und mittelt über mehrere Forward-Passes."
+ },
+ "earlystop": {
+  "n": "Early Stopping",
+  "d": "Early Stopping beendet das Training, sobald sich die Leistung auf einem Validierungsset nicht mehr verbessert, und behält das Modell aus dem besten Validierungsschritt. Es verhindert, dass ein iteratives Lernverfahren weiter Rauschen anpasst, nachdem es das generalisierbare Signal gelernt hat.\n\nDer Validierungsverlust wird regelmäßig geprüft. Ein Patience-Parameter legt fest, wie viele Evaluationen ohne Verbesserung erlaubt sind, bevor abgebrochen wird, und die Gewichte der besten Evaluation werden wiederhergestellt. Early Stopping wird beim Training neuronaler Netze verwendet und ist in Gradient-Boosting-Bibliotheken eingebaut, wo es die Zahl der Bäume bestimmt. Es wirkt als implizite Regularisierung, ähnlich einem L2-Strafterm bei linearen Modellen, die mit Gradientenabstieg trainiert werden.\n\nDas für den Abbruch genutzte Validierungsset wird Teil der Modellauswahl, daher ist sein Score optimistisch, und ein separates Testset bleibt nötig. Verrauschte Validierungskurven können einen zu frühen Abbruch auslösen, daher sollten Patience und eine Mindestverbesserung sinnvoll gesetzt werden. Beim Neutraining auf allen Daten wird oft die beste Iterationszahl wiederverwendet.",
+  "u": [
+   "Die Zahl der Bäume beim Gradient Boosting wählen",
+   "Training neuronaler Netze in der besten Epoche beenden",
+   "Rechenleistung bei Hyperparametersuchen sparen"
+  ],
+  "x": "Ein Ranking-Team trainiert LightGBM-Modelle mit bis zu mehreren tausend Bäumen und Early Stopping auf einer zeitbasierten Validierungswoche. Die beste Iteration wird bei jedem Lauf protokolliert, und das Produktivmodell wird auf allen Daten mit dieser Iterationszahl neu trainiert, leicht hochskaliert für das größere Trainingsset."
+ },
+ "augment": {
+  "n": "Datenaugmentierung (Data Augmentation)",
+  "d": "Datenaugmentierung erzeugt neue Trainingsbeispiele, indem labelerhaltende Transformationen auf vorhandene angewendet werden. Das erhöht die effektive Größe und Vielfalt des Datensatzes und bringt dem Modell nützliche Invarianzen bei.\n\nFür Bilder sind zufällige Ausschnitte, horizontale Spiegelungen, Rotationen, Farbvariationen und Skalierungen Standard, dazu Mischverfahren wie Mixup und CutMix, die zwei Bilder samt ihren Labels überblenden. Für Audio gehören zeitliche Verschiebungen, hinzugefügtes Rauschen und SpecAugment-Maskierung zu den Augmentierungen. Für Text kommen Rückübersetzung und Paraphrasierung infrage. Augmentierungen werden zufällig und dynamisch während des Trainings angewendet, sodass jede Epoche neue Varianten sieht.\n\nAugmentierung ist einer der wirksamsten Regularisierer in der Computer Vision und zentral für selbstüberwachtes Contrastive Learning. Die Transformationen müssen das Label wirklich erhalten: Eine vertikal gespiegelte 6 kann zur 9 werden, und horizontale Spiegelungen sind falsch bei Text in Bildern oder bei seitenabhängigen medizinischen Befunden. Augmentierung wird nur auf Trainingsdaten angewendet, nicht auf Validierungs- oder Testsets – mit Ausnahme gezielter Test-Time Augmentation.",
+  "u": [
+   "Bildklassifikatoren mit wenigen gelabelten Daten trainieren",
+   "Sprachmodelle robust gegenüber Hintergrundgeräuschen machen",
+   "Selbstüberwachtes Contrastive Pretraining von Bild-Encodern"
+  ],
+  "x": "Ein Einzelhandelsunternehmen baut ein Modell zur Erkennung von Regalprodukten aus Fotos, die in Filialen bei wechselndem Licht und aus unterschiedlichen Winkeln aufgenommen wurden. Zufällige Ausschnitte, Rotationen, Helligkeitsänderungen und Unschärfe im Training machen das Modell robust für neue Filialen, während horizontale Spiegelungen deaktiviert sind, weil sie den Text auf den Verpackungen spiegeln würden."
+ },
+ "labelsmooth": {
+  "n": "Label Smoothing",
+  "d": "Label Smoothing ersetzt harte One-Hot-Trainingsziele durch weiche Ziele, die den Großteil der Wahrscheinlichkeit auf die richtige Klasse legen und einen kleinen Betrag ε auf alle Klassen verteilen.\n\nBei harten Zielen belohnt die Kreuzentropie das Modell immer weiter dafür, den Logit der richtigen Klasse relativ zu den anderen anzuheben, was zu überkonfidenten Vorhersagen und großen Logits führen kann. Mit Smoothing wird das Ziel für die richtige Klasse zu 1 − ε + ε/K, und jede andere Klasse erhält ε/K, sodass die optimalen Logits endlich bleiben. Typisch ist ε = 0,1. Das Verfahren ist in der Bildklassifikation und maschinellen Übersetzung weit verbreitet und verbessert oft Genauigkeit und Kalibrierung.\n\nLabel Smoothing hat auch Nachteile. Es löscht die Information, welche falschen Klassen der richtigen ähneln, wodurch ein geglätteter Teacher eine schwächere Quelle für Knowledge Distillation ist. In Kombination mit anderen Kalibrierungsverfahren kann es die Kalibrierung verschlechtern, und bei Sprachmodellen erhöht es die Perplexity, selbst wenn sich die Übersetzungsqualität verbessert.",
+  "u": [
+   "Große Bildklassifikatoren regularisieren",
+   "Modelle für neuronale maschinelle Übersetzung trainieren",
+   "Überkonfidenz bei Datensätzen mit verrauschten Labels verringern"
+  ],
+  "x": "Ein Team, das einen Bildklassifikator auf Produktfotos mit einigen falsch gelabelten Beispielen trainiert, nutzt Kreuzentropie mit Label Smoothing von 0,1. Das Modell wird bei mehrdeutigen Bildern weniger überkonfident, was die Zahl hochkonfidenter Fehler senkt, die an der manuellen Prüfung vorbeigehen."
+ },
+ "batchnorm": {
+  "n": "Batch Normalization",
+  "d": "Batch Normalization normalisiert jedes Feature bzw. jeden Kanal mit Mittelwert und Varianz, die über den aktuellen Mini-Batch berechnet werden, und wendet dann eine gelernte Skalierung γ und Verschiebung β an.\n\nIm Training wird jede Aktivierung mit Batch-Statistiken standardisiert, und gleitende Mittelwerte von Mittelwert und Varianz werden aktualisiert. Bei der Inferenz kommen stattdessen diese gespeicherten gleitenden Statistiken zum Einsatz, sodass die Ausgabe für ein Beispiel nicht von anderen Beispielen abhängt. In Convolutional Networks werden die Statistiken pro Kanal über den Batch und die räumlichen Positionen geteilt. Batch Normalization erlaubt höhere Lernraten, verringert die Empfindlichkeit gegenüber der Initialisierung und fügt ein leicht regularisierendes Rauschen hinzu – vor allem, weil sie die Optimierungslandschaft glättet.\n\nSie hängt von der Batchgröße ab: Bei sehr kleinen Batches sind die Statistiken verrauscht und die Genauigkeit leidet, und verteiltes Training kann synchronisierte Batch Normalization erfordern. Wer vergisst, in den Evaluationsmodus zu wechseln, oder Unterschiede zwischen Trainings- und Serving-Verteilung hat, erhält falsche Ausgaben. Diese Einschränkungen sind der Grund, warum Transformer und rekurrente Modelle stattdessen Layer Normalization verwenden.",
+  "u": [
+   "Tiefe Convolutional Networks für Bilder trainieren",
+   "Hohe Lernraten in CNNs stabilisieren",
+   "Schnellere Konvergenz in Residual Networks"
+  ],
+  "x": "Ein Team für medizinische Bildgebung trainiert ein ResNet auf 3D-Scans, bei denen der GPU-Speicher nur zwei Volumen pro Gerät zulässt. Einfache Batch Normalization schnitt mit so winzigen Batches schlecht ab, daher wechselte das Team zu synchronisierter Batch Normalization über alle GPUs und verglich sie später mit Group Normalization, die nicht von der Batchgröße abhängt."
+ },
+ "layernorm": {
+  "n": "Layer Normalization",
+  "d": "Layer Normalization standardisiert die Aktivierungen jedes einzelnen Beispiels über dessen Feature-Dimension und wendet dann eine gelernte Skalierung und Verschiebung an. Anders als bei Batch Normalization hängen ihre Statistiken nicht von anderen Beispielen im Batch ab.\n\nFür einen Token-Vektor in einem Transformer werden Mittelwert und Varianz über seine verborgene Dimension berechnet, der Vektor wird normalisiert, und Parameter γ und β pro Feature stellen die Ausdrucksfähigkeit wieder her. Da die Berechnung in Training und Inferenz identisch ist und mit jeder Batchgröße und Sequenzlänge funktioniert, ist Layer Normalization die Standardwahl in Transformern und rekurrenten Netzen. Die Platzierung ist wichtig: Post-LN (nach der Residual-Addition) wurde im ursprünglichen Transformer verwendet, während Pre-LN (vor jeder Teilschicht) tiefe Modelle ohne langes Lernraten-Warmup stabiler trainiert und heute verbreiteter ist.\n\nIn Convolutional Networks schneidet sie oft schlechter ab als Batch Normalization. Viele neuere große Sprachmodelle ersetzen sie durch RMSNorm, die auf das Zentrieren um den Mittelwert und den Bias verzichtet und dadurch etwas günstiger ist.",
+  "u": [
+   "Normalisierung innerhalb von Transformer-Blöcken",
+   "Training rekurrenter neuronaler Netze stabilisieren",
+   "Modelle mit variablen oder winzigen Batchgrößen"
+  ],
+  "x": "Ein Team, das einen domänenspezifischen Transformer für juristische Texte trainiert, wechselte nach Verlustspitzen früh im Training von Post-LN- zu Pre-LN-Blöcken. Die Änderung ermöglichte tiefere Modelle mit kürzerem Warmup, wobei die LayerNorm-Parameter vom Weight Decay ausgenommen wurden."
+ },
+ "rmsnorm": {
+  "n": "RMSNorm",
+  "d": "RMSNorm (Root Mean Square Normalization) skaliert jeden Aktivierungsvektor mit seinem quadratischen Mittel und einem gelernten Verstärkungsfaktor pro Feature um, ohne den Mittelwert abzuziehen und meist ohne Bias. Sie ist eine einfachere und günstigere Variante der Layer Normalization.\n\nDer Vektor x wird durch √(mean(x²) + ε) geteilt und mit einem gelernten Gewicht g multipliziert. Der Verzicht auf das Zentrieren spart eine Reduktion und den Bias-Parameter und erreicht dennoch die Stabilität von LayerNorm in Transformern. Das Originalpaper argumentierte, dass die Invarianz gegenüber Umskalierung, nicht das Zentrieren, Layer Normalization wirksam macht. RMSNorm wird in vielen modernen großen Sprachmodellen eingesetzt, darunter LLaMA, Mistral und Gemma, typischerweise in einer Pre-Norm-Anordnung vor den Attention- und Feed-Forward-Teilschichten.\n\nDa RMSNorm die Aktivierungen nicht zentriert, ist sie in einem vortrainierten Modell kein direkter Ersatz für LayerNorm; mit der einen trainierte Gewichte funktionieren nicht mit der anderen. Auch die Präzision zählt: Implementierungen berechnen die Norm oft in float32, selbst in bfloat16-Modellen.",
+  "u": [
+   "Normalisierungsschichten in Sprachmodellen im LLaMA-Stil",
+   "Normalisierungskosten in großen Transformern senken",
+   "Pre-Norm-Blöcke für stabiles Training tiefer Netze"
+  ],
+  "x": "Ein LLM-Team, das ein Modell im LLaMA-Stil trainiert, setzt RMSNorm vor jede Attention- und MLP-Teilschicht sowie eine abschließende RMSNorm vor den Ausgabekopf. Sein fusionierter Kernel berechnet die Norm in float32 innerhalb eines bfloat16-Modells, was seltene numerische Spitzen in langen Trainingsläufen vermeidet."
+ }
+}

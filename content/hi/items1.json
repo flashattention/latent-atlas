@@ -1,0 +1,482 @@
+{
+ "eda": {
+  "n": "Exploratory Data Analysis (EDA)",
+  "d": "Exploratory data analysis किसी भी मॉडल को बनाने से पहले dataset की संरचना, गुणवत्ता और संबंधों को समझने के लिए उसका व्यवस्थित पहला निरीक्षण है। Practitioner column types, rows की संख्या, missing values के patterns, duplicates, मानों की रेंज और हर feature का distribution जाँचता है, फिर summary statistics, histograms, box plots, scatter plots और correlation matrices की मदद से features के आपसी संबंधों और target के साथ उनके संबंधों का अध्ययन करता है।\n\nलक्ष्य hypotheses बनाना और समस्याओं को जल्दी पकड़ना है: skewed features जिन्हें transform की ज़रूरत है, हज़ारों levels वाले categorical columns, label errors, ऋणात्मक उम्र जैसे असंभव मान, या ऐसा column जो संदेहजनक रूप से predictive हो क्योंकि उसमें उत्तर ही छिपा है। EDA validation योजना के चुनाव में भी मार्गदर्शन करता है, उदाहरण के लिए समय-क्रम या समूहित records को उजागर करके। एक आम ग़लती है test set सहित पूरे dataset पर EDA चलाना और फिर उसके आधार पर preprocessing के फ़ैसले लेना; इससे test की जानकारी चुपचाप modeling विकल्पों में leak हो जाती है।",
+  "u": [
+   "मॉडल training से पहले डेटा गुणवत्ता का audit",
+   "Skew, outliers और missing patterns की खोज",
+   "Leaky या target-encoding वाले columns को जल्दी पकड़ना"
+  ],
+  "x": "एक retail analytics टीम नया point-of-sale export मिलने पर पहले हर column को profile करती है, हर store की साप्ताहिक बिक्री plot करती है और क्षेत्रवार missing दरें जाँचती है। विश्लेषण से पता चलता है कि एक क्षेत्र refunds को ऋणात्मक बिक्री के रूप में दर्ज करता है और एक store ID का format साल के बीच में बदल गया था—demand forecasting मॉडल train करने से पहले दोनों को ठीक किया जाता है।"
+ },
+ "supervised": {
+  "n": "Supervised Learning (पर्यवेक्षित अधिगम)",
+  "d": "Supervised learning सही उत्तर से label किए गए उदाहरणों का उपयोग करके मॉडल को inputs से ज्ञात outputs तक map करना सिखाता है। (x, y) जोड़ियाँ मिलने पर algorithm अपने parameters को इस तरह समायोजित करता है कि एक loss—जो मापता है कि उसके predictions labels से कितने दूर हैं—न्यूनतम हो, और फिर सीखे गए function को नए, unlabeled inputs पर लागू करता है।\n\nसमस्याएँ classification में बँटती हैं, जहाँ y एक category है जैसे spam या not spam, और regression में, जहाँ y एक continuous मान है जैसे कीमत। सामान्य algorithms linear और logistic regression से लेकर gradient-boosted trees और deep neural networks तक हैं। जब भी भरोसेमंद labels मौजूद हों और prediction target स्पष्ट रूप से परिभाषित हो, supervised learning डिफ़ॉल्ट विकल्प है।\n\nइसकी मुख्य सीमा labels की लागत और गुणवत्ता है: मॉडल label noise और annotator bias को भी उतनी ही निष्ठा से सीखते हैं जितना वास्तविक signal को। प्रदर्शन को production traffic जैसे ही distribution से लिए गए held-out डेटा पर मापना चाहिए, क्योंकि केवल कम training error से generalization के बारे में कुछ पता नहीं चलता।",
+  "u": [
+   "Label किए गए संदेशों से email spam classification",
+   "Property attributes से घर की कीमत का अनुमान",
+   "Annotated scans से medical image निदान"
+  ],
+  "x": "एक insurance कंपनी investigators द्वारा fraudulent या वैध label किए गए वर्षों के ऐतिहासिक claims पर एक gradient-boosted classifier train करती है। मॉडल हर नए claim को milliseconds में score करता है, और टीम इसे हर तिमाही retrain करती है क्योंकि fraud के patterns बदलते हैं और नए पुष्ट labels देर से आते हैं।"
+ },
+ "unsupervised": {
+  "n": "Unsupervised Learning (अपर्यवेक्षित अधिगम)",
+  "d": "Unsupervised learning बिना labels वाले डेटा में संरचना ढूँढता है। किसी ज्ञात target का अनुमान लगाने के बजाय algorithm स्वयं डेटा को model करता है: यह समान points को समूहित करता है, उन्हें कम dimensions में compress करता है, उनकी density का अनुमान लगाता है या मेल न खाने वाले points को flag करता है।\n\nमुख्य परिवार हैं clustering (k-means, DBSCAN, Gaussian mixtures, hierarchical clustering), dimensionality reduction (PCA, UMAP, autoencoders) और density estimation या anomaly detection (isolation forest, kernel density)। ये तरीके तब उपयोगी हैं जब labels महँगे या अपरिभाषित हों, किसी नए dataset की खोज के लिए, बाद के supervised मॉडल के लिए features बनाने के लिए, और असामान्य व्यवहार का पता लगाने के लिए।\n\nकेंद्रीय कठिनाई मूल्यांकन है। Ground truth के बिना कोई एक सही उत्तर नहीं होता, इसलिए परिणाम feature scaling, distance metric और clusters की संख्या जैसे hyperparameters पर बहुत निर्भर करते हैं। Silhouette coefficient जैसे आंतरिक स्कोर ज्यामितीय अलगाव मापते हैं, business उपयोगिता नहीं, इसलिए clusters को domain विशेषज्ञों या downstream प्रभाव से validate करना ज़रूरी है।",
+  "u": [
+   "खरीदारी व्यवहार से customer segmentation",
+   "Server या sensor metrics में anomaly detection",
+   "Visualization और search के लिए embeddings को compress करना"
+  ],
+  "x": "एक subscription streaming सेवा viewing-time patterns, genres और device उपयोग के आधार पर users को cluster करके ऐसे audience segments खोजती है जिन्हें marketing ने परिभाषित नहीं किया था। Analysts नाम देने से पहले हर cluster की profile की समीक्षा करते हैं, और फिर segment labels churn मॉडलों में features के रूप में और campaigns की targeting के लिए इस्तेमाल होते हैं।"
+ },
+ "selfsup": {
+  "n": "Self-Supervised Learning (स्व-पर्यवेक्षित अधिगम)",
+  "d": "Self-supervised learning, input के किसी हिस्से को छिपाकर या बदलकर और मॉडल को उसे वापस प्राप्त करना सिखाकर unlabeled डेटा से अपना training signal ख़ुद बनाता है। चूँकि labels स्वयं डेटा से आते हैं, किसी मानवीय annotation की ज़रूरत नहीं होती।\n\nआम pretext tasks में अगले token का अनुमान (GPT-शैली के language मॉडल), masked tokens का अनुमान (BERT), masked image patches का reconstruction (MAE) और contrastive learning शामिल हैं, जिसमें एक ही उदाहरण के दो augmented views को embedding space में पास खींचा जाता है और अलग-अलग उदाहरणों के views को दूर धकेला जाता है (SimCLR, CLIP)। इसके बाद pretrained network को fine-tune किया जाता है, या कम labels वाले downstream tasks के लिए frozen feature extractor के रूप में इस्तेमाल किया जाता है।\n\nयही paradigm आधुनिक foundation models की नींव है। एक आम ग़लतफ़हमी यह है कि यह unsupervised clustering जैसा ही है; वास्तव में यह स्वचालित रूप से बने targets पर एक सामान्य supervised loss का उपयोग करता है। Pretext task और augmentations का चुनाव काफ़ी हद तक तय करता है कि कौन से features सीखे जाएँगे, और ख़राब चुनाव ऐसे shortcuts सिखा सकता है जो transfer नहीं होते।",
+  "u": [
+   "कच्चे web text पर language मॉडलों की pretraining",
+   "Manual labels के बिना image features सीखना",
+   "Retrieval और transfer learning के लिए embeddings बनाना"
+  ],
+  "x": "एक medical imaging समूह के पास लाखों unlabeled chest X-rays हैं, लेकिन radiologist labels वाले केवल कुछ हज़ार। वे सभी images पर masked-autoencoder objective से एक vision encoder को pretrain करते हैं, फिर labeled subset पर उसे fine-tune करते हैं, जो छोटे labeled set पर scratch से training की तुलना में बेहतर accuracy देता है।"
+ },
+ "rl": {
+  "n": "Reinforcement Learning (सुदृढ़ीकरण अधिगम)",
+  "d": "Reinforcement learning एक agent को environment के साथ trial-and-error interaction के ज़रिए ऐसे actions चुनना सिखाता है जो संचयी reward को अधिकतम करें। हर चरण पर agent एक state देखता है, एक action लेता है, एक scalar reward पाता है और नई state में पहुँचता है; उसे यह बताए बिना policy सीखनी होती है कि कौन सा action सही था।\n\nQ-learning और DQN जैसे value-based तरीके हर action के अपेक्षित return का अनुमान लगाते हैं और उन अनुमानों के आधार पर greedily कार्य करते हैं। REINFORCE और PPO जैसे policy-gradient तरीके policy को सीधे उस दिशा में समायोजित करते हैं जो अपेक्षित return बढ़ाती है। Discount factor γ निकट-अवधि और दीर्घ-अवधि reward के बीच भार तय करता है, और agent को अपरिचित actions की खोज (exploration) और ज्ञात अच्छे actions के उपयोग (exploitation) के बीच संतुलन बनाना होता है।\n\nReinforcement learning क्रमिक निर्णय समस्याओं के लिए उपयुक्त है: games, robotics और language मॉडलों को मानवीय प्राथमिकताओं के साथ align करना (RLHF)। यह sample-inefficient, reward design के प्रति संवेदनशील और अक्सर अस्थिर होता है। ख़राब तरीके से परिभाषित reward का आसानी से दुरुपयोग होता है: agents ऐसा व्यवहार सीख लेते हैं जो अच्छा स्कोर करता है लेकिन इच्छित लक्ष्य हासिल नहीं करता।",
+  "u": [
+   "Game खेलने वाले agents और simulators",
+   "Robot control और locomotion policies",
+   "मानवीय preference rewards से LLMs की fine-tuning"
+  ],
+  "x": "एक data center operator तापमान और load readings के आधार पर cooling setpoints समायोजित करने के लिए simulator में एक reinforcement learning controller train करता है, जिसका reward ऊर्जा उपयोग और सुरक्षा सीमाओं से जुड़ा है। Deployment से पहले सीखी गई policy recommendation mode में चलती है, और स्वीकृत operating ranges से बाहर के किसी भी action को hard constraints रद्द कर देते हैं।"
+ },
+ "split": {
+  "n": "Train / Validation / Test Split",
+  "d": "Train, validation और test split डेटा को तीन अलग-अलग sets में बाँटता है जिनके काम अलग हैं: मॉडल training set पर parameters सीखता है, hyperparameters और design विकल्प validation set पर tune किए जाते हैं, और test set का उपयोग अंत में केवल एक बार unseen डेटा पर प्रदर्शन का अनुमान लगाने के लिए होता है।\n\nकिसी स्कोर को देखकर लिया गया हर फ़ैसला मॉडल को उस डेटा के अनुकूल बना देता है। एक ही set पर tuning के कई दौर के बाद उसका स्कोर आशावादी रूप से biased हो जाता है, इसलिए ईमानदार अनुमान के लिए एक अंतिम अछूता set चाहिए। सामान्य अनुपात 70/15/15 या 80/10/10 हैं, और डेटा प्रचुर होने पर holdouts छोटे रखे जाते हैं।\n\nSplit को उसी तरह होना चाहिए जैसे मॉडल का उपयोग होगा। Time series के लिए समय के अनुसार split करें, ताकि validation और test, training के बाद आएँ। जब कई rows किसी एक entity जैसे patient या user से जुड़ी हों, तो group के अनुसार split करें ताकि वही entity दोनों ओर कभी न दिखे। इन मामलों में random split भ्रामक रूप से ऊँचे स्कोर देता है।",
+  "u": [
+   "Test डेटा को छुए बिना hyperparameters tune करना",
+   "अंतिम प्रदर्शन का unbiased अनुमान रिपोर्ट करना",
+   "एक निश्चित holdout पर candidate मॉडलों की तुलना"
+  ],
+  "x": "एक credit risk टीम पहले के वर्षों में जारी loans पर train करती है, अगली तिमाही पर tune करती है और सबसे हाल की तिमाही पर अंतिम metrics रिपोर्ट करती है—ठीक वैसे जैसे मॉडल भविष्य के आवेदकों को score करेगा। Test तिमाही को एक अलग storage स्थान में lock रखा जाता है ताकि analysts feature selection के दौरान ग़लती से उसका उपयोग न कर सकें।"
+ },
+ "cv": {
+  "n": "Cross-Validation (क्रॉस-वैलिडेशन)",
+  "d": "Cross-validation डेटा के अलग-अलग partitions पर मॉडल को कई बार train और evaluate करके अनुमान लगाता है कि वह कितनी अच्छी तरह generalize करता है। k-fold cross-validation में डेटा को k folds में बाँटा जाता है; हर fold एक बार validation set बनता है जबकि मॉडल बाकी k − 1 folds पर train होता है, और k स्कोरों का औसत लिया जाता है।\n\nएक अकेले holdout split के विपरीत, हर उदाहरण training और validation दोनों में इस्तेमाल होता है, जिससे कम noisy अनुमान के साथ एक standard deviation भी मिलता है जो मॉडल की स्थिरता दिखाता है। Variants विशेष संरचना संभालते हैं: stratified k-fold class अनुपात बनाए रखता है, group k-fold एक entity की सभी rows को एक ही fold में रखता है, और time-series split हमेशा training window के बाद आने वाले डेटा पर validate करता है।\n\nCross-validation की लागत training समय का k गुना है। जब इसका उपयोग hyperparameters चुनने में होता है, तो जीतने वाले configuration का औसत स्कोर आशावादी रूप से biased होता है; unbiased अंतिम अनुमान के लिए nested cross-validation या एक अलग test set ज़रूरी है।",
+  "u": [
+   "छोटे या मध्यम datasets पर मॉडलों की तुलना",
+   "भरोसेमंद स्कोर अनुमानों के साथ hyperparameter search",
+   "डेटा subsets में प्रदर्शन के variance का अनुमान"
+  ],
+  "x": "केवल कुछ सौ patient records वाली एक pharmaceutical analytics टीम grouped 5-fold cross-validation का उपयोग करती है ताकि एक patient की सभी visits एक ही fold में रहें। वे folds पर AUC का mean और standard deviation रिपोर्ट करते हैं, जिससे पता चलता है कि एक candidate मॉडल अपने औसत स्कोर से कहीं कम स्थिर है।"
+ },
+ "stratified": {
+  "n": "Stratified Sampling (स्तरीकृत नमूनाकरण)",
+  "d": "Stratified sampling डेटा को इस तरह split या sample करता है कि हर subset में किसी चुने हुए variable—आम तौर पर class label—का अनुपात पूरे dataset जितना ही रहे। डेटा को उस variable के अनुसार strata में बाँटा जाता है, और हर stratum से समान अंश लिया जाता है।\n\nइसका उपयोग मुख्यतः train/test splits और cross-validation folds के लिए होता है। Imbalanced labels के साथ सामान्य random split संयोगवश किसी validation fold में बहुत कम positive उदाहरण रख सकता है, जिससे metrics noisy या अपरिभाषित भी हो जाते हैं। Stratification variance के इस स्रोत को हटा देता है, इसलिए folds के बीच स्कोर अधिक तुलनीय होते हैं। इसे region या device type जैसे अन्य मुख्य variables पर भी लागू किया जा सकता है, और regression में binned target मानों पर stratify करके।\n\nStratification केवल चुने गए variable के distribution को नियंत्रित करता है; यह संबंधित rows के बीच leakage को नहीं रोकता। यह स्वयं class imbalance को भी ठीक नहीं करता। 1% positive वाले dataset का stratified split हर subset को फिर भी लगभग 1% positives ही देता है।",
+  "u": [
+   "Imbalanced classification के लिए train/test splits",
+   "दुर्लभ classes के लिए स्थिर cross-validation folds",
+   "जनसांख्यिकीय समूहों में survey sampling"
+  ],
+  "x": "0.3% positive दर वाली एक fraud detection टीम stratified 5-fold cross-validation का उपयोग करती है ताकि हर fold में fraud मामलों की तुलनीय संख्या हो। इसके बिना कुछ folds में इतने कम positives थे कि PR-AUC हर run में बेतहाशा बदलता था, जिससे मॉडलों की तुलना अविश्वसनीय हो जाती थी।"
+ },
+ "leak": {
+  "n": "Data Leakage (डेटा लीकेज)",
+  "d": "Data leakage तब होता है जब ऐसी जानकारी मॉडल training में प्रवेश कर जाती है जो prediction के समय उपलब्ध नहीं होगी, जिससे evaluation स्कोर वास्तविक दुनिया के प्रदर्शन से कहीं बेहतर दिखते हैं।\n\nLeakage के कई रूप हैं। Target leakage तब होता है जब कोई feature label से निकाला गया हो या परिणाम के बाद दर्ज हुआ हो, जैसे fraud का अनुमान लगाने के लिए refund flag का उपयोग। Train-test contamination तब होता है जब scaling, imputation, target encoding या feature selection जैसे preprocessing को split करने से पहले पूरे dataset पर fit किया जाता है। Temporal leakage तब होता है जब random split मॉडल को भविष्य पर train करके अतीत का अनुमान लगाने देता है, और group leakage तब होता है जब वही customer या patient training और test दोनों डेटा में दिखाई देता है।\n\nसामान्य लक्षण हैं संदेहजनक रूप से ऊँचा स्कोर या किसी एक feature का अत्यधिक importance। रोकथाम का अर्थ है सभी preprocessing को एक pipeline के भीतर केवल training fold पर fit करना, उचित होने पर समय या group के अनुसार split करना, और हर feature के लिए ठीक-ठीक जाँचना कि उसका मान कब ज्ञात होता है।",
+  "u": [
+   "परिणाम के बाद की जानकारी के लिए features का audit",
+   "Leak-मुक्त preprocessing pipelines बनाना",
+   "Deployment के बाद विफल होने वाले मॉडलों का निदान"
+  ],
+  "x": "एक hospital readmission मॉडल ने लगभग पूर्ण validation AUC हासिल किया, और audit से पता चला कि एक feature ऐसा discharge code था जो patient के दोबारा भर्ती होने के बाद ही दिया जाता था। उसे हटाकर discharge के समय उपलब्ध डेटा से features दोबारा बनाने पर स्कोर एक यथार्थवादी स्तर पर आ गया और बाद के production परिणामों से मेल खाया।"
+ },
+ "overfit": {
+  "n": "Overfitting (ओवरफिटिंग)",
+  "d": "Overfitting तब होता है जब मॉडल अपने training डेटा के विशिष्ट patterns—noise सहित—सीख लेता है, जिससे वह training उदाहरणों पर अच्छा लेकिन नए डेटा पर ख़राब प्रदर्शन करता है। इसका स्पष्ट संकेत training और validation प्रदर्शन के बीच बड़ा और बढ़ता अंतर है।\n\nयह तब होता है जब डेटा की मात्रा और गुणवत्ता की तुलना में मॉडल की capacity ऊँची हो: गहरे trees, ऊँचे degree के polynomials, कम rows के साथ बहुत सारे features, या बहुत देर तक train किए गए neural networks। मॉडल अंतर्निहित संबंध के बजाय उदाहरणों को रट लेता है। उपायों में अधिक डेटा, सरल मॉडल, regularization (L1, L2, dropout, weight decay), early stopping, data augmentation और bagging शामिल हैं।\n\nOverfitting प्रयोग के स्तर पर भी हो सकता है। एक ही validation set के सामने बार-बार hyperparameters tune करना या features चुनना पूरी pipeline को उस set के अनुकूल बना देता है। कम training loss अपने-आप में समस्या नहीं है; बहुत बड़े networks training डेटा को पूरी तरह fit करके भी अच्छी तरह generalize कर सकते हैं, इसलिए देखने लायक संकेत validation curve है।",
+  "u": [
+   "Training के दौरान train/validation अंतर का निदान",
+   "Tree depth या polynomial degree चुनना",
+   "तय करना कि neural network training कब रोकें"
+  ],
+  "x": "एक demand forecasting टीम ने देखा कि एक गहरा gradient-boosted मॉडल training हफ़्तों पर लगभग पूर्ण स्कोर करता था, लेकिन हाल के हफ़्तों पर बुरी तरह चूकता था। Tree depth सीमित करने, प्रति leaf न्यूनतम samples बढ़ाने और time-based validation set पर early stopping का उपयोग करने से अधिकांश अंतर ख़त्म हो गया।"
+ },
+ "underfit": {
+  "n": "Underfitting (अंडरफिटिंग)",
+  "d": "Underfitting तब होता है जब मॉडल डेटा की वास्तविक संरचना को पकड़ने के लिए बहुत सरल या बहुत सीमित होता है, इसलिए वह training और validation दोनों sets पर ख़राब प्रदर्शन करता है। Overfitting के विपरीत, दोनों errors के बीच कम अंतर होता है; दोनों ही बस ऊँचे होते हैं।\n\nआम कारण हैं ऐसा model family जो संबंध को व्यक्त नहीं कर सकता (घुमावदार pattern के लिए सीधी रेखा), बहुत कम या असूचनात्मक features, अत्यधिक regularization, training को बहुत जल्दी रोकना, या इतना कम learning rate कि optimizer मुश्किल से आगे बढ़े। Bias-variance के संदर्भ में, underfit मॉडल का bias ऊँचा होता है।\n\nउपाय overfitting से उलटी दिशा में होते हैं: अधिक लचीले मॉडल का उपयोग करें, interactions और nonlinear transforms जैसे features जोड़ें या बनाएँ, regularization की strength घटाएँ, या अधिक देर तक train करें। एक उपयोगी जाँच यह है कि क्या मॉडल डेटा के एक बहुत छोटे subset को overfit कर सकता है; अगर यह भी विफल हो, तो समस्या वास्तविक underfitting के बजाय संभवतः कोई bug, ग़लत learning rate या टूटी हुई data pipeline है।",
+  "u": [
+   "ऊँचे training error पर अटके मॉडलों का निदान",
+   "Features या मॉडल capacity जोड़ने का फ़ैसला",
+   "बहुत प्रबल regularization strength को tune करना"
+  ],
+  "x": "एक pricing टीम के delivery समय वाले linear मॉडल का training और validation डेटा पर error समान लेकिन निराशाजनक था। दूरी-और-traffic interaction features जोड़ने और gradient-boosted मॉडल पर स्विच करने से दोनों errors घटे, जिससे पुष्टि हुई कि मूल मॉडल में डेटा की नहीं, capacity की कमी थी।"
+ },
+ "biasvar": {
+  "n": "Bias–Variance Tradeoff",
+  "d": "Bias-variance tradeoff बताता है कि मॉडल का अपेक्षित prediction error कैसे दो भागों में बँटता है: अत्यधिक सरल मान्यताओं से आने वाला व्यवस्थित error (bias) और किसी विशेष training sample के प्रति संवेदनशीलता (variance)। Squared error के लिए अपेक्षित error, bias के वर्ग, variance और अपरिहार्य noise के योग के बराबर होता है।\n\nBias मापता है कि कई संभावित training sets पर लिया गया औसत prediction वास्तविक function से कितना दूर है। Variance मापता है कि एक training set से दूसरे पर predictions कितने बदलते हैं। Linear regression जैसे सरल मॉडलों में आम तौर पर bias ऊँचा और variance कम होता है; गहरे decision trees जैसे लचीले मॉडलों में bias कम और variance ऊँचा होता है। Regularization, ensembling और अधिक डेटा इस संतुलन को खिसकाते हैं: bagging मुख्यतः variance घटाता है, जबकि boosting मुख्यतः bias घटाता है।\n\nपारंपरिक तस्वीर कहती है कि test error मॉडल की जटिलता के साथ U-आकार का होता है। आधुनिक overparameterized networks double descent दिखा सकते हैं, जहाँ training डेटा को interpolate करने के बिंदु से आगे error फिर से गिरता है, इसलिए यह tradeoff कोई कठोर नियम नहीं, बल्कि एक मार्गदर्शक है।",
+  "u": [
+   "मॉडल की जटिलता और regularization चुनना",
+   "यह समझाना कि bagging और boosting क्यों मदद करते हैं",
+   "Underfitting बनाम overfitting का निदान"
+  ],
+  "x": "Energy load का forecast करने वाली एक टीम ने एक linear मॉडल की तुलना पूरी तरह बढ़े हुए decision tree से की और पाया कि पहला peaks चूक जाता था, जबकि दूसरा अलग-अलग महीनों पर retrain करने पर तेज़ी से बदल जाता था। Random forest पर स्विच करने से bias कम बना रहा और औसत निकालने से variance का बड़ा हिस्सा हट गया, जिससे forecasts अधिक स्थिर हुए।"
+ },
+ "curse": {
+  "n": "Curse of Dimensionality (आयामीयता का अभिशाप)",
+  "d": "Curse of dimensionality उन समस्याओं के समूह को कहते हैं जो डेटा में बहुत सारे features होने पर सामने आती हैं: space का आयतन exponentially बढ़ता है, इसलिए डेटा विरल हो जाता है और दो या तीन dimensions की कई सहज समझ काम करना बंद कर देती हैं।\n\nकिसी unit hypercube को एक निश्चित density पर ढकने के लिए आवश्यक samples की संख्या dimensions की संख्या के साथ exponentially बढ़ती है। दूरियाँ भी केंद्रित हो जाती हैं: high dimensions में किसी point के सबसे नज़दीकी और सबसे दूर के neighbors लगभग समान दूरी पर आ जाते हैं, जिससे k-nearest neighbors, k-means और isotropic kernels वाले kernel methods जैसे distance-based तरीके कमज़ोर पड़ते हैं। High-dimensional गोले का अधिकांश आयतन उसकी सतह के पास होता है, और random vectors लगभग orthogonal होते हैं।\n\nयह feature selection, dimensionality reduction और प्रबल inductive biases वाले मॉडलों की प्रेरणा है। जब वास्तविक डेटा किसी low-dimensional manifold के पास स्थित होता है, तो यह अभिशाप worst-case सिद्धांत जितना गंभीर नहीं होता, इसीलिए deep networks और embeddings images और text पर अपने विशाल नाममात्र dimension के बावजूद अच्छा काम करते हैं।",
+  "u": [
+   "यह समझाना कि कई features के साथ k-NN क्यों बिगड़ता है",
+   "Feature selection और PCA की प्रेरणा",
+   "Embedding search के लिए distance metrics चुनना"
+  ],
+  "x": "कच्चे one-hot product features पर nearest-neighbor recommender बनाने वाली एक टीम ने पाया कि प्रासंगिक और अप्रासंगिक items के similarity स्कोर में मुश्किल से अंतर था। Items को एक सीखे गए 128-dimensional embedding space में project करने से अर्थपूर्ण दूरियाँ लौट आईं और approximate nearest-neighbor search व्यावहारिक हो गई।"
+ },
+ "learncurve": {
+  "n": "Learning Curve",
+  "d": "Learning curve, training डेटा की मात्रा (या deep learning में training steps) के सापेक्ष मॉडल के training और validation प्रदर्शन को plot करता है। यह दिखाता है कि अगला सबसे आशाजनक कदम अधिक डेटा है, अधिक capacity है या अधिक regularization।\n\nइसे बनाने के लिए मॉडल को training set के बढ़ते subsets पर train किया जाता है, अक्सर हर आकार पर cross-validation के साथ, और दोनों स्कोर दर्ज किए जाते हैं। अगर training और validation errors एक ऊँचे मान पर मिल जाते हैं, तो मॉडल का bias ऊँचा है, और अधिक डेटा से ज़्यादा मदद नहीं मिलेगी; एक समृद्ध मॉडल या बेहतर features चाहिए। अगर कम training error और ऊँचे validation error के बीच बड़ा अंतर बना रहता है जो डेटा बढ़ने के साथ घटता जाता है, तो मॉडल का variance ऊँचा है और अधिक डेटा जुटाना फ़ायदेमंद होने की संभावना है।\n\nछोटे sample वाले points noisy होते हैं, इसलिए folds पर औसत लेना मायने रखता है। Curve को production से मेल खाने वाले validation डेटा पर ही निकालना चाहिए; वरना यह केवल किसी दूसरे distribution पर प्रदर्शन का वर्णन करता है।",
+  "u": [
+   "यह तय करना कि अधिक डेटा जुटाना सार्थक है या नहीं",
+   "ऊँचे bias बनाम ऊँचे variance का निदान",
+   "नए task के लिए labeling budget का अनुमान"
+  ],
+  "x": "एक document classification टीम 50,000 और labeled उदाहरणों के लिए भुगतान करने पर विचार कर रही थी। उनके learning curve ने दिखाया कि validation accuracy पहले ही सपाट हो चुकी थी और training accuracy से मेल खा रही थी, इसलिए उन्होंने अतिरिक्त labeling के बजाय एक अधिक सशक्त pretrained encoder में निवेश किया।"
+ },
+ "drift": {
+  "n": "Data Drift और Distribution Shift",
+  "d": "Distribution shift का अर्थ है कि production में मॉडल जो डेटा देखता है वह उस डेटा से अलग है जिस पर उसे train किया गया था, जिससे accuracy चुपचाप घट सकती है। Data drift आम तौर पर input distribution P(X) में बदलाव को कहते हैं; concept drift संबंध P(y | X) में बदलाव को कहते हैं, जहाँ वही inputs अब अलग परिणामों से जुड़ते हैं।\n\nShift के कई स्रोत हैं: नए user segments, seasonality, product में बदलाव, upstream pipeline bugs, sensor recalibration या स्वयं मॉडल से आने वाला feedback। Monitoring में production feature distributions की तुलना एक reference window से population stability index (PSI), Kolmogorov-Smirnov tests या Jensen-Shannon divergence जैसे statistics से की जाती है, और prediction distributions तथा labels आने पर वास्तविक प्रदर्शन को ट्रैक किया जाता है।\n\nप्रतिक्रियाओं में हाल के डेटा पर retraining, time-weighted training और fallback नियम शामिल हैं। एक मुख्य ख़तरा यह मान लेना है कि पकड़ा गया input drift हमेशा accuracy को नुकसान पहुँचाता है, या input drift न होने का अर्थ है कि मॉडल ठीक है। Concept drift, P(X) में किसी दिखाई देने वाले बदलाव के बिना भी हो सकता है, इसलिए label-आधारित monitoring आवश्यक बनी रहती है।",
+  "u": [
+   "Production feature distributions की निगरानी",
+   "निर्धारित या alert-आधारित retraining शुरू करना",
+   "Upstream data pipeline की ख़राबियों का पता लगाना"
+  ],
+  "x": "एक payments कंपनी हर मॉडल feature के लिए training window के सापेक्ष दैनिक PSI निकालती है और कोई मान तय threshold से अधिक होने पर alert भेजती है। एक alert ने transaction-amount feature में अचानक आए बदलाव को upstream currency conversion में हुए परिवर्तन तक पहुँचाया, जिसे fraud recall में उल्लेखनीय गिरावट से पहले ठीक कर दिया गया।"
+ },
+ "minmax": {
+  "n": "Min-Max Normalization",
+  "d": "Min-max normalization हर feature को linearly एक निश्चित रेंज, आम तौर पर [0, 1], में rescale करता है—feature का minimum घटाकर और उसकी रेंज से भाग देकर। Distribution का आकार नहीं बदलता; केवल उसकी स्थिति और scale बदलते हैं।\n\nयह तब उपयोगी है जब कोई मॉडल या downstream चरण bounded inputs की अपेक्षा करता है, उदाहरण के लिए neural network को दी जाने वाली pixel intensities, k-nearest neighbors जैसे distance-based तरीकों के features, या ऐसे algorithms के inputs जो किसी ज्ञात अंतराल में मान मानते हैं। Minimum और maximum केवल training डेटा से सीखे जाने चाहिए और फिर validation, test और production डेटा पर बिना बदले लागू होने चाहिए।\n\nइसकी मुख्य कमज़ोरी outliers के प्रति संवेदनशीलता है: एक अकेला चरम मान रेंज तय कर देता है और बाकी सभी मानों को एक संकरी पट्टी में दबा देता है। Training रेंज से बाहर का नया डेटा [0, 1] से बाहर map होता है, जिसकी कुछ systems अपेक्षा नहीं करते। Tree-based मॉडल monotonic rescaling से अप्रभावित रहते हैं, इसलिए उन्हें इससे कोई लाभ नहीं होता।",
+  "u": [
+   "Neural networks के लिए image pixel मानों को scale करना",
+   "k-NN और k-means के लिए feature रेंज को बराबर करना",
+   "Sigmoid-आधारित मॉडलों के लिए inputs को सीमित करना"
+  ],
+  "x": "एक computer vision टीम factory images पर defect detection network train करने से पहले 8-bit pixel मानों को 255 से भाग देती है, जो एक निश्चित min-max scaling है। चूँकि रेंज डेटा से सीखी जाने के बजाय sensor format से तय होती है, वही preprocessing हर production camera पर बिना बदले काम करता है।"
+ },
+ "standard": {
+  "n": "Standardization (Z-score मानकीकरण)",
+  "d": "Standardization हर feature से mean घटाकर और standard deviation से भाग देकर उसे शून्य mean और इकाई standard deviation वाला बना देता है। परिणाम, जिसे z-score कहते हैं, हर मान को औसत से कितने standard deviations दूर है, इस रूप में व्यक्त करता है।\n\nकई algorithms feature scale के प्रति संवेदनशील होते हैं। Features के scales समान होने पर gradient descent तेज़ी से converge करता है, regularized linear मॉडल coefficients पर तभी निष्पक्ष penalty लगाते हैं जब features तुलनीय हों, और PCA, SVMs, k-means और k-nearest neighbors सभी ऐसी दूरियों या variances पर निर्भर करते हैं जिन पर बड़े scale वाला feature हावी हो जाएगा। इन तरीकों के लिए standardization सामान्य डिफ़ॉल्ट है।\n\nMean और standard deviation केवल training डेटा पर निकाले जाने चाहिए और बाद के सभी डेटा पर दोबारा इस्तेमाल होने चाहिए। Standardization किसी distribution को normal नहीं बनाता; skewed feature skewed ही रहता है। यह outliers से भी प्रभावित होता है, क्योंकि mean और standard deviation दोनों होते हैं, इसलिए heavy-tailed डेटा के लिए robust scaling बेहतर हो सकती है। Tree-based मॉडलों को इसकी ज़रूरत नहीं होती।",
+  "u": [
+   "Linear मॉडलों और SVMs के लिए preprocessing",
+   "PCA से पहले features तैयार करना",
+   "Gradient descent के convergence को तेज़ करना"
+  ],
+  "x": "एक marketing analytics टीम उम्र से लेकर हज़ारों डॉलर में वार्षिक खर्च तक के features पर एक regularized logistic regression fit करती है। scikit-learn pipeline के भीतर standardization यह सुनिश्चित करता है कि L2 penalty हर feature के साथ निष्पक्ष व्यवहार करे, और वही scaling parameters production scoring सेवा द्वारा संग्रहीत और लागू किए जाएँ।"
+ },
+ "robust": {
+  "n": "Robust Scaling",
+  "d": "Robust scaling हर feature को उसके median पर center करता है और उसकी interquartile range (IQR), यानी 25वें और 75वें percentiles के बीच की दूरी, से भाग देता है। चूँकि median और IQR चरम छोरों को अनदेखा करते हैं, कुछ outliers बाकी मानों की scaling को विकृत नहीं करते।\n\nStandardization या min-max scaling में एक विशाल मान standard deviation या रेंज को इतना बढ़ा सकता है कि सामान्य मान एक बहुत छोटे अंतराल में सिमट जाएँ। Robust scaling डेटा के बड़े हिस्से को एक समझदार scale पर रखती है, जबकि transformation के बाद भी outliers बड़े बने रहते हैं, जो तब उपयोगी है जब उनमें जानकारी हो। यह linear मॉडलों, SVMs या neural networks में transaction राशियों या response times जैसे spiky features के लिए उपयुक्त है।\n\nRobust scaling outliers को हटाती या सीमित नहीं करती; यह केवल उन्हें scale तय करने से रोकती है। अगर मॉडल स्वयं चरम inputs के प्रति संवेदनशील है, तो clipping या log transform की फिर भी ज़रूरत हो सकती है। किसी भी scaler की तरह, statistics केवल training डेटा पर fit होने चाहिए।",
+  "u": [
+   "दुर्लभ विशाल मानों वाली transaction राशियों को scale करना",
+   "Spikes वाले sensor डेटा का preprocessing",
+   "Heavy-tailed features पर linear मॉडल"
+  ],
+  "x": "एक observability टीम service latency metrics पर anomaly detector train करती है, जहाँ दुर्लभ spikes सामान्य मान से हज़ारों गुना होते हैं। Robust scaling सामान्य latencies को अच्छी तरह फैलाकर रखती है ताकि मॉडल उनकी संरचना सीख सके, जबकि scaling के बाद भी spikes स्पष्ट रूप से चरम बने रहते हैं।"
+ },
+ "logtf": {
+  "n": "Log Transform (लघुगणकीय रूपांतरण)",
+  "d": "Log transform किसी धनात्मक मान x को log(x) से बदलता है, या शून्य मौजूद होने पर log(1 + x) से। यह बड़े मानों को छोटे मानों की तुलना में कहीं अधिक compress करता है, जिससे right-skewed, multiplicative डेटा अधिक symmetric, additive रूप में बदल जाता है।\n\nआय, कीमतें, गिनतियाँ और file sizes अक्सर कई orders of magnitude में फैले होते हैं। Log scale पर 10 से 100 का बदलाव 100 से 1,000 के बदलाव के बराबर गिना जाता है, इसलिए अनुपात अंतर बन जाते हैं। इससे अक्सर संबंध linear बनते हैं, variance स्थिर होता है और बहुत बड़े मान नियंत्रित होते हैं। Regression target पर लागू करने से squared error से train किया गया मॉडल absolute के बजाय relative error पर ध्यान केंद्रित करने लगता है।\n\nशून्य और ऋणात्मक मानों के लिए log अपरिभाषित है, इसलिए log1p या कोई shift चाहिए, और shift एक मनमाना चुनाव है। जब मॉडल log target पर train होता है, तो उसके predictions का exponent लेने से mean के बजाय median का अनुमान मिलता है, जो सुधार न करने पर कुल योग को नीचे की ओर bias करता है।",
+  "u": [
+   "लंबी दाहिनी tail वाली कीमतों या आय की modeling",
+   "Count features के variance को स्थिर करना",
+   "Relative error पर ध्यान के लिए log-sales का अनुमान"
+  ],
+  "x": "एक real estate platform log(price) पर train किए गए gradient-boosted मॉडल से बिक्री कीमतों का अनुमान लगाता है, ताकि सस्ते apartment और luxury घर पर 10% error पर समान penalty लगे। Predictions को exp से वापस बदला जाता है, और टीम validation set पर कुल bias की जाँच करती है क्योंकि back-transform औसत कीमतों को कम आँकने की प्रवृत्ति रखता है।"
+ },
+ "boxcox": {
+  "n": "Box-Cox Transform",
+  "d": "Box-Cox transform, parameter λ से अनुक्रमित power transformations का एक परिवार है, जो सख़्ती से धनात्मक डेटा को normal distribution के अधिक क़रीब लाता है। λ का मान maximum likelihood से चुना जाता है ताकि रूपांतरित डेटा normal distribution में सबसे अच्छी तरह fit हो।\n\nλ = 1 होने पर डेटा केवल खिसकता है, λ = 0.5 square-root transform के क़रीब है, और λ = 0 को natural logarithm के रूप में परिभाषित किया गया है। λ पर खोज करके Box-Cox log transform मान लेने के बजाय compression की वह strength चुनता है जो skewness को सबसे अच्छी तरह घटाती है और variance को स्थिर करती है। इसे linear मॉडलों और time-series forecasting में features और targets पर लागू किया जाता है।\n\nBox-Cox को सख़्ती से धनात्मक inputs चाहिए; शून्य या ऋणात्मक मानों वाले डेटा के लिए Yeo-Johnson transform सामान्य विकल्प है। Fit किया गया λ केवल training डेटा से आना चाहिए। Log transform की तरह, रूपांतरित scale पर किए गए predictions को उलटने से मूल mean का unbiased अनुमान नहीं मिलता।",
+  "u": [
+   "Linear मॉडलों के लिए skewed features को normalize करना",
+   "Time-series forecasting में variance को स्थिर करना",
+   "Statistical tests में normality की मान्यताएँ पूरी करना"
+  ],
+  "x": "दैनिक बिजली खपत का forecast करने वाली एक utility कंपनी ETS मॉडल fit करने से पहले series पर Box-Cox लागू करती है, क्योंकि seasonal उतार-चढ़ाव समग्र स्तर के साथ बढ़ता है। Fit किया गया λ मॉडल के साथ संग्रहीत रहता है, और planners को भेजने से पहले forecasts को inverse-transform किया जाता है।"
+ },
+ "impute": {
+  "n": "Missing Value Imputation",
+  "d": "Missing value imputation उन मॉडलों के लिए dataset की ख़ाली प्रविष्टियाँ भरता है जो उन्हें संभाल नहीं सकते। प्रतिस्थापन कोई सरल statistic, अन्य features से अनुमानित मान या मॉडल-विशिष्ट डिफ़ॉल्ट हो सकता है।\n\nसरल रणनीतियाँ numeric columns के लिए mean या median, और categorical columns के लिए सबसे बार-बार आने वाला मान या एक समर्पित “missing” category इस्तेमाल करती हैं। उन्नत तरीके समान rows (k-nearest neighbors) का उपयोग करते हैं या हर feature को बाकी पर iteratively regress करते हैं (MICE)। यह चिह्नित करने वाला binary indicator जोड़ना अक्सर मूल्यवान होता है कि कौन से मान missing थे, क्योंकि किसी मान का missing होना स्वयं predictive हो सकता है।\n\nसही तरीका इस पर निर्भर करता है कि डेटा क्यों missing है: पूरी तरह random रूप से, अन्य features के आधार पर random रूप से, या random रूप से नहीं, जहाँ missing होना स्वयं उस अदृश्य मान पर निर्भर करता है। Imputation statistics केवल training डेटा पर fit होने चाहिए। Mean imputation variance को सिकोड़ता है और correlations को कमज़ोर करता है, और LightGBM व XGBoost जैसी gradient-boosting libraries missing values को स्वाभाविक रूप से संभालती हैं, इसलिए imputation हमेशा ज़रूरी नहीं।",
+  "u": [
+   "Clinical डेटा में missing lab परिणाम भरना",
+   "आवेदनों में वैकल्पिक form fields को संभालना",
+   "Linear मॉडलों के लिए अधूरा sensor डेटा तैयार करना"
+  ],
+  "x": "Loan आवेदनों को score करने वाली एक lending टीम पाती है कि कई आवेदक employment-length field ख़ाली छोड़ देते हैं। वे केवल training वाली pipeline के भीतर median impute करते हैं और एक missing-indicator feature जोड़ते हैं, जो predictive साबित होता है क्योंकि field छोड़ने वाले आवेदकों की default दर अलग होती है।"
+ },
+ "outlier": {
+  "n": "Outlier Handling",
+  "d": "Outlier handling उन data points का पता लगाने की प्रक्रिया है जो distribution के मुख्य हिस्से से बहुत दूर हैं, और यह तय करने की कि उन्हें रखा जाए, सुधारा जाए, सीमित (cap) किया जाए, रूपांतरित किया जाए या हटाया जाए। फ़ैसला इस पर निर्भर करता है कि यह कोई error है या वास्तविक दुर्लभ घटना।\n\nपहचान के नियमों में z-scores (उदाहरण के लिए |z| > 3), IQR नियम जो quartiles के बाहर 1.5 × IQR से आगे के मानों को flag करता है, और isolation forest, local outlier factor या Mahalanobis distance जैसे multivariate तरीके शामिल हैं, जो ऐसे points पकड़ते हैं जो हर feature पर अलग-अलग सामान्य दिखते हैं लेकिन संयोजन में असामान्य होते हैं। फिर data-entry errors को सुधारा या हटाया जा सकता है, जबकि वैध चरम मानों को cap, log-transform या Huber जैसे robust losses से संभाला जा सकता है।\n\nOutliers सबसे अधिक squared error, means और दूरियों पर आधारित मॉडलों के लिए मायने रखते हैं, और trees के लिए कम। एक आम ग़लती outliers को स्वचालित रूप से हटा देना है: fraud detection, fault monitoring या दुर्लभ रोग निदान में outliers ठीक वही मामले हो सकते हैं जिन्हें मॉडल को सीखना है।",
+  "u": [
+   "Tabular datasets में data-entry errors साफ़ करना",
+   "Linear regression को चरम points से बचाना",
+   "समीक्षा के लिए असामान्य sensor readings को flag करना"
+  ],
+  "x": "एक e-commerce analytics टीम को ठीक 9,999,999 के order मान मिले, जो एक test account और एक system के डिफ़ॉल्ट placeholder के कारण थे। उन्होंने उन rows को errors मानकर हटा दिया, लेकिन वास्तविक बड़े business orders को रखा और revenue forecasting मॉडल में Huber loss से उनके प्रभाव को सीमित किया।"
+ },
+ "clipwin": {
+  "n": "Clipping और Winsorizing",
+  "d": "Clipping और winsorizing चरम मानों को सीमित करते हैं—किसी चुने हुए threshold से आगे के हर मान को स्वयं threshold से बदलकर। Clipping निश्चित सीमाओं का उपयोग करता है, जैसे 0 और 1,000; winsorizing सीमाओं को डेटा के percentiles पर तय करता है, जैसे 1st और 99th, ताकि कटौती हर feature के अनुसार ढल जाए।\n\nOutliers को हटाने के विपरीत, दोनों तरीके हर row को और गैर-चरम मानों के बीच उसके क्रम को बनाए रखते हैं, जबकि यह सीमित करते हैं कि कोई अकेला point किसी mean, regression coefficient या gradient को कितना खींच सकता है। ये linear मॉडलों और neural networks में heavy-tailed features के लिए, robust summary statistics के लिए, और ऐसे financial ratios के लिए आम हैं जिनमें कुछ कंपनियों के मान बहुत विशाल होते हैं।\n\nPercentile thresholds training डेटा पर निकाले जाने चाहिए और बिना बदले दोबारा इस्तेमाल होने चाहिए। Capping यह जानकारी मिटा देता है कि कोई मान कितना चरम था, जो तब हानिकारक है जब चरम मान ही रुचि का signal हों, जैसे fraud में। Tree मॉडल monotonic tails से काफ़ी हद तक अप्रभावित रहते हैं, इसलिए उनके लिए यह चरण अक्सर अनावश्यक है।",
+  "u": [
+   "Linear regression के लिए heavy-tailed features को सीमित करना",
+   "Financial ratios के robust औसत",
+   "दुर्लभ spikes वाले neural network inputs को स्थिर करना"
+  ],
+  "x": "एक quantitative research टीम cross-sectional regressions fit करने से पहले हर महीने के भीतर कंपनियों के valuation ratios को 1st और 99th percentiles पर winsorize करती है। इससे लगभग शून्य earnings और विशाल ratios वाली मुट्ठी भर कंपनियाँ coefficient अनुमानों पर हावी नहीं हो पातीं।"
+ },
+ "onehot": {
+  "n": "One-Hot Encoding",
+  "d": "One-hot encoding, k categories वाले categorical variable को k binary columns में बदलता है, जिनमें से हर row के लिए ठीक एक का मान 1 होता है। इससे numeric input चाहने वाले मॉडल categories का उपयोग उनके बीच किसी क्रम या दूरी का संकेत दिए बिना कर पाते हैं।\n\nRed = 1, green = 2, blue = 3 जैसे integers देने से linear मॉडल या neural network यह समझेगा कि blue, red का तीन गुना है और green उनके बीच है। One-hot vectors इससे बचते हैं और हर category को उसका अपना coefficient देते हैं। Intercept वाले linear मॉडलों के लिए पूर्ण multicollinearity, यानी तथाकथित dummy variable trap, से बचने के लिए अक्सर एक column हटा दिया जाता है। Encoders को training डेटा पर fit होना चाहिए और unseen categories को संभालना चाहिए।\n\nमुख्य सीमा dimensionality है: user ID या ZIP code जैसे दसियों हज़ार मानों वाला column एक विशाल sparse matrix बनाता है, और प्रति column बहुत कम उदाहरण होते हैं। High cardinality के विकल्पों में target encoding, frequency encoding, hashing या सीखे गए embeddings शामिल हैं।",
+  "u": [
+   "Linear मॉडलों के लिए low-cardinality categories को encode करना",
+   "Product type या सप्ताह के दिन को दर्शाना",
+   "Neural networks के लिए nominal features तैयार करना"
+  ],
+  "x": "एक airline की pricing टीम no-shows का अनुमान लगाने वाले logistic regression में cabin class, booking channel और प्रस्थान के सप्ताह-दिन को one-hot features के रूप में encode करती है। Encoder deployed pipeline के भीतर चलता है और अज्ञात categories को अनदेखा करता है, इसलिए नया शुरू किया गया booking channel scoring को नहीं तोड़ता।"
+ },
+ "targetenc": {
+  "n": "Target Encoding",
+  "d": "Target encoding हर category को उस category की rows पर निकाले गए target के किसी statistic से—आम तौर पर label के mean से—बदल देता है, जिससे एक high-cardinality feature एक अकेला सूचनात्मक numeric column बन जाता है।\n\nBinary target के लिए कोई शहर उस शहर में positive परिणामों का अंश बन जाता है। दुर्लभ categories noisy means देती हैं, इसलिए अनुमान को global mean की ओर smooth किया जाता है, जिसका weight category की गिनती के साथ बढ़ता है। इससे merchant ID या ZIP code जैसे features के लिए भी dimensionality कम रहती है, और यह linear व tree दोनों मॉडलों के लिए उपयुक्त है।\n\nसबसे बड़ा जोखिम target leakage है: अगर किसी row का अपना label उसके encoding में योगदान देता है, तो मॉडल उत्तर का विकृत रूप देखता है और overfit करता है। सुरक्षित तरीका out-of-fold encoding है, जिसमें हर training row को केवल अन्य folds के statistics से encode किया जाता है, फिर test डेटा को रूपांतरित करने के लिए encoder को पूरे training डेटा पर fit किया जाता है। scikit-learn का TargetEncoder, fit_transform में यह cross-fitting स्वचालित रूप से लागू करता है।",
+  "u": [
+   "Fraud मॉडलों के लिए merchant या ZIP code को encode करना",
+   "Linear मॉडलों के लिए high-cardinality IDs को compress करना",
+   "कई advertiser categories के साथ click-through prediction"
+  ],
+  "x": "एक online marketplace seller ID—जिसके लाखों मान हैं—का उपयोग करके अनुमान लगाता है कि कोई listing एक हफ़्ते के भीतर बिकेगी या नहीं। Out-of-fold smoothed target encoding, ID को एक column में बदल देता है जो हर seller की ऐतिहासिक sell-through दर्शाता है, जबकि भारी smoothing नए sellers को global औसत के पास रखती है।"
+ },
+ "freqenc": {
+  "n": "Frequency Encoding",
+  "d": "Frequency encoding हर category को इससे बदलता है कि वह training डेटा में कितनी बार आती है, या तो कच्ची गिनती के रूप में या अनुपात के रूप में। यह target का उपयोग किए बिना किसी भी cardinality के categorical column को एक numeric feature में बदल देता है।\n\nसहज विचार यह है कि लोकप्रियता अक्सर अपने-आप में सूचनात्मक होती है: बार-बार आने वाले merchants, आम device models या लोकप्रिय products दुर्लभ वालों से अलग व्यवहार कर सकते हैं। चूँकि यह labels को अनदेखा करता है, इसमें target-leakage का कोई जोखिम नहीं, यह सस्ता है और बहुत ऊँची cardinality संभालता है। यह tree मॉडलों के साथ अच्छा काम करता है, जो count thresholds पर split कर सकते हैं, और अक्सर अन्य encodings के साथ जोड़ा जाता है।\n\nइसकी मुख्य सीमा यह है कि समान frequency वाली categories अलग नहीं पहचानी जा सकतीं, भले ही उनका व्यवहार बहुत अलग हो। गिनतियाँ training डेटा से आनी चाहिए और संग्रहीत होनी चाहिए; production में unseen categories को आम तौर पर शून्य गिनती या एक छोटा डिफ़ॉल्ट मिलता है। अगर समय के साथ डेटा की मात्रा बदलती है, तो कच्ची गिनतियाँ drift करती हैं, इसलिए normalized frequencies आम तौर पर अधिक सुरक्षित होती हैं।",
+  "u": [
+   "Click logs में device model या browser को encode करना",
+   "Merchants या products की लोकप्रियता को पकड़ना",
+   "Gradient boosting के लिए सस्ता, leakage-मुक्त encoding"
+  ],
+  "x": "एक ad-tech टीम LightGBM click-through मॉडल में frequency-encoded publisher domain और app ID जोड़ती है। गिनतियाँ एक निश्चित training window से निकाली जाती हैं और feature service में lookup table के रूप में संग्रहीत होती हैं, और unseen domains को शून्य पर map किया जाता है ताकि नए publishers को दुर्लभ माना जाए।"
+ },
+ "binning": {
+  "n": "Binning (Discretization / विविक्तीकरण)",
+  "d": "Binning किसी continuous feature की रेंज को अंतरालों में बाँटकर और हर मान को उस अंतराल में रखकर जिसमें वह आता है, उसे categorical में बदल देता है। आम योजनाएँ हैं equal-width bins, equal-frequency (quantile) bins, और domain ज्ञान या decision tree से चुने गए bins।\n\nBinning से linear मॉडल nonlinear प्रभाव पकड़ पाता है, क्योंकि हर bin को अपना coefficient मिलता है, और यह outliers के प्रभाव को सीमित करता है, जो बस अंतिम bins में चले जाते हैं। Binned features समझाने में आसान होते हैं, इसीलिए credit scorecards हर bin को points देते हैं। Quantile binning skew के प्रति robust है, जबकि equal-width binning कुछ bins को लगभग ख़ाली छोड़ सकता है।\n\nइसकी कीमत जानकारी का नुकसान है: किसी सीमा के पास के मानों को अलग माना जाता है, जबकि एक bin के विपरीत छोरों के मानों को एक जैसा। Bins की संख्या और स्थान अतिरिक्त hyperparameters हैं जो overfit कर सकते हैं। Gradient-boosted trees जैसे लचीले मॉडल अपने split points ख़ुद सीखते हैं, इसलिए binning से उन्हें शायद ही मदद मिलती है।",
+  "u": [
+   "Points-आधारित credit scorecards बनाना",
+   "Linear मॉडलों को nonlinear प्रभाव पकड़ने देना",
+   "उम्र या आय को report categories में समूहित करना"
+  ],
+  "x": "एक bank की credit risk टीम आवेदक की उम्र, आय और utilization को quantile-आधारित समूहों में bin करती है और एक logistic regression scorecard fit करती है। Regulators और loan officers हर bin को दिए गए points सीधे पढ़ सकते हैं, जो किसी black-box मॉडल में संभव नहीं होता।"
+ },
+ "featureeng": {
+  "n": "Feature Engineering",
+  "d": "Feature engineering कच्चे डेटा से नए input variables बनाना है ताकि मॉडल प्रासंगिक pattern को अधिक आसानी से सीख सके। यह उस domain ज्ञान को encode करता है जिसे खोजने के लिए मॉडल को अन्यथा कहीं अधिक डेटा या कहीं अधिक लचीले रूप की ज़रूरत होती।\n\nसामान्य तकनीकों में ratios (आय से भाग दिया गया कर्ज़), interactions, दिन का घंटा जैसे date के भाग, किसी ग्राहक के इतिहास पर aggregates (पिछले 30 दिनों में orders), स्थानों के बीच की दूरियाँ और log transforms शामिल हैं। Tabular डेटा के लिए अच्छी तरह बनाए गए features अक्सर सशक्त algorithms के बीच चुनाव से अधिक मायने रखते हैं, और वे मॉडलों को समझाना भी आसान बनाते हैं।\n\nहर feature prediction के समय केवल उस समय उपलब्ध जानकारी से गणना योग्य होना चाहिए; भविष्य में झाँकने वाले aggregates leakage का एक पारंपरिक स्रोत हैं। Training-serving skew से बचने के लिए training और serving दोनों के features एक ही code से बनने चाहिए, अक्सर एक feature store के ज़रिए। Deep learning images और text के लिए manual feature engineering घटाता है, लेकिन अधिकांश tabular समस्याओं के लिए नहीं।",
+  "u": [
+   "Churn prediction के लिए customer-history aggregates",
+   "Credit scoring के लिए ratio और interaction features",
+   "Delivery अनुमानों के लिए समय और स्थान features"
+  ],
+  "x": "एक food delivery कंपनी ने पिछले एक घंटे में restaurant के तैयारी समय, courier की restaurant से दूरी और मौजूदा order backlog जैसे features जोड़कर अपने delivery-time मॉडल को बेहतर बनाया। ये features एक साझा feature store में गणना किए जाते हैं, इसलिए training pipeline और real-time prediction सेवा बिल्कुल एक ही परिभाषाओं का उपयोग करती हैं।"
+ },
+ "lagfeat": {
+  "n": "Lag Features",
+  "d": "Lag features किसी time series के पिछले मान हैं जिनका उपयोग उसके वर्तमान या भविष्य के मान का अनुमान लगाने के लिए inputs के रूप में होता है। समय t पर lag-k feature बस समय t − k पर observed मान होता है, जिससे मॉडल इतिहास से autocorrelation और seasonality सीख पाता है।\n\nये forecasting को सामान्य supervised learning में बदल देते हैं। उपयोगी lags डेटा की लय को दर्शाते हैं: momentum के लिए lag 1, दैनिक डेटा में साप्ताहिक चक्रों के लिए lag 7, घंटेवार डेटा के लिए lag 24 या 168, और वार्षिक seasonality वाले साप्ताहिक डेटा के लिए lag 52। कीमत जैसी संबंधित series के lags भी आम हैं।\n\nForecast horizon तय करता है कि कौन से lags वैध हैं। अगर predictions सात दिन आगे के लिए किए जाते हैं, तो सात दिन से छोटा कोई भी lag prediction के समय उपलब्ध नहीं होता, और उसका उपयोग भविष्य की जानकारी leak करता है और validation स्कोर को बढ़ा-चढ़ा देता है। Lagging हर series की शुरुआत में missing values भी बनाता है, और splits को समय-क्रम का सम्मान करना चाहिए।",
+  "u": [
+   "Gradient-boosted trees से दैनिक sales forecasting",
+   "घंटेवार बिजली load का अनुमान",
+   "प्रति store और item अगले दिन की माँग का अनुमान"
+  ],
+  "x": "एक grocery chain LightGBM से प्रति store 14 दिन आगे की item माँग का forecast करती है, जिसमें हर store-item जोड़ी के लिए 14, 21, 28 और 364 दिनों के lags निकाले जाते हैं। छोटे lags जानबूझकर बाहर रखे गए, क्योंकि replenishment order देते समय वे मौजूद नहीं होंगे।"
+ },
+ "rollfeat": {
+  "n": "Rolling Window Features",
+  "d": "Rolling window features किसी time series को हाल के observations की एक sliding window पर सारांशित करते हैं, उदाहरण के लिए पिछले सात दिनों का mean, standard deviation, minimum, maximum या योग। ये series के स्थानीय स्तर, trend और volatility को अकेले lag मानों की तुलना में अधिक smooth तरीके से पकड़ते हैं।\n\nRolling mean noise घटाता है और हाल का स्तर दिखाता है; rolling standard deviation हाल की volatility मापता है; rolling counts या योग गतिविधि पकड़ते हैं, जैसे पिछले एक घंटे में transactions। Exponentially weighted means बिना किसी कठोर cut-off के हाल के points को अधिक weight देते हैं। आम तौर पर प्रति entity कई window लंबाइयाँ मिलाई जाती हैं, जैसे 7, 28 और 90 दिन।\n\nWindow, prediction के समय उपलब्ध अंतिम जानकारी पर या उससे पहले ख़त्म होनी चाहिए। ऐसा rolling mean जिसमें वर्तमान target मान या forecast horizon के भीतर का कोई मान शामिल हो, उत्तर को leak कर देता है। मानक सुरक्षित तरीका है पहले series को horizon जितना shift करना और फिर rolling statistic निकालना।",
+  "u": [
+   "Fraud detection के लिए transaction velocity features",
+   "Sales forecasting के लिए हाल की औसत माँग",
+   "Financial risk मॉडलों के लिए volatility features"
+  ],
+  "x": "एक card issuer हर card के लिए पिछले 1 घंटे, 24 घंटे और 7 दिनों में transactions की संख्या और कुल राशि निकालता है, और वर्तमान राशि की तुलना 30-दिन के rolling औसत से करता है। ये velocity features एक streaming system में बनाए रखे जाते हैं ताकि real-time fraud scoring के लिए वे सेकंडों के भीतर ताज़ा रहें।"
+ },
+ "imbalance": {
+  "n": "Class Imbalance (वर्ग असंतुलन)",
+  "d": "Class imbalance तब होता है जब एक class बाकी की तुलना में बहुत दुर्लभ होती है, जैसे fraud, defects या रोग, ताकि मॉडल हमेशा majority class का अनुमान लगाकर ऊँची accuracy पा सकता है, जबकि वह मायने रखने वाले मामलों के लिए बेकार होता है।\n\nTraining के दौरान loss पर majority उदाहरण हावी रहते हैं, और मॉडल minority class का अनुमान शायद ही लगाता है। मूल्यांकन के दौरान accuracy भ्रामक हो जाती है; precision, recall, F1, PR-AUC और लागत-आधारित metrics अधिक सूचनात्मक होते हैं। PR-AUC विशेष रूप से उपयोगी है क्योंकि इसका random baseline positive दर के बराबर होता है, जिससे छोटे सुधार भी दिखाई देते हैं। आम उपाय हैं class weights, resampling (oversampling, SMOTE, undersampling), लागत-आधारित threshold चुनाव और अधिक minority उदाहरण जुटाना।\n\nअकेला imbalance हमेशा समस्या नहीं होता। Imbalanced डेटा पर train किया गया अच्छी तरह परिभाषित probabilistic मॉडल फिर भी अच्छी rankings और calibrated probabilities दे सकता है; अक्सर केवल threshold बदलने की ज़रूरत होती है। Resampling अनुमानित probabilities को बदल देता है, इसलिए अगर outputs को वास्तविक probabilities के रूप में इस्तेमाल करना हो तो उन्हें दोबारा calibrate करना होगा।",
+  "u": [
+   "दुर्लभ positive transactions के साथ fraud detection",
+   "Sensor डेटा से manufacturing defect detection",
+   "Patient records से दुर्लभ रोगों की screening"
+  ],
+  "x": "एक manufacturing quality टीम दोषपूर्ण parts का अनुमान लगाती है, जो उत्पादन का एक प्रतिशत से भी कम हिस्सा होते हैं। वे class weights के साथ train करते हैं, PR-AUC और एक निश्चित inspection budget पर recall से मूल्यांकन करते हैं, और ऐसा threshold चुनते हैं कि flag किए गए parts की संख्या उतनी हो जितनी inspectors हर shift में जाँच सकें।"
+ },
+ "smote": {
+  "n": "SMOTE Oversampling",
+  "d": "SMOTE (Synthetic Minority Over-sampling Technique) मौजूदा उदाहरणों की नक़ल करने के बजाय नए synthetic minority-class उदाहरण बनाकर dataset को संतुलित करता है। हर synthetic point को किसी minority उदाहरण और उसके k nearest minority neighbors में से एक के बीच की रेखा-खंड पर एक random स्थान पर रखा जाता है।\n\nRandom oversampling की तुलना में, जो rows की प्रतियाँ बनाता है और मॉडल को उन्हें रटने के लिए प्रोत्साहित करता है, SMOTE minority उदाहरणों के आसपास के क्षेत्र को भरता है और classifiers को दुर्लभ class के लिए एक व्यापक decision region देता है। Variants में Borderline-SMOTE, ADASYN, और mixed numeric व categorical features के लिए SMOTE-NC शामिल हैं।\n\nSMOTE केवल training fold पर, cross-validation loop के भीतर लागू होना चाहिए; split से पहले resampling करने से validation points की synthetic प्रतियाँ training में leak हो जाती हैं। Interpolation यह मानता है कि minority points के बीच का स्थान भी minority का क्षेत्र है, जो overlapping classes, noisy labels या categorical features के साथ विफल हो सकता है। व्यवहार में gradient boosting के साथ class weights या threshold tuning अक्सर उतना ही अच्छा प्रदर्शन करते हैं, और SMOTE अनुमानित probabilities को विकृत करता है।",
+  "u": [
+   "पारंपरिक classifiers के लिए दुर्लभ fraud मामलों को संतुलित करना",
+   "छोटे tabular datasets में minority classes का augmentation",
+   "Equipment sensors से दुर्लभ failure का अनुमान"
+  ],
+  "x": "दुर्लभ network equipment failures का अनुमान लगाने वाली एक telecom टीम imbalanced-learn pipeline के भीतर SMOTE लागू करती है ताकि हर cross-validation fold स्वतंत्र रूप से resample हो। वे इसकी तुलना class weighting से करते हैं और जो भी अछूती, time-based test अवधि पर बेहतर PR-AUC दे, उसे रखते हैं।"
+ },
+ "undersample": {
+  "n": "Undersampling",
+  "d": "Undersampling minority उदाहरण जोड़ने के बजाय majority class से उदाहरण हटाकर imbalanced dataset को संतुलित करता है। सबसे सरल रूप सभी minority rows और majority rows का एक random subset रखता है।\n\nयह training समय और memory घटाता है, जो करोड़ों rows वाले click logs के लिए मायने रखता है, और loss में minority class का भार बढ़ाता है। Tomek links और edited nearest neighbors जैसे सूचित variants सीमा के पास के या संभवतः ग़लत label वाले majority points हटाते हैं। Balanced random forests या EasyEnsemble जैसे ensembles अलग-अलग undersampled subsets पर कई मॉडल train करते हैं ताकि कुल मिलाकर कम जानकारी खोए।\n\nस्पष्ट कीमत छोड़ा गया डेटा है, जो variance बढ़ा सकता है और majority class के बारे में मॉडल की समझ को नुकसान पहुँचा सकता है। Undersampling अनुमानित probabilities को ऊपर भी खिसकाता है; अगर मॉडल के स्कोर probabilities के रूप में इस्तेमाल होते हैं, तो उन्हें sampling दर के लिए सुधारना होगा। इसे केवल training डेटा पर लागू करना चाहिए, कभी भी validation या test sets पर नहीं।",
+  "u": [
+   "CTR मॉडलों के लिए विशाल click logs को घटाना",
+   "अत्यधिक imbalanced डेटा पर training तेज़ करना",
+   "दुर्लभ घटनाओं के लिए balanced bagging ensembles"
+  ],
+  "x": "एक advertising platform अपना click-through मॉडल train करते समय हर click को रखता है, लेकिन non-click impressions का केवल एक छोटा random अंश, जिससे training लागत काफ़ी घट जाती है। चूँकि दी जाने वाली bids calibrated probabilities पर निर्भर करती हैं, उपयोग से पहले predictions को negative sampling दर के लिए सुधारा जाता है।"
+ },
+ "classweight": {
+  "n": "Class Weights",
+  "d": "Class weights हर उदाहरण के training loss में योगदान को उसकी class के अनुसार scale करते हैं, ताकि दुर्लभ classes पर errors की कीमत आम classes पर errors से अधिक हो।\n\nएक आम विकल्प, जिसे balanced weighting कहते हैं, हर class के weight को उसकी frequency के व्युत्क्रमानुपाती रखता है, ताकि हर class कुल loss में बराबर योगदान दे। Weights business लागतों को भी दर्शा सकते हैं, उदाहरण के लिए छूटे हुए fraud मामले को false alarm से दस गुना महँगा बनाना। अधिकांश libraries इसे सीधे support करती हैं: scikit-learn में class_weight, XGBoost और LightGBM में scale_pos_weight, और PyTorch losses में weight arguments।\n\nResampling की तुलना में class weights पूरे डेटा का उपयोग करते हैं और कोई synthetic points नहीं जोड़ते, जिससे ये एक साफ़ पहला विकल्प बनते हैं। ये decision boundary को खिसकाते हैं और minority class के लिए अनुमानित probabilities को बढ़ाते हैं, इसलिए outputs अब calibrated नहीं रहते और उन्हें recalibration की ज़रूरत हो सकती है। चरम weights training को अस्थिर बना सकते हैं, ख़ासकर stochastic gradients और प्रति batch बहुत कम minority उदाहरणों के साथ।",
+  "u": [
+   "Logistic regression या SVMs के साथ imbalanced classification",
+   "लागत-संवेदी fraud और churn मॉडल",
+   "Deep learning में दुर्लभ classes के लिए weighted cross-entropy"
+  ],
+  "x": "एक customer-support टीम tickets को कई categories में classify करती है, जिनमें से कुछ, जैसे security incidents, दुर्लभ लेकिन अत्यावश्यक हैं। वे weighted cross-entropy के साथ एक text classifier train करते हैं जो उन categories को चूकने की लागत बढ़ाता है, और समग्र accuracy के बजाय प्रति-class recall की निगरानी करते हैं।"
+ },
+ "featsel": {
+  "n": "Feature Selection",
+  "d": "Feature selection उपलब्ध input features में से एक subset चुनता है, जिसका लक्ष्य समान या बेहतर accuracy के साथ एक सरल, तेज़ और अक्सर अधिक robust मॉडल है।\n\nतरीके तीन समूहों में आते हैं। Filter methods हर feature को मॉडल से स्वतंत्र रूप से correlation, mutual information या statistical tests से score करते हैं, और तेज़ होते हैं लेकिन interactions के प्रति अंधे। Recursive feature elimination या forward selection जैसे wrapper methods candidate subsets पर बार-बार मॉडल train करते हैं, जो interactions पकड़ता है लेकिन महँगा है। Embedded methods training के दौरान चयन करते हैं, जैसे L1 regularization कुछ coefficients को ठीक शून्य कर देता है और tree मॉडल importance स्कोर देते हैं।\n\nचयन noisy features से होने वाले overfitting को घटाता है, data-collection लागत कम करता है और interpretability बढ़ाता है। चयन cross-validation loop के भीतर होना चाहिए; पूरे dataset पर features चुनकर फिर cross-validate करने से आशावादी स्कोर मिलते हैं। Features correlated होने पर importance-आधारित चयन अस्थिर होता है, क्योंकि मॉडल दो redundant features में से किसी का भी उपयोग कर सकता है, और trees में impurity-आधारित importances high-cardinality features की ओर biased होती हैं।",
+  "u": [
+   "चौड़े tabular डेटा से noisy features हटाना",
+   "Production में feature-collection लागत घटाना",
+   "Interpretability या नियमन के लिए मॉडलों को सरल बनाना"
+  ],
+  "x": "एक credit टीम ने bureau और application डेटा से कई सौ candidate features के साथ शुरुआत की। Cross-validation के भीतर L1-regularized logistic regression और permutation importance का उपयोग करके उन्होंने कुछ दर्जन features रखे, जिससे validation AUC घटाए बिना महँगे data vendors पर निर्भरता कम हुई।"
+ },
+ "vif": {
+  "n": "Multicollinearity और VIF",
+  "d": "Multicollinearity तब होती है जब दो या अधिक features आपस में प्रबल रूप से linearly संबंधित हों, जिससे linear मॉडल के अलग-अलग coefficients अस्थिर और व्याख्या में कठिन हो जाते हैं। Variance inflation factor (VIF) मापता है कि इस redundancy के कारण किसी coefficient का variance कितना बढ़ गया है।\n\nFeature j का VIF निकालने के लिए उसे बाकी सभी features पर regress करें और उस regression से R²ⱼ लें; VIF = 1 / (1 − R²ⱼ)। VIF 1 का अर्थ है कोई linear संबंध नहीं; लगभग 5 से 10 से ऊपर के मान आम तौर पर समस्याग्रस्त माने जाते हैं। ऊँचे VIF के साथ डेटा में छोटे बदलाव coefficient के sign पलट सकते हैं, और standard errors व p-values अविश्वसनीय हो जाते हैं।\n\nउपायों में redundant features को हटाना या मिलाना, domain-आधारित ratios का उपयोग, PCA लागू करना, या ridge regression का उपयोग शामिल है, जो correlated coefficients को स्थिर करता है। Multicollinearity मुख्यतः व्याख्या और inference को नुकसान पहुँचाती है; जब तक production में correlation संरचना वैसी ही रहे, यह आम तौर पर predictive accuracy को नुकसान नहीं पहुँचाती। VIF को intercept शामिल करके निकालें।",
+  "u": [
+   "Coefficients की व्याख्या से पहले regressors की जाँच",
+   "Econometric या pricing मॉडलों के लिए features साफ़ करना",
+   "अस्थिर coefficient signs का निदान"
+  ],
+  "x": "Insurance premiums के लिए व्याख्यात्मक regression बनाने वाली एक pricing analytics टीम ने पाया कि वाहन के वज़न, engine size और horsepower के VIFs 10 से काफ़ी ऊपर थे, और उनके coefficients तिमाहियों के बीच sign बदल रहे थे। उन्होंने horsepower और weight-to-power ratio रखा, जिससे मॉडल के प्रभाव actuaries के सामने प्रस्तुत करने लायक स्थिर हो गए।"
+ },
+ "dimred": {
+  "n": "Dimensionality Reduction (आयाम न्यूनीकरण)",
+  "d": "Dimensionality reduction कई features वाले डेटा को कम dimensions में map करता है, जबकि मायने रखने वाली संरचना—जैसे variance, neighborhoods या class separation—बनी रहती है।\n\nLinear तरीकों में principal component analysis (PCA) शामिल है, जो अधिकतम variance की orthogonal दिशाएँ ढूँढता है, और truncated SVD, जो text जैसे sparse matrices पर काम करता है। t-SNE और UMAP जैसे nonlinear तरीके local neighborhoods को बनाए रखते हैं और मुख्यतः visualization के लिए इस्तेमाल होते हैं, जबकि autoencoders neural networks से compressed representations सीखते हैं। Linear discriminant analysis जैसे supervised variants labels का उपयोग करके classes को अलग करने वाली दिशाएँ बनाए रखते हैं।\n\nयह curse of dimensionality से लड़ने में मदद करता है, correlated features के बीच redundancy हटाता है, training और storage को तेज़ करता है, और डेटा को दो या तीन dimensions में दृश्य बनाता है। घटाए गए features की व्याख्या कठिन होती है, और unsupervised reduction कम variance वाली ऐसी दिशाओं को छोड़ सकता है जो अत्यधिक predictive हों। t-SNE और UMAP plots global दूरियों और cluster sizes को विकृत करते हैं, इसलिए उन्हें डेटा के विश्वसनीय नक्शे के रूप में नहीं पढ़ना चाहिए।",
+  "u": [
+   "Embeddings या cell types को 2D में visualize करना",
+   "Correlated sensor features को compress करना",
+   "Nearest-neighbor search को तेज़ करना"
+  ],
+  "x": "एक single-cell genomics समूह हज़ारों genes के expression profiles को 50 principal components तक घटाता है, फिर visualization और clustering के लिए उन components पर UMAP चलाता है। PCA चरण noise हटाता है और लाखों cells वाले datasets के लिए neighbor graph की गणना को पर्याप्त तेज़ बनाता है।"
+ },
+ "l1": {
+  "n": "L1 Regularization (Lasso)",
+  "d": "L1 regularization मॉडल के weights के absolute मानों का योग loss में जोड़ता है, जो कई weights को ठीक शून्य पर धकेल देता है और इस तरह स्वचालित feature selection करता है। Linear regression में इसे lasso कहते हैं।\n\nAbsolute-value penalty का शून्य पर एक कोना होता है: वहाँ इसका subgradient पूरा अंतराल [−λ, λ] है, इसलिए कोई weight तब तक ठीक शून्य पर रहता है जब तक उसका feature loss को λ से अधिक न घटाए। ज्यामितीय रूप से, हीरे के आकार का constraint क्षेत्र loss contours को अपने कोनों पर छूता है, जहाँ कुछ coordinates शून्य होते हैं। Lasso को coordinate descent या proximal तरीकों से हल किया जाता है, क्योंकि penalty शून्य पर differentiable नहीं है।\n\nL1 तब उपयोगी है जब कई features के अप्रासंगिक होने की अपेक्षा हो, या जब एक compact मॉडल चाहिए। अत्यधिक correlated features के साथ lasso कुछ हद तक मनमाने ढंग से एक को चुनकर बाकी को छोड़ देता है, और चयन डेटा samples के बीच बदल सकता है। Features को पहले standardize करना ज़रूरी है, क्योंकि penalty coefficient के scale पर निर्भर करती है।",
+  "u": [
+   "कई candidate features वाले sparse linear मॉडल",
+   "चौड़े डेटा से genes या biomarkers चुनना",
+   "Compact, interpretable scoring मॉडल"
+  ],
+  "x": "एक marketing analytics टीम साप्ताहिक sign-ups को समझाने के लिए सैकड़ों campaign, channel और seasonality features पर lasso मॉडल fit करती है। Cross-validated penalty गैर-शून्य coefficients का एक छोटा सेट छोड़ती है जिसकी analysts समीक्षा कर सकते हैं, और अलग-अलग features पर भरोसा करने से पहले टीम bootstrap samples पर चयन की स्थिरता जाँचती है।"
+ },
+ "l2": {
+  "n": "L2 Regularization (Ridge)",
+  "d": "L2 regularization weights के वर्गों का योग loss में जोड़ता है, जो सभी weights को smooth तरीके से शून्य की ओर सिकोड़ता है और variance घटाता है। Linear regression में इसे ridge regression कहते हैं।\n\nSquared penalty का gradient स्वयं weight के समानुपाती होता है, इसलिए बड़े weights को प्रबलता से और छोटे weights को थोड़ा-सा खींचा जाता है; weights शायद ही कभी ठीक शून्य होते हैं। Ridge का closed-form हल है, w = (XᵀX + λI)⁻¹Xᵀy, और λI जोड़ने से matrix invertible हो जाता है, भले ही features collinear हों या samples से अधिक हों। Correlated features के साथ L2 weight को उनमें बाँट देता है, और एक को चुनने के बजाय correlated coefficients को समान मानों की ओर सिकोड़ता है। Bayesian दृष्टि से यह weights पर Gaussian prior के समकक्ष है।\n\nजब अधिकांश features से थोड़ा-थोड़ा योगदान अपेक्षित हो, तो L2 linear मॉडलों और neural networks के लिए डिफ़ॉल्ट regularizer है। यह sparse मॉडल नहीं बनाता, इसलिए यह feature selector नहीं है। Features को पहले standardize करना चाहिए, और intercept पर आम तौर पर penalty नहीं लगाई जाती।",
+  "u": [
+   "Correlated predictors के साथ regression को स्थिर करना",
+   "कई features पर logistic regression का regularization",
+   "Neural networks में बड़े weights को रोकना"
+  ],
+  "x": "एक energy trading desk दर्जनों प्रबल रूप से correlated मौसम और load पूर्वानुमानों से अगले दिन की कीमतों का अनुमान लगाता है। Ridge regression सभी inputs को रखते हुए उनके coefficients को स्थिर करता है, ताकि रोज़ की retraining से मॉडल के व्यवहार में बड़े उतार-चढ़ाव न आएँ।"
+ },
+ "elasticnet": {
+  "n": "Elastic Net",
+  "d": "Elastic net regularization, L1 (lasso) और L2 (ridge) penalties को मिलाता है, जिससे lasso जैसे sparse मॉडल मिलते हैं और साथ ही correlated features के समूहों को अधिक सहजता से संभाला जाता है।\n\nदो hyperparameters इसे नियंत्रित करते हैं: समग्र strength α और L1 व L2 के बीच mixing ratio (scikit-learn में l1_ratio)। l1_ratio = 1 पर यह lasso है, और l1_ratio = 0 पर ridge। L1 भाग अप्रासंगिक weights को ठीक शून्य कर देता है; L2 भाग समस्या को strictly convex बनाता है और correlated features को मॉडल में एक साथ आने या निकलने के लिए प्रोत्साहित करता है, बजाय lasso की एक को मनमाने ढंग से चुनने की प्रवृत्ति के। यह तब भी अच्छा व्यवहार करता है जब features samples से अधिक हों, जहाँ lasso अधिकतम n features ही चुनता है।\n\nGenomics, text n-grams या marketing features जैसे चौड़े, correlated डेटा के लिए यह एक मज़बूत डिफ़ॉल्ट है। दोनों hyperparameters को cross-validation से tune करना चाहिए, और features को standardize करना ज़रूरी है। संयुक्त penalty गैर-शून्य coefficients में bias जोड़ती है, इसलिए व्याख्या के लिए कभी-कभी चुने गए features पर दोबारा fit किया जाता है।",
+  "u": [
+   "Correlated genes वाले gene expression मॉडल",
+   "कई correlated n-grams पर text regression",
+   "चौड़े marketing-mix या survey डेटा"
+  ],
+  "x": "एक biotech टीम कुछ सौ patients के हज़ारों gene expression मापों से दवा की प्रतिक्रिया का अनुमान लगाती है। Elastic net हर समूह से एक चुनने के बजाय co-expressed genes के समूहों को एक साथ रखता है, जिससे चुने गए signatures resamples के बीच अधिक सुसंगत होते हैं और जीवविज्ञानियों के साथ चर्चा करना आसान होता है।"
+ },
+ "weightdecay": {
+  "n": "Weight Decay",
+  "d": "Weight decay हर optimization step पर neural network के weights को एक छोटे अंश से सिकोड़ता है, जो weights को छोटा रखता है और regularizer का काम करता है। Update, gradient step से पहले या उसके साथ हर weight को (1 − ηλ) से गुणा करता है।\n\nसामान्य stochastic gradient descent के लिए weight decay गणितीय रूप से loss में L2 penalty (λ/2)‖w‖² जोड़ने के समकक्ष है। Adam जैसे adaptive optimizers के लिए दोनों समकक्ष नहीं हैं: loss में जोड़ा गया L2 term Adam की प्रति-parameter scaling से भाग दिया जाता है, इसलिए बड़े gradient इतिहास वाले weights मुश्किल से regularize होते हैं। AdamW इसे ठीक करता है—decay को adaptive gradient step से अलग, सीधे weights पर लागू करके—और transformers की training के लिए मानक optimizer है।\n\nAdamW के साथ सामान्य मान लगभग 0.01 से 0.1 हैं। Biases और normalization parameters (LayerNorm और BatchNorm के scales व shifts) को आम तौर पर decay से बाहर रखा जाता है। चूँकि आम implementations में decay को learning rate से गुणा किया जाता है, schedule बदलने से प्रभावी regularization भी बदल जाता है।",
+  "u": [
+   "AdamW के साथ transformer pretraining का regularization",
+   "Image classifiers के generalization में सुधार",
+   "Pretrained मॉडलों को दूर भटकाए बिना fine-tune करना"
+  ],
+  "x": "Customer-support classification के लिए language मॉडल fine-tune करने वाली एक टीम weight decay 0.01 वाले AdamW का उपयोग करती है और सामान्य transformer प्रथा के अनुसार biases व LayerNorm weights को decay से बाहर रखती है। वे decay को learning rate के साथ मिलकर tune करते हैं, क्योंकि दोनों नियंत्रित करते हैं कि weights pretrained मानों से कितनी दूर जाएँ।"
+ },
+ "dropout": {
+  "n": "Dropout",
+  "d": "Dropout एक regularization तकनीक है जो हर training step के दौरान किसी layer के activations के एक अंश को randomly शून्य कर देती है, जिससे neurons कुछ विशिष्ट अन्य neurons पर अत्यधिक निर्भर नहीं हो पाते।\n\nDrop probability p के साथ हर unit को 1 − p probability से रखा जाता है। आधुनिक frameworks inverted dropout का उपयोग करते हैं: training के दौरान रखे गए activations को 1/(1 − p) से scale किया जाता है, ताकि अपेक्षित activation न बदले और inference पर, जब dropout बंद होता है, किसी rescaling की ज़रूरत न पड़े। Dropout को weight साझा करने वाले subnetworks के एक ensemble की training के रूप में देखा जा सकता है, जिनके औसत का पूरा network test समय पर अनुमान लगाता है।\n\nसामान्य दरें transformers में 0.1 और fully connected layers में 0.2 से 0.5 हैं। मॉडल को evaluation mode में स्विच करना भूल जाना, जिससे inference पर dropout सक्रिय रहता है, एक आम bug है जो predictions को noisy बनाता है। Dropout convergence को भी धीमा करता है। विशाल datasets पर train किए गए कई बड़े language मॉडल बहुत कम या कोई dropout उपयोग नहीं करते, क्योंकि overfitting उनकी मुख्य समस्या नहीं है।",
+  "u": [
+   "कम-डेटा tasks में fully connected layers का regularization",
+   "Transformers में attention और residual dropout",
+   "Uncertainty अनुमानों के लिए Monte Carlo dropout"
+  ],
+  "x": "मामूली dataset पर insurance risk के लिए tabular neural network train करने वाली एक टीम हर hidden layer के बाद 0.3 का dropout जोड़ती है, जिससे training और validation loss के बीच का अंतर घटता है। Uncertainty अनुमानों के लिए वे inference पर Monte Carlo dropout भी चलाते हैं—dropout को सक्रिय रखकर और कई forward passes का औसत लेकर।"
+ },
+ "earlystop": {
+  "n": "Early Stopping",
+  "d": "Early stopping तब training रोक देता है जब validation set पर प्रदर्शन सुधरना बंद हो जाए, और सबसे अच्छे validation step वाला मॉडल रखता है। यह किसी iterative learner को generalizable signal सीख लेने के बाद noise को fit करते रहने से रोकता है।\n\nValidation loss को समय-समय पर जाँचा जाता है। Patience parameter तय करता है कि रोकने से पहले बिना सुधार के कितने evaluations की अनुमति है, और सबसे अच्छे evaluation के weights बहाल कर दिए जाते हैं। Early stopping का उपयोग neural network training में होता है और यह gradient-boosting libraries में अंतर्निहित है, जहाँ यह trees की संख्या चुनता है। यह implicit regularization का काम करता है, जो gradient descent से train किए गए linear मॉडलों के लिए L2 penalty जैसा है।\n\nरोकने के लिए उपयोग किया गया validation set model selection का हिस्सा बन जाता है, इसलिए उसका स्कोर आशावादी होता है, और एक अलग test set की फिर भी ज़रूरत होती है। Noisy validation curves बहुत जल्दी रुकने का कारण बन सकते हैं, इसलिए patience और न्यूनतम सुधार threshold को समझदारी से तय करना चाहिए। पूरे डेटा पर retraining करते समय अक्सर सबसे अच्छी iteration संख्या दोबारा इस्तेमाल की जाती है।",
+  "u": [
+   "Gradient boosting में trees की संख्या चुनना",
+   "Neural network training को सबसे अच्छे epoch पर रोकना",
+   "Hyperparameter searches में compute बचाना"
+  ],
+  "x": "एक ranking टीम कई हज़ार trees तक वाले LightGBM मॉडल train करती है, जिसमें एक time-based validation सप्ताह पर early stopping होता है। सबसे अच्छी iteration हर run के साथ log की जाती है, और production मॉडल को पूरे डेटा पर उसी iteration संख्या के साथ retrain किया जाता है, जिसे बड़े training set के लिए थोड़ा बढ़ाया जाता है।"
+ },
+ "augment": {
+  "n": "Data Augmentation",
+  "d": "Data augmentation मौजूदा उदाहरणों पर label को बनाए रखने वाले transformations लागू करके नए training उदाहरण बनाता है, जो dataset के प्रभावी आकार और विविधता को बढ़ाता है और मॉडल को उपयोगी invariances सिखाता है।\n\nImages के लिए मानक transforms हैं random crops, horizontal flips, rotations, color jitter और scaling, साथ ही Mixup और CutMix जैसे mixing तरीके जो दो images और उनके labels को मिलाते हैं। Audio के लिए augmentations में time shifts, जोड़ा गया noise और SpecAugment masking शामिल हैं। Text के लिए विकल्पों में back-translation और paraphrasing शामिल हैं। Augmentations को चलते-चलते randomly लागू किया जाता है, इसलिए हर epoch नए variants देखता है।\n\nAugmentation computer vision में सबसे प्रभावी regularizers में से एक है और contrastive self-supervised learning का केंद्र है। Transformations को वास्तव में label बनाए रखना चाहिए: अंक 6 को vertically flip करने से वह 9 बन सकता है, और images में text या बाएँ-दाएँ वाले medical निष्कर्षों के लिए horizontal flips ग़लत हैं। Augmentation केवल training डेटा पर लागू होता है, validation या test sets पर नहीं, सिवाय जानबूझकर किए गए test-time augmentation के।",
+  "u": [
+   "सीमित labeled डेटा पर image classifiers की training",
+   "Speech मॉडलों को पृष्ठभूमि noise के प्रति robust बनाना",
+   "Image encoders की contrastive self-supervised pretraining"
+  ],
+  "x": "एक retail कंपनी अलग-अलग रोशनी और कोणों वाली stores में ली गई तस्वीरों से shelf-product recognition मॉडल बनाती है। Training के दौरान random crops, rotations, brightness बदलाव और blur मॉडल को नए stores के प्रति robust बनाते हैं, जबकि horizontal flips बंद रखे जाते हैं क्योंकि वे product packaging पर लिखे text को उलट देते हैं।"
+ },
+ "labelsmooth": {
+  "n": "Label Smoothing",
+  "d": "Label smoothing कठोर one-hot training targets को ऐसे soft targets से बदलता है जो अधिकांश probability सही class पर रखते हैं और एक छोटी मात्रा, ε, सभी classes में फैला देते हैं।\n\nकठोर targets के साथ cross-entropy मॉडल को सही logit को बाकी की तुलना में और ऊँचा धकेलने के लिए लगातार पुरस्कृत करता रहता है, जिससे अति-आत्मविश्वासी predictions और बड़े logits हो सकते हैं। Smoothing के साथ सही class का target 1 − ε + ε/K हो जाता है और हर अन्य class को ε/K मिलता है, इसलिए optimal logits सीमित रहते हैं। सामान्य मान ε = 0.1 है। इसका व्यापक उपयोग image classification और machine translation में होता है और यह अक्सर accuracy व calibration को सुधारता है।\n\nLabel smoothing की कुछ कीमतें भी हैं। यह यह जानकारी मिटा देता है कि कौन सी ग़लत classes सही class से मिलती-जुलती हैं, जिससे smoothed teacher knowledge distillation के लिए कमज़ोर स्रोत बन जाता है। अन्य calibration तरीकों के साथ मिलाने पर यह calibration को नुकसान पहुँचा सकता है, और language मॉडलों के लिए यह perplexity बढ़ाता है, भले ही translation गुणवत्ता सुधरे।",
+  "u": [
+   "बड़े image classifiers का regularization",
+   "Neural machine translation मॉडलों की training",
+   "Noisy-label datasets में अति-आत्मविश्वास घटाना"
+  ],
+  "x": "कुछ ग़लत label वाले उदाहरणों सहित product photos पर image classifier train करने वाली एक टीम 0.1 के label smoothing के साथ cross-entropy का उपयोग करती है। मॉडल अस्पष्ट images पर कम अति-आत्मविश्वासी हो जाता है, जिससे मानवीय समीक्षा से बच निकलने वाली ऊँचे-विश्वास वाली errors की संख्या घटती है।"
+ },
+ "batchnorm": {
+  "n": "Batch Normalization",
+  "d": "Batch normalization हर feature या channel को वर्तमान mini-batch पर निकाले गए mean और variance से normalize करता है, फिर एक सीखा गया scale γ और shift β लागू करता है।\n\nTraining के दौरान हर activation को batch statistics से standardize किया जाता है, और mean व variance के running averages update होते हैं। Inference पर इसके बजाय वे संग्रहीत running statistics इस्तेमाल होते हैं, इसलिए किसी उदाहरण का output अन्य उदाहरणों पर निर्भर नहीं करता। Convolutional networks में statistics हर channel के batch और spatial स्थानों पर साझा होते हैं। Batch normalization ऊँचे learning rates की अनुमति देता है, initialization के प्रति संवेदनशीलता घटाता है और हल्का regularizing noise जोड़ता है, मुख्यतः इसलिए कि यह optimization landscape को smooth करता है।\n\nयह batch size पर निर्भर है: बहुत छोटे batches के साथ statistics noisy होते हैं और accuracy घटती है, और distributed training में synchronized batch norm की ज़रूरत हो सकती है। Evaluation mode में स्विच करना भूलना, या training और serving distributions के बीच असंगति, ग़लत outputs देती है। इन्हीं सीमाओं के कारण transformers और recurrent मॉडल इसके बजाय layer normalization का उपयोग करते हैं।",
+  "u": [
+   "गहरे convolutional image networks की training",
+   "CNNs में ऊँचे learning rates को स्थिर करना",
+   "Residual networks में तेज़ convergence"
+  ],
+  "x": "एक medical imaging टीम 3D scans पर ResNet train करती है, जहाँ GPU memory प्रति device केवल दो volumes की अनुमति देती है। इतने छोटे batches के साथ सामान्य batch normalization ने ख़राब प्रदर्शन किया, इसलिए उन्होंने GPUs पर synchronized batch norm अपनाया, और बाद में इसकी तुलना group normalization से की, जो batch size पर निर्भर नहीं करता।"
+ },
+ "layernorm": {
+  "n": "Layer Normalization",
+  "d": "Layer normalization हर अलग उदाहरण के activations को उसके feature dimension पर standardize करता है, फिर एक सीखा गया scale और shift लागू करता है। Batch normalization के विपरीत, इसके statistics batch के अन्य उदाहरणों पर निर्भर नहीं करते।\n\nTransformer में किसी token vector के लिए mean और variance उसके hidden dimension पर निकाले जाते हैं, vector को normalize किया जाता है, और प्रति-feature parameters γ और β representational लचीलापन बहाल करते हैं। चूँकि गणना training और inference पर एक जैसी है और किसी भी batch size या sequence length के साथ काम करती है, layer normalization transformers और recurrent networks में मानक विकल्प है। स्थान मायने रखता है: मूल transformer में Post-LN (residual जोड़ के बाद) का उपयोग हुआ था, जबकि Pre-LN (हर sublayer से पहले) गहरे मॉडलों में लंबे learning-rate warmup के बिना अधिक स्थिरता से train होता है, और अब अधिक आम है।\n\nConvolutional networks में यह अक्सर batch normalization से ख़राब प्रदर्शन करता है। कई हालिया बड़े language मॉडल इसे RMSNorm से बदल देते हैं, जो थोड़ी कम लागत के लिए mean-centering चरण और bias को हटा देता है।",
+  "u": [
+   "Transformer blocks के भीतर normalization",
+   "Recurrent neural network training को स्थिर करना",
+   "परिवर्ती या बहुत छोटे batch sizes वाले मॉडल"
+  ],
+  "x": "कानूनी text के लिए domain-specific transformer train करने वाली एक टीम training की शुरुआत में loss spikes देखने के बाद Post-LN से Pre-LN blocks पर चली गई। इस बदलाव से वे छोटे warmup के साथ गहरे मॉडल train कर सके, जबकि LayerNorm parameters को weight decay से बाहर रखा गया।"
+ },
+ "rmsnorm": {
+  "n": "RMSNorm",
+  "d": "RMSNorm (root mean square normalization) हर activation vector को उसके root mean square और एक सीखे गए प्रति-feature gain से rescale करता है, mean घटाए बिना और आम तौर पर bias के बिना। यह layer normalization का एक सरल और सस्ता रूप है।\n\nVector x को √(mean(x²) + ε) से भाग दिया जाता है और एक सीखे गए weight g से गुणा किया जाता है। Mean-centering छोड़ने से एक reduction और bias parameter की बचत होती है, जबकि transformers में LayerNorm जैसी स्थिरता बनी रहती है। मूल paper का तर्क था कि layer normalization को प्रभावी re-centering नहीं, बल्कि re-scaling invariance बनाती है। RMSNorm का उपयोग LLaMA, Mistral और Gemma सहित कई आधुनिक बड़े language मॉडलों में होता है, आम तौर पर attention और feed-forward sublayers से पहले Pre-norm व्यवस्था में।\n\nचूँकि यह activations को center नहीं करता, RMSNorm किसी pretrained मॉडल में LayerNorm का सीधा प्रतिस्थापन नहीं है; एक के साथ train किए गए weights दूसरे के साथ काम नहीं करेंगे। Precision भी मायने रखती है: implementations अक्सर bfloat16 मॉडलों में भी norm को float32 में निकालते हैं।",
+  "u": [
+   "LLaMA-शैली के language मॉडलों में normalization layers",
+   "बड़े transformers में normalization लागत घटाना",
+   "स्थिर गहरी training के लिए Pre-norm blocks"
+  ],
+  "x": "LLaMA-शैली का मॉडल train करने वाली एक LLM टीम हर attention और MLP sublayer से पहले और output head से पहले एक अंतिम RMSNorm का उपयोग करती है। उनका fused kernel bfloat16 मॉडल के भीतर norm को float32 में निकालता है, जिससे लंबे training runs में दुर्लभ numerical spikes से बचा जाता है।"
+ }
+}

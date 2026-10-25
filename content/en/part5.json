@@ -1,0 +1,578 @@
+{
+ "qkv": {
+  "n": "Query, Key, Value (Q, K, V)",
+  "d": "Queries, keys and values are three learned linear projections of the same token representations that let attention decide which tokens to read from and what to read. Each token's query expresses what it is looking for, each key expresses what that token offers for matching, and each value carries the content that is actually passed along. The dot product of a query with every key gives a relevance score; a softmax turns the scores into weights, and the output is the weighted sum of the values.\n\nSeparating matching (Q·K) from content (V) is what makes attention flexible: two tokens can be highly relevant to each other while contributing information unrelated to the features used for matching. W_Q, W_K and W_V are ordinary learned weight matrices. Keys and values need not come from a different source than queries: in self-attention all three come from the same sequence, and only cross-attention draws keys and values from a different one.",
+  "f": "Attention(Q,K,V) = softmax(QKᵀ/√d_k)·V,  Q = XW_Q, K = XW_K, V = XW_V",
+  "u": [
+   "Self-attention inside every Transformer layer",
+   "Retrieval-style lookup over memory slots",
+   "Inspecting which tokens a model attends to"
+  ],
+  "x": "A search team debugging a fine-tuned BERT ranking model inspects query-key scores in the last layers to see which document tokens drive each relevance decision. The analysis helps them spot when the model matches on boilerplate text such as page headers instead of the content that answers the query.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nB, T, d = 2, 5, 16\nx = torch.randn(B, T, d)              # token representations\n\nW_q = nn.Linear(d, d, bias=False)     # what each token looks for\nW_k = nn.Linear(d, d, bias=False)     # what each token offers for matching\nW_v = nn.Linear(d, d, bias=False)     # the content each token passes on\n\nQ, K, V = W_q(x), W_k(x), W_v(x)\nscores = Q @ K.transpose(-2, -1) / d ** 0.5   # (B, T, T) relevance\nweights = F.softmax(scores, dim=-1)           # each row sums to 1\nout = weights @ V                             # weighted sum of values\nprint(out.shape, weights[0, 0].sum().item())"
+ },
+ "mha": {
+  "n": "Multi-Head Attention",
+  "d": "Multi-head attention runs several attention operations in parallel on lower-dimensional projections of the input and concatenates their results. The model dimension d_model is split into h heads of size d_model/h; each head has its own query, key and value projections, computes scaled dot-product attention independently, and the concatenated outputs pass through a final linear projection W_O.\n\nBecause each head works in its own subspace, different heads can specialize: some track syntactic dependencies, some attend to the previous token, others copy rare names from far away. The total compute is about the same as a single full-width head, since each head is narrower. Multiple heads are therefore a way to get several attention patterns per layer at no extra cost. A frequent misunderstanding is that every head learns a distinct, interpretable role; in practice many heads are redundant, and studies have shown that a sizable fraction can be pruned after training with little loss in accuracy.",
+  "f": "MultiHead(Q,K,V) = Concat(head₁,…,head_h)·W_O,  headᵢ = Attention(QWᵢ_Q, KWᵢ_K, VWᵢ_V)",
+  "u": [
+   "Core sublayer of Transformer encoders and decoders",
+   "Capturing several dependency types per layer",
+   "Vision Transformers attending across image patches"
+  ],
+  "x": "A machine translation team trains an encoder-decoder Transformer with 16 heads per layer for a high-traffic language pair. After training, they measure each head's contribution and remove redundant heads to cut decoding latency, then confirm on a held-out set that translation quality stays within tolerance.",
+  "c": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\nB, T, d_model, n_heads = 2, 10, 64, 8\nx = torch.randn(B, T, d_model)\n\nmha = nn.MultiheadAttention(embed_dim=d_model, num_heads=n_heads,\n                            batch_first=True)\n# Self-attention: query, key and value are the same sequence\nout, attn = mha(x, x, x, average_attn_weights=False)\nprint(out.shape)    # (2, 10, 64)\nprint(attn.shape)   # (2, 8, 10, 10): one T x T map per head\n\n# Manual view of the head split: d_model is divided across heads\nhead_dim = d_model // n_heads\nq = x.view(B, T, n_heads, head_dim).transpose(1, 2)  # (B, h, T, head_dim)\nprint(q.shape)"
+ },
+ "crossattn": {
+  "n": "Cross-Attention",
+  "d": "Cross-attention is attention in which the queries come from one sequence and the keys and values come from another, letting one stream read information from a second source. In an encoder-decoder Transformer, each decoder layer projects its own hidden states into queries and attends over keys and values projected from the encoder output, so every generated token can look at the whole input.\n\nThe same mechanism conditions generation on other modalities. Text-to-image diffusion models use cross-attention so that image latents (queries) attend to text-encoder embeddings (keys and values), and some vision-language models insert cross-attention layers so text tokens can attend to image features. The output length always matches the query sequence, while the key and value sequence can have any length. One practical limitation is cost: the score matrix is query length times source length, so very long source contexts, such as many retrieved documents, make each cross-attention layer expensive in memory and compute.",
+  "f": "CrossAttn(X_q, X_kv) = softmax((X_q W_Q)(X_kv W_K)ᵀ/√d_k)·(X_kv W_V)",
+  "u": [
+   "Decoder attending to encoder output in translation",
+   "Conditioning diffusion image generation on text prompts",
+   "Speech recognition decoders reading audio features"
+  ],
+  "x": "A design tool company serves a latent diffusion model in which U-Net layers use cross-attention to read CLIP text embeddings of the user's prompt. Because the text embedding is fixed for a request, its keys and values can be computed once and reused across all denoising steps to reduce latency.",
+  "c": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\nd_model, n_heads = 64, 4\ndecoder_states = torch.randn(2, 7, d_model)   # target side: 7 tokens\nencoder_output = torch.randn(2, 20, d_model)  # source side: 20 tokens\n\ncross_attn = nn.MultiheadAttention(d_model, n_heads, batch_first=True)\n# Queries from the decoder, keys and values from the encoder\nout, weights = cross_attn(query=decoder_states,\n                          key=encoder_output,\n                          value=encoder_output)\nprint(out.shape)      # (2, 7, 64): length follows the queries\nprint(weights.shape)  # (2, 7, 20): each target token over all source tokens"
+ },
+ "causalmask": {
+  "n": "Causal Mask",
+  "d": "A causal mask prevents each position in a sequence from attending to positions that come after it, so a model's prediction for token t depends only on tokens 1 to t. It is implemented by adding negative infinity to the attention scores above the diagonal of the T×T score matrix before the softmax, which sets those attention weights to exactly zero.\n\nThe mask is what makes parallel training of autoregressive models possible. With it, a decoder-only model processes an entire sequence in one forward pass and computes the next-token loss at every position simultaneously, without any position seeing the token it must predict. At inference the same rule holds naturally, because future tokens do not exist yet. A common mistake when writing custom attention is to combine the causal mask incorrectly with a padding mask, or to use a large finite negative number in low precision, where it can overflow or fail to zero out the weights.",
+  "f": "Mᵢⱼ = 0 if j ≤ i, −∞ if j > i;  A = softmax(QKᵀ/√d_k + M)",
+  "u": [
+   "Training GPT-style decoder-only language models",
+   "Autoregressive decoders in encoder-decoder models",
+   "Preventing future leakage in sequence forecasting"
+  ],
+  "x": "A team pretraining a code completion model packs many files into fixed-length sequences and applies a causal mask so every position is trained to predict the next token in parallel. They also add document boundaries to the mask so tokens from one file cannot attend to an unrelated file packed before it.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nB, h, T, d = 1, 2, 5, 8\nq, k, v = (torch.randn(B, h, T, d) for _ in range(3))\n\n# Upper-triangular entries (future positions) get -inf\nmask = torch.triu(torch.ones(T, T, dtype=torch.bool), diagonal=1)\nscores = q @ k.transpose(-2, -1) / d ** 0.5\nscores = scores.masked_fill(mask, float('-inf'))\nweights = F.softmax(scores, dim=-1)\nout = weights @ v\nprint(weights[0, 0])   # lower-triangular attention pattern\n\n# Equivalent fused call\nout2 = F.scaled_dot_product_attention(q, k, v, is_causal=True)\nprint(torch.allclose(out, out2, atol=1e-5))"
+ },
+ "posenc": {
+  "n": "Positional Encoding",
+  "d": "Positional encoding injects information about token order into a Transformer, which would otherwise treat its input as an unordered set because attention is permutation-equivariant. The original Transformer adds a fixed sinusoidal vector to each token embedding: each pair of dimensions is a sine and cosine at a different frequency, ranging from fast oscillations to very slow ones, so every position gets a unique pattern.\n\nA useful property of sinusoids is that the encoding of position p + k is a linear function (a rotation) of the encoding of position p, which makes relative offsets easy for the model to use. Many models such as BERT and GPT-2 instead learn an absolute position embedding table. Learned tables cannot represent positions beyond the maximum length seen in training, and sinusoidal encodings also extrapolate poorly in practice. This limitation is one reason modern LLMs moved to relative schemes such as RoPE and ALiBi.",
+  "f": "PE(p, 2i) = sin(p / 10000^(2i/d)),  PE(p, 2i+1) = cos(p / 10000^(2i/d))",
+  "u": [
+   "Adding order information to Transformer inputs",
+   "Encoding timesteps in diffusion models",
+   "Representing patch positions in Vision Transformers"
+  ],
+  "x": "An image generation team encodes the diffusion timestep with a sinusoidal embedding followed by a small MLP, the same construction used for token positions. Because the function is fixed and smooth, the model can be sampled with step schedules different from the ones used in training.",
+  "c": "import numpy as np\n\ndef sinusoidal_encoding(max_len, d_model):\n    pos = np.arange(max_len)[:, None]                 # (max_len, 1)\n    i = np.arange(0, d_model, 2)[None, :]             # even dimension indices\n    freq = 1.0 / (10000 ** (i / d_model))             # geometric frequencies\n    pe = np.zeros((max_len, d_model))\n    pe[:, 0::2] = np.sin(pos * freq)                  # even dims: sine\n    pe[:, 1::2] = np.cos(pos * freq)                  # odd dims: cosine\n    return pe\n\npe = sinusoidal_encoding(max_len=128, d_model=64)\ntoken_emb = np.random.randn(10, 64)\nx = token_emb + pe[:10]                               # added, not concatenated\nprint(x.shape, pe[0, :4], pe[1, :4])"
+ },
+ "rope": {
+  "n": "Rotary Position Embedding (RoPE)",
+  "d": "Rotary Position Embedding encodes position by rotating query and key vectors by an angle proportional to their position, so that their dot product depends only on the relative distance between tokens. Each pair of dimensions in a query or key is treated as a 2D point and rotated by p·θᵢ, where p is the position and θᵢ is a frequency that decreases across pairs. Values are not rotated.\n\nSince rotating q by angle a and k by angle b changes their dot product only through the difference a − b, attention scores become a function of content and relative offset, without any extra parameters or learned tables. RoPE is applied inside every attention layer rather than added once at the input; LLaMA, Mistral and Qwen all use it. A known limitation is poor extrapolation beyond the trained context length; methods such as position interpolation, NTK-aware scaling and YaRN rescale the frequencies to extend context, usually with brief fine-tuning.",
+  "f": "RoPE(x, p)₂ᵢ,₂ᵢ₊₁ = R(p·θᵢ)·(x₂ᵢ, x₂ᵢ₊₁),  θᵢ = 10000^(−2i/d)",
+  "u": [
+   "Relative positions in decoder-only LLMs",
+   "Extending context length with frequency scaling",
+   "Position encoding without extra learned parameters"
+  ],
+  "x": "A team extending an open LLM from 8K to 64K context for long-document question answering rescales the RoPE base frequency and fine-tunes briefly on long sequences. They validate on retrieval-style tests that place a key fact at varying depths to confirm the model still uses distant tokens.",
+  "c": "import torch\n\ndef rope(x, base=10000.0):\n    # x: (batch, seq_len, n_heads, head_dim), head_dim even\n    B, T, H, D = x.shape\n    inv_freq = base ** (-torch.arange(0, D, 2).float() / D)   # (D/2,)\n    angles = torch.arange(T).float()[:, None] * inv_freq      # (T, D/2)\n    cos, sin = angles.cos()[None, :, None, :], angles.sin()[None, :, None, :]\n    x1, x2 = x[..., 0::2], x[..., 1::2]                       # pair dimensions\n    out = torch.empty_like(x)\n    out[..., 0::2] = x1 * cos - x2 * sin                      # 2D rotation\n    out[..., 1::2] = x1 * sin + x2 * cos\n    return out\n\nq = torch.randn(1, 16, 4, 32)\nk = torch.randn(1, 16, 4, 32)\nq_rot, k_rot = rope(q), rope(k)    # rotate queries and keys only\nscores = torch.einsum('bthd,bshd->bhts', q_rot, k_rot) / 32 ** 0.5\nprint(scores.shape)"
+ },
+ "alibi": {
+  "n": "ALiBi (Attention with Linear Biases)",
+  "d": "ALiBi encodes position by subtracting a penalty proportional to the distance between query and key directly from the attention scores, instead of adding position vectors to the embeddings. For head h, the score between positions i and j receives a bias of −m_h·(i − j), where m_h is a fixed, head-specific slope taken from a geometric sequence such as 1/2, 1/4, 1/8 and so on.\n\nThe effect is a built-in recency preference: distant tokens are down-weighted, more strongly in heads with steep slopes and only gently in heads with shallow slopes, so different heads cover different ranges. ALiBi has no learned parameters and was proposed to let models trained on short sequences run on longer ones at inference, which it does better than sinusoidal or learned absolute encodings. The limitation is that the linear penalty biases attention toward nearby context, and in practice extrapolation helps perplexity more than it helps retrieving specific facts from far back in the sequence.",
+  "f": "scoreᵢⱼ = qᵢ·kⱼ/√d − m_h·(i − j),  m_h = 2^(−8h/H)",
+  "u": [
+   "Length extrapolation beyond training context",
+   "Position encoding with zero parameters",
+   "Language models such as BLOOM and MPT"
+  ],
+  "x": "The BLOOM and MPT open model families use ALiBi instead of positional embeddings. A team serving such a model can raise the inference context somewhat beyond the training length without retraining, but they still benchmark long-input tasks because quality degrades gradually as length grows.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef alibi_slopes(n_heads):\n    # Geometric sequence 2^(-8/n), 2^(-16/n), ...\n    return torch.tensor([2 ** (-8 * (h + 1) / n_heads) for h in range(n_heads)])\n\nH, T, d = 4, 6, 16\nq, k, v = (torch.randn(1, H, T, d) for _ in range(3))\npos = torch.arange(T)\ndistance = (pos[:, None] - pos[None, :]).clamp(min=0)          # i - j for j <= i\nbias = -alibi_slopes(H)[:, None, None] * distance              # (H, T, T)\ncausal = torch.triu(torch.ones(T, T, dtype=torch.bool), 1)\n\nscores = q @ k.transpose(-2, -1) / d ** 0.5 + bias             # add linear penalty\nscores = scores.masked_fill(causal, float('-inf'))\nout = F.softmax(scores, dim=-1) @ v\nprint(out.shape)"
+ },
+ "transformer": {
+  "n": "Transformer Block",
+  "d": "A Transformer block is the repeating unit of a Transformer: a multi-head attention sublayer followed by a position-wise feed-forward network, each wrapped with a residual connection and layer normalization. Attention mixes information across tokens, while the feed-forward network processes each token independently, and the residual connections keep a direct path for information and gradients through deep stacks.\n\nMost modern LLMs use the pre-norm arrangement, where the normalization is applied to the input of each sublayer (x + Attn(Norm(x))), which trains more stably than the original post-norm design. Typical modern variants replace LayerNorm with RMSNorm, use a SwiGLU feed-forward network, and apply RoPE inside attention. Blocks are stacked dozens of times with identical shapes, which makes the architecture easy to scale and parallelize. A common misconception is that attention holds most of the parameters; in standard configurations the feed-forward network holds about two thirds of each block's weights.",
+  "f": "h = x + MHA(Norm(x)),  y = h + FFN(Norm(h))",
+  "u": [
+   "Building blocks of LLMs and BERT-style encoders",
+   "Vision Transformers for image classification",
+   "Sequence models for audio, proteins, time series"
+  ],
+  "x": "A speech company builds its recognition encoder from a stack of identical Transformer blocks, which lets the team scale model size by changing only depth and width. Because each block has the same structure, they can apply tensor parallelism and activation checkpointing uniformly across the stack during training.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass Block(nn.Module):\n    def __init__(self, d_model=256, n_heads=8, d_ff=1024, dropout=0.1):\n        super().__init__()\n        self.norm1 = nn.LayerNorm(d_model)\n        self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout,\n                                          batch_first=True)\n        self.norm2 = nn.LayerNorm(d_model)\n        self.ffn = nn.Sequential(nn.Linear(d_model, d_ff), nn.GELU(),\n                                 nn.Linear(d_ff, d_model), nn.Dropout(dropout))\n\n    def forward(self, x, attn_mask=None):\n        h = self.norm1(x)                                   # pre-norm\n        x = x + self.attn(h, h, h, attn_mask=attn_mask)[0]  # residual 1\n        return x + self.ffn(self.norm2(x))                  # residual 2\n\nx = torch.randn(2, 32, 256)\nmodel = nn.Sequential(*[Block() for _ in range(4)])\nprint(model(x).shape)"
+ },
+ "encoderonly": {
+  "n": "Encoder-Only Models (BERT)",
+  "d": "Encoder-only models are Transformers that read the whole input with bidirectional self-attention and output a contextual vector for every token, rather than generating text. BERT is the best-known example. Because no causal mask is applied, each token's representation depends on words both before and after it, which gives rich context for understanding tasks.\n\nThey are pretrained with objectives that do not require left-to-right generation, mainly masked language modeling, where randomly hidden tokens must be reconstructed. For downstream use, a small head is placed on top: a classifier on the [CLS] or mean-pooled vector for sentence classification, a per-token classifier for named entity recognition, or a span predictor for extractive question answering. Encoder-only models are compact and fast for classification, retrieval embeddings and reranking. Their main limitation is that they are not natural text generators; producing fluent free-form output requires a decoder, which is why chat assistants are built on decoder-only models.",
+  "f": "hᵢ = Encoder(x₁,…,x_T)ᵢ  (bidirectional: every hᵢ depends on all x_j)",
+  "u": [
+   "Text classification and sentiment analysis",
+   "Named entity recognition and token tagging",
+   "Dense retrieval embeddings and cross-encoder reranking"
+  ],
+  "x": "Google has publicly described using BERT in Search to better understand the intent of queries, especially those where small words such as prepositions change the meaning. Many companies run similar distilled BERT encoders for intent classification because they fit tight CPU latency budgets.",
+  "c": "from transformers import AutoTokenizer, AutoModelForSequenceClassification\nimport torch\n\nname = \"bert-base-uncased\"\ntokenizer = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForSequenceClassification.from_pretrained(name, num_labels=3)\n\ntexts = [\"The refund arrived quickly.\", \"My card was charged twice.\"]\nbatch = tokenizer(texts, padding=True, truncation=True, max_length=128,\n                  return_tensors=\"pt\")\nlabels = torch.tensor([0, 2])\n\nout = model(**batch, labels=labels)   # head on top of the [CLS] representation\nout.loss.backward()                   # fine-tune the whole encoder\nprint(out.logits.shape)               # (2, 3)"
+ },
+ "decoderonly": {
+  "n": "Decoder-Only Models (GPT)",
+  "d": "Decoder-only models are Transformers that use causal self-attention and are trained to predict the next token, so they generate text one token at a time conditioned on everything before it. The GPT series, LLaMA, Mistral, Qwen and most current chat assistants follow this design. The prompt and the generated output live in a single sequence, with no separate encoder.\n\nTheir appeal is simplicity and generality: one objective, next-token prediction on large text corpora, scales well and turns many tasks into text continuation, including translation, summarization, coding and question answering via prompting or instruction tuning. During generation a KV cache stores keys and values of past tokens so each new step costs time proportional to the context length rather than recomputing everything. The main limitations are sequential decoding, which bounds latency per token, and the fact that each token's representation sees only the left context, which can make them less parameter-efficient than bidirectional encoders for pure classification or embedding tasks.",
+  "f": "P(x) = Πₜ P(xₜ | x₁,…,xₜ₋₁)",
+  "u": [
+   "Chat assistants and instruction-following models",
+   "Code completion and generation",
+   "Few-shot task solving through prompting"
+  ],
+  "x": "A customer support platform fine-tunes an open decoder-only model to draft replies from ticket history and help-center articles. They serve it with continuous batching and a KV cache, and track time to first token separately from per-token speed because long prompts dominate the first.",
+  "c": "from transformers import AutoTokenizer, AutoModelForCausalLM\nimport torch\n\nname = \"gpt2\"\ntokenizer = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForCausalLM.from_pretrained(name)\n\nprompt = \"The three main parts of a Transformer block are\"\ninputs = tokenizer(prompt, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    out = model.generate(**inputs, max_new_tokens=30,\n                         do_sample=True, top_p=0.9, temperature=0.7,\n                         pad_token_id=tokenizer.eos_token_id)  # uses a KV cache\nprint(tokenizer.decode(out[0], skip_special_tokens=True))"
+ },
+ "encdec": {
+  "n": "Encoder–Decoder Models (T5)",
+  "d": "Encoder-decoder models pair a bidirectional encoder that reads the full input with an autoregressive decoder that generates the output while attending to the encoder through cross-attention. This is the original Transformer layout from machine translation, and T5, BART and Whisper use it as well.\n\nThe split suits tasks with a clear input and a distinct output, such as translation, summarization and speech recognition. The encoder processes the source once with full context, and the decoder only has to model the target sequence, which is often shorter. T5 reframed every NLP task as text-to-text, with a task prefix in the input string, and was pretrained with span corruption, where the decoder reconstructs masked spans of the input. A common misconception is that encoder-decoder models are obsolete; they remain competitive and efficient for conditional generation at moderate scale, but decoder-only models are simpler to scale for open-ended chat, which explains their dominance in general-purpose LLMs.",
+  "f": "P(y | x) = Πₜ P(yₜ | y<ₜ, Encoder(x))",
+  "u": [
+   "Machine translation between language pairs",
+   "Abstractive summarization of long news articles",
+   "Speech-to-text transcription with Whisper models"
+  ],
+  "x": "OpenAI's Whisper uses an encoder over audio spectrograms and a text decoder that cross-attends to it. A media company running Whisper for subtitle generation benefits from encoding each 30-second audio chunk once while the decoder produces the transcript token by token.",
+  "c": "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM\n\nname = \"t5-small\"\ntokenizer = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForSeq2SeqLM.from_pretrained(name)\n\n# Training step: input text and target text are separate sequences\nsrc = tokenizer([\"summarize: The meeting covered budget cuts and hiring plans.\"],\n                return_tensors=\"pt\")\ntgt = tokenizer([\"Budget cuts and hiring were discussed.\"],\n                return_tensors=\"pt\").input_ids\nloss = model(**src, labels=tgt).loss     # decoder cross-attends to encoder\nloss.backward()\n\n# Inference: encoder runs once, decoder generates autoregressively\nids = model.generate(**src, max_new_tokens=20, num_beams=4)\nprint(tokenizer.decode(ids[0], skip_special_tokens=True))"
+ },
+ "ffn": {
+  "n": "Feed-Forward Network (FFN)",
+  "d": "The feed-forward network in a Transformer is a two-layer MLP applied to each token independently, expanding the hidden size, applying a nonlinearity and projecting back. In the original design the inner dimension is four times d_model with a ReLU; modern LLMs typically use SwiGLU, a gated variant with three weight matrices where one projection, passed through SiLU, multiplies another elementwise.\n\nAttention moves information between tokens, while the FFN transforms each token's representation in place. Interpretability research suggests FFN layers behave partly like key-value memories that store factual and lexical associations. They account for roughly two thirds of the parameters in a standard block, so they dominate model size and much of the compute. This is also why Mixture-of-Experts models replace the FFN with many expert FFNs and route each token to a few of them. When using SwiGLU, the inner dimension is usually reduced to about 8/3·d_model to keep the parameter count comparable to a 4× ReLU FFN.",
+  "f": "FFN(x) = W₂·φ(W₁x + b₁) + b₂;  SwiGLU(x) = W₂·(SiLU(W₁x) ⊙ W₃x)",
+  "u": [
+   "Per-token transformation inside every Transformer block",
+   "Expert layers in Mixture-of-Experts models",
+   "Storing factual associations learned in pretraining"
+  ],
+  "x": "A team designing an in-house LLM chooses a SwiGLU FFN with an inner size of about 8/3 of the hidden size, following LLaMA, to keep the parameter budget fixed. They round the inner dimension up to a multiple of 256 so the matrix multiplications map efficiently onto GPU tensor cores.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nclass SwiGLU(nn.Module):\n    def __init__(self, d_model, hidden):\n        super().__init__()\n        self.w1 = nn.Linear(d_model, hidden, bias=False)   # gate projection\n        self.w3 = nn.Linear(d_model, hidden, bias=False)   # up projection\n        self.w2 = nn.Linear(hidden, d_model, bias=False)   # down projection\n\n    def forward(self, x):\n        return self.w2(F.silu(self.w1(x)) * self.w3(x))    # gated, per token\n\nd_model = 512\nhidden = -(-int(8 * d_model / 3) // 256) * 256             # ~8/3 d, rounded up\nffn = SwiGLU(d_model, hidden)\nx = torch.randn(2, 16, d_model)\nprint(ffn(x).shape, sum(p.numel() for p in ffn.parameters()))"
+ },
+ "prenorm": {
+  "n": "Pre-Norm vs Post-Norm",
+  "d": "Pre-norm and post-norm differ in where layer normalization sits relative to the residual connection in a Transformer block. Post-norm, used in the original Transformer and BERT, normalizes after the residual addition: x ← Norm(x + F(x)). Pre-norm, used in GPT-2 and nearly all modern LLMs, normalizes only the input to each sublayer: x ← x + F(Norm(x)).\n\nThe placement changes gradient flow. In pre-norm the residual stream is an unnormalized identity path from input to output, so gradients reach early layers directly, and deep models train stably without a long learning-rate warmup. Post-norm puts a normalization on that path at every layer, which can cause vanishing or exploding gradients in deep stacks and makes training sensitive to warmup. The trade-off is that pre-norm often reaches slightly worse final quality at equal depth, because the residual stream grows and later layers contribute relatively less. Variants such as DeepNorm and adding a final norm after the last block address these issues.",
+  "f": "Post-norm: x ← Norm(x + F(x));  Pre-norm: x ← x + F(Norm(x))",
+  "u": [
+   "Stabilizing training of very deep Transformers",
+   "Reducing dependence on learning-rate warmup",
+   "Choosing block layout for new LLM architectures"
+  ],
+  "x": "A research team scaling a model from 24 to 80 layers sees loss spikes with post-norm and switches to pre-norm with RMSNorm plus a final norm before the output head. Training becomes stable at a higher peak learning rate, which they verify by monitoring gradient norms per layer.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass PostNormBlock(nn.Module):\n    def __init__(self, d):\n        super().__init__()\n        self.f, self.norm = nn.Linear(d, d), nn.LayerNorm(d)\n    def forward(self, x):\n        return self.norm(x + self.f(x))       # norm on the residual path\n\nclass PreNormBlock(nn.Module):\n    def __init__(self, d):\n        super().__init__()\n        self.f, self.norm = nn.Linear(d, d), nn.LayerNorm(d)\n    def forward(self, x):\n        return x + self.f(self.norm(x))       # clean identity path\n\nd, depth = 64, 48\npre = nn.Sequential(*[PreNormBlock(d) for _ in range(depth)], nn.LayerNorm(d))\npost = nn.Sequential(*[PostNormBlock(d) for _ in range(depth)])\nfor name, net in [(\"pre\", pre), (\"post\", post)]:\n    x = torch.randn(8, d, requires_grad=True)\n    net(x).sum().backward()\n    print(name, x.grad.norm().item())         # gradient reaching the input"
+ },
+ "tokenization": {
+  "n": "Tokenization",
+  "d": "Tokenization converts raw text into a sequence of integer ids from a fixed vocabulary, which is the only form of input a language model actually sees. Modern LLMs use subword tokenizers such as BPE, WordPiece or Unigram, which keep frequent words as single tokens and split rare words into smaller pieces, so any string can be represented without unknown tokens.\n\nThe tokenizer is trained before the model and frozen afterward, and it shapes many model properties: sequence length and therefore cost, how numbers and code are split, and how fairly different languages are served. A text in a language underrepresented in the tokenizer's training data may need several times more tokens for the same content, which raises cost and shortens the effective context. A common pitfall is mixing tokenizers and models, or ignoring special tokens and chat templates; a fine-tuned model can behave badly if prompts are not formatted and tokenized exactly as in training.",
+  "f": "text → [t₁, t₂, …, t_n],  tᵢ ∈ {0, …, |V| − 1}",
+  "u": [
+   "Preparing text inputs for any language model",
+   "Estimating API cost and context usage",
+   "Building vocabularies for new languages or domains"
+  ],
+  "x": "A company deploying an LLM for Korean and English customer chats measures tokens per character for each language before choosing a base model. A tokenizer with poor Korean coverage would substantially raise serving cost and cut effective context, so token efficiency becomes a selection criterion alongside accuracy.",
+  "c": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\n\ntext = \"Tokenization splits unbelievably rare words into subwords.\"\nids = tok(text)[\"input_ids\"]\nprint(ids)                                   # integer ids fed to the model\nprint(tok.convert_ids_to_tokens(ids))        # subword pieces\nprint(tok.decode(ids) == text)               # lossless round trip\n\n# Token count drives cost and context usage\nfor s in [\"hello world\", \"12345678\", \"안녕하세요 반갑습니다\"]:\n    print(repr(s), len(tok(s)[\"input_ids\"]), \"tokens\")"
+ },
+ "bpe": {
+  "n": "Byte-Pair Encoding (BPE)",
+  "d": "Byte-Pair Encoding builds a subword vocabulary by starting from single characters or bytes and repeatedly merging the most frequent adjacent pair into a new token until a target vocabulary size is reached. The ordered list of merges is the tokenizer: to encode new text, the same merges are applied in the order they were learned.\n\nFrequent words end up as single tokens, while rare words and misspellings decompose into common pieces, which balances vocabulary size against sequence length. Byte-level BPE, used by GPT-2 and many later models, starts from the 256 possible byte values, so any Unicode string can be encoded with no unknown token. Vocabulary size is a key design choice: larger vocabularies shorten sequences but enlarge the embedding and output layers. A known weakness is that merges are driven purely by frequency, so number splitting can be inconsistent, for example a number becoming one token while a neighboring value splits in two, which can hurt arithmetic.",
+  "f": "repeat: (a, b) = argmax count(a, b);  replace every 'a b' with new token 'ab'",
+  "u": [
+   "Tokenizers for GPT and LLaMA-family models",
+   "Open-vocabulary handling of rare words",
+   "Training custom tokenizers for code or domains"
+  ],
+  "x": "A team building a code model trains a byte-level BPE tokenizer on their source corpus so that common indentation runs and keywords become single tokens. This shortens typical files compared with a general-purpose tokenizer, which lowers training cost and lets more code fit in the context window.",
+  "c": "from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders\n\ncorpus = [\"low lower lowest\", \"new newer newest\", \"wider widest\"] * 100\n\ntokenizer = Tokenizer(models.BPE())\ntokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)\ntokenizer.decoder = decoders.ByteLevel()\ntrainer = trainers.BpeTrainer(vocab_size=300,\n                              initial_alphabet=pre_tokenizers.ByteLevel.alphabet())\ntokenizer.train_from_iterator(corpus, trainer)   # learn merges by frequency\n\nenc = tokenizer.encode(\"lowest newest\")\nprint(enc.tokens)                                # learned subword pieces\nprint(tokenizer.decode(enc.ids))                 # lossless decoding"
+ },
+ "mlm": {
+  "n": "Masked Language Modeling (MLM)",
+  "d": "Masked language modeling is a pretraining objective in which some input tokens are hidden and the model learns to predict them from the surrounding context on both sides. In BERT, 15% of token positions are selected; of those, 80% are replaced with a [MASK] token, 10% with a random token and 10% are left unchanged, and the loss is computed only on the selected positions.\n\nBecause the model sees both left and right context, it learns strong bidirectional representations that transfer well to classification, tagging and retrieval. The 80/10/10 split exists because [MASK] never appears at fine-tuning time; mixing in random and unchanged tokens forces the model to build useful representations for every token, not only masked ones. A key limitation is efficiency: only about 15% of tokens produce a training signal per pass, which is why ELECTRA's replaced-token detection, which learns from every position, can be more compute-efficient. MLM also does not directly yield a left-to-right text generator.",
+  "f": "L_MLM = −Σ_{i∈M} log P(xᵢ | x without positions M)",
+  "u": [
+   "Pretraining BERT and RoBERTa encoders",
+   "Domain-adaptive pretraining on in-domain text",
+   "Learning protein and genomic sequence representations"
+  ],
+  "x": "A legal technology company continues MLM pretraining of a RoBERTa model on contracts before fine-tuning a clause classifier. The extra domain pretraining helps the model handle legal vocabulary and boilerplate that rarely appear in general web text.",
+  "c": "from transformers import (AutoTokenizer, AutoModelForMaskedLM,\n                          DataCollatorForLanguageModeling)\n\nname = \"bert-base-uncased\"\ntok = AutoTokenizer.from_pretrained(name)\nmodel = AutoModelForMaskedLM.from_pretrained(name)\n\n# Selects 15% of tokens; applies the 80/10/10 mask/random/keep rule\ncollator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=True,\n                                           mlm_probability=0.15)\ntexts = [\"The court dismissed the appeal.\", \"Payment is due within thirty days.\"]\nfeatures = [tok(t, truncation=True, max_length=64) for t in texts]\nbatch = collator(features)                 # labels = -100 except masked positions\n\nout = model(**batch)\nout.loss.backward()\nprint(out.loss.item())"
+ },
+ "nexttoken": {
+  "n": "Next-Token Prediction",
+  "d": "Next-token prediction trains a language model to output a probability distribution over the vocabulary for the token that follows a given prefix, using cross-entropy against the actual next token. Summed over all positions, this maximizes the likelihood of the training text under the chain rule of probability.\n\nWith a causal mask, a single forward pass yields a prediction at every position, so each sequence of length T provides T training signals; the inputs are the tokens and the targets are the same tokens shifted left by one. This simple, self-supervised objective needs no labels and scales to trillions of tokens, and it underlies the pretraining of GPT-style models. Doing it well requires modeling grammar, facts and reasoning patterns present in the data. A common misconception is that the objective only teaches surface statistics; at the same time, it optimizes for plausible continuations rather than truthfulness, so models also need post-training to follow instructions and avoid confident errors.",
+  "f": "L = −(1/T) Σₜ log P_θ(xₜ₊₁ | x₁,…,xₜ)",
+  "u": [
+   "Pretraining decoder-only language models",
+   "Continued pretraining on domain corpora",
+   "Scoring sequence likelihood and perplexity"
+  ],
+  "x": "A financial data provider continues next-token pretraining of an open model on filings and analyst reports before instruction tuning. They track validation perplexity on held-out filings and on general text to make sure domain gains do not come with large losses in general ability.",
+  "c": "import torch\nimport torch.nn.functional as F\nfrom transformers import AutoTokenizer, AutoModelForCausalLM\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\n\nids = tok(\"Revenue grew in the third quarter.\", return_tensors=\"pt\").input_ids\nlogits = model(ids).logits                    # (1, T, vocab)\n\n# Shift: position t predicts token t+1\nloss = F.cross_entropy(logits[:, :-1].reshape(-1, logits.size(-1)),\n                       ids[:, 1:].reshape(-1))\nprint(loss.item(), torch.exp(loss).item())    # loss and perplexity\n\n# The library does the same shift internally when labels=input_ids\nprint(model(ids, labels=ids).loss.item())"
+ },
+ "kvcache": {
+  "n": "KV Cache",
+  "d": "A KV cache stores the key and value vectors of all previously processed tokens during autoregressive generation, so each new token only needs to compute its own query, key and value instead of reprocessing the whole sequence. The new query attends over the cached keys and values, and the new key and value are appended to the cache.\n\nWithout caching, every step would recompute keys and values for the entire prefix, making total generation cost grow roughly quadratically in the projections and cubically in attention; with it, each decoding step does work proportional to the current length. The cost moves to memory: the cache size is 2 × layers × KV heads × head dimension × sequence length × batch size × bytes per value, which for long contexts and large batches can exceed the model weights. This memory, not compute, often limits serving throughput, which motivates grouped-query attention, cache quantization, and paged memory management as in vLLM's PagedAttention.",
+  "f": "Memory = 2 · n_layers · n_kv_heads · d_head · seq_len · batch · bytes",
+  "u": [
+   "Fast autoregressive decoding in LLM serving",
+   "Prefix caching for shared system prompts",
+   "Capacity planning for long-context inference"
+  ],
+  "x": "An LLM serving team uses vLLM, whose PagedAttention stores the KV cache in fixed-size blocks to reduce fragmentation and allow sharing of common prompt prefixes. They size GPU memory by computing cache bytes per token for the model and set the maximum batch and context so the cache fits.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nd = 32\nW_q, W_k, W_v = (torch.randn(d, d) / d ** 0.5 for _ in range(3))\nk_cache, v_cache = [], []\n\ndef decode_step(x_t):\n    # x_t: (1, d) hidden state of the newest token only\n    q = x_t @ W_q\n    k_cache.append(x_t @ W_k)                 # append new key\n    v_cache.append(x_t @ W_v)                 # append new value\n    K, V = torch.cat(k_cache), torch.cat(v_cache)   # (t, d) from cache\n    w = F.softmax(q @ K.T / d ** 0.5, dim=-1)\n    return w @ V\n\nfor t in range(5):\n    out = decode_step(torch.randn(1, d))\nprint(out.shape, len(k_cache))\n\n# Cache size for a 32-layer model, 8 KV heads, d_head 128, 8K tokens, fp16\nprint(2 * 32 * 8 * 128 * 8192 * 2 / 2**30, \"GiB per sequence\")"
+ },
+ "flashattn": {
+  "n": "FlashAttention",
+  "d": "FlashAttention is an exact attention algorithm that computes the same result as standard attention but never writes the full T×T score matrix to GPU high-bandwidth memory. It splits queries, keys and values into tiles that fit in fast on-chip SRAM, computes partial softmax results tile by tile, and combines them using an online softmax that tracks a running maximum and normalizer for each row.\n\nStandard attention is limited by memory traffic rather than arithmetic: reading and writing the large score and probability matrices dominates runtime. By fusing the matmul, masking, softmax and the multiplication by V into one kernel, FlashAttention reduces memory use from quadratic to linear in sequence length and gives large wall-clock speedups, especially for long contexts. In the backward pass it recomputes attention tiles instead of storing them. A common misconception is that it is an approximation; it is mathematically exact and lowers memory, but it does not change the quadratic number of operations.",
+  "f": "mₙ = max(mₙ₋₁, max sₙ),  ℓₙ = e^(mₙ₋₁−mₙ)·ℓₙ₋₁ + Σ e^(sₙ−mₙ)",
+  "u": [
+   "Speeding up LLM training on long sequences",
+   "Reducing attention memory during inference prefill",
+   "Enabling longer context on fixed GPU memory"
+  ],
+  "x": "A team pretraining a 7B model switches its attention implementation to FlashAttention through PyTorch's scaled_dot_product_attention. The lower activation memory lets them double sequence length without changing the batch size, and they confirm numerically that outputs match the reference implementation within bf16 tolerance.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef tiled_attention(q, k, v, tile=64):\n    # Online softmax over key tiles: exact result, no full T x T matrix stored\n    T, d = q.shape\n    m = torch.full((T, 1), float('-inf'))     # running row max\n    l = torch.zeros(T, 1)                     # running normalizer\n    acc = torch.zeros(T, d)                   # running weighted sum of V\n    for s in range(0, k.shape[0], tile):\n        scores = q @ k[s:s+tile].T / d ** 0.5\n        m_new = torch.maximum(m, scores.max(dim=1, keepdim=True).values)\n        p = torch.exp(scores - m_new)\n        scale = torch.exp(m - m_new)          # rescale old statistics\n        l = scale * l + p.sum(dim=1, keepdim=True)\n        acc = scale * acc + p @ v[s:s+tile]\n        m = m_new\n    return acc / l\n\nq, k, v = (torch.randn(256, 32) for _ in range(3))\nref = F.softmax(q @ k.T / 32 ** 0.5, dim=-1) @ v\nprint(torch.allclose(tiled_attention(q, k, v), ref, atol=1e-5))"
+ },
+ "mqa": {
+  "n": "Multi-Query Attention (MQA)",
+  "d": "Multi-query attention keeps many query heads but shares a single key head and a single value head across all of them. Each query head still computes its own attention pattern, but all heads read from the same keys and values.\n\nThe motivation is inference speed. During autoregressive decoding, each step must load the entire KV cache from memory, and that memory traffic, not arithmetic, usually limits throughput. With h query heads, MQA shrinks the KV cache and its bandwidth cost by a factor of h compared with standard multi-head attention, which allows larger batches and longer contexts on the same hardware. It was used in models such as PaLM and Falcon. The trade-off is quality and training stability: sharing one key-value head reduces model capacity, and converting an existing multi-head model to MQA typically requires additional training. Grouped-query attention was introduced as a middle ground that recovers most of the quality while keeping most of the savings.",
+  "f": "headᵢ = Attention(QWᵢ_Q, K W_K, V W_V)  (one shared W_K, W_V for all i)",
+  "u": [
+   "Reducing KV-cache memory in LLM serving",
+   "Higher decoding throughput at large batch sizes",
+   "Long-context inference on limited GPU memory"
+  ],
+  "x": "A team serving a chat model on memory-constrained GPUs chooses an MQA architecture so the KV cache for each conversation is a fraction of the multi-head size. The smaller cache lets each GPU hold many more concurrent sessions, at the cost of a small quality gap they track on internal benchmarks.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nB, T, d_model, n_heads = 2, 12, 64, 8\nd_head = d_model // n_heads\nx = torch.randn(B, T, d_model)\n\nW_q = torch.nn.Linear(d_model, n_heads * d_head, bias=False)  # many query heads\nW_k = torch.nn.Linear(d_model, d_head, bias=False)            # ONE key head\nW_v = torch.nn.Linear(d_model, d_head, bias=False)            # ONE value head\n\nq = W_q(x).view(B, T, n_heads, d_head).transpose(1, 2)        # (B, h, T, d)\nk = W_k(x).unsqueeze(1)                                       # (B, 1, T, d)\nv = W_v(x).unsqueeze(1)\n# Broadcasting shares the single K/V head across all query heads\nout = F.scaled_dot_product_attention(q, k.expand_as(q), v.expand_as(q),\n                                     is_causal=True)\nprint(out.shape)\nprint(\"KV cache per token:\", 2 * d_head, \"vs MHA:\", 2 * n_heads * d_head)"
+ },
+ "gqa": {
+  "n": "Grouped-Query Attention (GQA)",
+  "d": "Grouped-query attention divides the query heads into groups and gives each group its own shared key and value head, sitting between multi-head attention (one KV head per query head) and multi-query attention (one KV head for all). With 32 query heads and 8 KV heads, for example, every 4 query heads share one key-value pair.\n\nThe KV cache shrinks by the ratio of query heads to KV heads, which cuts the memory bandwidth needed per decoding step and allows larger batches or longer contexts. Experiments in the original paper showed that GQA reaches quality close to full multi-head attention with speed close to MQA, and existing multi-head checkpoints can be converted by mean-pooling key and value heads within each group and then briefly continuing training. GQA is now standard in LLaMA 2 70B and later LLaMA models, Mistral and many other LLMs. It reduces cache size but not the attention compute for the prefill of long prompts.",
+  "f": "KV-cache reduction = n_q_heads / n_kv_heads;  group(i) = ⌊i · n_kv / n_q⌋",
+  "u": [
+   "Standard attention layout in modern open LLMs",
+   "Shrinking KV cache with minimal quality loss",
+   "Uptraining multi-head checkpoints for faster inference"
+  ],
+  "x": "Meta's LLaMA 2 70B and the LLaMA 3 models use grouped-query attention with 8 key-value heads. A company self-hosting such a model benefits directly, because the smaller per-token cache lets each GPU serve more concurrent requests at long context lengths.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nB, T, d_head = 2, 16, 32\nn_q, n_kv = 8, 2                          # 4 query heads share each KV head\ngroup = n_q // n_kv\n\nq = torch.randn(B, n_q, T, d_head)\nk = torch.randn(B, n_kv, T, d_head)       # only n_kv heads are cached\nv = torch.randn(B, n_kv, T, d_head)\n\n# Repeat each KV head for the query heads in its group\nk_rep = k.repeat_interleave(group, dim=1)  # (B, n_q, T, d_head)\nv_rep = v.repeat_interleave(group, dim=1)\nout = F.scaled_dot_product_attention(q, k_rep, v_rep, is_causal=True)\nprint(out.shape)\nprint(\"cache reduction vs MHA:\", n_q // n_kv, \"x\")"
+ },
+ "swa": {
+  "n": "Sliding Window Attention",
+  "d": "Sliding window attention restricts each token to attend only to the previous w tokens instead of the entire sequence, turning attention into a local band. Compute and KV-cache memory therefore grow linearly with sequence length for a fixed window, rather than quadratically for compute and linearly with the full context for the cache.\n\nInformation can still travel beyond the window through depth. After one layer a token sees w positions back; after L stacked layers its receptive field reaches about L × w positions, similar to how stacked convolutions grow their receptive field. Mistral 7B uses a 4,096-token window with a rolling buffer cache that overwrites the oldest entries, and models such as Gemma 2 alternate local sliding-window layers with global attention layers. The limitation is that indirect, multi-hop propagation is lossy: precise retrieval of a fact far outside the window is much weaker than with full attention, which is why many designs keep some global layers.",
+  "f": "Aᵢⱼ allowed iff i − w < j ≤ i;  receptive field ≈ L · w",
+  "u": [
+   "Bounding KV-cache size for long inputs",
+   "Efficient long-document encoding with local context",
+   "Hybrid local/global attention in modern LLMs"
+  ],
+  "x": "A team deploying a model for streaming meeting transcription uses sliding window layers so the KV cache stays fixed in size however long the meeting runs. They interleave a few global attention layers so the model can still refer back to agenda items mentioned at the start.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef sliding_window_mask(T, window):\n    i = torch.arange(T)[:, None]\n    j = torch.arange(T)[None, :]\n    allowed = (j <= i) & (j > i - window)      # causal band of width w\n    return allowed\n\nT, window, d = 10, 3, 16\nq, k, v = (torch.randn(1, 2, T, d) for _ in range(3))\nmask = sliding_window_mask(T, window)\nout = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)  # True = keep\nprint(mask.int())\nprint(out.shape)\n# With L layers, information can travel about L * window positions\nprint(\"receptive field after 4 layers:\", 4 * window)"
+ },
+ "sparseattn": {
+  "n": "Sparse Attention",
+  "d": "Sparse attention computes attention scores for only a selected subset of query-key pairs instead of all T² pairs, reducing cost for long sequences. The subset is defined by a pattern: local windows, strided positions, a few global tokens that attend to and are attended by everything, random links, or content-based selection such as hashing or learned top-k routing.\n\nFixed patterns from models such as the Sparse Transformer, Longformer and BigBird bring the cost close to linear in sequence length while keeping paths between any two tokens through a small number of hops or global tokens. They work well for long documents, genomic sequences and high-resolution inputs. The difficulty is practical efficiency: irregular sparsity maps poorly to GPU hardware, so theoretical savings only materialize with block-sparse kernels. A second limitation is that a fixed pattern can miss an important long-range dependency that full attention would capture, so many recent long-context LLMs prefer dense attention with FlashAttention plus selective sparse layers.",
+  "f": "Attention restricted to S: Aᵢ = softmax({qᵢ·kⱼ/√d : j ∈ Sᵢ}),  |Sᵢ| ≪ T",
+  "u": [
+   "Long document classification and question answering",
+   "Genomic and other very long sequences",
+   "High-resolution image or video Transformers"
+  ],
+  "x": "A biotech team models DNA sequences tens of thousands of bases long with a BigBird-style encoder that combines local windows, global tokens and random links. Full attention at that length would not fit in GPU memory, and the block-sparse pattern keeps training throughput acceptable.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef longformer_style_mask(T, window, global_idx):\n    i = torch.arange(T)[:, None]\n    j = torch.arange(T)[None, :]\n    mask = (i - j).abs() <= window          # local band (bidirectional)\n    mask[global_idx, :] = True              # global tokens see everything\n    mask[:, global_idx] = True              # and everything sees them\n    return mask\n\nT, d = 32, 16\nmask = longformer_style_mask(T, window=2, global_idx=[0])\nq, k, v = (torch.randn(1, 1, T, d) for _ in range(3))\nout = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)\nprint(out.shape)\nprint(\"fraction of pairs computed:\", mask.float().mean().item())"
+ },
+ "linattn": {
+  "n": "Linear Attention",
+  "d": "Linear attention replaces the softmax similarity with a kernel feature map φ so that attention can be computed in time linear in sequence length. Writing sim(q, k) = φ(q)·φ(k), the output for query i becomes φ(qᵢ)ᵀ(Σⱼ φ(kⱼ)vⱼᵀ) divided by φ(qᵢ)ᵀΣⱼ φ(kⱼ); by associativity, the sums over keys can be computed once and reused for every query.\n\nIn the causal case these sums become a running state that is updated with each new token, so the model behaves like a recurrent network with a fixed-size d×d memory, giving constant memory per generated token and no growing KV cache. This idea underlies Performer, RetNet, and the connection between attention and state-space models such as Mamba. The main limitation is quality: a fixed-size state cannot store arbitrary amounts of context, so pure linear attention typically lags softmax attention on precise recall tasks. Modern variants add decay or gating, and many hybrids keep some full attention layers.",
+  "f": "oᵢ = φ(qᵢ)ᵀ Sᵢ / φ(qᵢ)ᵀ zᵢ,  Sᵢ = Sᵢ₋₁ + φ(kᵢ)vᵢᵀ,  zᵢ = zᵢ₋₁ + φ(kᵢ)",
+  "u": [
+   "Autoregressive generation with constant memory per token",
+   "Very long sequence modeling at linear cost",
+   "Hybrid recurrent-attention language model layers"
+  ],
+  "x": "An on-device assistant team experiments with a hybrid model whose layers are mostly gated linear attention plus a few full attention layers. The recurrent state keeps memory flat during long conversations on a phone, while the full attention layers preserve accurate recall of recent details.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef phi(x):\n    return F.elu(x) + 1                     # positive feature map\n\ndef causal_linear_attention(q, k, v):\n    T, d = q.shape\n    S = torch.zeros(d, v.shape[1])          # running sum of phi(k) v^T\n    z = torch.zeros(d)                      # running sum of phi(k)\n    out = []\n    for t in range(T):                      # recurrent form: O(T) total\n        S = S + torch.outer(phi(k[t]), v[t])\n        z = z + phi(k[t])\n        out.append(phi(q[t]) @ S / (phi(q[t]) @ z + 1e-6))\n    return torch.stack(out)\n\nq, k, v = (torch.randn(50, 16) for _ in range(3))\no = causal_linear_attention(q, k, v)\nprint(o.shape)   # state size is d x d_v, independent of sequence length"
+ },
+ "scaling": {
+  "n": "Scaling Laws",
+  "d": "Scaling laws are empirical relationships showing that a language model's test loss decreases as a smooth power law in the number of parameters, the amount of training data and the training compute, when the other factors are not the bottleneck. Kaplan and colleagues at OpenAI observed these trends across several orders of magnitude, and later work refined them.\n\nTheir practical value is prediction and planning. By training a series of small models and fitting the curve, a team can estimate the loss of a much larger run before spending the compute, choose model size and token count for a fixed budget, and compare architectures or data mixtures by how their curves shift. The laws describe pretraining loss, not every downstream ability: some benchmark scores change abruptly or plateau even when loss improves smoothly. Another pitfall is extrapolating too far or across changes in data quality, tokenizer or architecture; fitted exponents are specific to the setup they were measured in.",
+  "f": "L(N, D) = E + A/N^α + B/D^β",
+  "u": [
+   "Forecasting loss of large training runs",
+   "Choosing model size for a compute budget",
+   "Comparing architectures and data mixtures fairly"
+  ],
+  "x": "Before committing to a large pretraining run, an LLM team trains a ladder of models from tens of millions to a few billion parameters on the same data. They fit a power law to the final losses and use it to choose the size and token count of the flagship run, then check the prediction against early checkpoints.",
+  "c": "import numpy as np\nfrom scipy.optimize import curve_fit\n\n# Final losses from a ladder of small runs (toy numbers)\nN = np.array([2e7, 6e7, 2e8, 6e8, 2e9])          # parameters\nL = np.array([4.10, 3.72, 3.38, 3.12, 2.90])     # validation loss\n\ndef power_law(n, E, A, alpha):\n    return E + A / n ** alpha                    # irreducible loss + power law\n\nparams, _ = curve_fit(power_law, N, L, p0=[1.5, 400.0, 0.3], maxfev=20000)\nE, A, alpha = params\nprint(f\"E={E:.2f}, A={A:.1f}, alpha={alpha:.3f}\")\n\nfor n in [7e9, 7e10]:                            # extrapolate with caution\n    print(f\"{n:.0e} params -> predicted loss {power_law(n, *params):.2f}\")"
+ },
+ "chinchilla": {
+  "n": "Chinchilla-Optimal Training",
+  "d": "Chinchilla-optimal training is the rule that, for a fixed training compute budget, model parameters and training tokens should be scaled in roughly equal proportion, which works out to about 20 tokens per parameter. DeepMind's Chinchilla paper showed that many earlier large models were undertrained: a 70B-parameter model trained on 1.4 trillion tokens outperformed the 280B Gopher model trained with the same compute.\n\nThe analysis uses training compute C ≈ 6ND, where N is parameters and D is tokens, and finds that the loss-minimizing N and D each grow roughly as the square root of C. A frequent misconception is that 20 tokens per parameter is the best target for every project. It minimizes training compute for a given loss, but it ignores inference cost. Models that will serve heavy traffic, such as the LLaMA series, are deliberately trained far beyond this ratio, because a smaller model trained on more data is cheaper to run for its whole lifetime.",
+  "f": "C ≈ 6·N·D,  N_opt ∝ C^0.5,  D_opt ∝ C^0.5,  D_opt ≈ 20·N_opt",
+  "u": [
+   "Allocating compute between model size and data",
+   "Planning token budgets for pretraining runs",
+   "Judging whether a model is undertrained"
+  ],
+  "x": "A startup with a fixed GPU budget uses the Chinchilla ratio as a starting point, then deliberately trains a smaller model on several times more tokens. Because the model will serve millions of requests, they accept higher training cost per unit of quality in exchange for lower inference cost.",
+  "c": "def chinchilla_optimal(compute_flops, tokens_per_param=20.0):\n    # C = 6 N D and D = k N  ->  N = sqrt(C / (6 k))\n    n = (compute_flops / (6 * tokens_per_param)) ** 0.5\n    return n, tokens_per_param * n\n\nfor C in [1e21, 1e23, 5.76e23]:            # last one ~ Chinchilla's budget\n    n, d = chinchilla_optimal(C)\n    print(f\"C={C:.2e}  params={n/1e9:6.1f}B  tokens={d/1e9:8.0f}B\")\n\n# Inference-heavy choice: smaller model, more tokens, same compute\nC = 1e23\nn_small = 3e9\nd_small = C / (6 * n_small)\nprint(f\"3B model at same compute trains on {d_small/1e9:.0f}B tokens \"\n      f\"({d_small / n_small:.0f} tokens/param)\")"
+ },
+ "icl": {
+  "n": "In-Context Learning (ICL)",
+  "d": "In-context learning is the ability of a large language model to perform a new task from instructions or a few examples placed in the prompt, without any update to its weights. Given several input-output demonstrations followed by a new input, the model continues the pattern, and the same frozen model can switch tasks just by changing the prompt.\n\nThis ability emerged at scale with GPT-3. Research suggests the model infers the task format and label space from the demonstrations, and mechanisms such as induction heads, which copy patterns seen earlier in the context, contribute to it. Performance depends heavily on the choice, order and format of examples, and selecting demonstrations similar to the query through retrieval often helps. A notable finding is that models sometimes rely more on format and label distribution than on whether the example labels are correct. In-context learning is limited by context length and costs tokens on every call, unlike fine-tuning.",
+  "f": "ŷ = argmax_y P_θ(y | x₁, y₁, …, x_k, y_k, x)  (θ fixed)",
+  "u": [
+   "Few-shot classification without fine-tuning",
+   "Rapid prototyping of new LLM-powered features",
+   "Format-following via example demonstrations"
+  ],
+  "x": "A marketplace team builds a product categorization prototype by placing ten labeled examples, retrieved by embedding similarity to each new listing, into the prompt of a hosted LLM. This avoids training a model during exploration, and they move to fine-tuning only once volume makes the long prompts too costly.",
+  "c": "from transformers import pipeline\n\ngenerator = pipeline(\"text-generation\", model=\"Qwen/Qwen2.5-0.5B-Instruct\")\n\ndemos = [(\"The battery died after two days.\", \"negative\"),\n         (\"Setup took one minute, works great.\", \"positive\"),\n         (\"Arrived on time, nothing special.\", \"neutral\")]\nquery = \"Screen is bright but the speaker crackles.\"\n\n# Few-shot prompt: the task is defined entirely by the examples\nprompt = \"Classify the sentiment of each review.\\n\\n\"\nfor text, label in demos:\n    prompt += f\"Review: {text}\\nSentiment: {label}\\n\\n\"\nprompt += f\"Review: {query}\\nSentiment:\"\n\nout = generator(prompt, max_new_tokens=3, do_sample=False,\n                return_full_text=False)\nprint(out[0][\"generated_text\"].strip())   # no weights were updated"
+ },
+ "pretrain": {
+  "n": "Pretraining",
+  "d": "Pretraining is the first and most expensive stage of building a foundation model, in which the model learns general representations from a very large unlabeled corpus using a self-supervised objective. For LLMs this is next-token prediction over trillions of tokens of web text, books, code and other sources; for encoders such as BERT it is masked language modeling.\n\nThe quality of the result depends as much on data as on architecture. Pipelines deduplicate documents, filter low-quality and toxic text with heuristics and classifiers, remove benchmark contamination, and tune the mixture of domains and languages. Training runs for weeks on thousands of accelerators with data, tensor and pipeline parallelism, careful learning-rate schedules and monitoring for loss spikes. The resulting base model can complete text and has broad knowledge, but it does not reliably follow instructions; post-training such as supervised fine-tuning and preference optimization is what turns it into a usable assistant. Knowledge learned in pretraining also has a fixed cutoff date.",
+  "f": "θ* = argmin_θ E_{x∼D} [−Σₜ log P_θ(xₜ | x<ₜ)]",
+  "u": [
+   "Building base LLMs from web-scale text",
+   "Continued pretraining on domain or language data",
+   "Self-supervised encoders for vision and speech"
+  ],
+  "x": "A national research lab pretrains a bilingual LLM with heavy weight on its own language, after deduplication and quality filtering of crawled text. They track validation loss per data source throughout training and adjust the mixture when one domain stops improving.",
+  "c": "from datasets import load_dataset\nfrom transformers import (AutoTokenizer, AutoModelForCausalLM, Trainer,\n                          TrainingArguments, DataCollatorForLanguageModeling)\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\ntok.pad_token = tok.eos_token\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\n\nraw = load_dataset(\"wikitext\", \"wikitext-2-raw-v1\", split=\"train\")\ndata = raw.map(lambda b: tok(b[\"text\"], truncation=True, max_length=512),\n               batched=True, remove_columns=[\"text\"])\ndata = data.filter(lambda ex: len(ex[\"input_ids\"]) > 16)   # drop tiny lines\n\ncollator = DataCollatorForLanguageModeling(tok, mlm=False)  # next-token labels\nargs = TrainingArguments(\"pretrain-out\", per_device_train_batch_size=8,\n                         learning_rate=3e-4, lr_scheduler_type=\"cosine\",\n                         warmup_ratio=0.02, bf16=True, max_steps=1000)\nTrainer(model=model, args=args, train_dataset=data,\n        data_collator=collator).train()"
+ },
+ "sft": {
+  "n": "Supervised Fine-Tuning (SFT)",
+  "d": "Supervised fine-tuning trains a pretrained language model on curated prompt-response pairs so that it learns to follow instructions and produce responses in a desired style. The objective is still next-token cross-entropy, but the loss is usually computed only on the response tokens, with the prompt tokens masked out, so the model learns to answer rather than to imitate user messages.\n\nSFT is typically the first post-training step after pretraining. A few thousand to a few hundred thousand high-quality examples, formatted with the model's chat template, are often enough to change behavior substantially, because the model already has the underlying knowledge. Data quality and diversity matter more than volume. SFT is also used to specialize models for domains or output formats such as JSON. Its limitations are that it only imitates demonstrations, so it cannot easily teach the model to prefer better answers over merely plausible ones, and that aggressive fine-tuning on narrow data can cause forgetting of general abilities.",
+  "f": "L_SFT = −Σ_{t ∈ response} log P_θ(yₜ | prompt, y<ₜ)",
+  "u": [
+   "Turning base models into instruction followers",
+   "Teaching structured output formats such as JSON",
+   "Domain specialization for support or legal tasks"
+  ],
+  "x": "An insurance company fine-tunes an open LLM on several thousand reviewed question-answer pairs about its policies, formatted with the model's chat template. They mask the prompt tokens from the loss and evaluate on a held-out set plus general benchmarks to catch any loss of broader ability.",
+  "c": "from datasets import load_dataset\nfrom trl import SFTTrainer, SFTConfig\n\n# Conversational data: {\"messages\": [{\"role\": \"user\", ...}, {\"role\": \"assistant\", ...}]}\ndataset = load_dataset(\"trl-lib/Capybara\", split=\"train[:2000]\")\n\nconfig = SFTConfig(\n    output_dir=\"sft-out\",\n    max_length=2048,\n    assistant_only_loss=True,      # loss only on assistant tokens\n    per_device_train_batch_size=4,\n    gradient_accumulation_steps=4,\n    learning_rate=2e-5,\n    num_train_epochs=2,\n    bf16=True,\n)\ntrainer = SFTTrainer(model=\"Qwen/Qwen2.5-0.5B-Instruct\",\n                     train_dataset=dataset, args=config)\ntrainer.train()"
+ },
+ "rlhf": {
+  "n": "RLHF (Reinforcement Learning from Human Feedback)",
+  "d": "Reinforcement learning from human feedback aligns a language model with human preferences by training it to maximize a learned reward that predicts which responses people prefer. The classic pipeline, used for InstructGPT and early ChatGPT, has three stages: supervised fine-tuning on demonstrations, training a reward model on human comparisons between pairs of responses, and optimizing the policy against that reward with PPO.\n\nComparisons are easier for people to provide reliably than ideal answers, and the reward model generalizes those judgments to new prompts. During RL a KL penalty keeps the policy close to the SFT reference model, which preserves fluency and limits exploitation of reward-model errors. RLHF improves helpfulness, harmlessness and instruction following beyond what SFT achieves. Its weaknesses are cost and fragility: it needs several models in memory, many hyperparameters, and is prone to reward hacking, where the policy learns quirks such as excessive length or flattery that the reward model scores highly but people do not actually prefer.",
+  "f": "max_π E_{x, y∼π} [r_φ(x, y)] − β·KL(π(·|x) ‖ π_ref(·|x))",
+  "u": [
+   "Aligning chat assistants with human preferences",
+   "Reducing harmful or unhelpful responses",
+   "Improving summarization quality beyond imitation"
+  ],
+  "x": "OpenAI described using RLHF to train InstructGPT, where labelers ranked model outputs and a reward model trained on those rankings guided PPO. Teams applying the same recipe monitor response length and reward-model scores together, because a rising reward with steadily longer answers is a common sign of reward hacking.",
+  "c": "import torch\n\ndef rlhf_reward(rm_score, logp_policy, logp_ref, beta=0.05):\n    # Sequence reward = reward model score - beta * KL estimate\n    kl = (logp_policy - logp_ref).sum(dim=-1)   # sum over generated tokens\n    return rm_score - beta * kl\n\n# Toy batch: 4 responses, 12 generated tokens each\nrm_score = torch.tensor([1.2, 0.3, 2.0, -0.5])        # from the reward model\nlogp_policy = torch.randn(4, 12) * 0.1 - 2.0          # current policy log-probs\nlogp_ref = torch.randn(4, 12) * 0.1 - 2.0             # frozen SFT model log-probs\n\nr = rlhf_reward(rm_score, logp_policy, logp_ref)\nprint(r)   # this reward is what PPO maximizes\n\n# In practice, TRL's PPOTrainer runs the full loop:\n# policy, reference model, reward model and value model"
+ },
+ "rewardmodel": {
+  "n": "Reward Model",
+  "d": "A reward model is a network that takes a prompt and a response and outputs a scalar score estimating how much humans, or another judge, would prefer that response. It is usually a pretrained language model with a single linear output head, trained on pairwise comparisons where one response was chosen over another.\n\nThe standard training loss is the Bradley-Terry objective: maximize the log-sigmoid of the score difference between the chosen and the rejected response. Only differences matter, so the absolute scale of rewards is arbitrary. Reward models drive RLHF, rank candidate responses in best-of-n sampling, and filter synthetic data. Their main weakness is that they are imperfect proxies trained on limited data. When a policy is optimized hard against a reward model, it finds inputs where the model is wrong, such as verbose or sycophantic answers, which is called reward hacking or overoptimization. Ensembles, KL constraints and fresh comparison data reduce this risk.",
+  "f": "L = −log σ(r_φ(x, y_w) − r_φ(x, y_l))",
+  "u": [
+   "Scoring responses for RLHF policy optimization",
+   "Best-of-n reranking of sampled answers",
+   "Filtering synthetic training data by quality"
+  ],
+  "x": "A team building a coding assistant trains a reward model on developer preferences between pairs of suggested code edits. Besides using it for RL, they use it at inference to rerank several sampled candidates, and they audit cases where it prefers longer code to check for a length bias.",
+  "c": "import torch\nimport torch.nn.functional as F\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\n\nname = \"distilroberta-base\"\ntok = AutoTokenizer.from_pretrained(name)\nrm = AutoModelForSequenceClassification.from_pretrained(name, num_labels=1)\n\nprompt = \"How do I reverse a list in Python?\"\nchosen = prompt + \" Use my_list[::-1] or my_list.reverse() for in-place.\"\nrejected = prompt + \" You cannot reverse lists in Python.\"\n\nbatch = tok([chosen, rejected], return_tensors=\"pt\", padding=True)\nscores = rm(**batch).logits.squeeze(-1)          # one scalar per response\n# Bradley-Terry loss: chosen should score higher than rejected\nloss = -F.logsigmoid(scores[0] - scores[1])\nloss.backward()\nprint(scores.tolist(), loss.item())"
+ },
+ "ppo": {
+  "n": "PPO (Proximal Policy Optimization)",
+  "d": "Proximal Policy Optimization is a policy-gradient reinforcement learning algorithm that improves a policy while preventing each update from moving it too far from the policy that collected the data. It does this with a clipped objective: the probability ratio between the new and old policy for each action is multiplied by the advantage, but the ratio is clipped to a range such as 0.8 to 1.2, so there is no incentive to push it further.\n\nPPO is popular because it is stable, reuses each batch of experience for several epochs, and is simpler than trust-region methods. A learned value function with generalized advantage estimation supplies advantages. In LLM training, each generated token is an action, the reward arrives at the end of the response, and a per-token KL penalty to a reference model is added. The main drawback for LLMs is cost: policy, value, reward and reference models must all fit in memory, and results depend heavily on hyperparameters.",
+  "f": "L_CLIP = E[min(rₜ·Âₜ, clip(rₜ, 1−ε, 1+ε)·Âₜ)],  rₜ = π_θ(aₜ|sₜ)/π_old(aₜ|sₜ)",
+  "u": [
+   "RLHF policy optimization for language models",
+   "Robotics and continuous control tasks",
+   "Game-playing agents with simulated environments"
+  ],
+  "x": "OpenAI used PPO to train game-playing agents in OpenAI Five and later for the RL stage of InstructGPT. Teams running PPO on LLMs typically watch the clip fraction and the KL to the reference model each step, and stop or lower the learning rate when either grows too quickly.",
+  "c": "import torch\n\ndef ppo_loss(logp_new, logp_old, advantages, eps=0.2):\n    ratio = torch.exp(logp_new - logp_old)              # pi_new / pi_old\n    unclipped = ratio * advantages\n    clipped = torch.clamp(ratio, 1 - eps, 1 + eps) * advantages\n    return -torch.min(unclipped, clipped).mean()        # maximize the minimum\n\ntorch.manual_seed(0)\nlogp_old = torch.randn(64) - 1.0                        # from rollout policy\nlogp_new = (logp_old + 0.1 * torch.randn(64)).requires_grad_()\nadvantages = torch.randn(64)                            # e.g. from GAE\nadvantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)\n\nloss = ppo_loss(logp_new, logp_old, advantages)\nloss.backward()\nclip_frac = ((torch.exp(logp_new - logp_old) - 1).abs() > 0.2).float().mean()\nprint(loss.item(), clip_frac.item())"
+ },
+ "dpo": {
+  "n": "DPO (Direct Preference Optimization)",
+  "d": "Direct Preference Optimization trains a language model on preference pairs with a simple classification-style loss, without training a separate reward model or running reinforcement learning. It relies on the fact that the optimal policy for the KL-regularized RLHF objective has a closed form, so the reward can be written through the log-probability ratio between the policy and a frozen reference model.\n\nSubstituting that implicit reward into the Bradley-Terry preference model yields a loss that increases the policy's relative likelihood of the chosen response over the rejected one, compared with the reference model. The temperature β controls how far the policy may move from the reference. DPO is stable, needs two models in memory and is a standard alignment step for open models. Its limitations are that it learns from a fixed offline dataset, so it cannot explore or correct mistakes outside that data, and it can reduce the absolute likelihood of both chosen and rejected responses, sometimes degrading outputs.",
+  "f": "L_DPO = −log σ(β·[log π_θ(y_w|x)/π_ref(y_w|x) − log π_θ(y_l|x)/π_ref(y_l|x)])",
+  "u": [
+   "Preference alignment of open chat models",
+   "Tuning style or tone from pairwise feedback",
+   "Reducing unwanted behaviors without RL infrastructure"
+  ],
+  "x": "A team aligning an open model for internal use collects pairwise preferences from domain experts and runs DPO with TRL on top of their SFT checkpoint. They choose DPO over PPO because it fits on fewer GPUs and has fewer hyperparameters, and they compare win rates against the SFT model on held-out prompts.",
+  "c": "from datasets import load_dataset\nfrom transformers import AutoTokenizer, AutoModelForCausalLM\nfrom trl import DPOTrainer, DPOConfig\n\nname = \"Qwen/Qwen2.5-0.5B-Instruct\"\nmodel = AutoModelForCausalLM.from_pretrained(name)\ntokenizer = AutoTokenizer.from_pretrained(name)\n\n# Each row: prompt, chosen, rejected\ndataset = load_dataset(\"trl-lib/ultrafeedback_binarized\", split=\"train[:2000]\")\n\nconfig = DPOConfig(\n    output_dir=\"dpo-out\",\n    beta=0.1,                        # strength of the pull toward the reference\n    learning_rate=5e-7,\n    per_device_train_batch_size=2,\n    gradient_accumulation_steps=8,\n    bf16=True,\n)\ntrainer = DPOTrainer(model=model, args=config, train_dataset=dataset,\n                     processing_class=tokenizer)   # reference = frozen copy\ntrainer.train()"
+ },
+ "grpo": {
+  "n": "GRPO (Group Relative Policy Optimization)",
+  "d": "Group Relative Policy Optimization is a variant of PPO for language models that removes the learned value function and instead computes each response's advantage relative to a group of responses sampled for the same prompt. For every prompt, the policy generates G completions, each is scored, and the advantage of a completion is its reward minus the group mean, divided by the group standard deviation.\n\nUsing the group as a baseline saves the memory and compute of a separate critic, which is often as large as the policy, and suits rewards given at the end of a response, such as math answer checks. The policy update keeps PPO's clipped ratio and adds a KL penalty to a reference model. GRPO was introduced in DeepSeekMath and used to train DeepSeek-R1's reasoning. A practical limitation is that prompts where all sampled answers receive the same reward give zero advantage and no learning signal, so prompt difficulty must suit the model.",
+  "f": "Âᵢ = (rᵢ − mean(r₁,…,r_G)) / std(r₁,…,r_G)",
+  "u": [
+   "Reasoning training with verifiable math rewards",
+   "Code generation optimized against unit tests",
+   "Critic-free RL fine-tuning on limited GPUs"
+  ],
+  "x": "DeepSeek used GRPO to train its R1 reasoning models with rule-based rewards for answer correctness and format. Teams reproducing this filter their prompt sets so that the model solves some but not all samples per prompt, since groups with uniform rewards contribute nothing to the gradient.",
+  "c": "from datasets import load_dataset\nfrom trl import GRPOTrainer, GRPOConfig\n\ndataset = load_dataset(\"trl-lib/tldr\", split=\"train[:2000]\")   # column: prompt\n\ndef reward_len(completions, **kwargs):\n    # Toy verifiable reward: prefer completions close to 200 characters\n    return [-abs(200 - len(c)) / 100 for c in completions]\n\nconfig = GRPOConfig(\n    output_dir=\"grpo-out\",\n    num_generations=8,              # group size G per prompt\n    max_completion_length=128,\n    learning_rate=1e-6,\n    beta=0.04,                      # KL penalty to the reference model\n    per_device_train_batch_size=8,\n    bf16=True,\n)\ntrainer = GRPOTrainer(model=\"Qwen/Qwen2.5-0.5B-Instruct\",\n                      reward_funcs=reward_len, args=config,\n                      train_dataset=dataset)\ntrainer.train()"
+ },
+ "rlvr": {
+  "n": "RL with Verifiable Rewards (RLVR)",
+  "d": "Reinforcement learning with verifiable rewards trains a language model using rewards computed by a program that checks the output, instead of a learned reward model. Typical verifiers compare a final math answer with the ground truth, run generated code against unit tests, or check that an output satisfies a format or constraint.\n\nBecause the reward is objective, it cannot be flattered by style or length in the way a learned reward model can, which allows long RL runs with less reward hacking. Combined with algorithms such as PPO or GRPO, RLVR is the main recipe behind recent reasoning models: the model learns to produce long chains of thought that end in correct answers, and behaviors such as self-checking and backtracking can emerge. The limitation is coverage: it only works for tasks with reliable automatic checks. Lenient verifiers can still be gamed, and sparse binary rewards give no signal on problems the model never solves.",
+  "f": "r(x, y) = 𝟙[verify(x, y) = true];  max_π E[r] − β·KL(π ‖ π_ref)",
+  "u": [
+   "Training math reasoning with checkable answers",
+   "Code generation rewarded by passing tests",
+   "Instruction following with programmatic constraint checks"
+  ],
+  "x": "DeepSeek-R1 was trained largely with rule-based rewards that check final answers and output format. A team applying RLVR to SQL generation executes each generated query against a test database and rewards exact result matches, sandboxing execution so generated queries cannot modify data.",
+  "c": "import re\n\ndef extract_answer(text):\n    m = re.search(r\"\\\\boxed\\{([^}]*)\\}\", text)    # answer in \\boxed{...}\n    return m.group(1).strip() if m else None\n\ndef math_reward(completions, answer, **kwargs):\n    # 1.0 if the final answer matches the ground truth, else 0.0\n    return [1.0 if extract_answer(c) == str(a) else 0.0\n            for c, a in zip(completions, answer)]\n\ndef format_reward(completions, **kwargs):\n    return [0.2 if \"<think>\" in c and \"</think>\" in c else 0.0\n            for c in completions]\n\nsamples = [\"<think>2+3=5</think> \\\\boxed{5}\", \"The answer is 6\"]\nprint(math_reward(samples, answer=[5, 5]))     # [1.0, 0.0]\nprint(format_reward(samples))                  # [0.2, 0.0]\n# Pass both functions as reward_funcs to trl.GRPOTrainer"
+ },
+ "cai": {
+  "n": "Constitutional AI & RLAIF",
+  "d": "Constitutional AI is a method from Anthropic for training a harmless and helpful assistant using a written set of principles, the constitution, and AI-generated feedback instead of human labels for harmfulness. RLAIF, reinforcement learning from AI feedback, is the general idea of replacing human preference labels with judgments from a language model.\n\nThe method has two phases. In the supervised phase, the model responds to difficult prompts, then critiques and revises its own responses according to randomly selected principles, and is fine-tuned on the revised answers. In the RL phase, an AI model compares response pairs against the principles, and these AI preferences train a reward model that the policy is optimized against. This scales feedback cheaply and makes the target behavior explicit and auditable through the written principles. The limitation is that quality is bounded by the judging model's ability and biases, so errors or blind spots in the AI feedback can be reinforced rather than corrected.",
+  "f": "Preference label: y_w = argmax_{y∈{y₁,y₂}} P_judge(y better | x, principles)",
+  "u": [
+   "Harmlessness training without large human labeling",
+   "Scaling preference data with LLM judges",
+   "Making target behavior explicit through principles"
+  ],
+  "x": "Anthropic introduced Constitutional AI to train Claude models to avoid harmful outputs while remaining helpful and willing to explain refusals. Other teams adopt RLAIF by using a strong model as judge to label preference pairs, then spot-check a sample with human reviewers to measure agreement.",
+  "c": "from transformers import pipeline\n\njudge = pipeline(\"text-generation\", model=\"Qwen/Qwen2.5-1.5B-Instruct\")\n\nprinciple = \"Choose the response that is more helpful while avoiding harm.\"\nprompt = \"How can I get into my neighbor's wifi?\"\na = \"Ask your neighbor for the password or use your own provider.\"\nb = \"Try common passwords until one works.\"\n\nquery = (f\"Principle: {principle}\\nUser: {prompt}\\n\"\n         f\"Response A: {a}\\nResponse B: {b}\\n\"\n         \"Which response better follows the principle? Answer A or B.\")\nmsgs = [{\"role\": \"user\", \"content\": query}]\nout = judge(msgs, max_new_tokens=3, do_sample=False)\nverdict = out[0][\"generated_text\"][-1][\"content\"].strip()\n\n# AI-labeled pair becomes training data for a reward model or DPO\npair = {\"prompt\": prompt, \"chosen\": a if verdict.startswith(\"A\") else b,\n        \"rejected\": b if verdict.startswith(\"A\") else a}\nprint(pair[\"chosen\"])"
+ },
+ "lora": {
+  "n": "LoRA (Low-Rank Adaptation)",
+  "d": "LoRA fine-tunes a large model by freezing its original weights and learning a low-rank update for selected weight matrices. For a frozen matrix W of shape d×k, it adds a product BA, where B is d×r and A is r×k with a small rank r such as 8 or 16; only A and B are trained, and the update is scaled by α/r.\n\nFine-tuning updates tend to have low intrinsic rank. LoRA cuts trainable parameters by orders of magnitude, reduces optimizer memory accordingly, and yields small adapter files that can be swapped on one shared base model. B is initialized to zero so training starts exactly from the base model, and after training BA can be merged into W with no added latency. Targeting all linear layers usually beats targeting only the attention projections. A limitation is that low rank can underfit tasks that require large changes, such as learning new languages or substantial new knowledge.",
+  "f": "W' = W + (α/r)·B·A,  B ∈ ℝ^(d×r), A ∈ ℝ^(r×k), r ≪ min(d, k)",
+  "u": [
+   "Parameter-efficient fine-tuning of large LLMs",
+   "Serving many task adapters on one base model",
+   "Customizing diffusion models for styles or subjects"
+  ],
+  "x": "A SaaS company serves one base LLM and loads a separate LoRA adapter for each enterprise customer's tone and terminology. Serving engines such as vLLM can batch requests that use different adapters together, so adding a customer costs only a small adapter file rather than a full model copy.",
+  "c": "from transformers import AutoModelForCausalLM\nfrom peft import LoraConfig, get_peft_model\n\nmodel = AutoModelForCausalLM.from_pretrained(\"Qwen/Qwen2.5-0.5B\")\n\nconfig = LoraConfig(\n    r=16,                              # rank of the update\n    lora_alpha=32,                     # scale = alpha / r\n    lora_dropout=0.05,\n    target_modules=[\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\",\n                    \"gate_proj\", \"up_proj\", \"down_proj\"],\n    task_type=\"CAUSAL_LM\",\n)\nmodel = get_peft_model(model, config)  # base weights frozen, B initialized to 0\nmodel.print_trainable_parameters()     # well under 1% of all parameters\n\n# ... train with Trainer or SFTTrainer ...\nmerged = model.merge_and_unload()      # fold BA into W for zero-overhead serving"
+ },
+ "qlora": {
+  "n": "QLoRA",
+  "d": "QLoRA fine-tunes a large language model by keeping the frozen base weights in 4-bit precision and training LoRA adapters in 16-bit on top of them. Gradients flow through the quantized weights, dequantized on the fly for each matrix multiplication, into the small adapters, which are the only trainable parameters.\n\nThree techniques make this work. NF4 is a 4-bit data type whose levels are placed at quantiles of a normal distribution, matching how pretrained weights are distributed. Double quantization also quantizes the per-block scaling constants to save further memory. Paged optimizers move optimizer state to CPU memory during memory spikes. Together they made it possible to fine-tune a 65B model on a single 48 GB GPU with quality close to 16-bit LoRA. The trade-offs are slower training steps because of repeated dequantization, and a subtle deployment issue: merging adapters into a dequantized base gives slightly different weights than those used in training, so outputs should be re-evaluated after merging.",
+  "f": "y = dequant(W_NF4)·x + (α/r)·B·A·x  (only A, B trained)",
+  "u": [
+   "Fine-tuning large LLMs on a single GPU",
+   "Low-budget domain adaptation experiments",
+   "Academic research on limited hardware"
+  ],
+  "x": "A university lab with a few 24 GB GPUs uses QLoRA to adapt a 30B-class open model to clinical note summarization. Running the base in 4-bit lets each experiment fit on one card, and they evaluate the merged model separately before deployment to confirm quality matches the adapter-on-quantized setup.",
+  "c": "import torch\nfrom transformers import AutoModelForCausalLM, BitsAndBytesConfig\nfrom peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training\n\nbnb = BitsAndBytesConfig(\n    load_in_4bit=True,\n    bnb_4bit_quant_type=\"nf4\",             # normal-float 4-bit levels\n    bnb_4bit_use_double_quant=True,        # quantize the scales too\n    bnb_4bit_compute_dtype=torch.bfloat16, # dequantize to bf16 for matmuls\n)\nmodel = AutoModelForCausalLM.from_pretrained(\"Qwen/Qwen2.5-7B\",\n                                             quantization_config=bnb,\n                                             device_map=\"auto\")\nmodel = prepare_model_for_kbit_training(model)   # enables checkpointing etc.\n\nlora = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05,\n                  target_modules=\"all-linear\", task_type=\"CAUSAL_LM\")\nmodel = get_peft_model(model, lora)\nmodel.print_trainable_parameters()\n# Train with optim=\"paged_adamw_8bit\" in TrainingArguments"
+ },
+ "adapters": {
+  "n": "Adapters & PEFT",
+  "d": "Parameter-efficient fine-tuning, or PEFT, is a family of methods that adapt a pretrained model to a new task by training only a small number of added or selected parameters while the original weights stay frozen. Bottleneck adapters, the original approach, insert small modules inside each Transformer layer: a down-projection to a low dimension, a nonlinearity and an up-projection, added back through a residual connection.\n\nOther PEFT methods include LoRA, which adds low-rank updates to weight matrices; prefix and prompt tuning, which learn virtual tokens; and IA³ and BitFit, which train scaling vectors or only biases. The shared benefits are lower training memory, tiny per-task checkpoints, and one base model that switches behavior by loading different adapters. Classic adapters add sequential computation at inference, which increases latency slightly, whereas LoRA can be merged into the weights. PEFT methods generally match full fine-tuning on moderate tasks but may fall short when the task differs greatly from pretraining.",
+  "f": "h ← h + W_up·σ(W_down·h),  W_down ∈ ℝ^(m×d), m ≪ d",
+  "u": [
+   "Multi-task models with per-task adapter modules",
+   "Cheap fine-tuning under limited GPU memory",
+   "Storing many customer-specific model variants"
+  ],
+  "x": "A translation provider keeps one multilingual base model and trains a small adapter per language pair and domain. Adapters are loaded on demand for each request, so adding a new domain means training and storing a few megabytes instead of copying the full model.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass BottleneckAdapter(nn.Module):\n    def __init__(self, d_model, bottleneck=64):\n        super().__init__()\n        self.down = nn.Linear(d_model, bottleneck)\n        self.up = nn.Linear(bottleneck, d_model)\n        nn.init.zeros_(self.up.weight)        # start as identity mapping\n        nn.init.zeros_(self.up.bias)\n\n    def forward(self, h):\n        return h + self.up(torch.relu(self.down(h)))   # residual adapter\n\nlayer = nn.TransformerEncoderLayer(d_model=512, nhead=8, batch_first=True)\nfor p in layer.parameters():\n    p.requires_grad = False                   # freeze the pretrained layer\nadapter = BottleneckAdapter(512)\n\nx = torch.randn(4, 20, 512)\ny = adapter(layer(x))                         # only adapter params get gradients\ntrainable = sum(p.numel() for p in adapter.parameters())\nfrozen = sum(p.numel() for p in layer.parameters())\nprint(trainable, frozen)"
+ },
+ "prompttuning": {
+  "n": "Prefix Tuning & Prompt Tuning",
+  "d": "Prompt tuning and prefix tuning adapt a frozen language model by learning continuous vectors that act like extra tokens, instead of changing the model's weights. Prompt tuning prepends a small number of trainable embeddings, often 20 to 100 virtual tokens, to the input embedding sequence only. Prefix tuning instead learns key and value vectors prepended at every attention layer, giving it more influence over the computation.\n\nOnly these soft prompt parameters are trained, so each task needs a few thousand to a few hundred thousand parameters, and a single batch can mix requests for different tasks by attaching different prompts. Prompt tuning was shown to approach full fine-tuning quality as model size grows into the billions of parameters, but it is noticeably weaker on smaller models and harder tasks. Training can also be unstable and sensitive to initialization; initializing virtual tokens from embeddings of real words related to the task usually helps. Soft prompts are not human-readable text.",
+  "f": "input = [P₁, …, P_m ; E(x₁), …, E(x_T)],  only P trained",
+  "u": [
+   "Lightweight per-task adaptation of frozen LLMs",
+   "Mixed-task batching on one shared model",
+   "Multi-tenant serving with tiny task parameters"
+  ],
+  "x": "A platform team offering classification tasks to many internal groups trains a soft prompt for each task on a shared frozen model. Because requests differ only in their prepended vectors, the server can batch tasks together, though for their smaller models they found LoRA gave better accuracy on harder tasks.",
+  "c": "from transformers import AutoModelForCausalLM, AutoTokenizer\nfrom peft import PromptTuningConfig, PromptTuningInit, get_peft_model\n\nname = \"Qwen/Qwen2.5-0.5B\"\nmodel = AutoModelForCausalLM.from_pretrained(name)\n\nconfig = PromptTuningConfig(\n    task_type=\"CAUSAL_LM\",\n    num_virtual_tokens=20,                       # learned soft prompt length\n    prompt_tuning_init=PromptTuningInit.TEXT,    # start from real word embeddings\n    prompt_tuning_init_text=\"Classify the support ticket by topic:\",\n    tokenizer_name_or_path=name,\n)\nmodel = get_peft_model(model, config)            # base model frozen\nmodel.print_trainable_parameters()               # 20 x hidden_size parameters\n\n# For prefix tuning (key/value vectors at every layer) use instead:\n# from peft import PrefixTuningConfig\n# PrefixTuningConfig(task_type=\"CAUSAL_LM\", num_virtual_tokens=20)"
+ },
+ "distill": {
+  "n": "Knowledge Distillation",
+  "d": "Knowledge distillation trains a smaller student model to imitate a larger teacher model, transferring much of the teacher's ability into a model that is cheaper to run. Instead of learning only from hard labels, the student is trained to match the teacher's full output distribution, softened with a temperature T so that the relative probabilities of wrong classes, which carry information about similarity, become visible.\n\nThe usual loss mixes cross-entropy on true labels with the KL divergence between temperature-softened teacher and student distributions, multiplied by T² to keep gradient scales comparable. DistilBERT used this approach to reach most of BERT's accuracy with fewer layers. For LLMs, distillation also takes the form of training a student on text generated by a teacher, sometimes called sequence-level distillation, or matching token-level logits when both share a tokenizer. A limitation is that a student with much less capacity cannot absorb everything, and a teacher's errors and biases transfer along with its strengths.",
+  "f": "L = α·CE(y, p_s) + (1−α)·T²·KL(softmax(z_t/T) ‖ softmax(z_s/T))",
+  "u": [
+   "Compressing large models for mobile deployment",
+   "Creating fast models for low-latency serving",
+   "Transferring LLM abilities into smaller open models"
+  ],
+  "x": "Hugging Face released DistilBERT, trained by distilling BERT into a model with half the layers. A search team uses a similar approach, distilling a large cross-encoder reranker into a small student so that reranking fits within their per-query latency budget.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef distillation_loss(student_logits, teacher_logits, labels, T=2.0, alpha=0.5):\n    hard = F.cross_entropy(student_logits, labels)            # true labels\n    soft = F.kl_div(F.log_softmax(student_logits / T, dim=-1),\n                    F.softmax(teacher_logits / T, dim=-1),\n                    reduction=\"batchmean\") * T * T            # softened teacher\n    return alpha * hard + (1 - alpha) * soft\n\ntorch.manual_seed(0)\nteacher = torch.nn.Sequential(torch.nn.Linear(32, 256), torch.nn.ReLU(),\n                              torch.nn.Linear(256, 10)).eval()\nstudent = torch.nn.Linear(32, 10)\nx, y = torch.randn(64, 32), torch.randint(0, 10, (64,))\n\nwith torch.no_grad():\n    t_logits = teacher(x)                                     # teacher is frozen\nloss = distillation_loss(student(x), t_logits, y)\nloss.backward()\nprint(loss.item())"
+ },
+ "synthdata": {
+  "n": "Synthetic Data",
+  "d": "Synthetic data is training data generated by a model or a program rather than collected from real users or written by people. For LLMs, a strong model is prompted to write instructions, answers, dialogues, reasoning traces or code, and the filtered results train another model; for other domains, simulators or generative models produce images, tabular records or sensor data.\n\nIt is valuable when real data is scarce, expensive to label, private or lacks rare cases. Pipelines such as Self-Instruct bootstrap varied tasks from a small seed set, and verification steps such as code execution, math answer checks or reward-model scoring raise quality. Diversity and correctness are the central challenges: generated data tends to repeat the generator's style and errors, and training repeatedly on a model's own outputs without fresh real data can narrow the distribution, which is known as model collapse. License terms of the generator model may also restrict using its outputs to train competing models.",
+  "f": "D_synth = {(x, y) : x ∼ G_prompt, y ∼ G(·|x), filter(x, y) = true}",
+  "u": [
+   "Instruction tuning data for smaller LLMs",
+   "Augmenting rare classes and edge cases",
+   "Privacy-preserving substitutes for sensitive records"
+  ],
+  "x": "A bank's NLP team needs training data for routing customer complaints but cannot use raw transcripts. They generate synthetic complaints with an LLM from a taxonomy of issues and personas, then have reviewers check a sample and deduplicate by embedding similarity to keep the set diverse.",
+  "c": "from transformers import pipeline\nfrom sentence_transformers import SentenceTransformer, util\n\ngen = pipeline(\"text-generation\", model=\"Qwen/Qwen2.5-1.5B-Instruct\")\nembedder = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ntopics = [\"late card delivery\", \"double charge\", \"locked account\"]\nsamples = []\nfor topic in topics:\n    for tone in [\"angry\", \"polite\"]:\n        msg = [{\"role\": \"user\", \"content\":\n                f\"Write one short {tone} customer complaint about {topic}.\"}]\n        text = gen(msg, max_new_tokens=60, do_sample=True,\n                   temperature=0.9)[0][\"generated_text\"][-1][\"content\"]\n        samples.append({\"text\": text, \"label\": topic})\n\n# Filter near-duplicates to keep the synthetic set diverse\nemb = embedder.encode([s[\"text\"] for s in samples], convert_to_tensor=True)\nsim = util.cos_sim(emb, emb)\nkeep = [i for i in range(len(samples)) if all(sim[i, j] < 0.9 for j in range(i))]\nprint(len(samples), \"generated,\", len(keep), \"kept\")"
+ },
+ "forgetting": {
+  "n": "Catastrophic Forgetting",
+  "d": "Catastrophic forgetting is the tendency of a neural network to lose previously learned abilities when it is trained further on new data or a new task. Because the same weights encode both old and new knowledge, gradient updates that reduce loss on the new data can overwrite what supported earlier performance, and nothing in the objective protects it.\n\nIn LLM practice it appears when fine-tuning on narrow domain data degrades general instruction following, safety behavior or performance in other languages. Common mitigations include mixing a fraction of general or original-task data into the fine-tuning set (replay), using lower learning rates and fewer steps, parameter-efficient methods such as LoRA that change fewer weights, and regularization methods such as elastic weight consolidation, which penalizes changes to parameters important for earlier tasks. A common misconception is that LoRA prevents forgetting entirely; it typically forgets less than full fine-tuning, but it also learns less, and significant forgetting can still occur.",
+  "f": "EWC: L = L_new(θ) + (λ/2)·Σᵢ Fᵢ·(θᵢ − θᵢ*)²",
+  "u": [
+   "Diagnosing regressions after domain fine-tuning",
+   "Continual learning on evolving data streams",
+   "Designing replay mixtures for model updates"
+  ],
+  "x": "A company fine-tuning an assistant on internal documentation notices it starts ignoring formatting instructions and answers general questions worse. They add about one fifth general instruction data to the training mix and track a fixed general benchmark alongside the domain metrics for every new checkpoint.",
+  "c": "from datasets import load_dataset, interleave_datasets\n\ndomain = load_dataset(\"json\", data_files=\"internal_docs_qa.jsonl\", split=\"train\")\ngeneral = load_dataset(\"trl-lib/Capybara\", split=\"train\")\n\n# Replay: mix general data into the fine-tuning stream to limit forgetting\ndomain = domain.select_columns([\"messages\"])\ngeneral = general.select_columns([\"messages\"])\nmixed = interleave_datasets([domain, general], probabilities=[0.8, 0.2],\n                            seed=42, stopping_strategy=\"first_exhausted\")\n\n# Conservative settings also reduce forgetting\ntrain_kwargs = dict(learning_rate=1e-5, num_train_epochs=1)\nprint(len(mixed), train_kwargs)\n# Evaluate on both domain and general benchmarks after every checkpoint"
+ },
+ "quantization": {
+  "n": "Quantization",
+  "d": "Quantization stores and computes a model's weights, and sometimes its activations, with fewer bits, such as 8-bit or 4-bit integers instead of 16-bit floats, to reduce memory and speed up inference. Each real value is mapped to an integer through a scale and often a zero point, and values are reconstructed approximately when needed.\n\nFor LLMs, decoding is usually limited by memory bandwidth, so halving or quartering the bytes per weight translates fairly directly into faster token generation and lets larger models fit on a given GPU. Quantization can be applied after training (post-training quantization) with a small calibration set or simulated during training (quantization-aware training) for better accuracy at very low bit widths. Per-channel or per-group scales greatly reduce error. The main pitfall is outliers: a few very large activation or weight values stretch the range and destroy precision for the rest, which is why naive 8-bit activation quantization can badly hurt large models.",
+  "f": "q = clamp(round(x/s) + z, q_min, q_max),  x̂ = s·(q − z)",
+  "u": [
+   "Running LLMs on smaller or fewer GPUs",
+   "On-device inference on phones and laptops",
+   "Lowering serving cost and token latency"
+  ],
+  "x": "A team running a local coding assistant on developer laptops ships a 4-bit quantized model in GGUF format via llama.cpp. They compare a few quantization levels on their internal code tasks and pick the smallest one whose accuracy stays close to the 16-bit baseline.",
+  "c": "import torch\n\ndef quantize_per_channel(w, bits=8):\n    qmax = 2 ** (bits - 1) - 1                          # symmetric int range\n    scale = w.abs().amax(dim=1, keepdim=True) / qmax    # one scale per row\n    q = torch.clamp(torch.round(w / scale), -qmax - 1, qmax).to(torch.int8)\n    return q, scale\n\ndef dequantize(q, scale):\n    return q.float() * scale\n\ntorch.manual_seed(0)\nw = torch.randn(256, 512) * 0.02\nq, s = quantize_per_channel(w, bits=8)\nerr = (dequantize(q, s) - w).abs().mean() / w.abs().mean()\nprint(q.dtype, f\"relative error {err:.4f}\")\n\n# Outlier effect: one large value stretches the scale for its whole row\nw[0, 0] = 5.0\nq, s = quantize_per_channel(w)\nprint((dequantize(q, s)[0] - w[0]).abs().mean().item())"
+ },
+ "gptq": {
+  "n": "INT8 / INT4 Weight Quantization (GPTQ, AWQ)",
+  "d": "GPTQ and AWQ are post-training methods that compress LLM weights to 4-bit or 3-bit integers with little accuracy loss, using only a small calibration dataset and no retraining. Plain rounding to 4 bits often damages large models, so both methods decide how to quantize using information about the activations the weights will see.\n\nGPTQ quantizes the columns of each weight matrix one at a time and, after each step, updates the remaining unquantized weights to compensate for the error, using second-order information from the inverse Hessian of the layer's reconstruction loss. AWQ observes that a small fraction of weight channels, those multiplied by large activations, matter most; it scales these channels up before quantization (and the activations down correspondingly) so they lose less precision. Weight-only methods mainly save memory and bandwidth during decoding; compute-bound prefill speeds up less. Calibration data should resemble the deployment domain.",
+  "f": "GPTQ: argmin_Ŵ ‖WX − ŴX‖²;  AWQ: Q(W·diag(s))·(diag(s)⁻¹X)",
+  "u": [
+   "Serving 70B-class models on fewer GPUs",
+   "4-bit checkpoints for local LLM inference",
+   "Reducing memory bandwidth during decoding"
+  ],
+  "x": "A team self-hosting a 70B model serves an AWQ 4-bit checkpoint with vLLM, which fits on half as many GPUs as the 16-bit version. Before switching, they run their evaluation suite and spot-check long reasoning outputs, where small quantization errors are most likely to show up.",
+  "c": "from transformers import AutoModelForCausalLM, AutoTokenizer, GPTQConfig\n\nname = \"Qwen/Qwen2.5-1.5B-Instruct\"\ntokenizer = AutoTokenizer.from_pretrained(name)\n\n# Calibration data drives the error-compensating weight updates\ngptq = GPTQConfig(bits=4, group_size=128, dataset=\"c4\", tokenizer=tokenizer)\nmodel = AutoModelForCausalLM.from_pretrained(name, quantization_config=gptq,\n                                             device_map=\"auto\")\nmodel.save_pretrained(\"qwen-1.5b-gptq-int4\")\ntokenizer.save_pretrained(\"qwen-1.5b-gptq-int4\")\n\n# Serving a pre-quantized AWQ or GPTQ checkpoint with vLLM:\n# from vllm import LLM\n# llm = LLM(model=\"Qwen/Qwen2.5-7B-Instruct-AWQ\", quantization=\"awq\")"
+ },
+ "mixedprec": {
+  "n": "Mixed Precision (FP16 / BF16)",
+  "d": "Mixed precision training runs most computations in 16-bit floating point while keeping numerically sensitive parts in 32-bit, which roughly halves activation memory and speeds up matrix multiplications on tensor-core GPUs. Matmuls run in FP16 or BF16, while a master copy of the weights, the optimizer state, and reductions such as softmax and loss stay in FP32.\n\nThe two 16-bit formats trade off differently. FP16 has 5 exponent bits and 10 mantissa bits: good precision but a narrow range, so small gradients underflow to zero. It therefore needs loss scaling, where the loss is multiplied by a large factor before backpropagation and gradients are divided back before the update, with the factor adjusted dynamically when overflows occur. BF16 keeps FP32's 8 exponent bits with only 7 mantissa bits, so it has the same range, usually needs no loss scaling, and is the default for LLM training on recent hardware. Its low precision makes summing many small values error-prone.",
+  "f": "FP16: 1 sign + 5 exp + 10 mantissa;  BF16: 1 sign + 8 exp + 7 mantissa",
+  "u": [
+   "Faster training on tensor-core GPUs",
+   "Halving activation memory for larger batches",
+   "Standard BF16 training of large language models"
+  ],
+  "x": "A vision team moves from FP32 to automatic mixed precision and roughly halves per-step training time on the same GPUs. On older GPUs without BF16 support they use FP16 with a gradient scaler, and they log the scale value so that repeated drops can flag overflow problems early.",
+  "c": "import torch\nimport torch.nn as nn\n\ndevice = \"cuda\" if torch.cuda.is_available() else \"cpu\"\nmodel = nn.Sequential(nn.Linear(512, 1024), nn.ReLU(), nn.Linear(1024, 10)).to(device)\nopt = torch.optim.AdamW(model.parameters(), lr=1e-3)   # master weights in FP32\nscaler = torch.amp.GradScaler(device)                  # needed for FP16, not BF16\n\nx = torch.randn(64, 512, device=device)\ny = torch.randint(0, 10, (64,), device=device)\n\nfor step in range(10):\n    opt.zero_grad(set_to_none=True)\n    with torch.autocast(device_type=device, dtype=torch.float16):\n        loss = nn.functional.cross_entropy(model(x), y)  # matmuls in 16-bit\n    scaler.scale(loss).backward()      # scale loss to avoid gradient underflow\n    scaler.step(opt)                   # unscale, skip step on inf/nan\n    scaler.update()                    # adjust the scale factor\nprint(loss.item(), scaler.get_scale())"
+ },
+ "prune": {
+  "n": "Pruning",
+  "d": "Pruning removes weights, neurons, attention heads or whole layers from a trained network to make it smaller or faster while preserving as much accuracy as possible. Unstructured pruning zeroes individual weights, typically those with the smallest magnitude or the lowest estimated importance; structured pruning removes entire rows, channels, heads or layers so the remaining model is a smaller dense network.\n\nThe distinction matters for speed. Unstructured sparsity reduces parameter count but rarely speeds up inference on GPUs without specialized sparse kernels, except for hardware-supported patterns such as NVIDIA's 2:4 sparsity, where two of every four consecutive weights are zero. Structured pruning gives real speedups on standard hardware but usually costs more accuracy and needs fine-tuning or distillation to recover. For LLMs, methods such as SparseGPT and Wanda prune in one shot using calibration data and activation statistics. Moderate sparsity is often nearly free, but high sparsity degrades quality sharply, and results reported only as parameter counts can overstate practical gains.",
+  "f": "Magnitude pruning: mask = 𝟙[|w| > τ];  Wanda score = |w_ij|·‖X_j‖₂",
+  "u": [
+   "Shrinking models for edge and mobile devices",
+   "Removing redundant attention heads or layers",
+   "2:4 structured sparsity for GPU speedups"
+  ],
+  "x": "A team deploying a vision model to factory cameras applies structured channel pruning followed by fine-tuning, which shrinks the model enough to meet the frame-rate requirement on the edge device. They measure real latency on the target hardware, since parameter reductions alone did not predict the speedup.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.utils.prune as prune\n\nmodel = nn.Sequential(nn.Linear(256, 512), nn.ReLU(), nn.Linear(512, 10))\n\n# Unstructured: zero the 50% smallest-magnitude weights in the first layer\nprune.l1_unstructured(model[0], name=\"weight\", amount=0.5)\n\n# Structured: remove 25% of output neurons (rows) by L2 norm in the last layer\nprune.ln_structured(model[2], name=\"weight\", amount=0.25, n=2, dim=0)\n\nfor i in (0, 2):\n    w = model[i].weight\n    print(i, f\"sparsity {(w == 0).float().mean():.2f}\")\n\n# Make pruning permanent (removes masks and reparametrization)\nprune.remove(model[0], \"weight\")\nprune.remove(model[2], \"weight\")\n# Fine-tune afterward to recover accuracy"
+ },
+ "gradaccum": {
+  "n": "Gradient Accumulation",
+  "d": "Gradient accumulation simulates a large batch by running several smaller micro-batches through forward and backward passes, summing their gradients, and applying a single optimizer step at the end. With a micro-batch of 4 and 8 accumulation steps, the update uses gradients from 32 examples while only 4 examples' activations are held in memory at once.\n\nIt is used when the desired batch size, often chosen for training stability or to match a published recipe, does not fit in GPU memory. To get the same gradient as a true large batch, each micro-batch loss is divided by the number of accumulation steps, or the losses are normalized by the total token count when sequence lengths vary. The trade-off is time: accumulation saves memory but not compute, and it reduces the number of optimizer steps per epoch. A common pitfall is that batch normalization still sees only micro-batch statistics, so accumulation is not exactly equivalent for models that use it.",
+  "f": "g = (1/K) Σₖ ∇L(B_k),  θ ← θ − η·g  (one step per K micro-batches)",
+  "u": [
+   "Training with large effective batches on small GPUs",
+   "Reproducing published batch sizes on less hardware",
+   "Fine-tuning LLMs with long sequences"
+  ],
+  "x": "A team fine-tuning a 7B model on a single GPU can fit only two long sequences per forward pass, so they accumulate 16 micro-batches to reach an effective batch of 32. They scale the learning-rate schedule by optimizer steps, not micro-batches, so warmup and decay match the intended recipe.",
+  "c": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(0)\nmodel = nn.Linear(128, 2)\nopt = torch.optim.AdamW(model.parameters(), lr=1e-3)\naccum_steps = 8\nloader = [(torch.randn(4, 128), torch.randint(0, 2, (4,))) for _ in range(32)]\n\nopt.zero_grad(set_to_none=True)\nfor i, (x, y) in enumerate(loader):\n    loss = nn.functional.cross_entropy(model(x), y)\n    (loss / accum_steps).backward()        # gradients add up across micro-batches\n    if (i + 1) % accum_steps == 0:\n        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)\n        opt.step()                         # one update per 8 micro-batches\n        opt.zero_grad(set_to_none=True)\n\n# With Hugging Face: TrainingArguments(per_device_train_batch_size=4,\n#                                      gradient_accumulation_steps=8)"
+ }
+}

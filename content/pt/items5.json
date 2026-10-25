@@ -1,0 +1,482 @@
+{
+ "qkv": {
+  "n": "Query, Key, Value (Q, K, V)",
+  "d": "Queries, keys e values são três projeções lineares aprendidas das mesmas representações de tokens que permitem à atenção decidir de quais tokens ler e o que ler. A query de cada token expressa o que ele está procurando, cada key expressa o que aquele token oferece para a correspondência e cada value carrega o conteúdo que de fato é repassado. O produto escalar de uma query com cada key dá um score de relevância; uma softmax transforma os scores em pesos, e a saída é a soma ponderada dos values.\n\nSeparar a correspondência (Q·K) do conteúdo (V) é o que torna a atenção flexível: dois tokens podem ser muito relevantes um para o outro e, ao mesmo tempo, contribuir com informações não relacionadas às features usadas na correspondência. W_Q, W_K e W_V são matrizes de pesos aprendidas comuns. Keys e values não precisam vir de uma fonte diferente das queries: na self-attention, os três vêm da mesma sequência, e apenas a cross-attention extrai keys e values de outra sequência.",
+  "u": [
+   "Self-attention dentro de cada camada Transformer",
+   "Consulta no estilo de recuperação sobre slots de memória",
+   "Inspecionar a quais tokens um modelo presta atenção"
+  ],
+  "x": "Uma equipe de busca que depura um modelo de ranking BERT com fine-tuning inspeciona os scores query-key nas últimas camadas para ver quais tokens do documento conduzem cada decisão de relevância. A análise ajuda a identificar quando o modelo faz a correspondência com textos repetitivos, como cabeçalhos de página, em vez do conteúdo que responde à consulta."
+ },
+ "mha": {
+  "n": "Multi-Head Attention",
+  "d": "A multi-head attention executa várias operações de atenção em paralelo sobre projeções de menor dimensão da entrada e concatena seus resultados. A dimensão do modelo d_model é dividida em h heads de tamanho d_model/h; cada head tem suas próprias projeções de query, key e value, calcula a scaled dot-product attention de forma independente, e as saídas concatenadas passam por uma projeção linear final W_O.\n\nComo cada head trabalha em seu próprio subespaço, heads diferentes podem se especializar: algumas acompanham dependências sintáticas, outras prestam atenção ao token anterior, outras copiam nomes raros de posições distantes. A computação total é aproximadamente a mesma de uma única head de largura total, já que cada head é mais estreita. Múltiplas heads são, portanto, uma forma de obter vários padrões de atenção por camada sem custo extra. Um mal-entendido frequente é achar que cada head aprende um papel distinto e interpretável; na prática, muitas heads são redundantes, e estudos mostraram que uma fração considerável pode ser podada após o treinamento com pouca perda de acurácia.",
+  "u": [
+   "Subcamada central de encoders e decoders Transformer",
+   "Capturar vários tipos de dependência por camada",
+   "Vision Transformers prestando atenção entre patches de imagem"
+  ],
+  "x": "Uma equipe de tradução automática treina um Transformer encoder-decoder com 16 heads por camada para um par de idiomas de alto tráfego. Após o treinamento, eles medem a contribuição de cada head e removem as redundantes para reduzir a latência de decodificação, confirmando depois em um conjunto reservado que a qualidade da tradução continua dentro da tolerância."
+ },
+ "crossattn": {
+  "n": "Cross-Attention",
+  "d": "A cross-attention é uma atenção em que as queries vêm de uma sequência e as keys e os values vêm de outra, permitindo que um fluxo leia informações de uma segunda fonte. Em um Transformer encoder-decoder, cada camada do decoder projeta seus próprios estados ocultos em queries e presta atenção sobre keys e values projetados a partir da saída do encoder, de modo que cada token gerado pode olhar para a entrada inteira.\n\nO mesmo mecanismo condiciona a geração a outras modalidades. Modelos de difusão texto-imagem usam cross-attention para que os latentes da imagem (queries) prestem atenção aos embeddings do encoder de texto (keys e values), e alguns modelos de visão e linguagem inserem camadas de cross-attention para que os tokens de texto possam prestar atenção às features da imagem. O comprimento da saída sempre corresponde ao da sequência de queries, enquanto a sequência de keys e values pode ter qualquer comprimento. Uma limitação prática é o custo: a matriz de scores tem tamanho comprimento das queries vezes comprimento da fonte, então contextos de origem muito longos, como muitos documentos recuperados, tornam cada camada de cross-attention cara em memória e computação.",
+  "u": [
+   "Decoder prestando atenção à saída do encoder na tradução",
+   "Condicionar a geração de imagens por difusão a prompts de texto",
+   "Decoders de reconhecimento de fala lendo features de áudio"
+  ],
+  "x": "Uma empresa de ferramentas de design serve um modelo de difusão latente em que as camadas da U-Net usam cross-attention para ler os embeddings de texto CLIP do prompt do usuário. Como o embedding de texto é fixo para uma requisição, suas keys e values podem ser calculados uma única vez e reutilizados em todos os passos de remoção de ruído para reduzir a latência."
+ },
+ "causalmask": {
+  "n": "Máscara Causal",
+  "d": "Uma máscara causal impede que cada posição de uma sequência preste atenção às posições que vêm depois dela, de modo que a previsão de um modelo para o token t depende apenas dos tokens 1 a t. Ela é implementada somando menos infinito aos scores de atenção acima da diagonal da matriz de scores T×T antes da softmax, o que zera exatamente esses pesos de atenção.\n\nA máscara é o que torna possível o treinamento paralelo de modelos autorregressivos. Com ela, um modelo decoder-only processa uma sequência inteira em uma única passada forward e calcula a loss de próximo token em todas as posições simultaneamente, sem que nenhuma posição veja o token que precisa prever. Na inferência, a mesma regra vale naturalmente, porque os tokens futuros ainda não existem. Um erro comum ao escrever uma atenção personalizada é combinar incorretamente a máscara causal com uma máscara de padding, ou usar um número negativo finito grande em baixa precisão, onde ele pode causar overflow ou não zerar os pesos.",
+  "u": [
+   "Treinar modelos de linguagem decoder-only no estilo GPT",
+   "Decoders autorregressivos em modelos encoder-decoder",
+   "Evitar vazamento do futuro na previsão de sequências"
+  ],
+  "x": "Uma equipe que pré-treina um modelo de autocompletar código empacota muitos arquivos em sequências de comprimento fixo e aplica uma máscara causal para que cada posição seja treinada a prever o próximo token em paralelo. Eles também adicionam fronteiras de documento à máscara para que tokens de um arquivo não possam prestar atenção a um arquivo não relacionado empacotado antes dele."
+ },
+ "posenc": {
+  "n": "Codificação Posicional",
+  "d": "A codificação posicional (positional encoding) injeta informação sobre a ordem dos tokens em um Transformer, que de outra forma trataria sua entrada como um conjunto sem ordem, porque a atenção é equivariante a permutações. O Transformer original soma um vetor senoidal fixo a cada embedding de token: cada par de dimensões é um seno e um cosseno em uma frequência diferente, indo de oscilações rápidas a muito lentas, de modo que cada posição recebe um padrão único.\n\nUma propriedade útil das senoides é que a codificação da posição p + k é uma função linear (uma rotação) da codificação da posição p, o que facilita para o modelo usar deslocamentos relativos. Muitos modelos, como BERT e GPT-2, aprendem em vez disso uma tabela de embeddings de posição absoluta. Tabelas aprendidas não conseguem representar posições além do comprimento máximo visto no treino, e as codificações senoidais também extrapolam mal na prática. Essa limitação é um dos motivos pelos quais os LLMs modernos migraram para esquemas relativos, como RoPE e ALiBi.",
+  "u": [
+   "Adicionar informação de ordem às entradas de um Transformer",
+   "Codificar os timesteps em modelos de difusão",
+   "Representar as posições dos patches em Vision Transformers"
+  ],
+  "x": "Uma equipe de geração de imagens codifica o timestep da difusão com um embedding senoidal seguido de uma pequena MLP, a mesma construção usada para as posições dos tokens. Como a função é fixa e suave, o modelo pode ser amostrado com schedules de passos diferentes dos usados no treinamento."
+ },
+ "rope": {
+  "n": "Rotary Position Embedding (RoPE)",
+  "d": "O Rotary Position Embedding codifica a posição rotacionando os vetores de query e key por um ângulo proporcional à sua posição, de modo que seu produto escalar depende apenas da distância relativa entre os tokens. Cada par de dimensões de uma query ou key é tratado como um ponto 2D e rotacionado por p·θᵢ, em que p é a posição e θᵢ é uma frequência que diminui ao longo dos pares. Os values não são rotacionados.\n\nComo rotacionar q por um ângulo a e k por um ângulo b só altera seu produto escalar por meio da diferença a − b, os scores de atenção passam a ser uma função do conteúdo e do deslocamento relativo, sem parâmetros extras nem tabelas aprendidas. O RoPE é aplicado dentro de cada camada de atenção, em vez de ser somado uma única vez na entrada; LLaMA, Mistral e Qwen o utilizam. Uma limitação conhecida é a extrapolação ruim além do comprimento de contexto treinado; métodos como position interpolation, escalonamento NTK-aware e YaRN reescalam as frequências para estender o contexto, geralmente com um breve fine-tuning.",
+  "u": [
+   "Posições relativas em LLMs decoder-only",
+   "Estender o comprimento de contexto com escalonamento de frequências",
+   "Codificação posicional sem parâmetros aprendidos extras"
+  ],
+  "x": "Uma equipe que estende um LLM aberto de 8K para 64K de contexto, para responder perguntas sobre documentos longos, reescala a frequência base do RoPE e faz um breve fine-tuning com sequências longas. Eles validam com testes no estilo de recuperação que colocam um fato-chave em profundidades variadas, para confirmar que o modelo ainda usa tokens distantes."
+ },
+ "alibi": {
+  "n": "ALiBi (Attention with Linear Biases)",
+  "d": "O ALiBi codifica a posição subtraindo diretamente dos scores de atenção uma penalidade proporcional à distância entre query e key, em vez de somar vetores de posição aos embeddings. Para a head h, o score entre as posições i e j recebe um viés de −m_h·(i − j), em que m_h é uma inclinação fixa e específica da head, tirada de uma sequência geométrica como 1/2, 1/4, 1/8 e assim por diante.\n\nO efeito é uma preferência embutida pelo que é recente: tokens distantes recebem peso menor, com mais força nas heads de inclinação acentuada e de forma suave nas heads de inclinação leve, de modo que heads diferentes cobrem alcances diferentes. O ALiBi não tem parâmetros aprendidos e foi proposto para permitir que modelos treinados com sequências curtas rodem com sequências mais longas na inferência, o que ele faz melhor do que codificações absolutas senoidais ou aprendidas. A limitação é que a penalidade linear enviesa a atenção em direção ao contexto próximo e, na prática, a extrapolação ajuda mais a perplexidade do que a recuperação de fatos específicos lá atrás na sequência.",
+  "u": [
+   "Extrapolação de comprimento além do contexto de treino",
+   "Codificação posicional com zero parâmetros",
+   "Modelos de linguagem como BLOOM e MPT"
+  ],
+  "x": "As famílias de modelos abertos BLOOM e MPT usam ALiBi em vez de embeddings posicionais. Uma equipe que serve um desses modelos pode aumentar o contexto de inferência um pouco além do comprimento de treino sem retreinar, mas ainda faz benchmarks de tarefas com entradas longas, porque a qualidade se degrada gradualmente à medida que o comprimento cresce."
+ },
+ "transformer": {
+  "n": "Bloco Transformer",
+  "d": "Um bloco Transformer é a unidade que se repete em um Transformer: uma subcamada de multi-head attention seguida de uma rede feed-forward aplicada por posição, cada uma envolvida por uma conexão residual e uma layer normalization. A atenção mistura informações entre os tokens, enquanto a rede feed-forward processa cada token de forma independente, e as conexões residuais mantêm um caminho direto para as informações e os gradientes ao longo de pilhas profundas.\n\nA maioria dos LLMs modernos usa o arranjo pre-norm, em que a normalização é aplicada à entrada de cada subcamada (x + Attn(Norm(x))), o que treina de forma mais estável do que o design post-norm original. As variantes modernas típicas substituem a LayerNorm pela RMSNorm, usam uma rede feed-forward SwiGLU e aplicam RoPE dentro da atenção. Os blocos são empilhados dezenas de vezes com formatos idênticos, o que torna a arquitetura fácil de escalar e paralelizar. Um equívoco comum é achar que a atenção concentra a maior parte dos parâmetros; nas configurações padrão, a rede feed-forward contém cerca de dois terços dos pesos de cada bloco.",
+  "u": [
+   "Blocos básicos de LLMs e encoders no estilo BERT",
+   "Vision Transformers para classificação de imagens",
+   "Modelos de sequência para áudio, proteínas e séries temporais"
+  ],
+  "x": "Uma empresa de tecnologia de fala constrói seu encoder de reconhecimento a partir de uma pilha de blocos Transformer idênticos, o que permite à equipe escalar o tamanho do modelo mudando apenas a profundidade e a largura. Como cada bloco tem a mesma estrutura, eles podem aplicar tensor parallelism e activation checkpointing de forma uniforme em toda a pilha durante o treinamento."
+ },
+ "encoderonly": {
+  "n": "Modelos Encoder-Only (BERT)",
+  "d": "Modelos encoder-only são Transformers que leem a entrada inteira com self-attention bidirecional e produzem um vetor contextual para cada token, em vez de gerar texto. O BERT é o exemplo mais conhecido. Como nenhuma máscara causal é aplicada, a representação de cada token depende das palavras antes e depois dele, o que fornece um contexto rico para tarefas de compreensão.\n\nEles são pré-treinados com objetivos que não exigem geração da esquerda para a direita, principalmente o masked language modeling, em que tokens ocultados aleatoriamente precisam ser reconstruídos. Para o uso em tarefas posteriores, uma pequena cabeça é colocada por cima: um classificador sobre o vetor [CLS] ou sobre a média dos vetores para classificação de sentenças, um classificador por token para reconhecimento de entidades nomeadas ou um preditor de spans para question answering extrativo. Modelos encoder-only são compactos e rápidos para classificação, embeddings de recuperação e reranking. Sua principal limitação é que não são geradores naturais de texto; produzir uma saída fluente e livre exige um decoder, e é por isso que os assistentes de chat são construídos sobre modelos decoder-only.",
+  "u": [
+   "Classificação de texto e análise de sentimento",
+   "Reconhecimento de entidades nomeadas e rotulagem de tokens",
+   "Embeddings para recuperação densa e reranking com cross-encoder"
+  ],
+  "x": "O Google descreveu publicamente o uso do BERT na Busca para entender melhor a intenção das consultas, especialmente aquelas em que palavras pequenas, como preposições, mudam o sentido. Muitas empresas rodam encoders BERT destilados semelhantes para classificação de intenção, porque eles cabem em orçamentos apertados de latência em CPU."
+ },
+ "decoderonly": {
+  "n": "Modelos Decoder-Only (GPT)",
+  "d": "Modelos decoder-only são Transformers que usam self-attention causal e são treinados para prever o próximo token, então geram texto um token por vez, condicionados a tudo o que veio antes. A série GPT, LLaMA, Mistral, Qwen e a maioria dos assistentes de chat atuais seguem esse design. O prompt e a saída gerada ficam em uma única sequência, sem um encoder separado.\n\nSeu atrativo é a simplicidade e a generalidade: um único objetivo, a previsão do próximo token em grandes corpora de texto, escala bem e transforma muitas tarefas em continuação de texto, incluindo tradução, sumarização, programação e question answering, por meio de prompts ou de instruction tuning. Durante a geração, um KV cache armazena as keys e os values dos tokens passados, de modo que cada novo passo custa um tempo proporcional ao comprimento do contexto, em vez de recalcular tudo. As principais limitações são a decodificação sequencial, que limita a latência por token, e o fato de que a representação de cada token vê apenas o contexto à esquerda, o que pode torná-los menos eficientes em parâmetros do que encoders bidirecionais para tarefas puras de classificação ou de embeddings.",
+  "u": [
+   "Assistentes de chat e modelos que seguem instruções",
+   "Autocompletar e geração de código",
+   "Resolver tarefas com poucos exemplos por meio de prompts"
+  ],
+  "x": "Uma plataforma de atendimento ao cliente faz fine-tuning de um modelo decoder-only aberto para redigir respostas a partir do histórico do ticket e de artigos da central de ajuda. Eles o servem com continuous batching e KV cache e acompanham o tempo até o primeiro token separadamente da velocidade por token, porque prompts longos dominam o primeiro."
+ },
+ "encdec": {
+  "n": "Modelos Encoder–Decoder (T5)",
+  "d": "Modelos encoder-decoder combinam um encoder bidirecional, que lê a entrada completa, com um decoder autorregressivo, que gera a saída prestando atenção ao encoder por meio de cross-attention. Esse é o layout original do Transformer, vindo da tradução automática, e T5, BART e Whisper também o usam.\n\nEssa divisão é adequada a tarefas com uma entrada clara e uma saída distinta, como tradução, sumarização e reconhecimento de fala. O encoder processa a fonte uma única vez com contexto completo, e o decoder só precisa modelar a sequência-alvo, que muitas vezes é mais curta. O T5 reformulou todas as tarefas de NLP como texto-para-texto, com um prefixo de tarefa na string de entrada, e foi pré-treinado com span corruption, em que o decoder reconstrói trechos mascarados da entrada. Um equívoco comum é achar que os modelos encoder-decoder estão obsoletos; eles continuam competitivos e eficientes para geração condicional em escala moderada, mas os modelos decoder-only são mais simples de escalar para chat aberto, o que explica seu domínio nos LLMs de uso geral.",
+  "u": [
+   "Tradução automática entre pares de idiomas",
+   "Sumarização abstrativa de longas matérias jornalísticas",
+   "Transcrição de fala para texto com modelos Whisper"
+  ],
+  "x": "O Whisper da OpenAI usa um encoder sobre espectrogramas de áudio e um decoder de texto que aplica cross-attention sobre ele. Uma empresa de mídia que roda o Whisper para gerar legendas se beneficia de codificar cada trecho de 30 segundos de áudio uma única vez, enquanto o decoder produz a transcrição token por token."
+ },
+ "ffn": {
+  "n": "Rede Feed-Forward (FFN)",
+  "d": "A rede feed-forward em um Transformer é uma MLP de duas camadas aplicada a cada token de forma independente, que expande a dimensão oculta, aplica uma não linearidade e projeta de volta. No design original, a dimensão interna é quatro vezes d_model com uma ReLU; os LLMs modernos normalmente usam a SwiGLU, uma variante com gating e três matrizes de pesos, em que uma projeção, passada pela SiLU, multiplica outra elemento a elemento.\n\nA atenção move informações entre os tokens, enquanto a FFN transforma a representação de cada token no lugar. Pesquisas de interpretabilidade sugerem que as camadas FFN se comportam em parte como memórias chave-valor que armazenam associações factuais e lexicais. Elas respondem por cerca de dois terços dos parâmetros de um bloco padrão, então dominam o tamanho do modelo e boa parte da computação. É também por isso que os modelos Mixture-of-Experts substituem a FFN por muitas FFNs especialistas e roteiam cada token para algumas delas. Ao usar SwiGLU, a dimensão interna geralmente é reduzida para cerca de 8/3·d_model, para manter a contagem de parâmetros comparável à de uma FFN ReLU de 4×.",
+  "u": [
+   "Transformação por token dentro de cada bloco Transformer",
+   "Camadas de especialistas em modelos Mixture-of-Experts",
+   "Armazenar associações factuais aprendidas no pré-treinamento"
+  ],
+  "x": "Uma equipe que projeta um LLM interno escolhe uma FFN SwiGLU com dimensão interna de cerca de 8/3 da dimensão oculta, seguindo o LLaMA, para manter fixo o orçamento de parâmetros. Eles arredondam a dimensão interna para cima, até um múltiplo de 256, para que as multiplicações de matrizes sejam mapeadas de forma eficiente nos tensor cores da GPU."
+ },
+ "prenorm": {
+  "n": "Pre-Norm vs. Post-Norm",
+  "d": "Pre-norm e post-norm diferem na posição da layer normalization em relação à conexão residual em um bloco Transformer. O post-norm, usado no Transformer original e no BERT, normaliza depois da soma residual: x ← Norm(x + F(x)). O pre-norm, usado no GPT-2 e em quase todos os LLMs modernos, normaliza apenas a entrada de cada subcamada: x ← x + F(Norm(x)).\n\nO posicionamento muda o fluxo dos gradientes. No pre-norm, o fluxo residual é um caminho de identidade não normalizado da entrada até a saída, então os gradientes chegam diretamente às camadas iniciais, e modelos profundos treinam de forma estável sem um warmup longo da taxa de aprendizado. O post-norm coloca uma normalização nesse caminho em cada camada, o que pode causar gradientes que desaparecem ou explodem em pilhas profundas e torna o treinamento sensível ao warmup. O trade-off é que o pre-norm muitas vezes atinge uma qualidade final um pouco pior com a mesma profundidade, porque o fluxo residual cresce e as camadas posteriores contribuem relativamente menos. Variantes como o DeepNorm e a adição de uma normalização final após o último bloco tratam esses problemas.",
+  "u": [
+   "Estabilizar o treinamento de Transformers muito profundos",
+   "Reduzir a dependência do warmup da taxa de aprendizado",
+   "Escolher o layout dos blocos em novas arquiteturas de LLM"
+  ],
+  "x": "Uma equipe de pesquisa que escala um modelo de 24 para 80 camadas observa picos na loss com post-norm e muda para pre-norm com RMSNorm, mais uma normalização final antes da cabeça de saída. O treinamento fica estável com uma taxa de aprendizado de pico mais alta, o que eles verificam monitorando as normas dos gradientes por camada."
+ },
+ "tokenization": {
+  "n": "Tokenização",
+  "d": "A tokenização converte texto bruto em uma sequência de IDs inteiros de um vocabulário fixo, que é a única forma de entrada que um modelo de linguagem realmente vê. Os LLMs modernos usam tokenizers de subpalavras, como BPE, WordPiece ou Unigram, que mantêm palavras frequentes como tokens únicos e dividem palavras raras em pedaços menores, de modo que qualquer string pode ser representada sem tokens desconhecidos.\n\nO tokenizer é treinado antes do modelo e congelado depois, e ele molda muitas propriedades do modelo: o comprimento das sequências e, portanto, o custo, a forma como números e código são divididos e o quão justamente diferentes idiomas são atendidos. Um texto em um idioma sub-representado nos dados de treino do tokenizer pode precisar de várias vezes mais tokens para o mesmo conteúdo, o que aumenta o custo e encurta o contexto efetivo. Uma armadilha comum é misturar tokenizers e modelos, ou ignorar tokens especiais e chat templates; um modelo com fine-tuning pode se comportar mal se os prompts não forem formatados e tokenizados exatamente como no treinamento.",
+  "u": [
+   "Preparar entradas de texto para qualquer modelo de linguagem",
+   "Estimar o custo de API e o uso do contexto",
+   "Construir vocabulários para novos idiomas ou domínios"
+  ],
+  "x": "Uma empresa que implanta um LLM para chats de clientes em coreano e inglês mede os tokens por caractere em cada idioma antes de escolher um modelo base. Um tokenizer com cobertura ruim de coreano aumentaria substancialmente o custo de serving e reduziria o contexto efetivo, então a eficiência de tokens se torna um critério de seleção ao lado da acurácia."
+ },
+ "bpe": {
+  "n": "Byte-Pair Encoding (BPE)",
+  "d": "O Byte-Pair Encoding constrói um vocabulário de subpalavras começando por caracteres ou bytes individuais e mesclando repetidamente o par adjacente mais frequente em um novo token, até atingir um tamanho de vocabulário-alvo. A lista ordenada de mesclagens é o tokenizer: para codificar um texto novo, as mesmas mesclagens são aplicadas na ordem em que foram aprendidas.\n\nPalavras frequentes acabam como tokens únicos, enquanto palavras raras e erros de digitação se decompõem em pedaços comuns, o que equilibra o tamanho do vocabulário e o comprimento das sequências. O BPE em nível de byte, usado pelo GPT-2 e por muitos modelos posteriores, começa pelos 256 valores de byte possíveis, então qualquer string Unicode pode ser codificada sem token desconhecido. O tamanho do vocabulário é uma escolha de design importante: vocabulários maiores encurtam as sequências, mas aumentam as camadas de embedding e de saída. Uma fraqueza conhecida é que as mesclagens são guiadas apenas pela frequência, então a divisão de números pode ser inconsistente, por exemplo um número virando um único token enquanto um valor vizinho se divide em dois, o que pode prejudicar a aritmética.",
+  "u": [
+   "Tokenizers dos modelos das famílias GPT e LLaMA",
+   "Tratamento de vocabulário aberto para palavras raras",
+   "Treinar tokenizers personalizados para código ou domínios"
+  ],
+  "x": "Uma equipe que constrói um modelo de código treina um tokenizer BPE em nível de byte sobre seu corpus de código-fonte, para que sequências comuns de indentação e palavras-chave virem tokens únicos. Isso encurta os arquivos típicos em comparação com um tokenizer de uso geral, o que reduz o custo de treinamento e permite que mais código caiba na janela de contexto."
+ },
+ "mlm": {
+  "n": "Masked Language Modeling (MLM)",
+  "d": "O masked language modeling é um objetivo de pré-treinamento em que alguns tokens da entrada são ocultados e o modelo aprende a prevê-los a partir do contexto ao redor, dos dois lados. No BERT, 15% das posições de tokens são selecionadas; dessas, 80% são substituídas por um token [MASK], 10% por um token aleatório e 10% ficam inalteradas, e a loss é calculada apenas nas posições selecionadas.\n\nComo o modelo vê o contexto à esquerda e à direita, ele aprende representações bidirecionais fortes que se transferem bem para classificação, rotulagem e recuperação. A divisão 80/10/10 existe porque o [MASK] nunca aparece no fine-tuning; misturar tokens aleatórios e inalterados força o modelo a construir representações úteis para todos os tokens, não só para os mascarados. Uma limitação importante é a eficiência: apenas cerca de 15% dos tokens produzem sinal de treino em cada passada, e é por isso que a detecção de tokens substituídos do ELECTRA, que aprende com todas as posições, pode ser mais eficiente em computação. O MLM também não produz diretamente um gerador de texto da esquerda para a direita.",
+  "u": [
+   "Pré-treinamento de encoders BERT e RoBERTa",
+   "Pré-treinamento adaptado ao domínio com texto do domínio",
+   "Aprender representações de sequências de proteínas e genômicas"
+  ],
+  "x": "Uma empresa de tecnologia jurídica continua o pré-treinamento MLM de um modelo RoBERTa com contratos antes de fazer o fine-tuning de um classificador de cláusulas. O pré-treinamento extra no domínio ajuda o modelo a lidar com o vocabulário jurídico e com textos padronizados que raramente aparecem em textos gerais da web."
+ },
+ "nexttoken": {
+  "n": "Previsão do Próximo Token",
+  "d": "A previsão do próximo token treina um modelo de linguagem para produzir uma distribuição de probabilidade sobre o vocabulário para o token que segue um prefixo dado, usando entropia cruzada em relação ao próximo token real. Somado sobre todas as posições, isso maximiza a verossimilhança do texto de treino pela regra da cadeia da probabilidade.\n\nCom uma máscara causal, uma única passada forward gera uma previsão em cada posição, então cada sequência de comprimento T fornece T sinais de treino; as entradas são os tokens e os alvos são os mesmos tokens deslocados uma posição para a esquerda. Esse objetivo simples e autossupervisionado não precisa de rótulos, escala para trilhões de tokens e é a base do pré-treinamento dos modelos no estilo GPT. Fazê-lo bem exige modelar a gramática, os fatos e os padrões de raciocínio presentes nos dados. Um equívoco comum é achar que o objetivo só ensina estatísticas superficiais; ao mesmo tempo, ele otimiza para continuações plausíveis, e não para a veracidade, então os modelos também precisam de pós-treinamento para seguir instruções e evitar erros cometidos com confiança.",
+  "u": [
+   "Pré-treinamento de modelos de linguagem decoder-only",
+   "Pré-treinamento continuado em corpora de domínio",
+   "Pontuar a verossimilhança de sequências e a perplexidade"
+  ],
+  "x": "Um provedor de dados financeiros continua o pré-treinamento de próximo token de um modelo aberto com documentos regulatórios e relatórios de analistas antes do instruction tuning. Eles acompanham a perplexidade de validação em documentos reservados e em texto geral para garantir que os ganhos no domínio não venham acompanhados de grandes perdas na capacidade geral."
+ },
+ "kvcache": {
+  "n": "KV Cache",
+  "d": "Um KV cache armazena os vetores de key e value de todos os tokens já processados durante a geração autorregressiva, de modo que cada novo token só precisa calcular sua própria query, key e value, em vez de reprocessar a sequência inteira. A nova query presta atenção sobre as keys e os values em cache, e a nova key e o novo value são acrescentados ao cache.\n\nSem cache, cada passo recalcularia keys e values para o prefixo inteiro, fazendo o custo total da geração crescer aproximadamente de forma quadrática nas projeções e cúbica na atenção; com ele, cada passo de decodificação faz um trabalho proporcional ao comprimento atual. O custo passa para a memória: o tamanho do cache é 2 × camadas × heads de KV × dimensão da head × comprimento da sequência × tamanho do batch × bytes por valor, o que, com contextos longos e batches grandes, pode ultrapassar os pesos do modelo. Essa memória, e não a computação, muitas vezes limita o throughput do serving, o que motiva a grouped-query attention, a quantização do cache e o gerenciamento de memória paginada, como no PagedAttention do vLLM.",
+  "u": [
+   "Decodificação autorregressiva rápida no serving de LLMs",
+   "Cache de prefixos para system prompts compartilhados",
+   "Planejamento de capacidade para inferência com contexto longo"
+  ],
+  "x": "Uma equipe de serving de LLMs usa o vLLM, cujo PagedAttention armazena o KV cache em blocos de tamanho fixo para reduzir a fragmentação e permitir o compartilhamento de prefixos comuns de prompt. Eles dimensionam a memória da GPU calculando os bytes de cache por token do modelo e definem o batch e o contexto máximos para que o cache caiba."
+ },
+ "flashattn": {
+  "n": "FlashAttention",
+  "d": "O FlashAttention é um algoritmo de atenção exata que calcula o mesmo resultado da atenção padrão, mas nunca grava a matriz de scores T×T completa na memória de alta largura de banda da GPU. Ele divide queries, keys e values em blocos (tiles) que cabem na SRAM rápida do chip, calcula resultados parciais da softmax bloco a bloco e os combina usando uma softmax online, que acompanha um máximo e um normalizador acumulados para cada linha.\n\nA atenção padrão é limitada pelo tráfego de memória, e não pela aritmética: ler e gravar as grandes matrizes de scores e de probabilidades domina o tempo de execução. Ao fundir a multiplicação de matrizes, o mascaramento, a softmax e a multiplicação por V em um único kernel, o FlashAttention reduz o uso de memória de quadrático para linear no comprimento da sequência e gera grandes ganhos de velocidade real, especialmente em contextos longos. Na passada backward, ele recalcula os blocos de atenção em vez de armazená-los. Um equívoco comum é achar que ele é uma aproximação; ele é matematicamente exato e reduz a memória, mas não muda o número quadrático de operações.",
+  "u": [
+   "Acelerar o treinamento de LLMs com sequências longas",
+   "Reduzir a memória de atenção no prefill da inferência",
+   "Permitir contextos mais longos com memória de GPU fixa"
+  ],
+  "x": "Uma equipe que pré-treina um modelo de 7B troca sua implementação de atenção pelo FlashAttention por meio do scaled_dot_product_attention do PyTorch. A menor memória de ativações permite dobrar o comprimento das sequências sem mudar o tamanho do batch, e eles confirmam numericamente que as saídas coincidem com a implementação de referência dentro da tolerância do bf16."
+ },
+ "mqa": {
+  "n": "Multi-Query Attention (MQA)",
+  "d": "A multi-query attention mantém muitas heads de query, mas compartilha uma única head de key e uma única head de value entre todas elas. Cada head de query ainda calcula seu próprio padrão de atenção, mas todas leem das mesmas keys e values.\n\nA motivação é a velocidade de inferência. Durante a decodificação autorregressiva, cada passo precisa carregar o KV cache inteiro da memória, e esse tráfego de memória, e não a aritmética, geralmente limita o throughput. Com h heads de query, a MQA reduz o KV cache e seu custo de largura de banda por um fator de h em comparação com a multi-head attention padrão, o que permite batches maiores e contextos mais longos no mesmo hardware. Ela foi usada em modelos como PaLM e Falcon. O trade-off é a qualidade e a estabilidade do treinamento: compartilhar uma única head de key-value reduz a capacidade do modelo, e converter um modelo multi-head existente para MQA normalmente exige treinamento adicional. A grouped-query attention foi introduzida como meio-termo, recuperando a maior parte da qualidade e mantendo a maior parte da economia.",
+  "u": [
+   "Reduzir a memória do KV cache no serving de LLMs",
+   "Maior throughput de decodificação com batches grandes",
+   "Inferência com contexto longo em memória de GPU limitada"
+  ],
+  "x": "Uma equipe que serve um modelo de chat em GPUs com memória limitada escolhe uma arquitetura MQA para que o KV cache de cada conversa seja uma fração do tamanho multi-head. O cache menor permite que cada GPU mantenha muito mais sessões simultâneas, ao custo de uma pequena perda de qualidade que eles acompanham em benchmarks internos."
+ },
+ "gqa": {
+  "n": "Grouped-Query Attention (GQA)",
+  "d": "A grouped-query attention divide as heads de query em grupos e dá a cada grupo sua própria head compartilhada de key e value, ficando entre a multi-head attention (uma head de KV por head de query) e a multi-query attention (uma head de KV para todas). Com 32 heads de query e 8 heads de KV, por exemplo, cada 4 heads de query compartilham um par key-value.\n\nO KV cache diminui na proporção entre heads de query e heads de KV, o que reduz a largura de banda de memória necessária por passo de decodificação e permite batches maiores ou contextos mais longos. Experimentos no artigo original mostraram que a GQA atinge qualidade próxima à da multi-head attention completa com velocidade próxima à da MQA, e checkpoints multi-head existentes podem ser convertidos calculando a média das heads de key e value dentro de cada grupo e depois continuando brevemente o treinamento. A GQA hoje é padrão no LLaMA 2 70B e nos modelos LLaMA posteriores, no Mistral e em muitos outros LLMs. Ela reduz o tamanho do cache, mas não a computação de atenção no prefill de prompts longos.",
+  "u": [
+   "Layout de atenção padrão nos LLMs abertos modernos",
+   "Reduzir o KV cache com perda mínima de qualidade",
+   "Uptraining de checkpoints multi-head para inferência mais rápida"
+  ],
+  "x": "O LLaMA 2 70B e os modelos LLaMA 3 da Meta usam grouped-query attention com 8 heads de key-value. Uma empresa que hospeda um desses modelos por conta própria se beneficia diretamente, porque o cache menor por token permite que cada GPU atenda mais requisições simultâneas com contextos longos."
+ },
+ "swa": {
+  "n": "Sliding Window Attention",
+  "d": "A sliding window attention restringe cada token a prestar atenção apenas aos w tokens anteriores, em vez da sequência inteira, transformando a atenção em uma faixa local. Assim, a computação e a memória do KV cache crescem linearmente com o comprimento da sequência para uma janela fixa, em vez de quadraticamente na computação e linearmente com o contexto completo no cache.\n\nAs informações ainda podem viajar além da janela por meio da profundidade. Depois de uma camada, um token enxerga w posições para trás; depois de L camadas empilhadas, seu campo receptivo chega a cerca de L × w posições, de forma semelhante a como convoluções empilhadas aumentam seu campo receptivo. O Mistral 7B usa uma janela de 4.096 tokens com um cache em buffer circular que sobrescreve as entradas mais antigas, e modelos como o Gemma 2 alternam camadas locais de sliding window com camadas de atenção global. A limitação é que a propagação indireta, em vários saltos, perde informação: a recuperação precisa de um fato muito fora da janela é bem mais fraca do que com atenção completa, e é por isso que muitos designs mantêm algumas camadas globais.",
+  "u": [
+   "Limitar o tamanho do KV cache para entradas longas",
+   "Codificação eficiente de documentos longos com contexto local",
+   "Atenção híbrida local/global em LLMs modernos"
+  ],
+  "x": "Uma equipe que implanta um modelo para transcrição de reuniões em streaming usa camadas de sliding window para que o KV cache mantenha um tamanho fixo, por mais longa que seja a reunião. Eles intercalam algumas camadas de atenção global para que o modelo ainda possa se referir a itens da pauta mencionados no início."
+ },
+ "sparseattn": {
+  "n": "Atenção Esparsa",
+  "d": "A atenção esparsa (sparse attention) calcula scores de atenção apenas para um subconjunto selecionado de pares query-key, em vez de todos os T² pares, reduzindo o custo para sequências longas. O subconjunto é definido por um padrão: janelas locais, posições espaçadas (strided), alguns tokens globais que prestam atenção a tudo e recebem atenção de tudo, ligações aleatórias ou seleção baseada no conteúdo, como hashing ou roteamento top-k aprendido.\n\nPadrões fixos de modelos como Sparse Transformer, Longformer e BigBird levam o custo para perto do linear no comprimento da sequência, mantendo caminhos entre quaisquer dois tokens por meio de poucos saltos ou de tokens globais. Eles funcionam bem para documentos longos, sequências genômicas e entradas de alta resolução. A dificuldade é a eficiência prática: a esparsidade irregular se adapta mal ao hardware de GPU, então a economia teórica só se concretiza com kernels block-sparse. Uma segunda limitação é que um padrão fixo pode deixar passar uma dependência de longo alcance importante que a atenção completa capturaria, e por isso muitos LLMs recentes de contexto longo preferem atenção densa com FlashAttention mais algumas camadas esparsas seletivas.",
+  "u": [
+   "Classificação e question answering em documentos longos",
+   "Sequências genômicas e outras sequências muito longas",
+   "Transformers para imagens ou vídeos de alta resolução"
+  ],
+  "x": "Uma equipe de biotecnologia modela sequências de DNA com dezenas de milhares de bases usando um encoder no estilo BigBird que combina janelas locais, tokens globais e ligações aleatórias. A atenção completa nesse comprimento não caberia na memória da GPU, e o padrão block-sparse mantém um throughput de treinamento aceitável."
+ },
+ "linattn": {
+  "n": "Atenção Linear",
+  "d": "A atenção linear substitui a similaridade da softmax por um mapa de features de kernel φ, de modo que a atenção possa ser calculada em tempo linear no comprimento da sequência. Escrevendo sim(q, k) = φ(q)·φ(k), a saída para a query i passa a ser φ(qᵢ)ᵀ(Σⱼ φ(kⱼ)vⱼᵀ) dividido por φ(qᵢ)ᵀΣⱼ φ(kⱼ); pela associatividade, as somas sobre as keys podem ser calculadas uma única vez e reutilizadas para todas as queries.\n\nNo caso causal, essas somas viram um estado acumulado que é atualizado a cada novo token, então o modelo se comporta como uma rede recorrente com uma memória de tamanho fixo d×d, o que dá memória constante por token gerado e nenhum KV cache crescente. Essa ideia está na base do Performer, do RetNet e da conexão entre a atenção e os modelos de espaço de estados, como o Mamba. A principal limitação é a qualidade: um estado de tamanho fixo não consegue armazenar quantidades arbitrárias de contexto, então a atenção linear pura normalmente fica atrás da atenção softmax em tarefas de recuperação precisa. Variantes modernas adicionam decaimento ou gating, e muitos modelos híbridos mantêm algumas camadas de atenção completa.",
+  "u": [
+   "Geração autorregressiva com memória constante por token",
+   "Modelagem de sequências muito longas com custo linear",
+   "Camadas híbridas recorrentes-atenção em modelos de linguagem"
+  ],
+  "x": "Uma equipe de assistente on-device experimenta um modelo híbrido cujas camadas são, em sua maioria, de atenção linear com gating, mais algumas camadas de atenção completa. O estado recorrente mantém a memória estável durante conversas longas em um celular, enquanto as camadas de atenção completa preservam a recuperação precisa de detalhes recentes."
+ },
+ "scaling": {
+  "n": "Leis de Escala",
+  "d": "Leis de escala (scaling laws) são relações empíricas que mostram que a loss de teste de um modelo de linguagem diminui como uma lei de potência suave no número de parâmetros, na quantidade de dados de treino e na computação de treinamento, quando os outros fatores não são o gargalo. Kaplan e colegas da OpenAI observaram essas tendências ao longo de várias ordens de grandeza, e trabalhos posteriores as refinaram.\n\nSeu valor prático é a previsão e o planejamento. Treinando uma série de modelos pequenos e ajustando a curva, uma equipe consegue estimar a loss de uma execução muito maior antes de gastar a computação, escolher o tamanho do modelo e o número de tokens para um orçamento fixo e comparar arquiteturas ou misturas de dados pelo deslocamento de suas curvas. As leis descrevem a loss de pré-treinamento, não todas as habilidades posteriores: alguns scores de benchmark mudam abruptamente ou estagnam mesmo quando a loss melhora de forma suave. Outra armadilha é extrapolar longe demais ou através de mudanças na qualidade dos dados, no tokenizer ou na arquitetura; os expoentes ajustados são específicos da configuração em que foram medidos.",
+  "u": [
+   "Prever a loss de grandes treinamentos",
+   "Escolher o tamanho do modelo para um orçamento de computação",
+   "Comparar arquiteturas e misturas de dados de forma justa"
+  ],
+  "x": "Antes de se comprometer com um grande pré-treinamento, uma equipe de LLM treina uma escada de modelos, de dezenas de milhões a alguns bilhões de parâmetros, com os mesmos dados. Eles ajustam uma lei de potência às losses finais e a usam para escolher o tamanho e o número de tokens da execução principal, depois conferem a previsão com os primeiros checkpoints."
+ },
+ "chinchilla": {
+  "n": "Treinamento Chinchilla-Ótimo",
+  "d": "O treinamento Chinchilla-ótimo é a regra segundo a qual, para um orçamento fixo de computação de treinamento, os parâmetros do modelo e os tokens de treino devem ser escalados em proporção aproximadamente igual, o que resulta em cerca de 20 tokens por parâmetro. O artigo Chinchilla, da DeepMind, mostrou que muitos grandes modelos anteriores estavam subtreinados: um modelo de 70B parâmetros treinado com 1,4 trilhão de tokens superou o modelo Gopher de 280B treinado com a mesma computação.\n\nA análise usa a computação de treinamento C ≈ 6ND, em que N é o número de parâmetros e D o de tokens, e conclui que os valores de N e D que minimizam a loss crescem cada um aproximadamente como a raiz quadrada de C. Um equívoco frequente é achar que 20 tokens por parâmetro é a melhor meta para qualquer projeto. Essa proporção minimiza a computação de treinamento para uma dada loss, mas ignora o custo de inferência. Modelos que vão atender tráfego pesado, como a série LLaMA, são deliberadamente treinados muito além dessa proporção, porque um modelo menor treinado com mais dados é mais barato de rodar durante toda a sua vida útil.",
+  "u": [
+   "Distribuir a computação entre tamanho do modelo e dados",
+   "Planejar orçamentos de tokens para pré-treinamentos",
+   "Avaliar se um modelo está subtreinado"
+  ],
+  "x": "Uma startup com orçamento fixo de GPUs usa a proporção Chinchilla como ponto de partida e depois treina deliberadamente um modelo menor com várias vezes mais tokens. Como o modelo vai atender milhões de requisições, eles aceitam um custo de treinamento maior por unidade de qualidade em troca de um custo de inferência menor."
+ },
+ "icl": {
+  "n": "Aprendizado em Contexto (ICL)",
+  "d": "O aprendizado em contexto (in-context learning) é a capacidade de um grande modelo de linguagem de realizar uma nova tarefa a partir de instruções ou de alguns exemplos colocados no prompt, sem nenhuma atualização em seus pesos. Dadas várias demonstrações de entrada e saída seguidas de uma nova entrada, o modelo continua o padrão, e o mesmo modelo congelado pode trocar de tarefa apenas mudando o prompt.\n\nEssa capacidade surgiu com a escala no GPT-3. Pesquisas sugerem que o modelo infere o formato da tarefa e o espaço de rótulos a partir das demonstrações, e mecanismos como as induction heads, que copiam padrões vistos antes no contexto, contribuem para isso. O desempenho depende muito da escolha, da ordem e do formato dos exemplos, e selecionar demonstrações semelhantes à consulta por meio de recuperação costuma ajudar. Uma descoberta notável é que os modelos às vezes dependem mais do formato e da distribuição dos rótulos do que de os rótulos dos exemplos estarem corretos. O aprendizado em contexto é limitado pelo comprimento do contexto e custa tokens em cada chamada, ao contrário do fine-tuning.",
+  "u": [
+   "Classificação few-shot sem fine-tuning",
+   "Prototipagem rápida de novas funcionalidades com LLMs",
+   "Seguir formatos por meio de exemplos demonstrativos"
+  ],
+  "x": "Uma equipe de marketplace constrói um protótipo de categorização de produtos colocando no prompt de um LLM hospedado dez exemplos rotulados, recuperados por similaridade de embeddings com cada novo anúncio. Isso evita treinar um modelo durante a fase de exploração, e eles só passam para o fine-tuning quando o volume torna os prompts longos caros demais."
+ },
+ "pretrain": {
+  "n": "Pré-treinamento",
+  "d": "O pré-treinamento é a primeira e mais cara etapa da construção de um modelo de fundação, na qual o modelo aprende representações gerais a partir de um corpus enorme e sem rótulos usando um objetivo autossupervisionado. Para LLMs, é a previsão do próximo token sobre trilhões de tokens de texto da web, livros, código e outras fontes; para encoders como o BERT, é o masked language modeling.\n\nA qualidade do resultado depende tanto dos dados quanto da arquitetura. Os pipelines removem documentos duplicados, filtram textos de baixa qualidade e tóxicos com heurísticas e classificadores, removem a contaminação por benchmarks e ajustam a mistura de domínios e idiomas. O treinamento dura semanas em milhares de aceleradores, com paralelismo de dados, de tensores e de pipeline, schedules cuidadosos de taxa de aprendizado e monitoramento de picos na loss. O modelo base resultante consegue completar textos e tem amplo conhecimento, mas não segue instruções de forma confiável; é o pós-treinamento, como o fine-tuning supervisionado e a otimização de preferências, que o transforma em um assistente utilizável. O conhecimento aprendido no pré-treinamento também tem uma data de corte fixa.",
+  "u": [
+   "Construir LLMs base a partir de texto em escala web",
+   "Pré-treinamento continuado com dados de um domínio ou idioma",
+   "Encoders autossupervisionados para visão e fala"
+  ],
+  "x": "Um laboratório nacional de pesquisa pré-treina um LLM bilíngue com grande peso para o seu próprio idioma, após deduplicação e filtragem de qualidade do texto coletado. Eles acompanham a loss de validação por fonte de dados durante todo o treinamento e ajustam a mistura quando um domínio para de melhorar."
+ },
+ "sft": {
+  "n": "Fine-Tuning Supervisionado (SFT)",
+  "d": "O fine-tuning supervisionado treina um modelo de linguagem pré-treinado com pares prompt-resposta selecionados para que ele aprenda a seguir instruções e a produzir respostas no estilo desejado. O objetivo continua sendo a entropia cruzada do próximo token, mas a loss geralmente é calculada apenas nos tokens da resposta, com os tokens do prompt mascarados, para que o modelo aprenda a responder em vez de imitar as mensagens do usuário.\n\nO SFT normalmente é o primeiro passo de pós-treinamento depois do pré-treinamento. Alguns milhares a algumas centenas de milhares de exemplos de alta qualidade, formatados com o chat template do modelo, muitas vezes bastam para mudar substancialmente o comportamento, porque o modelo já tem o conhecimento subjacente. A qualidade e a diversidade dos dados importam mais do que o volume. O SFT também é usado para especializar modelos em domínios ou em formatos de saída como JSON. Suas limitações são que ele apenas imita demonstrações, então não consegue ensinar facilmente o modelo a preferir respostas melhores a respostas apenas plausíveis, e que um fine-tuning agressivo em dados restritos pode causar o esquecimento de habilidades gerais.",
+  "u": [
+   "Transformar modelos base em modelos que seguem instruções",
+   "Ensinar formatos de saída estruturados, como JSON",
+   "Especialização de domínio para tarefas de suporte ou jurídicas"
+  ],
+  "x": "Uma seguradora faz fine-tuning de um LLM aberto com vários milhares de pares pergunta-resposta revisados sobre suas apólices, formatados com o chat template do modelo. Eles mascaram os tokens do prompt na loss e avaliam em um conjunto reservado e em benchmarks gerais para detectar qualquer perda de capacidade mais ampla."
+ },
+ "rlhf": {
+  "n": "RLHF (Aprendizado por Reforço com Feedback Humano)",
+  "d": "O aprendizado por reforço com feedback humano (reinforcement learning from human feedback) alinha um modelo de linguagem com preferências humanas treinando-o para maximizar uma recompensa aprendida que prevê quais respostas as pessoas preferem. O pipeline clássico, usado no InstructGPT e no ChatGPT inicial, tem três etapas: fine-tuning supervisionado com demonstrações, treinamento de um reward model com comparações humanas entre pares de respostas e otimização da política contra essa recompensa com PPO.\n\nComparações são mais fáceis de fornecer de forma confiável do que respostas ideais, e o reward model generaliza esses julgamentos para novos prompts. Durante o RL, uma penalidade KL mantém a política próxima do modelo de referência do SFT, o que preserva a fluência e limita a exploração de erros do reward model. O RLHF melhora a utilidade, a inocuidade e a capacidade de seguir instruções além do que o SFT consegue. Suas fraquezas são o custo e a fragilidade: ele precisa de vários modelos na memória e de muitos hiperparâmetros, e é propenso ao reward hacking, em que a política aprende manias, como respostas longas demais ou bajulação, que o reward model pontua bem, mas que as pessoas na verdade não preferem.",
+  "u": [
+   "Alinhar assistentes de chat com preferências humanas",
+   "Reduzir respostas nocivas ou pouco úteis",
+   "Melhorar a qualidade de sumarização além da imitação"
+  ],
+  "x": "A OpenAI descreveu o uso de RLHF para treinar o InstructGPT, em que rotuladores ordenavam as saídas do modelo e um reward model treinado com essas ordenações guiava o PPO. Equipes que aplicam a mesma receita monitoram o comprimento das respostas junto com os scores do reward model, porque uma recompensa crescente com respostas cada vez mais longas é um sinal comum de reward hacking."
+ },
+ "rewardmodel": {
+  "n": "Reward Model (Modelo de Recompensa)",
+  "d": "Um reward model é uma rede que recebe um prompt e uma resposta e produz um score escalar que estima o quanto humanos, ou outro avaliador, prefeririam aquela resposta. Normalmente é um modelo de linguagem pré-treinado com uma única cabeça linear de saída, treinado com comparações entre pares em que uma resposta foi escolhida em vez de outra.\n\nA loss de treino padrão é o objetivo de Bradley-Terry: maximizar o log-sigmoide da diferença de score entre a resposta escolhida e a rejeitada. Só as diferenças importam, então a escala absoluta das recompensas é arbitrária. Os reward models conduzem o RLHF, ordenam respostas candidatas na amostragem best-of-n e filtram dados sintéticos. Sua principal fraqueza é serem substitutos imperfeitos treinados com dados limitados. Quando uma política é otimizada com força contra um reward model, ela encontra entradas em que o modelo erra, como respostas prolixas ou bajuladoras, o que se chama reward hacking ou sobreotimização. Ensembles, restrições de KL e novos dados de comparação reduzem esse risco.",
+  "u": [
+   "Pontuar respostas para a otimização da política no RLHF",
+   "Reranking best-of-n de respostas amostradas",
+   "Filtrar dados de treino sintéticos por qualidade"
+  ],
+  "x": "Uma equipe que constrói um assistente de programação treina um reward model com as preferências de desenvolvedores entre pares de edições de código sugeridas. Além de usá-lo no RL, eles o usam na inferência para reordenar vários candidatos amostrados e auditam os casos em que ele prefere código mais longo, para verificar se há viés de comprimento."
+ },
+ "ppo": {
+  "n": "PPO (Proximal Policy Optimization)",
+  "d": "O Proximal Policy Optimization é um algoritmo de aprendizado por reforço do tipo policy gradient que melhora uma política impedindo que cada atualização a afaste demais da política que coletou os dados. Ele faz isso com um objetivo com clipping: a razão de probabilidades entre a política nova e a antiga para cada ação é multiplicada pela vantagem, mas a razão é limitada a uma faixa como 0,8 a 1,2, então não há incentivo para empurrá-la além disso.\n\nO PPO é popular porque é estável, reutiliza cada batch de experiência por várias épocas e é mais simples do que os métodos de trust region. Uma função de valor aprendida com generalized advantage estimation fornece as vantagens. No treinamento de LLMs, cada token gerado é uma ação, a recompensa chega no fim da resposta e é adicionada uma penalidade KL por token em relação a um modelo de referência. A principal desvantagem para LLMs é o custo: os modelos de política, de valor, de recompensa e de referência precisam caber todos na memória, e os resultados dependem muito dos hiperparâmetros.",
+  "u": [
+   "Otimização da política no RLHF para modelos de linguagem",
+   "Robótica e tarefas de controle contínuo",
+   "Agentes que jogam games em ambientes simulados"
+  ],
+  "x": "A OpenAI usou o PPO para treinar os agentes de jogo do OpenAI Five e, depois, na etapa de RL do InstructGPT. Equipes que rodam PPO em LLMs normalmente observam a fração de clipping e o KL em relação ao modelo de referência a cada passo, e param ou reduzem a taxa de aprendizado quando algum deles cresce rápido demais."
+ },
+ "dpo": {
+  "n": "DPO (Direct Preference Optimization)",
+  "d": "O Direct Preference Optimization treina um modelo de linguagem com pares de preferência usando uma loss simples, no estilo de classificação, sem treinar um reward model separado nem rodar aprendizado por reforço. Ele se baseia no fato de que a política ótima para o objetivo de RLHF regularizado por KL tem forma fechada, de modo que a recompensa pode ser escrita por meio da razão de log-probabilidades entre a política e um modelo de referência congelado.\n\nSubstituir essa recompensa implícita no modelo de preferência de Bradley-Terry gera uma loss que aumenta a verossimilhança relativa da resposta escolhida sobre a rejeitada na política, em comparação com o modelo de referência. A temperatura β controla o quanto a política pode se afastar da referência. O DPO é estável, precisa de dois modelos na memória e é uma etapa de alinhamento padrão para modelos abertos. Suas limitações são que ele aprende com um dataset offline fixo, então não consegue explorar nem corrigir erros fora desses dados, e que pode reduzir a verossimilhança absoluta tanto das respostas escolhidas quanto das rejeitadas, às vezes degradando as saídas.",
+  "u": [
+   "Alinhamento por preferências de modelos de chat abertos",
+   "Ajustar estilo ou tom a partir de feedback em pares",
+   "Reduzir comportamentos indesejados sem infraestrutura de RL"
+  ],
+  "x": "Uma equipe que alinha um modelo aberto para uso interno coleta preferências em pares de especialistas do domínio e roda DPO com o TRL sobre seu checkpoint de SFT. Eles escolhem o DPO em vez do PPO porque ele cabe em menos GPUs e tem menos hiperparâmetros, e comparam as taxas de vitória com o modelo SFT em prompts reservados."
+ },
+ "grpo": {
+  "n": "GRPO (Group Relative Policy Optimization)",
+  "d": "O Group Relative Policy Optimization é uma variante do PPO para modelos de linguagem que remove a função de valor aprendida e, em vez disso, calcula a vantagem de cada resposta em relação a um grupo de respostas amostradas para o mesmo prompt. Para cada prompt, a política gera G completions, cada uma recebe um score, e a vantagem de uma completion é sua recompensa menos a média do grupo, dividida pelo desvio-padrão do grupo.\n\nUsar o grupo como baseline economiza a memória e a computação de um critic separado, que muitas vezes é tão grande quanto a política, e é adequado a recompensas dadas no fim de uma resposta, como a verificação de respostas de matemática. A atualização da política mantém a razão com clipping do PPO e adiciona uma penalidade KL em relação a um modelo de referência. O GRPO foi introduzido no DeepSeekMath e usado para treinar o raciocínio do DeepSeek-R1. Uma limitação prática é que prompts em que todas as respostas amostradas recebem a mesma recompensa geram vantagem zero e nenhum sinal de aprendizado, então a dificuldade dos prompts precisa ser adequada ao modelo.",
+  "u": [
+   "Treinamento de raciocínio com recompensas matemáticas verificáveis",
+   "Geração de código otimizada contra testes unitários",
+   "Fine-tuning por RL sem critic em poucas GPUs"
+  ],
+  "x": "A DeepSeek usou o GRPO para treinar seus modelos de raciocínio R1 com recompensas baseadas em regras para a correção da resposta e o formato. Equipes que reproduzem isso filtram seus conjuntos de prompts para que o modelo resolva algumas, mas não todas, as amostras de cada prompt, já que grupos com recompensas uniformes não contribuem em nada para o gradiente."
+ },
+ "rlvr": {
+  "n": "RL com Recompensas Verificáveis (RLVR)",
+  "d": "O aprendizado por reforço com recompensas verificáveis (reinforcement learning with verifiable rewards) treina um modelo de linguagem usando recompensas calculadas por um programa que verifica a saída, em vez de um reward model aprendido. Verificadores típicos comparam a resposta final de matemática com o gabarito, executam o código gerado contra testes unitários ou checam se uma saída satisfaz um formato ou uma restrição.\n\nComo a recompensa é objetiva, ela não pode ser enganada por estilo ou comprimento como um reward model aprendido pode, o que permite execuções longas de RL com menos reward hacking. Combinado com algoritmos como PPO ou GRPO, o RLVR é a principal receita por trás dos modelos de raciocínio recentes: o modelo aprende a produzir longas cadeias de pensamento que terminam em respostas corretas, e comportamentos como autoverificação e retrocesso podem emergir. A limitação é a cobertura: ele só funciona para tarefas com verificações automáticas confiáveis. Verificadores lenientes ainda podem ser burlados, e recompensas binárias esparsas não dão nenhum sinal em problemas que o modelo nunca resolve.",
+  "u": [
+   "Treinar raciocínio matemático com respostas verificáveis",
+   "Geração de código recompensada pela aprovação em testes",
+   "Seguir instruções com verificação programática de restrições"
+  ],
+  "x": "O DeepSeek-R1 foi treinado em grande parte com recompensas baseadas em regras que verificam as respostas finais e o formato da saída. Uma equipe que aplica RLVR à geração de SQL executa cada consulta gerada em um banco de dados de teste e recompensa resultados exatamente iguais, isolando a execução em sandbox para que as consultas geradas não possam modificar dados."
+ },
+ "cai": {
+  "n": "Constitutional AI e RLAIF",
+  "d": "A Constitutional AI é um método da Anthropic para treinar um assistente inofensivo e útil usando um conjunto escrito de princípios, a constituição, e feedback gerado por IA em vez de rótulos humanos de nocividade. O RLAIF, aprendizado por reforço com feedback de IA (reinforcement learning from AI feedback), é a ideia geral de substituir os rótulos de preferência humanos por julgamentos de um modelo de linguagem.\n\nO método tem duas fases. Na fase supervisionada, o modelo responde a prompts difíceis, depois critica e revisa suas próprias respostas de acordo com princípios selecionados aleatoriamente e recebe fine-tuning com as respostas revisadas. Na fase de RL, um modelo de IA compara pares de respostas à luz dos princípios, e essas preferências de IA treinam um reward model contra o qual a política é otimizada. Isso escala o feedback a baixo custo e torna o comportamento-alvo explícito e auditável por meio dos princípios escritos. A limitação é que a qualidade fica limitada pela capacidade e pelos vieses do modelo avaliador, então erros ou pontos cegos no feedback de IA podem ser reforçados em vez de corrigidos.",
+  "u": [
+   "Treinamento de inocuidade sem grande rotulagem humana",
+   "Escalar dados de preferência com LLMs como avaliadores",
+   "Tornar explícito o comportamento-alvo por meio de princípios"
+  ],
+  "x": "A Anthropic introduziu a Constitutional AI para treinar os modelos Claude a evitar saídas nocivas, continuando úteis e dispostos a explicar suas recusas. Outras equipes adotam o RLAIF usando um modelo forte como avaliador para rotular pares de preferência e depois verificam uma amostra com revisores humanos para medir a concordância."
+ },
+ "lora": {
+  "n": "LoRA (Low-Rank Adaptation)",
+  "d": "O LoRA faz o fine-tuning de um modelo grande congelando seus pesos originais e aprendendo uma atualização de baixo posto para matrizes de pesos selecionadas. Para uma matriz congelada W de formato d×k, ele adiciona um produto BA, em que B é d×r e A é r×k, com um posto r pequeno, como 8 ou 16; apenas A e B são treinadas, e a atualização é escalada por α/r.\n\nAs atualizações de fine-tuning tendem a ter posto intrínseco baixo. O LoRA reduz os parâmetros treináveis em ordens de grandeza, diminui proporcionalmente a memória do otimizador e gera arquivos de adapter pequenos, que podem ser trocados sobre um único modelo base compartilhado. B é inicializada com zero para que o treinamento comece exatamente a partir do modelo base e, após o treinamento, BA pode ser mesclado em W sem latência adicional. Aplicá-lo a todas as camadas lineares geralmente supera aplicá-lo apenas às projeções de atenção. Uma limitação é que o posto baixo pode causar underfitting em tarefas que exigem grandes mudanças, como aprender novos idiomas ou uma quantidade substancial de conhecimento novo.",
+  "u": [
+   "Fine-tuning eficiente em parâmetros de grandes LLMs",
+   "Servir muitos adapters de tarefas sobre um único modelo base",
+   "Personalizar modelos de difusão para estilos ou temas"
+  ],
+  "x": "Uma empresa de SaaS serve um único LLM base e carrega um adapter LoRA separado para o tom e a terminologia de cada cliente corporativo. Engines de serving como o vLLM conseguem agrupar no mesmo batch requisições que usam adapters diferentes, então adicionar um cliente custa apenas um pequeno arquivo de adapter, e não uma cópia completa do modelo."
+ },
+ "qlora": {
+  "n": "QLoRA",
+  "d": "O QLoRA faz o fine-tuning de um grande modelo de linguagem mantendo os pesos base congelados em precisão de 4 bits e treinando adapters LoRA em 16 bits sobre eles. Os gradientes passam pelos pesos quantizados, desquantizados em tempo real a cada multiplicação de matrizes, até os pequenos adapters, que são os únicos parâmetros treináveis.\n\nTrês técnicas tornam isso possível. O NF4 é um tipo de dado de 4 bits cujos níveis ficam nos quantis de uma distribuição normal, correspondendo à forma como os pesos pré-treinados se distribuem. A quantização dupla também quantiza as constantes de escala por bloco para economizar ainda mais memória. Os otimizadores paginados movem o estado do otimizador para a memória da CPU durante picos de memória. Juntas, essas técnicas tornaram possível fazer o fine-tuning de um modelo de 65B em uma única GPU de 48 GB com qualidade próxima à do LoRA em 16 bits. Os trade-offs são passos de treinamento mais lentos, por causa da desquantização repetida, e um problema sutil na implantação: mesclar os adapters em uma base desquantizada gera pesos ligeiramente diferentes dos usados no treinamento, então as saídas devem ser reavaliadas após a mesclagem.",
+  "u": [
+   "Fine-tuning de grandes LLMs em uma única GPU",
+   "Experimentos de adaptação de domínio com orçamento baixo",
+   "Pesquisa acadêmica com hardware limitado"
+  ],
+  "x": "Um laboratório universitário com algumas GPUs de 24 GB usa QLoRA para adaptar um modelo aberto da classe de 30B à sumarização de notas clínicas. Rodar a base em 4 bits permite que cada experimento caiba em uma única placa, e eles avaliam o modelo mesclado separadamente antes da implantação para confirmar que a qualidade corresponde à da configuração com adapter sobre o modelo quantizado."
+ },
+ "adapters": {
+  "n": "Adapters e PEFT",
+  "d": "O fine-tuning eficiente em parâmetros, ou PEFT (parameter-efficient fine-tuning), é uma família de métodos que adaptam um modelo pré-treinado a uma nova tarefa treinando apenas um pequeno número de parâmetros adicionados ou selecionados, enquanto os pesos originais ficam congelados. Os bottleneck adapters, a abordagem original, inserem pequenos módulos dentro de cada camada Transformer: uma projeção para uma dimensão baixa, uma não linearidade e uma projeção de volta, somadas por meio de uma conexão residual.\n\nOutros métodos PEFT incluem o LoRA, que adiciona atualizações de baixo posto às matrizes de pesos; o prefix tuning e o prompt tuning, que aprendem tokens virtuais; e o IA³ e o BitFit, que treinam vetores de escala ou apenas os biases. Os benefícios em comum são menor memória de treinamento, checkpoints minúsculos por tarefa e um único modelo base que muda de comportamento carregando adapters diferentes. Os adapters clássicos adicionam computação sequencial na inferência, o que aumenta um pouco a latência, enquanto o LoRA pode ser mesclado aos pesos. Os métodos PEFT geralmente igualam o fine-tuning completo em tarefas moderadas, mas podem ficar aquém quando a tarefa é muito diferente do pré-treinamento.",
+  "u": [
+   "Modelos multitarefa com módulos de adapter por tarefa",
+   "Fine-tuning barato com memória de GPU limitada",
+   "Armazenar muitas variantes do modelo específicas por cliente"
+  ],
+  "x": "Um provedor de tradução mantém um único modelo base multilíngue e treina um pequeno adapter por par de idiomas e domínio. Os adapters são carregados sob demanda para cada requisição, então adicionar um novo domínio significa treinar e armazenar alguns megabytes, em vez de copiar o modelo inteiro."
+ },
+ "prompttuning": {
+  "n": "Prefix Tuning e Prompt Tuning",
+  "d": "O prompt tuning e o prefix tuning adaptam um modelo de linguagem congelado aprendendo vetores contínuos que funcionam como tokens extras, em vez de alterar os pesos do modelo. O prompt tuning adiciona um pequeno número de embeddings treináveis, muitas vezes de 20 a 100 tokens virtuais, apenas no início da sequência de embeddings de entrada. O prefix tuning, por sua vez, aprende vetores de key e value adicionados no início de cada camada de atenção, o que lhe dá mais influência sobre a computação.\n\nApenas esses parâmetros de soft prompt são treinados, então cada tarefa precisa de alguns milhares a algumas centenas de milhares de parâmetros, e um único batch pode misturar requisições de tarefas diferentes anexando prompts diferentes. Foi demonstrado que o prompt tuning se aproxima da qualidade do fine-tuning completo à medida que o tamanho do modelo chega aos bilhões de parâmetros, mas ele é visivelmente mais fraco em modelos menores e em tarefas mais difíceis. O treinamento também pode ser instável e sensível à inicialização; inicializar os tokens virtuais a partir de embeddings de palavras reais relacionadas à tarefa geralmente ajuda. Os soft prompts não são texto legível por humanos.",
+  "u": [
+   "Adaptação leve por tarefa de LLMs congelados",
+   "Batches com tarefas mistas sobre um único modelo compartilhado",
+   "Serving multi-tenant com parâmetros de tarefa minúsculos"
+  ],
+  "x": "Uma equipe de plataforma que oferece tarefas de classificação a muitos grupos internos treina um soft prompt para cada tarefa sobre um modelo congelado compartilhado. Como as requisições diferem apenas nos vetores adicionados no início, o servidor consegue agrupar tarefas no mesmo batch, embora, em seus modelos menores, eles tenham descoberto que o LoRA dava melhor acurácia nas tarefas mais difíceis."
+ },
+ "distill": {
+  "n": "Knowledge Distillation (Destilação de Conhecimento)",
+  "d": "A knowledge distillation treina um modelo student menor para imitar um modelo teacher maior, transferindo boa parte da capacidade do teacher para um modelo mais barato de rodar. Em vez de aprender apenas com rótulos rígidos, o student é treinado para corresponder à distribuição de saída completa do teacher, suavizada com uma temperatura T para que as probabilidades relativas das classes erradas, que carregam informação sobre similaridade, fiquem visíveis.\n\nA loss usual combina a entropia cruzada com os rótulos verdadeiros e a divergência KL entre as distribuições do teacher e do student suavizadas pela temperatura, multiplicada por T² para manter as escalas dos gradientes comparáveis. O DistilBERT usou essa abordagem para atingir a maior parte da acurácia do BERT com menos camadas. Para LLMs, a destilação também assume a forma de treinar um student com textos gerados por um teacher, às vezes chamada de destilação em nível de sequência, ou de corresponder aos logits em nível de token quando ambos compartilham o tokenizer. Uma limitação é que um student com capacidade muito menor não consegue absorver tudo, e os erros e vieses do teacher são transferidos junto com seus pontos fortes.",
+  "u": [
+   "Comprimir modelos grandes para implantação em dispositivos móveis",
+   "Criar modelos rápidos para serving de baixa latência",
+   "Transferir habilidades de LLMs para modelos abertos menores"
+  ],
+  "x": "O Hugging Face lançou o DistilBERT, treinado destilando o BERT em um modelo com metade das camadas. Uma equipe de busca usa uma abordagem semelhante, destilando um grande reranker cross-encoder em um student pequeno para que o reranking caiba no orçamento de latência por consulta."
+ },
+ "synthdata": {
+  "n": "Dados Sintéticos",
+  "d": "Dados sintéticos são dados de treino gerados por um modelo ou por um programa, em vez de coletados de usuários reais ou escritos por pessoas. Para LLMs, um modelo forte recebe prompts para escrever instruções, respostas, diálogos, rastros de raciocínio ou código, e os resultados filtrados treinam outro modelo; em outros domínios, simuladores ou modelos generativos produzem imagens, registros tabulares ou dados de sensores.\n\nEles são valiosos quando os dados reais são escassos, caros de rotular, privados ou não têm casos raros. Pipelines como o Self-Instruct geram tarefas variadas a partir de um pequeno conjunto inicial, e etapas de verificação, como execução de código, conferência de respostas de matemática ou scoring com reward model, aumentam a qualidade. Diversidade e correção são os desafios centrais: os dados gerados tendem a repetir o estilo e os erros do gerador, e treinar repetidamente com as próprias saídas de um modelo sem dados reais novos pode estreitar a distribuição, o que é conhecido como model collapse. Os termos de licença do modelo gerador também podem restringir o uso de suas saídas para treinar modelos concorrentes.",
+  "u": [
+   "Dados de instruction tuning para LLMs menores",
+   "Ampliar classes raras e casos extremos",
+   "Substitutos que preservam a privacidade de registros sensíveis"
+  ],
+  "x": "A equipe de NLP de um banco precisa de dados de treino para encaminhar reclamações de clientes, mas não pode usar as transcrições brutas. Eles geram reclamações sintéticas com um LLM a partir de uma taxonomia de problemas e personas, depois pedem a revisores que verifiquem uma amostra e removem duplicatas por similaridade de embeddings para manter o conjunto diverso."
+ },
+ "forgetting": {
+  "n": "Esquecimento Catastrófico",
+  "d": "O esquecimento catastrófico (catastrophic forgetting) é a tendência de uma rede neural de perder habilidades aprendidas anteriormente quando é treinada com novos dados ou em uma nova tarefa. Como os mesmos pesos codificam o conhecimento antigo e o novo, as atualizações de gradiente que reduzem a loss nos novos dados podem sobrescrever o que sustentava o desempenho anterior, e nada no objetivo protege isso.\n\nNa prática com LLMs, ele aparece quando o fine-tuning em dados restritos de um domínio degrada a capacidade geral de seguir instruções, o comportamento de segurança ou o desempenho em outros idiomas. As mitigações comuns incluem misturar uma fração de dados gerais ou da tarefa original ao conjunto de fine-tuning (replay), usar taxas de aprendizado menores e menos passos, métodos eficientes em parâmetros como o LoRA, que alteram menos pesos, e métodos de regularização como o elastic weight consolidation, que penaliza mudanças em parâmetros importantes para tarefas anteriores. Um equívoco comum é achar que o LoRA impede totalmente o esquecimento; ele normalmente esquece menos do que o fine-tuning completo, mas também aprende menos, e ainda pode ocorrer um esquecimento significativo.",
+  "u": [
+   "Diagnosticar regressões após fine-tuning de domínio",
+   "Aprendizado contínuo com fluxos de dados em evolução",
+   "Projetar misturas de replay para atualizações do modelo"
+  ],
+  "x": "Uma empresa que faz fine-tuning de um assistente com documentação interna percebe que ele começa a ignorar instruções de formatação e a responder pior a perguntas gerais. Eles adicionam cerca de um quinto de dados gerais de instruções à mistura de treino e acompanham um benchmark geral fixo junto com as métricas do domínio em cada novo checkpoint."
+ },
+ "quantization": {
+  "n": "Quantização",
+  "d": "A quantização armazena e calcula os pesos de um modelo, e às vezes suas ativações, com menos bits, como inteiros de 8 ou 4 bits em vez de floats de 16 bits, para reduzir a memória e acelerar a inferência. Cada valor real é mapeado para um inteiro por meio de uma escala e, muitas vezes, de um ponto zero, e os valores são reconstruídos aproximadamente quando necessário.\n\nEm LLMs, a decodificação geralmente é limitada pela largura de banda de memória, então reduzir à metade ou a um quarto os bytes por peso se traduz de forma bastante direta em geração de tokens mais rápida e permite que modelos maiores caibam em uma dada GPU. A quantização pode ser aplicada após o treinamento (post-training quantization), com um pequeno conjunto de calibração, ou simulada durante o treinamento (quantization-aware training), para obter melhor acurácia com larguras de bits muito baixas. Escalas por canal ou por grupo reduzem muito o erro. A principal armadilha são os outliers: alguns poucos valores muito grandes de ativação ou de peso esticam a faixa e destroem a precisão do restante, e é por isso que uma quantização ingênua das ativações em 8 bits pode prejudicar seriamente modelos grandes.",
+  "u": [
+   "Rodar LLMs em GPUs menores ou em menos GPUs",
+   "Inferência on-device em celulares e notebooks",
+   "Reduzir o custo de serving e a latência por token"
+  ],
+  "x": "Uma equipe que roda um assistente de programação local nos notebooks dos desenvolvedores distribui um modelo quantizado em 4 bits no formato GGUF via llama.cpp. Eles comparam alguns níveis de quantização em suas tarefas internas de código e escolhem o menor cuja acurácia fica próxima do baseline em 16 bits."
+ },
+ "gptq": {
+  "n": "Quantização de Pesos INT8 / INT4 (GPTQ, AWQ)",
+  "d": "GPTQ e AWQ são métodos de pós-treinamento que comprimem os pesos de LLMs para inteiros de 4 ou 3 bits com pouca perda de acurácia, usando apenas um pequeno dataset de calibração e sem retreinamento. O simples arredondamento para 4 bits muitas vezes prejudica modelos grandes, então os dois métodos decidem como quantizar usando informações sobre as ativações que os pesos vão receber.\n\nO GPTQ quantiza as colunas de cada matriz de pesos uma de cada vez e, após cada passo, atualiza os pesos ainda não quantizados para compensar o erro, usando informação de segunda ordem da inversa da Hessiana da loss de reconstrução da camada. O AWQ observa que uma pequena fração dos canais de pesos, aqueles multiplicados por ativações grandes, é a que mais importa; ele aumenta a escala desses canais antes da quantização (e reduz as ativações na mesma proporção) para que percam menos precisão. Métodos só de pesos economizam principalmente memória e largura de banda durante a decodificação; o prefill, limitado pela computação, acelera menos. Os dados de calibração devem se parecer com o domínio de implantação.",
+  "u": [
+   "Servir modelos da classe de 70B em menos GPUs",
+   "Checkpoints de 4 bits para inferência local de LLMs",
+   "Reduzir a largura de banda de memória durante a decodificação"
+  ],
+  "x": "Uma equipe que hospeda por conta própria um modelo de 70B serve um checkpoint AWQ de 4 bits com o vLLM, que cabe em metade das GPUs exigidas pela versão de 16 bits. Antes da troca, eles rodam sua suíte de avaliação e conferem por amostragem saídas longas de raciocínio, onde pequenos erros de quantização têm mais chance de aparecer."
+ },
+ "mixedprec": {
+  "n": "Precisão Mista (FP16 / BF16)",
+  "d": "O treinamento com precisão mista (mixed precision) executa a maior parte das computações em ponto flutuante de 16 bits, mantendo em 32 bits as partes numericamente sensíveis, o que reduz aproximadamente à metade a memória de ativações e acelera as multiplicações de matrizes em GPUs com tensor cores. As multiplicações de matrizes rodam em FP16 ou BF16, enquanto uma cópia mestre dos pesos, o estado do otimizador e reduções como a softmax e a loss ficam em FP32.\n\nOs dois formatos de 16 bits fazem trade-offs diferentes. O FP16 tem 5 bits de expoente e 10 de mantissa: boa precisão, mas faixa estreita, então gradientes pequenos sofrem underflow para zero. Por isso, ele precisa de loss scaling: a loss é multiplicada por um fator grande antes da backpropagation e os gradientes são divididos de volta antes da atualização, com o fator ajustado dinamicamente quando ocorrem overflows. O BF16 mantém os 8 bits de expoente do FP32 com apenas 7 bits de mantissa, então tem a mesma faixa, geralmente dispensa o loss scaling e é o padrão para o treinamento de LLMs em hardware recente. Sua baixa precisão torna propensa a erros a soma de muitos valores pequenos.",
+  "u": [
+   "Treinamento mais rápido em GPUs com tensor cores",
+   "Reduzir à metade a memória de ativações para batches maiores",
+   "Treinamento padrão de grandes modelos de linguagem em BF16"
+  ],
+  "x": "Uma equipe de visão migra de FP32 para precisão mista automática e reduz aproximadamente à metade o tempo de treinamento por passo nas mesmas GPUs. Em GPUs mais antigas sem suporte a BF16, eles usam FP16 com um gradient scaler e registram o valor da escala para que quedas repetidas sinalizem cedo problemas de overflow."
+ },
+ "prune": {
+  "n": "Pruning (Poda)",
+  "d": "O pruning remove pesos, neurônios, heads de atenção ou camadas inteiras de uma rede treinada para torná-la menor ou mais rápida, preservando o máximo possível de acurácia. O pruning não estruturado zera pesos individuais, normalmente os de menor magnitude ou de menor importância estimada; o pruning estruturado remove linhas, canais, heads ou camadas inteiras, de modo que o modelo restante seja uma rede densa menor.\n\nA distinção importa para a velocidade. A esparsidade não estruturada reduz o número de parâmetros, mas raramente acelera a inferência em GPUs sem kernels esparsos especializados, exceto em padrões suportados pelo hardware, como a esparsidade 2:4 da NVIDIA, em que dois de cada quatro pesos consecutivos são zero. O pruning estruturado gera ganhos reais de velocidade em hardware padrão, mas geralmente custa mais acurácia e exige fine-tuning ou destilação para recuperá-la. Para LLMs, métodos como SparseGPT e Wanda fazem o pruning de uma só vez usando dados de calibração e estatísticas das ativações. Uma esparsidade moderada muitas vezes sai quase de graça, mas uma esparsidade alta degrada a qualidade bruscamente, e resultados reportados apenas em número de parâmetros podem exagerar os ganhos práticos.",
+  "u": [
+   "Reduzir modelos para dispositivos de borda e móveis",
+   "Remover heads de atenção ou camadas redundantes",
+   "Esparsidade estruturada 2:4 para acelerar em GPUs"
+  ],
+  "x": "Uma equipe que implanta um modelo de visão em câmeras de fábrica aplica pruning estruturado de canais seguido de fine-tuning, o que reduz o modelo o suficiente para atender ao requisito de taxa de quadros no dispositivo de borda. Eles medem a latência real no hardware de destino, já que a redução de parâmetros, por si só, não previa o ganho de velocidade."
+ },
+ "gradaccum": {
+  "n": "Acumulação de Gradientes",
+  "d": "A acumulação de gradientes (gradient accumulation) simula um batch grande passando vários micro-batches menores pelas passadas forward e backward, somando seus gradientes e aplicando um único passo do otimizador no final. Com um micro-batch de 4 e 8 passos de acumulação, a atualização usa os gradientes de 32 exemplos, enquanto apenas as ativações de 4 exemplos ficam na memória ao mesmo tempo.\n\nEla é usada quando o tamanho de batch desejado, muitas vezes escolhido pela estabilidade do treinamento ou para reproduzir uma receita publicada, não cabe na memória da GPU. Para obter o mesmo gradiente de um batch grande de verdade, a loss de cada micro-batch é dividida pelo número de passos de acumulação, ou as losses são normalizadas pelo número total de tokens quando os comprimentos das sequências variam. O trade-off é o tempo: a acumulação economiza memória, mas não computação, e reduz o número de passos do otimizador por época. Uma armadilha comum é que a batch normalization continua vendo apenas as estatísticas do micro-batch, então a acumulação não é exatamente equivalente em modelos que a usam.",
+  "u": [
+   "Treinar com batches efetivos grandes em GPUs pequenas",
+   "Reproduzir tamanhos de batch publicados com menos hardware",
+   "Fine-tuning de LLMs com sequências longas"
+  ],
+  "x": "Uma equipe que faz fine-tuning de um modelo de 7B em uma única GPU só consegue colocar duas sequências longas por passada forward, então acumula 16 micro-batches para chegar a um batch efetivo de 32. Eles escalam o schedule da taxa de aprendizado pelos passos do otimizador, e não pelos micro-batches, para que o warmup e o decaimento correspondam à receita pretendida."
+ }
+}

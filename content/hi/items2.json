@@ -1,0 +1,482 @@
+{
+ "gradclip": {
+  "n": "Gradient Clipping",
+  "d": "Gradient clipping हर optimizer step से पहले gradient के आकार को सीमित करता है, ताकि कोई एक ख़राब batch parameters को बहुत दूर न फेंक सके। सबसे आम रूप, global norm से clipping, सभी gradients को जोड़कर उनका L2 norm निकालता है; अगर यह threshold c से अधिक हो, तो हर gradient को c / ‖g‖ से गुणा किया जाता है। इससे update की दिशा नहीं बदलती, केवल उसकी लंबाई घटती है। एक मोटा रूप, value से clipping, हर element को स्वतंत्र रूप से सीमित करता है और इसलिए दिशा बदल सकता है।\n\nClipping, recurrent networks के लिए मानक है, जहाँ exploding gradients आम हैं, और transformer pretraining के लिए भी, जहाँ 1.0 का max norm एक सामान्य डिफ़ॉल्ट है। यह बड़े learning rates या mixed precision के साथ training को भी अधिक स्थिर बनाता है। Clipping vanishing gradients को ठीक नहीं करता, और बहुत कम threshold optimizer को चुपचाप निश्चित-लंबाई वाले कदमों में बदल देता है। Clip से पहले के gradient norm को log करना loss spikes और डेटा समस्याओं का पता लगाने का एक सस्ता तरीका है।",
+  "u": [
+   "लंबी sequences पर LSTM और GRU training को स्थिर करना",
+   "बड़े transformer pretraining में loss spikes रोकना",
+   "Differentially private training में प्रति-उदाहरण gradients को सीमित करना"
+  ],
+  "x": "एक multilingual language मॉडल को pretrain करने वाली टीम हर step पर global gradient norm को 1.0 पर clip करती है। वे clip से पहले का norm अपने dashboard पर log करते हैं, क्योंकि उस मान में अचानक उछाल अक्सर दूषित data shards या बहुत ऊँचे learning rate की ओर इशारा करते हैं। Spike दिखने पर वे पिछले checkpoint पर लौटते हैं और समस्याग्रस्त batches को छोड़ देते हैं।"
+ },
+ "linreg": {
+  "n": "Linear Regression (रैखिक प्रतिगमन)",
+  "d": "Linear regression किसी numeric target को input features के weighted योग और एक intercept के रूप में model करता है। Ordinary least squares ऐसे weights चुनता है जो predictions और observed मानों के बीच vertical अंतरों के वर्गों के योग को न्यूनतम करें, जिसका XᵀX invertible होने पर closed-form हल w = (XᵀX)⁻¹Xᵀy है। व्यवहार में libraries numerical स्थिरता के लिए इसे QR या SVD decompositions से, या बहुत बड़े डेटा के लिए gradient descent से हल करती हैं।\n\nयह किसी भी regression task के लिए डिफ़ॉल्ट baseline है और तब मूल्यवान बना रहता है जब interpretability मायने रखती हो: हर coefficient, बाकी features को स्थिर रखते हुए, किसी feature में एक इकाई बदलाव पर target में अपेक्षित बदलाव है। Gauss–Markov मान्यताओं के तहत OLS सबसे अच्छा linear unbiased estimator है। इसकी कमज़ोरियाँ हैं outliers के प्रति संवेदनशीलता, क्योंकि squared errors बड़े residuals को बढ़ा देते हैं, और features के अत्यधिक correlated होने पर अस्थिर coefficients। एक आम ग़लतफ़हमी यह है कि “linear” features को संदर्भित करता है; यह parameters को संदर्भित करता है, इसलिए log या polynomial features के साथ भी मॉडल linear ही रहता है।",
+  "u": [
+   "किसी भी numeric prediction task के लिए baseline मॉडल",
+   "Sales डेटा से price elasticity का अनुमान",
+   "Econometric विश्लेषण में interpretable effect sizes"
+  ],
+  "x": "एक real estate platform पारदर्शी baseline के रूप में listing कीमत का floor area, location dummies और इमारत की उम्र पर linear regression fit करता है। Agents coefficients सीधे पढ़ सकते हैं, उदाहरण के लिए प्रति वर्ग मीटर जुड़ने वाली कीमत। टीम उन क्षेत्रों को पकड़ने के लिए neighborhood-वार residuals की निगरानी करती है जहाँ linear मान्यता टूट जाती है।"
+ },
+ "tls": {
+  "n": "Total Least Squares",
+  "d": "Total least squares एक रेखा या hyperplane को fit करते समय ordinary least squares द्वारा उपयोग की जाने वाली केवल vertical दूरियों के बजाय points से उस तक की लंबवत (perpendicular) दूरियों को न्यूनतम करता है। यह inputs और target की errors को समान रूप से मानता है, जो ऐसे डेटा के लिए उपयुक्त है जहाँ हर मापा गया variable noisy हो।\n\nहल singular value decomposition से आता है। डेटा को center करने के बाद fit किया गया hyperplane सबसे छोटे singular value वाले right singular vector के orthogonal होता है; दो dimensions में रेखा के लिए यह पहले principal component को रेखा की दिशा मानने के समान है। इसी कारण TLS, PCA और orthogonal regression से निकटता से संबंधित है। यह sensor calibration, दो मापन उपकरणों की तुलना, और computer vision में ज्यामितीय fitting के लिए उपयोगी है। एक मुख्य सीमा यह है कि यह सभी variables में समान noise variance मानता है, इसलिए features को पहले तुलनीय error स्तरों पर scale करना चाहिए, और यह OLS से भी अधिक outliers के प्रति संवेदनशील है।",
+  "u": [
+   "दो noisy मापन उपकरणों की readings की तुलना",
+   "3D point clouds पर रेखाएँ और समतल fit करना",
+   "दोनों axes में error होने पर sensors को calibrate करना"
+  ],
+  "x": "एक medical device कंपनी नए blood glucose meter की तुलना laboratory reference से करती है, और दोनों readings में मापन error होता है। वे OLS के बजाय orthogonal (total least squares) fit का उपयोग करते हैं, क्योंकि reference स्वयं noisy होने पर OLS slope को कम आँकेगा। Fit किए गए slope और intercept सीधे calibration report में जाते हैं।"
+ },
+ "polyreg": {
+  "n": "Polynomial Regression",
+  "d": "Polynomial regression मूल features की powers और गुणनफल जोड़कर, फिर विस्तारित सेट पर एक सामान्य linear मॉडल fit करके घुमावदार संबंधों को पकड़ता है। Features x₁ और x₂ का degree-2 विस्तार x₁², x₂² और x₁x₂ जोड़ता है; मॉडल अपने parameters में linear रहता है, इसलिए least squares और regularization बिना बदले काम करते हैं।\n\nयह closed-form fit बनाए रखते हुए smooth nonlinearity—जैसे घटते प्रतिफल या U-आकार की dose response—को model करने का एक सरल तरीका है। Degree, bias-variance tradeoff को नियंत्रित करती है: कम degree underfit करती है, और ऊँची degree तीव्र दोलन पैदा करती है, ख़ासकर डेटा के किनारों के पास, जो overfitting का एक पारंपरिक उदाहरण है। Features की संख्या और degree के साथ terms की संख्या भी संयोजनात्मक रूप से बढ़ती है। अच्छी प्रथा है विस्तार से पहले features को scale करना, cross-validation से degree चुनना, और ridge regularization जोड़ना। Training रेंज से बाहर extrapolation विशेष रूप से अविश्वसनीय है, क्योंकि ऊँचे-order terms तेज़ी से विस्फोटित होते हैं।",
+  "u": [
+   "Advertising खर्च के घटते प्रतिफल की modeling",
+   "प्रयोगों में smooth dose-response curves fit करना",
+   "Linear baseline में interaction terms जोड़ना"
+  ],
+  "x": "एक marketing analytics टीम ऊँचे budgets पर saturation पकड़ने के लिए साप्ताहिक conversions को ad खर्च के degree-2 polynomial के रूप में model करती है। वे cross-validation से degree चुनते हैं और coefficients स्थिर रखने के लिए ridge regularization जोड़ते हैं। Fit किया गया curve केवल observed खर्च रेंज के भीतर इस्तेमाल होता है, क्योंकि उससे आगे के predictions अविश्वसनीय हैं।"
+ },
+ "logreg": {
+  "n": "Logistic Regression",
+  "d": "Logistic regression एक linear classifier है जो features के weighted योग को sigmoid function से गुज़ारकर positive class की probability का अनुमान लगाता है। समकक्ष रूप से, यह परिणाम के log-odds को inputs के linear function के रूप में model करता है, इसलिए हर coefficient उस feature में एक इकाई वृद्धि पर log-odds में बदलाव है।\n\nWeights को likelihood maximize करके fit किया जाता है, जो binary cross-entropy को न्यूनतम करने के समान है। Loss convex है, इसलिए L-BFGS जैसे optimizers भरोसेमंद तरीके से global minimum ढूँढते हैं। Softmax extension कई classes को संभालता है। Logistic regression तेज़, interpretable है और आम तौर पर उचित रूप से calibrated probabilities देता है, जो इसे credit scoring, medical risk और click prediction के लिए एक मज़बूत baseline बनाता है। इसकी decision boundary linear है, इसलिए nonlinear प्रभावों के लिए engineered features चाहिए। पूर्णतः separable डेटा पर unregularized weights असीमित रूप से बढ़ते हैं, यही एक कारण है कि scikit-learn डिफ़ॉल्ट रूप से L2 regularization लागू करता है। नाम के बावजूद यह एक classification तरीका है, regression तरीका नहीं।",
+  "u": [
+   "Tabular डेटा पर credit default scoring",
+   "Click-through rate prediction का baseline",
+   "Interpretable odds ratios वाले clinical risk scores"
+  ],
+  "x": "एक consumer lending कंपनी loan आवेदनों को score करने के लिए L2-regularized logistic regression का उपयोग करती है, क्योंकि regulators हर फ़ैसले की व्याख्या माँगते हैं। Coefficients को scorecard points में बदला जाता है, और अनुमानित default probability ब्याज दर tier तय करती है। टीम हर महीने calibration जाँचती है, क्योंकि आर्थिक बदलाव वास्तविक default दर को predictions से दूर ले जा सकते हैं।"
+ },
+ "knn": {
+  "n": "k-Nearest Neighbors (KNN)",
+  "d": "k-nearest neighbors किसी नए point का label अनुमानित करने के लिए k सबसे समान training points को देखता है और classification के लिए बहुमत मत या regression के लिए औसत लेता है। Training केवल डेटा संग्रहीत करती है, इसलिए इसे lazy या instance-based learner कहा जाता है।\n\nModeling के सभी विकल्प distance metric और k में होते हैं। छोटा k डेटा का बारीकी से अनुसरण करता है और variance ऊँचा होता है; बड़ा k decision boundary को smooth करता है और bias बढ़ाता है। Neighbors को दूरी के व्युत्क्रम से weight देना अक्सर मदद करता है। चूँकि सब कुछ दूरियों से चलता है, features को scale करना ज़रूरी है, वरना हज़ारों में मापा गया feature भिन्नों में मापे गए feature पर हावी हो जाएगा। KNN अर्थपूर्ण similarity माप वाली low-dimensional समस्याओं के लिए अच्छा काम करता है, और यही विचार आधुनिक embedding search को शक्ति देता है। इसकी मुख्य सीमाएँ हैं बड़े datasets पर धीमा prediction, जिसके लिए KD-trees या approximate nearest neighbor libraries जैसी index संरचनाएँ चाहिए, और curse of dimensionality, जो features बढ़ने के साथ दूरियों को कम सूचनात्मक बना देता है।",
+  "u": [
+   "Embedding similarity से item-to-item recommendations",
+   "समान records से missing values भरना",
+   "Low-dimensional classification के लिए सरल baseline"
+  ],
+  "x": "एक music streaming सेवा audio embeddings पर nearest neighbor search चलाकर मिलते-जुलते tracks ढूँढती है। करोड़ों tracks के लिए exact KNN बहुत धीमा है, इसलिए वे एक approximate index का उपयोग करते हैं और millisecond latency के बदले recall में थोड़ी कमी स्वीकार करते हैं। नए tracks जुड़ने पर neighbor lists हर रात refresh होती हैं।"
+ },
+ "naivebayes": {
+  "n": "Naive Bayes",
+  "d": "Naive Bayes एक probabilistic classifier है जो इस सरलीकृत मान्यता के तहत Bayes' theorem लागू करता है कि class दिए जाने पर features conditionally independent हैं। इस मान्यता के तहत class likelihood एक-आयामी distributions के गुणनफल में बँट जाती है, जिनका अनुमान सरल गिनती से या प्रति feature mean और variance fit करके लगाया जा सकता है।\n\nVariants प्रति-feature distribution में भिन्न होते हैं: शब्द गिनतियों के लिए multinomial, binary indicators के लिए Bernoulli, और continuous मानों के लिए Gaussian। Training डेटा पर एक ही pass है, prediction बहुत तेज़ है, और यह तरीका text जैसे high-dimensional sparse डेटा पर, कम उदाहरणों के साथ भी, आश्चर्यजनक रूप से अच्छा काम करता है। Laplace (additive) smoothing यह रोकता है कि किसी class के साथ कभी न देखा गया शब्द उस class की probability को शून्य कर दे। Independence मान्यता लगभग हमेशा टूटती है, इसलिए classes की ranking अक्सर सही होने के बावजूद अनुमानित probabilities 0 और 1 की ओर धकेली जाती हैं और ख़राब calibrated होती हैं। Correlated या दोहराए गए features प्रभावी रूप से कई बार गिने जाते हैं।",
+  "u": [
+   "Email शब्द गिनतियों से spam filtering",
+   "Document topic classification के लिए तेज़ baseline",
+   "बहुत कम latency के साथ real-time text routing"
+  ],
+  "x": "एक customer support platform TF-IDF features पर multinomial Naive Bayes मॉडल से आने वाले tickets को विभागों में भेजता है। Agents जब भी tickets को relabel करते हैं, यह सेकंडों में retrain हो जाता है, और predictions में microseconds लगते हैं। चूँकि इसकी probabilities अति-आत्मविश्वासी होती हैं, टीम केवल शीर्ष अनुमानित class का उपयोग करती है और कम margin वाले मामलों को मानवीय queue में भेजती है।"
+ },
+ "svm": {
+  "n": "Support Vector Machine (SVM)",
+  "d": "Support vector machine ऐसी decision boundary ढूँढती है जो दो classes को सबसे चौड़े संभव margin—निकटतम training points तक की दूरी—के साथ अलग करे। केवल वे निकटतम points, यानी support vectors, boundary तय करते हैं, इसलिए हल sparse होता है।\n\nवास्तविक डेटा शायद ही कभी separable होता है, इसलिए soft-margin रूप slack variables के ज़रिए उल्लंघनों की अनुमति देता है, जिसमें hyperparameter C margin की चौड़ाई और training errors के बीच संतुलन बनाता है: बड़ा C training डेटा को कसकर fit करता है, जबकि छोटा C चौड़ा, अधिक regularized margin देता है। यह hinge loss और L2 penalty के योग को न्यूनतम करने के समकक्ष है। Kernel trick के साथ SVM nonlinear boundaries सीख सकती है, उदाहरण के लिए RBF kernel के साथ, जिसका gamma नियंत्रित करता है कि हर support vector का प्रभाव कितना स्थानीय हो। SVMs कई features वाले छोटे से मध्यम datasets, जैसे text, के लिए उपयुक्त हैं। Kernel SVM training sample संख्या के साथ लगभग quadratically या उससे भी बुरी तरह scale करती है, features को scale करना ज़रूरी है, और कच्चा output एक margin स्कोर है, calibrated probability नहीं।",
+  "u": [
+   "High-dimensional sparse features के साथ text classification",
+   "कम-sample वाले bioinformatics classification tasks",
+   "Handcrafted feature descriptors पर image classification"
+  ],
+  "x": "एक pharmaceutical research समूह RBF-kernel SVM का उपयोग करके कुछ हज़ार molecular fingerprints से compounds को active या inactive में classify करता है। वे cross-validation से C और gamma tune करते हैं, क्योंकि dataset kernel methods के लिए पर्याप्त छोटा है। चूँकि candidates की ranking के लिए उन्हें probabilities चाहिए, वे held-out डेटा पर एक अलग calibration चरण जोड़ते हैं।"
+ },
+ "kerneltrick": {
+  "n": "Kernel Trick",
+  "d": "Kernel trick एक linear algorithm को nonlinear patterns सीखने देता है—data points के बीच हर inner product को ऐसे kernel function से बदलकर जो एक higher-dimensional feature space में inner product के बराबर हो। Feature mapping की स्वयं कभी गणना नहीं होती, केवल pairwise kernel मानों की होती है।\n\nयह किसी भी ऐसे तरीके के लिए काम करता है जिसे पूरी तरह dot products के रूप में लिखा जा सके, जिनमें support vector machines, kernel ridge regression, kernel PCA और Gaussian processes शामिल हैं। आम kernels हैं polynomial kernel और RBF kernel, जिसका feature space अनंत-आयामी है। एक वैध kernel को points के किसी भी सेट के लिए positive semidefinite Gram matrix देना चाहिए (Mercer की शर्त)। मुख्य लागत यह है कि n × n kernel matrix के कारण training memory और समय में कम से कम quadratically scale करती है, इसलिए दसियों हज़ार samples के बाद kernel methods अव्यावहारिक हो जाते हैं। Random Fourier features या Nyström method जैसे approximations कुछ accuracy की कीमत पर linear scaling बहाल करते हैं।",
+  "u": [
+   "Explicit features के बिना nonlinear SVM classification",
+   "Surrogate modeling के लिए Gaussian process regression",
+   "Nonlinear dimensionality reduction के लिए kernel PCA"
+  ],
+  "x": "एक engineering टीम manufacturing process settings tune करने के लिए Gaussian process surrogate मॉडल बनाती है, और RBF kernel से यह encode करती है कि समान settings समान yields देती हैं। केवल कुछ सौ प्रयोगों के साथ n × n kernel matrix की गणना सस्ती है। एक बड़े sensor dataset के लिए वे training समय linear रखने हेतु random Fourier features पर स्विच करते हैं।"
+ },
+ "lda": {
+  "n": "Linear Discriminant Analysis (LDA)",
+  "d": "Linear discriminant analysis एक classifier भी है और एक supervised dimensionality reduction तरीका भी, जो ज्ञात classes को सबसे अच्छी तरह अलग करने वाली दिशाएँ ढूँढता है। Classifier के रूप में यह मानता है कि हर class अपने mean वाला लेकिन साझा covariance matrix वाला एक Gaussian है; इस मान्यता के तहत Bayes-optimal decision boundaries linear होती हैं।\n\nProjection के रूप में LDA, between-class scatter और within-class scatter के अनुपात को maximize करता है, जिससे C classes के लिए अधिकतम C − 1 discriminant दिशाएँ मिलती हैं। यह PCA से अलग है, जो labels को अनदेखा करता है और सबसे बड़े कुल variance वाली दिशाएँ रखता है, भले ही वे classes को अलग न करें। LDA तेज़ है, इसका closed-form हल है, और जब इसकी मान्यताएँ मोटे तौर पर सही हों तो छोटे samples के साथ अच्छा काम करता है; features samples से अधिक होने पर covariance अनुमान का shrinkage मदद करता है। जब classes के covariances बहुत अलग हों—जहाँ quadratic discriminant analysis बेहतर fit होता है—और जब class संरचना nonlinear हो, तब इसे कठिनाई होती है। NLP में यही संक्षिप्त नाम Latent Dirichlet Allocation के लिए भी इस्तेमाल होता है, जो एक असंबंधित topic मॉडल है।",
+  "u": [
+   "Visualization या clustering से पहले supervised projection",
+   "Brain-computer interfaces में EEG signals का classification",
+   "Shrinkage covariance के साथ कम-sample classification"
+  ],
+  "x": "एक brain-computer interface टीम shrinkage LDA से EEG features के आधार पर कल्पित हाथ की गतिविधियों को classify करती है। यह तरीका हर user के छोटे calibration session पर milliseconds में train होता है और कम trials के साथ स्थिर परिणाम देता है। इसकी linear boundary inference को real-time control के लिए पर्याप्त तेज़ भी रखती है।"
+ },
+ "perceptron": {
+  "n": "Perceptron",
+  "d": "Perceptron सबसे सरल linear classifier है: अगर inputs का weighted योग धनात्मक हो तो यह एक class देता है, अन्यथा दूसरी, और केवल ग़लती के बाद अपने weights update करता है। हर ग़लत classify किए गए उदाहरण पर यह input vector को, सही label और learning rate से scale करके, weight vector में जोड़ता है।\n\nPerceptron convergence theorem गारंटी देता है कि अगर डेटा linearly separable है, तो यह नियम सीमित संख्या के updates में एक अलग करने वाला hyperplane ढूँढ लेगा। अगर डेटा separable नहीं है, तो weights कभी स्थिर नहीं होते, इसीलिए averaged या pocket perceptron जैसे variants मौजूद हैं। Step activation का कोई उपयोगी gradient नहीं होता, इसलिए आधुनिक neural networks ने इसे differentiable activations और gradient descent से बदल दिया; इसलिए multilayer perceptron पारंपरिक perceptrons का stack नहीं है। XOR सीखने में इसकी असमर्थता ने hidden layers की ज़रूरत दिखाई। यह अब भी बड़ी sparse समस्याओं के लिए तेज़ online learner और एक शिक्षण उदाहरण के रूप में काम आता है।",
+  "u": [
+   "Streaming sparse features पर online learning",
+   "Linear separability और learning नियम सिखाना",
+   "Linearly separable समस्याओं के लिए तेज़ baseline"
+  ],
+  "x": "एक search टीम लाखों sparse n-gram features पर averaged perceptron से query intent classifier का prototype बनाती है। नई labeled queries आने पर मॉडल online update होता है और passes की संख्या के अलावा किसी tuning की ज़रूरत नहीं होती। Prototype से features की उपयोगिता सिद्ध होने के बाद वे probability स्कोर पाने के लिए इसे logistic regression से बदल देते हैं।"
+ },
+ "dtree": {
+  "n": "Decision Tree (निर्णय वृक्ष)",
+  "d": "Decision tree features के बारे में सरल प्रश्नों का एक क्रम पूछकर, और उत्तरों के अनुसार नीचे एक leaf तक जाकर—जो एक class या मान संग्रहीत करती है—prediction करता है। हर node एक feature और threshold पर split करता है, और leaves feature space को axis-aligned आयतों में बाँटती हैं।\n\nTrees ऊपर से greedily बनाए जाते हैं: हर node पर algorithm वह split चुनता है जो impurity को सबसे अधिक घटाए, जिसे classification के लिए Gini impurity या entropy से और regression के लिए variance (squared error) से मापा जाता है। इन्हें feature scaling की ज़रूरत नहीं होती, ये interactions अपने-आप पकड़ते हैं, और इन्हें समझाना आसान है। इनकी मुख्य कमज़ोरी ऊँचा variance है: पूरी तरह बढ़ा हुआ tree noise को रट लेता है, और डेटा में छोटा बदलाव बहुत अलग tree बना सकता है। Depth सीमित करना, प्रति leaf न्यूनतम samples की शर्त रखना, या pruning overfitting घटाता है। व्यवहार में अकेले trees का उपयोग मुख्यतः interpretability के लिए होता है, जबकि random forests और gradient boosting जैसे ensembles accuracy के लिए trees को building blocks के रूप में इस्तेमाल करते हैं।",
+  "u": [
+   "पात्रता या triage फ़ैसलों के लिए समझाने योग्य नियम",
+   "Random forests और boosting का building block",
+   "Feature interactions का त्वरित exploratory विश्लेषण"
+  ],
+  "x": "एक hospital triage टीम तत्काल समीक्षा की ज़रूरत वाले emergency patients को flag करने के लिए depth चार तक सीमित एक उथला decision tree train करती है। Clinicians ने इसे स्वीकार किया क्योंकि हर prediction को शर्तों की एक छोटी सूची के रूप में trace किया जा सकता है। उस पारदर्शिता के बदले टीम जानबूझकर boosted मॉडल से थोड़ी कम accuracy स्वीकार करती है।"
+ },
+ "gini": {
+  "n": "Gini Impurity",
+  "d": "Gini impurity मापता है कि किसी node में class labels कितने मिश्रित हैं: यह इस probability के बराबर है कि node से randomly, replacement के साथ, निकाले गए दो labels अलग हों। एक शुद्ध node, जहाँ हर sample की class एक ही हो, उसकी Gini impurity 0 होती है; समान frequency वाली दो classes के लिए यह अपने अधिकतम 0.5 तक पहुँचती है।\n\nCART जैसे decision tree algorithms हर candidate split का मूल्यांकन child nodes की weighted औसत Gini impurity से करते हैं और parent से सबसे बड़ी गिरावट वाला split चुनते हैं। इसमें logarithms की ज़रूरत नहीं होती और यह entropy जैसे ही लगभग splits चुनता है। किसी feature द्वारा सभी trees में की गई impurity गिरावटों को जोड़ने से “mean decrease in impurity” feature importance मिलती है, जिसका उपयोग random forests करते हैं। यह importance training डेटा पर निकाली जाती है और high-cardinality व continuous features की ओर biased होती है, जो कई split points देते हैं। Gini impurity को credit scoring में इस्तेमाल होने वाले Gini coefficient से भ्रमित नहीं करना चाहिए, जो 2·AUC − 1 के बराबर है।",
+  "u": [
+   "CART classification trees में splits चुनना",
+   "Random forests में impurity-आधारित feature importance",
+   "Clusters या segments की label शुद्धता मापना"
+  ],
+  "x": "एक fraud analytics टीम अपने random forest की impurity-आधारित importances देखती है और पाती है कि एक high-cardinality merchant ID पहले स्थान पर है। चूँकि Gini-आधारित importance कई split points वाले features को प्राथमिकता देती है, वे validation set पर permutation importance से ranking की पुष्टि करते हैं। Permutation ranking में merchant ID तेज़ी से नीचे गिर जाता है, इसलिए वे उसे मॉडल से हटा देते हैं।"
+ },
+ "entropy": {
+  "n": "Entropy और Information Gain",
+  "d": "Entropy किसी label distribution की अनिश्चितता को bits में मापती है, और information gain किसी feature पर डेटा को split करने से entropy में आई कमी है। एक ही class वाले node की entropy 0 होती है, जबकि दो समान संभावित classes वाले node की entropy 1 bit होती है, जो binary labels के लिए अधिकतम है।\n\nID3 और C4.5 जैसे decision tree algorithms, और criterion=\"entropy\" के साथ CART, वह split चुनते हैं जो information gain को maximize करे: parent की entropy में से children की आकार-भारित entropy घटाकर। Information gain, split और label के बीच की mutual information के बराबर है। व्यवहार में यह Gini impurity से बने trees जैसे ही trees बनाता है, logarithm के कारण थोड़ी अधिक compute लागत के साथ। एक ज्ञात ख़तरा यह है कि कच्चा information gain IDs जैसे कई अलग मानों वाले features को प्राथमिकता देता है, क्योंकि कई छोटे शुद्ध समूह generalize किए बिना ऊँचा gain देते हैं। C4.5 इसे gain ratio से सुधारता है, जो gain को स्वयं split की entropy से भाग देता है।",
+  "u": [
+   "ID3, C4.5 और CART trees में splits चुनना",
+   "Label के साथ mutual information से features की ranking",
+   "Active learning में सूचनात्मक प्रश्न चुनना"
+  ],
+  "x": "एक telecom churn टीम मॉडल बनाने से पहले सैकड़ों candidate features को churn label के साथ उनकी mutual information से rank करती है। यह information-gain screening उन features को जल्दी हटा देती है जिनका churn से लगभग कोई संबंध नहीं है। फिर वे बचे हुए features में leakage की जाँच करते हैं, क्योंकि संदेहजनक रूप से ऊँचा gain अक्सर ग्राहक के जाने के बाद update हुए fields से आता है।"
+ },
+ "cart": {
+  "n": "CART और Axis-Aligned Splits",
+  "d": "CART (Classification and Regression Trees) एक feature पर एक threshold से डेटा को बार-बार split करके binary decision trees बनाता है। हर split पूछता है कि क्या x_j ≤ t है, इसलिए हर decision boundary किसी एक feature axis के लंबवत होती है और tree space को आयताकार boxes में बाँटता है।\n\nहर node पर CART हर feature और हर candidate threshold—आम तौर पर sorted unique मानों के बीच के मध्य-बिंदु—की खोज करता है और वह जोड़ी चुनता है जो classification के लिए Gini impurity या regression के लिए squared error को सबसे अधिक घटाए। खोज greedy है, इसलिए tree globally optimal नहीं होता। CART cost-complexity pruning भी परिभाषित करता है, जो tree के आकार और training error के बीच संतुलन बनाता है। Axis-aligned splits trees को monotonic feature transformations से अप्रभावित बनाते हैं, इसलिए scaling अनावश्यक है, और नियमों को पठनीय रखते हैं। कमी यह है कि x₁ > x₂ जैसी विकर्ण boundary को कई splits की सीढ़ी से approximate करना पड़ता है; एक difference feature जोड़ना या oblique trees का उपयोग मदद कर सकता है। scikit-learn के trees optimized CART लागू करते हैं।",
+  "u": [
+   "Interpretable binary classification trees बनाना",
+   "Piecewise-constant predictions के लिए regression trees",
+   "Random forests और boosting के भीतर base learners"
+  ],
+  "x": "एक insurance pricing टीम policyholders को समान claim लागत वाले समूहों में बाँटने के लिए CART regression trees का उपयोग करती है। चूँकि हर split एक feature पर एक threshold है, परिणामी segments को actuaries की समीक्षा के लिए सरल नियमों के रूप में लिखा जा सकता है। जब वे देखते हैं कि tree विकर्ण boundaries को approximate करने के लिए लंबी सीढ़ियाँ बना रहा है, तो वे engineered ratio features जोड़ते हैं।"
+ },
+ "pruning": {
+  "n": "Tree Pruning",
+  "d": "Tree pruning उन शाखाओं को हटाकर decision trees में overfitting घटाता है जो generalization सुधारे बिना जटिलता जोड़ती हैं। Pre-pruning, या early stopping, tree को maximum depth या प्रति leaf न्यूनतम samples जैसी सीमाओं से आगे बढ़ने से रोकता है। Post-pruning पहले एक बड़ा tree बनाता है और फिर उन subtrees को समेट देता है जिन्हें हटाने से accuracy में कम नुकसान हो।\n\nCART में मानक post-pruning तरीका minimal cost-complexity pruning है। यह training error और α गुणा leaves की संख्या के योग को न्यूनतम करता है; α बढ़ाने से छोटे trees का एक nested क्रम मिलता है, और cross-validation सबसे अच्छा α चुनता है। Post-pruning अक्सर early stopping से बेहतर होता है, क्योंकि अपने-आप में बेकार दिखने वाला split अपने नीचे मूल्यवान splits को संभव बना सकता है, एक ऐसी स्थिति जिसे greedy stopping नियम चूक जाते हैं। Pruning सबसे अधिक अकेले interpretable trees के लिए मायने रखता है। यह random forests में आम तौर पर अनावश्यक है, जहाँ कई गहरे trees का औसत variance नियंत्रित करता है, और gradient boosting में भी, जहाँ trees को design से ही उथला रखा जाता है।",
+  "u": [
+   "मानव-पठनीय नियमों के लिए decision trees को सरल बनाना",
+   "Noisy डेटा पर अकेले trees का overfitting घटाना",
+   "Cross-validated alpha से tree की जटिलता चुनना"
+  ],
+  "x": "एक credit policy टीम को compliance समीक्षा के लिए एक पन्ने पर छपने लायक छोटा decision tree चाहिए। वे पूरा tree बनाते हैं, cost-complexity pruning path निकालते हैं, और वह सबसे बड़ा alpha चुनते हैं जिसकी cross-validated accuracy सबसे अच्छे से एक standard error के भीतर रहे। अंतिम tree में कई सौ के बजाय एक दर्जन leaves हैं।"
+ },
+ "bootstrap": {
+  "n": "Bootstrap Sampling",
+  "d": "Bootstrap sampling replacement के साथ randomly observations निकालकर मूल के समान आकार का एक नया dataset बनाता है। कुछ points कई बार आते हैं और कुछ बिल्कुल नहीं; औसतन हर sample में लगभग 63.2% अद्वितीय मूल points आते हैं, क्योंकि किसी point के कभी न चुने जाने की संभावना (1 − 1/n)ⁿ ≈ 1/e ≈ 36.8% है।\n\nबार-बार resampling, population से नए datasets निकालने का अनुमान देती है। सांख्यिकीविद इसका उपयोग median, AUC या मॉडल coefficient जैसे लगभग किसी भी statistic की standard error या confidence interval का अनुमान लगाने के लिए करते हैं, बिना किसी closed-form सूत्र के। Machine learning में bootstrap samples, bagging और random forests का आधार हैं, और छूटे हुए points out-of-bag validation देते हैं। Bootstrap मानता है कि observations independent और identically distributed हैं, इसलिए time series या समूहित डेटा के लिए सामान्य resampling अनिश्चितता को कम आँकती है; वहाँ block या cluster bootstrap variants चाहिए। यह maximum जैसे extreme-value statistics के लिए भी विफल होता है।",
+  "u": [
+   "Model evaluation metrics के लिए confidence intervals",
+   "Bagging ensembles के लिए विविध training sets बनाना",
+   "A/B test प्रभावों में अनिश्चितता का अनुमान"
+  ],
+  "x": "एक ML platform टीम हर offline AUC को test set के 1,000 resamples से निकाले गए 95% bootstrap confidence interval के साथ रिपोर्ट करती है। इससे टीमें ऐसा मॉडल ship करने से बचती हैं जिसका स्पष्ट सुधार noise के भीतर हो। दोहराए गए users वाले डेटा के लिए वे intervals को ईमानदार रखने हेतु अलग-अलग rows के बजाय पूरे users को resample करते हैं।"
+ },
+ "bagging": {
+  "n": "Bagging",
+  "d": "Bagging, यानी bootstrap aggregating, training डेटा के अलग-अलग bootstrap samples पर एक ही मॉडल की कई प्रतियाँ train करता है और उनके predictions का औसत लेता है, या बहुमत मत लेता है। चूँकि हर मॉडल थोड़ा अलग dataset देखता है, उनकी errors आंशिक रूप से स्वतंत्र होती हैं, और औसत उस noise का बड़ा हिस्सा रद्द कर देता है।\n\nBagging मुख्यतः variance घटाता है जबकि bias लगभग वैसा ही रहता है, इसलिए यह पूरी तरह बढ़े decision trees जैसे अस्थिर, कम-bias learners के लिए सबसे अधिक मदद करता है, और linear regression जैसे स्थिर मॉडलों के लिए बहुत कम। Pairwise correlation ρ वाले B मॉडलों के औसत का variance ρσ² + (1 − ρ)σ²/B है, इसलिए correlation term हावी होने के बाद और मॉडल जोड़ने का लाभ घटता जाता है। Random forests feature subsampling से trees को decorrelate करके और आगे जाते हैं। Bagged मॉडल समानांतर रूप से train हो सकते हैं, और हर bootstrap sample से छूटे points generalization error का मुफ़्त out-of-bag अनुमान देते हैं। एक आम ग़लतफ़हमी यह है कि bagging underfitting ठीक करता है; कई उथले, biased मॉडलों का औसत biased ही रहता है।",
+  "u": [
+   "ऊँचे variance वाले decision trees को स्थिर करना",
+   "Multi-core machines पर समानांतर ensemble training",
+   "Neural network predictions का variance घटाना"
+  ],
+  "x": "एक demand forecasting टीम store-स्तर के इतिहास के bootstrap samples पर train किए गए बीस गहरे regression trees को bag करती है। Bagged ensemble अकेले tree की तुलना में हफ़्ते-दर-हफ़्ते स्पष्ट रूप से अधिक स्थिर है, जिसकी शिकायत store managers करते थे। Training cores पर समानांतर चलती है, इसलिए ensemble से wall-clock समय में बहुत कम वृद्धि होती है।"
+ },
+ "oob": {
+  "n": "Out-of-Bag (OOB) Score",
+  "d": "Out-of-bag score, bagged ensembles के लिए एक validation अनुमान है जो हर training point के लिए केवल उन मॉडलों का उपयोग करता है जिनके bootstrap sample में वह point शामिल नहीं था। चूँकि हर bootstrap sample लगभग 36.8% डेटा छोड़ देता है, हर point लगभग एक-तिहाई trees के लिए out-of-bag होता है, और उनका संयुक्त prediction held-out prediction जैसा काम करता है।\n\nइन OOB predictions की तुलना वास्तविक labels से करने पर accuracy, R² या कोई अन्य metric मिलता है जो अतिरिक्त मॉडलों या validation split के बिना cross-validation का अनुमान देता है। यह छोटे datasets पर random forests को tune करने और यह जाँचने के लिए सुविधाजनक है कि क्या और trees अब भी मदद करते हैं। OOB predictions ensemble के केवल लगभग एक-तिहाई हिस्से से बनते हैं, इसलिए कम trees के साथ अनुमान noisy और थोड़ा निराशावादी होता है। किसी भी row-स्तर की resampling की तरह, यह तब अत्यधिक आशावादी होता है जब rows स्वतंत्र न हों, उदाहरण के लिए time series या एक ही ग्राहक के दोहराए गए मापों के साथ; ऐसे मामलों में grouped या time-based split चाहिए।",
+  "u": [
+   "Validation split के बिना random forests को tune करना",
+   "छोटे datasets पर त्वरित generalization अनुमान",
+   "Bagging में trees की संख्या चुनना"
+  ],
+  "x": "केवल कुछ सौ patient samples वाली एक छोटी genomics lab अलग validation set के बजाय random forest OOB score का उपयोग करती है, ताकि कोई डेटा बर्बाद न हो। वे एक छोटे grid पर OOB accuracy की तुलना करके max_features tune करते हैं। प्रकाशन से पहले वे grouped cross-validation से परिणाम की पुष्टि करते हैं, क्योंकि कुछ patients ने कई samples दिए थे।"
+ },
+ "rf": {
+  "n": "Random Forest (रैंडम फ़ॉरेस्ट)",
+  "d": "Random forest decision trees का एक ensemble है, जिसमें हर tree डेटा के एक bootstrap sample पर train होता है, और उनके predictions का औसत लिया जाता है या मतदान से जोड़ा जाता है। Bagging में इसका मुख्य योगदान feature subsampling है: हर split पर हर tree features के केवल एक random subset पर विचार करता है और उनमें से सबसे अच्छा split चुनता है।\n\nहर tree पर एक बार नहीं, बल्कि हर split पर नए सिरे से features sample करने से प्रबल predictors हर tree पर हावी नहीं हो पाते और ensemble decorrelate होता है, जिससे औसत variance को कहीं अधिक घटा पाता है। Trees आम तौर पर गहरे बनाए जाते हैं, क्योंकि औसत उनके variance को संभाल लेता है। Random forests tabular डेटा पर बिना tuning के अच्छा काम करते हैं, अधिक trees जोड़ने से overfit नहीं होते, मुफ़्त out-of-bag error अनुमान देते हैं, और आसानी से समानांतर होते हैं। हालाँकि, ये आम तौर पर tune किए गए gradient boosting से कम सटीक होते हैं, धीमे inference वाले बड़े मॉडल बनाते हैं, training targets की रेंज से आगे extrapolate नहीं कर सकते, और इनकी डिफ़ॉल्ट impurity-आधारित importances high-cardinality features की ओर biased होती हैं।",
+  "u": [
+   "Tabular classification के लिए मज़बूत डिफ़ॉल्ट मॉडल",
+   "Permutation importance के साथ feature screening",
+   "छोटे, noisy datasets पर robust baselines"
+  ],
+  "x": "एक manufacturing quality टीम 500 trees वाले random forest से sensor readings के आधार पर दोषपूर्ण parts का अनुमान लगाती है। इसे लगभग कोई tuning नहीं चाहिए थी, यह सरल imputation के बाद missing sensor channels संभाल लेता है, और इसका OOB score production accuracy के साथ अच्छा मेल खाता है। जब edge devices पर latency एक समस्या बनी, तो उन्होंने accuracy की लागत मापने के बाद tree depth और संख्या घटाई।"
+ },
+ "maxfeat": {
+  "n": "Feature Subsampling (max_features)",
+  "d": "Feature subsampling किसी tree के हर split को features के एक random subset तक सीमित करता है, जिसे scikit-learn में max_features parameter नियंत्रित करता है। Tree फिर भी sample किए गए features में से सबसे अच्छा split चुनता है, और हर node पर एक नया subset निकाला जाता है।\n\nयही वह घटक है जो bagged trees को random forest में बदलता है। जब एक या दो features बहुत प्रबल हों, तो सामान्य bagging ऐसे trees बनाता है जो सभी पहले उन्हीं पर split करते हैं, इसलिए trees correlated होते हैं और औसत से कम मदद मिलती है। कुछ splits से उन features को छिपाने से trees को अन्य संरचना खोजनी पड़ती है और trees के बीच correlation घटता है, जिससे ensemble variance कम होता है। आम डिफ़ॉल्ट classification के लिए √p और regression के लिए p/3 से p के बीच हैं; scikit-learn का RandomForestRegressor डिफ़ॉल्ट रूप से सभी features का उपयोग करता है। छोटे मान विविधता बढ़ाते हैं लेकिन हर tree का bias बढ़ाते हैं, और कई अप्रासंगिक features होने पर छोटे subset में अक्सर कोई उपयोगी feature ही नहीं होता। XGBoost समान विकल्प देता है, colsample_bytree और colsample_bynode।",
+  "u": [
+   "Random forests में trees को decorrelate करना",
+   "Column sampling से gradient boosting का regularization",
+   "बहुत चौड़े datasets पर training तेज़ करना"
+  ],
+  "x": "एक marketing टीम का random forest एक ही प्रबल खर्च feature पर split करता रहा, और trees जोड़ने से validation स्कोर सुधरना बंद हो गए। max_features को सभी features से घटाकर square root करने से trees अधिक विविध हुए और out-of-bag accuracy सुधरी। उन्होंने एक छोटे grid पर OOB स्कोरों की तुलना करके अंतिम मान चुना।"
+ },
+ "extratrees": {
+  "n": "Extra Trees",
+  "d": "Extra Trees, यानी extremely randomized trees, एक tree ensemble है जो features के साथ-साथ split thresholds में भी randomness जोड़ता है। हर node पर यह features का एक subset sample करता है, हर feature के लिए node में उसकी रेंज के भीतर एक random threshold निकालता है, और इन random candidate splits में से सबसे अच्छा रखता है।\n\nचूँकि thresholds optimize नहीं होते, हर tree का bias कुछ अधिक होता है, लेकिन trees कम correlated होते हैं और ensemble का variance random forest से भी अधिक घटता है। पूरी threshold खोज छोड़ने से training भी तेज़ होती है। डिफ़ॉल्ट रूप से scikit-learn के Extra Trees हर tree को bootstrap sampling के बिना पूरे training set पर fit करते हैं, इसलिए bootstrap सक्षम किए बिना out-of-bag स्कोर उपलब्ध नहीं होते। Extra Trees अक्सर accuracy में random forests के बराबर होते हैं, noisy, high-dimensional डेटा पर बेहतर हो सकते हैं, और smoother regression surfaces देते हैं। जब केवल कुछ features सटीक thresholds के ज़रिए signal रखते हैं, तब ये कमज़ोर प्रदर्शन कर सकते हैं, क्योंकि random cut points उन्हें चूक सकते हैं।",
+  "u": [
+   "बड़े tabular डेटा पर तेज़ tree ensembles",
+   "Noisy, high-dimensional features पर variance घटाना",
+   "कम compute लागत पर feature importance screening"
+  ],
+  "x": "एक remote sensing टीम प्रति pixel सैकड़ों spectral bands से land cover classify करती है। उन्होंने random forest से Extra Trees पर स्विच किया क्योंकि लाखों pixels पर training तेज़ थी और उनके validation maps पर accuracy समान थी। तेज़ training से वे हर नए satellite scene के लिए मॉडल retrain कर पाते हैं।"
+ },
+ "boosting": {
+  "n": "Boosting",
+  "d": "Boosting एक-एक करके weak learners जोड़कर एक सशक्त मॉडल बनाता है, जिसमें हर नया learner अब तक बने ensemble की ग़लतियों पर ध्यान केंद्रित करता है। Prediction सभी learners का weighted योग होता है, जो आम तौर पर उथले trees होते हैं।\n\nAdaBoost में ग़लत classify किए गए उदाहरणों को बड़े weights मिलते हैं ताकि अगला learner उन पर ध्यान केंद्रित करे। Gradient boosting में हर नया tree वर्तमान ensemble के predictions के सापेक्ष loss के negative gradient पर fit होता है, जो squared error के लिए बस अब तक के पूरे ensemble का residual है। Bagging के विपरीत, जो variance घटाने के लिए स्वतंत्र मॉडल समानांतर रूप से train करता है, boosting क्रमिक है और मुख्यतः bias घटाता है। XGBoost, LightGBM और CatBoost जैसे boosted trees अधिकांश tabular benchmarks में आगे हैं। चूँकि हर चरण training errors को fit करता रहता है, बहुत अधिक rounds या गहरे trees के साथ boosting overfit कर सकता है, इसलिए छोटा learning rate, validation डेटा पर early stopping और regularization आवश्यक हैं। Label noise एक और कमज़ोरी है, ख़ासकर AdaBoost के लिए।",
+  "u": [
+   "Tabular prediction tasks के लिए विजेता मॉडल",
+   "Search और recommendations के लिए learning-to-rank",
+   "कई विषम features के साथ risk scoring"
+  ],
+  "x": "एक online marketplace कीमत, seller इतिहास और category features पर gradient-boosted trees से अनुमान लगाता है कि कोई listing एक हफ़्ते में बिकेगी या नहीं। Boosting इसलिए चुना गया क्योंकि उनके tabular डेटा पर यह कहीं कम tuning के साथ neural networks को लगातार हराता था। वे trees की संख्या चुनने के लिए time-based validation set पर early stopping का उपयोग करते हैं।"
+ },
+ "adaboost": {
+  "n": "AdaBoost",
+  "d": "AdaBoost (Adaptive Boosting) मूल व्यावहारिक boosting algorithm है: यह weak classifiers का एक क्रम train करता है, आम तौर पर एक-split वाले decision stumps, और हर round के बाद उन training उदाहरणों के weights बढ़ाता है जिन्हें वर्तमान classifier ने ग़लत पाया। इसलिए अगले classifier को कठिन मामलों पर ध्यान केंद्रित करना पड़ता है।\n\nहर classifier को एक vote weight α = ½ ln((1 − ε)/ε) भी मिलता है, जहाँ ε उसका weighted error है, ताकि अधिक सटीक learners का अंतिम weighted बहुमत मत में अधिक प्रभाव हो। यह दिखाया जा सकता है कि AdaBoost exponential loss के साथ forward stagewise additive modeling करता है, जो इसे gradient boosting से जोड़ता है। यह सरल है, इसके hyperparameters कम हैं, और ऐतिहासिक रूप से इसने Viola–Jones real-time face detector को शक्ति दी। इसकी मुख्य कमज़ोरी label noise और outliers के प्रति संवेदनशीलता है: ग़लत label वाले points को exponentially बढ़ते weights मिलते हैं और वे बाद के rounds पर हावी हो सकते हैं। आधुनिक tabular benchmarks पर इसे आम तौर पर gradient boosting libraries पीछे छोड़ देती हैं, जो अन्य losses, regularization और कहीं तेज़ training को support करती हैं।",
+  "u": [
+   "सरल classifiers के लिए decision stumps की boosting",
+   "Cascade आधारित real-time object detection",
+   "Errors को दोबारा weight देने का मूल विचार सिखाना"
+  ],
+  "x": "शुरुआती digital cameras में इस्तेमाल हुए Viola–Jones face detector ने बहुत बड़े संग्रह से कुछ सूचनात्मक Haar-like features चुनने के लिए AdaBoost लागू किया। Boosted classifiers को एक cascade में व्यवस्थित किया गया, ताकि अधिकांश background windows केवल कुछ features के मूल्यांकन के बाद ही अस्वीकार हो जाएँ। इससे साधारण hardware पर real-time detection संभव हुआ।"
+ },
+ "gbm": {
+  "n": "Gradient Boosting",
+  "d": "Gradient boosting decision trees का एक additive मॉडल बनाता है, जिसमें हर नया tree वर्तमान ensemble के predictions के सापेक्ष loss function के negative gradient का अनुमान लगाने के लिए train होता है। इस दृष्टि से boosting, function space में gradient descent है: हर tree एक कदम है जो predictions को loss पर नीचे की ओर ले जाता है।\n\nSquared error के लिए negative gradient बस residual y − F(x) है; log loss के लिए यह y − p है। केवल gradient बदलता है, इसलिए एक ही algorithm regression, classification, ranking और custom objectives संभालता है। मुख्य hyperparameters हैं learning rate, trees की संख्या, tree का आकार और प्रति leaf न्यूनतम samples। कम learning rate और अधिक trees आम तौर पर बेहतर generalize करते हैं, और validation loss पर early stopping trees की संख्या चुनता है। scikit-learn के GradientBoostingClassifier सहित पारंपरिक implementations डिफ़ॉल्ट रूप से सभी rows का उपयोग करते हैं (subsample = 1.0)। बिना tuning के छोड़ने पर gradient boosting, random forests की तुलना में अधिक आसानी से overfit करता है, और इसकी क्रमिक training केवल हर tree के भीतर ही समानांतर होती है।",
+  "u": [
+   "Production में tabular regression और classification",
+   "Pairwise या listwise objectives के साथ ranking",
+   "Insurance claim की गंभीरता और आवृत्ति की modeling"
+  ],
+  "x": "एक insurance कंपनी Poisson loss और exposure को offset के रूप में लेकर gradient-boosted trees से claim आवृत्ति का अनुमान लगाती है। Boosting ने driver की उम्र, वाहन प्रकार और क्षेत्र के बीच उन interactions को पकड़ा जो पिछला generalized linear मॉडल चूक गया था। Pricing टीम फिर भी हर release से पहले partial dependence plots की समीक्षा करती है ताकि सुनिश्चित हो कि प्रभाव विश्वसनीय हैं।"
+ },
+ "xgboost": {
+  "n": "XGBoost",
+  "d": "XGBoost एक व्यापक रूप से इस्तेमाल होने वाली gradient boosting library है जो पारंपरिक gradient-boosted trees में explicit regularization और एक second-order optimization चरण जोड़ती है। हर candidate tree के लिए यह loss के gradient g और Hessian h दोनों का उपयोग करती है, closed form में optimal leaf weights निकालती है, और splits को इस आधार पर score करती है कि वे एक regularized objective को कितना घटाते हैं।\n\nObjective, γ के ज़रिए leaves की संख्या पर और λ (L2) व α (L1) के ज़रिए leaf weights के आकार पर penalty लगाता है, जिससे trees अधिक सतर्क बनते हैं। XGBoost हर split पर missing values के लिए एक डिफ़ॉल्ट दिशा भी सीखता है, और exact, approximate व histogram-आधारित split खोज, column व row subsampling, GPU training और custom objectives को support करता है। यह tabular डेटा के लिए एक मानक tool बन गया। आम ग़लतियों में max_depth को बहुत बड़ा छोड़कर केवल n_estimators tune करना, early stopping भूल जाना, और यह मान लेना शामिल है कि row subsampling डिफ़ॉल्ट रूप से चालू है; subsample का डिफ़ॉल्ट 1 है। बहुत बड़े या high-cardinality categorical डेटा के लिए LightGBM या CatBoost तेज़ या अधिक सुविधाजनक हो सकते हैं।",
+  "u": [
+   "Tabular logs पर click-through और conversion prediction",
+   "Missing और sparse features के साथ fraud detection",
+   "Data science competitions में मज़बूत baseline"
+  ],
+  "x": "एक payments कंपनी राशि, merchant category और हाल की velocity counts जैसे features पर XGBoost मॉडल से हर card transaction को score करती है। Histogram tree method करोड़ों rows पर रात की retraining को एक निश्चित समय-budget के भीतर रखता है। Inference प्रति transaction कुछ milliseconds में चलता है, और SHAP values log किए जाते हैं ताकि analysts अस्वीकृतियों की व्याख्या कर सकें।"
+ },
+ "lightgbm": {
+  "n": "LightGBM",
+  "d": "LightGBM, Microsoft की एक gradient boosting library है जिसे बड़े datasets पर गति और memory दक्षता के लिए बनाया गया है। यह continuous features को histograms में bin करती है, trees को level-wise के बजाय leaf-wise बढ़ाती है, और काम को और घटाने के लिए Gradient-based One-Side Sampling (GOSS) और Exclusive Feature Bundling जैसी तकनीकें देती है।\n\nLeaf-wise वृद्धि हमेशा सबसे बड़ी loss कमी वाली leaf को split करती है, इसलिए leaves की समान संख्या के लिए यह आम तौर पर depth-wise वृद्धि से कम training loss तक पहुँचती है। इसका नुकसान यह है कि trees बहुत गहरे हो सकते हैं और छोटे datasets पर overfit कर सकते हैं; इसलिए min_data_in_leaf और max_depth के साथ num_leaves मुख्य जटिलता नियंत्रण है। LightGBM categories के optimal समूहन की खोज करके categorical features को स्वाभाविक रूप से संभालती है, और missing values को स्वचालित रूप से। यह बड़ी tabular समस्याओं और learning-to-rank के लिए एक आम पहला विकल्प है। एक आम ग़लती छोटे डेटा पर num_leaves को 2^max_depth के पास रखना है, जो overfit मॉडल बनाता है; दूसरी है पर्याप्त regularization के बिना high-cardinality categoricals देना, जो भी overfit कर सकता है।",
+  "u": [
+   "बड़े पैमाने पर tabular classification और regression",
+   "LambdaRank objective के साथ learning-to-rank",
+   "कई lag features के साथ demand forecasting"
+  ],
+  "x": "एक grocery delivery कंपनी lag, calendar और promotion features पर LightGBM से हज़ारों stores के लिए item-स्तर की माँग का forecast करती है। उन्होंने LightGBM इसलिए चुना क्योंकि एक global मॉडल एक ही machine पर करोड़ों rows पर मिनटों में train होता है। Store और item IDs को categorical features के रूप में दिया जाता है, और दुर्लभ items पर overfitting से बचने के लिए min_data_per_group बढ़ाया गया है।"
+ },
+ "catboost": {
+  "n": "CatBoost",
+  "d": "CatBoost, Yandex की एक gradient boosting library है जिसे categorical features के लिए और prediction shift नामक एक सूक्ष्म overfitting को घटाने के लिए बनाया गया है। यह ordered target statistics से categories को संख्याओं में बदलती है: हर row का encoding केवल उन rows के target मानों से निकाला जाता है जो एक random permutation में उससे पहले आती हैं, इसलिए किसी row का अपना label कभी उसके feature में leak नहीं होता।\n\nयही विचार, ordered boosting, trees बनाने में इस्तेमाल होने वाले gradients पर भी लागू होता है। CatBoost oblivious (symmetric) trees भी बनाती है, जिनमें समान depth के हर node एक ही split का उपयोग करते हैं; यह regularizer का काम करता है और inference को बहुत तेज़ बनाता है। परिणामस्वरूप, user या product IDs जैसे कई high-cardinality categoricals वाले डेटा पर CatBoost अक्सर डिफ़ॉल्ट settings के साथ ही मज़बूत परिणाम देती है। विशुद्ध numeric डेटा पर training, LightGBM से धीमी हो सकती है, और categorical columns को स्पष्ट रूप से घोषित करना होता है; उन्हें घोषित किए बिना integer codes के रूप में देने से ordered encoding का लाभ खो जाता है।",
+  "u": [
+   "कई high-cardinality categoricals वाला tabular डेटा",
+   "कम hyperparameter tuning के साथ मज़बूत परिणाम",
+   "Symmetric trees के साथ कम-latency scoring"
+  ],
+  "x": "एक travel booking साइट शहर, hotel ID, device और traffic source जैसे features से अनुमान लगाती है कि कोई user hotel book करेगा या नहीं, जिनमें से कई के हज़ारों levels हैं। CatBoost इसलिए चुनी गई क्योंकि इसके ordered target statistics ने उस leakage से बचाया जो टीम ने manual target encoding में देखा था। Symmetric trees प्रति search सैकड़ों hotels की ranking करते समय scoring latency भी कम रखते हैं।"
+ },
+ "goss": {
+  "n": "GOSS (Gradient-based One-Side Sampling)",
+  "d": "GOSS, LightGBM में पेश की गई एक row sampling तकनीक है जो बड़े gradients वाले सभी training उदाहरणों को रखकर और छोटे gradients वालों का केवल एक random अंश रखकर gradient boosting को तेज़ करती है। छोटे-gradient वाले उदाहरण पहले से अच्छी तरह fit हैं, इसलिए वे अगले split में कम जानकारी जोड़ते हैं।\n\nठोस रूप से, GOSS rows को उनके gradient के absolute मान से sort करता है, शीर्ष a अंश रखता है, बाकी से b अंश randomly sample करता है, और split gains निकालते समय sample की गई छोटे-gradient rows को (1 − a)/b से गुणा करता है। यह reweighting gain अनुमान को लगभग unbiased रखती है, जबकि प्रति iteration process होने वाली rows की संख्या बहुत घट जाती है। यह stochastic gradient boosting की uniform random subsampling से अलग है, जो gradients को अनदेखा करती है। एक सावधानी यह है कि यह noisy या ग़लत label वाले points के प्रभाव को बढ़ा सकता है, जिनके gradients अक्सर बड़े होते हैं, और हाल के LightGBM संस्करणों में इसे boosting type के बजाय data_sample_strategy=\"goss\" से चुना जाता है।",
+  "u": [
+   "बहुत बड़े tabular datasets पर तेज़ boosting",
+   "LightGBM training में प्रति-iteration लागत घटाना",
+   "ख़राब fit वाले उदाहरणों पर compute केंद्रित करना"
+  ],
+  "x": "एक ad-tech टीम अरबों impression logs पर दिन में कई बार LightGBM click मॉडल retrain करती है। GOSS सक्षम करने से training समय काफ़ी घटा और validation log loss में केवल मामूली बदलाव आया, जिसकी उन्होंने स्विच करने से पहले एक offline तुलना में पुष्टि की। वे दुर्लभ ad categories के लिए प्रभाव की अलग से निगरानी करते हैं, जहाँ आक्रामक sampling नुकसान पहुँचा सकती है।"
+ },
+ "histsplit": {
+  "n": "Histogram-Based Splitting",
+  "d": "Histogram-based splitting पहले हर continuous feature को कम संख्या के bins (आम तौर पर 255) में discretize करके और फिर केवल bin सीमाओं पर splits खोजकर decision tree training को तेज़ करता है। हर node पर हर feature मान को sort करने के बजाय algorithm प्रति bin gradients और Hessians (या गिनतियों) का योग जमा करता है और इन छोटे histograms को scan करता है।\n\nइससे sorting के बाद प्रति node प्रति feature लगभग O(n) वाली split खोज O(bins) तक घट जाती है, और features छोटे integers के रूप में संग्रहीत होते हैं, जिससे memory बचती है। एक और तरकीब histogram subtraction है: किसी child का histogram parent के histogram में से उसके sibling का histogram घटाकर मिल सकता है, इसलिए केवल छोटे child को बनाना पड़ता है। LightGBM, XGBoost का hist method, CatBoost और scikit-learn का HistGradientBoosting सभी इस पर निर्भर हैं। Binning से precision का नुकसान शायद ही accuracy को नुकसान पहुँचाता है और हल्के regularization का काम कर सकता है। यह तब मायने रख सकता है जब किसी feature का महत्वपूर्ण threshold किसी चौड़े bin के भीतर आता हो, या बहुत skewed distributions वाले features के लिए।",
+  "u": [
+   "लाखों rows पर तेज़ gradient boosting",
+   "Quantized features के साथ memory-कुशल training",
+   "बड़े datasets के लिए GPU-accelerated tree निर्माण"
+  ],
+  "x": "एक logistics कंपनी करोड़ों पिछली deliveries पर रोज़ arrival-time मॉडल retrain करती है। Exact split खोज से scikit-learn के HistGradientBoostingRegressor पर जाने से training समय घंटों से मिनटों तक घट गया, error में कोई सार्थक बदलाव नहीं आया। तेज़ चक्र से वे नए features जोड़ पाए और अधिक बार retrain कर पाए।"
+ },
+ "subsample": {
+  "n": "Row Subsampling (Stochastic GB)",
+  "d": "Row subsampling, जिसे stochastic gradient boosting के रूप में पेश किया गया, हर boosting tree को training rows के replacement के बिना निकाले गए एक random अंश पर train करता है। Subsample parameter के सामान्य मान 0.5 से 0.9 के बीच होते हैं।\n\nRandomness से लगातार trees उन्हीं points पर कम निर्भर होते हैं, जो मॉडल को regularize करता है और अक्सर test error सुधारता है। इससे हर iteration सस्ती भी होती है। Libraries में यह parameter स्वैच्छिक है: scikit-learn का GradientBoosting, XGBoost और LightGBM सभी डिफ़ॉल्ट रूप से हर row का उपयोग करते हैं, यानी subsample = 1.0, और LightGBM में bagging_fraction के प्रभावी होने के लिए अतिरिक्त रूप से bagging_freq > 0 चाहिए। अगर अंश बहुत छोटा हो, तो हर tree बहुत कम डेटा देखता है और मॉडल को कहीं अधिक rounds चाहिए, जो कुल training समय और noise बढ़ा सकता है। Imbalanced डेटा के लिए सामान्य row sampling प्रति tree कम positives छोड़ सकती है; उस स्थिति में ऊँचा अंश रखें या stratified या GOSS जैसी gradient-aware sampling का उपयोग करें।",
+  "u": [
+   "Overfitting के विरुद्ध gradient boosting का regularization",
+   "बड़े डेटा पर प्रति-tree training लागत घटाना",
+   "Boosted tree ensembles में विविधता जोड़ना"
+  ],
+  "x": "एक churn prediction टीम ने पाया कि उनका XGBoost मॉडल कुछ भारी users पर overfit कर रहा था। Subsample को 0.7 और colsample_bytree को 0.8 पर रखने और साथ में कम learning rate से validation AUC सुधरा और retraining runs के बीच परिणाम अधिक स्थिर हुए। वे production में random seed स्थिर रखते हैं ताकि retraining के अंतर sampling noise के बजाय डेटा बदलावों को दर्शाएँ।"
+ },
+ "shrinkage": {
+  "n": "Shrinkage (Boosting में Learning Rate)",
+  "d": "Shrinkage, boosting ensemble में हर नए tree के योगदान को 0 और 1 के बीच के learning rate η से scale करता है, ताकि मॉडल हर चरण पर अपनी वर्तमान errors को सुधारने की दिशा में केवल आंशिक रूप से आगे बढ़े। F_m = F_{m−1} + h_m के बजाय update F_m = F_{m−1} + η·h_m हो जाता है।\n\nछोटे कदम बाद के trees के लिए ग़लतियाँ सुधारने की गुंजाइश छोड़ते हैं और किसी एक tree पर निर्भरता घटाते हैं, जिससे generalization सुधरता है। इसकी कीमत यह है कि छोटे learning rate को समान training loss तक पहुँचने के लिए अनुपात में अधिक trees चाहिए, इसलिए η और estimators की संख्या को साथ-साथ tune करना चाहिए। एक आम प्रथा है 0.01 से 0.1 के बीच rate तय करना और early stopping से trees की संख्या चुनना। एक आम ग़लती एक learning rate पर trees की संख्या tune करके फिर बिना दोबारा tune किए rate बदल देना है। Boosting में shrinkage का ridge regression जैसे shrinkage estimators से कोई संबंध नहीं है, हालाँकि दोनों variance घटाते हैं।",
+  "u": [
+   "Gradient-boosted trees के generalization में सुधार",
+   "Boosting में training समय के बदले accuracy पाना",
+   "Trees की संख्या तय करने के लिए early stopping के साथ जोड़ना"
+  ],
+  "x": "एक credit risk टीम 0.1 पर तेज़ hyperparameter search करने के बाद अंतिम LightGBM मॉडलों को 0.02 के learning rate और early stopping के साथ train करती है। कम rate validation AUC में छोटा लेकिन सुसंगत लाभ देता है, जिसकी कीमत कई गुना अधिक trees हैं। Deploy करने से पहले वे जाँचते हैं कि अतिरिक्त trees फिर भी scoring latency budget में आते हैं।"
+ },
+ "stacking": {
+  "n": "Stacking",
+  "d": "Stacking, या stacked generalization, कई अलग मॉडलों को एक second-level मॉडल—meta-learner—train करके जोड़ता है, जो base मॉडलों के outputs से अंतिम prediction बनाता है। निश्चित weights से औसत लेने के बजाय meta-learner सीखता है कि हर base मॉडल पर कितना, और संभवतः कहाँ, भरोसा करना है।\n\nनिर्णायक बात यह है कि meta-learner को out-of-fold predictions पर train करना चाहिए: हर base मॉडल K-fold cross-validation से fit होता है, और held-out folds पर उसके predictions दूसरे स्तर के training features बनते हैं। In-sample predictions का उपयोग training labels को leak करेगा और meta-learner को overfit मॉडलों पर भरोसा करवाएगा। Stacking विविध base learners—उदाहरण के लिए एक gradient boosting मॉडल, एक linear मॉडल और एक neural network—और regularized logistic या linear regression जैसे सरल meta-learner के साथ सबसे अच्छा काम करता है। यह अक्सर छोटे लेकिन भरोसेमंद लाभ देता है और competitions में लोकप्रिय है। Production में यह training और inference की लागत और जटिलता कई गुना बढ़ा देता है, इसलिए लाभ को कई मॉडलों के रखरखाव को उचित ठहराना चाहिए।",
+  "u": [
+   "Competition leaderboards के लिए विविध मॉडलों को जोड़ना",
+   "Tabular डेटा पर tree और linear मॉडलों का मिश्रण",
+   "Text और tabular मॉडल predictions को मिलाना"
+  ],
+  "x": "एक insurance fraud टीम tabular claim डेटा पर gradient boosting मॉडल और adjuster notes पर text classifier को stack करती है, जिसमें logistic regression meta-learner है। Five-fold cross-validation से आए out-of-fold predictions meta-learner को train करते हैं, जिससे leakage रुकता है। संयुक्त मॉडल किसी भी अकेले input से बेहतर प्रदर्शन करता है, और meta-learner के coefficients दिखाते हैं कि हर स्रोत कितना योगदान देता है।"
+ },
+ "voting": {
+  "n": "Voting Ensemble",
+  "d": "Voting ensemble कई स्वतंत्र रूप से train किए गए मॉडलों के predictions को सीखे गए नियम के बजाय एक निश्चित नियम से जोड़ता है। Hard voting में हर classifier किसी class को मत देता है और बहुमत जीतता है; soft voting में अनुमानित class probabilities का औसत लिया जाता है, वैकल्पिक रूप से weights के साथ, और सबसे ऊँचे औसत वाली class चुनी जाती है। Regression के लिए समकक्ष predictions का औसत है।\n\nVoting तब मदद करता है जब मॉडल अलग-अलग उचित हों और अलग प्रकार की errors करते हों, क्योंकि uncorrelated ग़लतियाँ एक-दूसरे को रद्द करने की प्रवृत्ति रखती हैं। Soft voting आम तौर पर hard voting से बेहतर होता है क्योंकि यह हर मॉडल के विश्वास का उपयोग करता है, लेकिन इसके लिए उचित रूप से calibrated probabilities चाहिए; ख़राब calibrated या अति-आत्मविश्वासी मॉडल औसत पर हावी हो सकता है। Voting, stacking से सरल है और overfitting की संभावना कम है, क्योंकि train करने के लिए कोई meta-learner नहीं है, लेकिन यह नहीं सीख सकता कि कुछ स्थितियों में एक मॉडल बेहतर है। कमज़ोर या अत्यधिक correlated मॉडल जोड़ने से ensemble ख़राब हो सकता है, इसलिए हर सदस्य को validation से अपनी जगह साबित करनी चाहिए।",
+  "u": [
+   "Robust predictions के लिए विविध classifiers को जोड़ना",
+   "अलग random seeds से train किए मॉडलों का औसत",
+   "सरल ensembles जहाँ stacking overfit करेगा"
+  ],
+  "x": "एक medical imaging startup संदिग्ध scans को flag करने के लिए अलग-अलग architectures से train किए गए तीन convolutional networks की probabilities का औसत लेता है। Soft voting ने किसी भी अकेले network की तुलना में आत्मविश्वासी ग़लतियों की संख्या घटाई। औसत लेने से पहले वे हर network को temperature scaling से calibrate करते हैं ताकि कोई एक मॉडल हावी न हो।"
+ },
+ "confusion": {
+  "n": "Confusion Matrix",
+  "d": "Confusion matrix एक तालिका है जो गिनती है कि classifier के predictions वास्तविक labels से कैसे मेल खाते हैं, जिसमें हर वास्तविक class के लिए एक row और हर अनुमानित class के लिए एक column होता है। Binary समस्या के लिए इसमें चार cells होते हैं: true positives, false positives, false negatives और true negatives।\n\nलगभग हर classification metric इन गिनतियों से निकाला जाता है। Precision अनुमानित-positive column का उपयोग करता है, recall वास्तविक-positive row का, और accuracy diagonal का। Multiclass समस्याओं के लिए off-diagonal cells ठीक-ठीक दिखाते हैं कि कौन सी classes आपस में भ्रमित होती हैं, जो debugging में किसी एक स्कोर से अधिक मदद करता है; उदाहरण के लिए, यह उजागर कर सकता है कि मॉडल दो समान product categories को मिला देता है जबकि बाकी को अच्छी तरह संभालता है। हर row को उसके कुल से normalize करने पर प्रति-class recall मिलता है। Binary confusion matrix चुने गए decision threshold पर निर्भर करता है, इसलिए यह पूरे मॉडल का नहीं, एक operating point का वर्णन करता है। परंपराएँ भी अलग हैं: scikit-learn वास्तविक classes को rows में रखता है, जबकि कुछ पाठ्यपुस्तकें transpose का उपयोग करती हैं।",
+  "u": [
+   "यह निदान करना कि मॉडल किन classes को भ्रमित करता है",
+   "Precision, recall और specificity निकालना",
+   "Business stakeholders को error प्रकार समझाना"
+  ],
+  "x": "एक document processing कंपनी scanned forms को बीस प्रकारों में classify करती है और हर retraining के बाद row-normalized confusion matrix की समीक्षा करती है। इससे पता चला कि दो समान tax forms अक्सर आपस में बदल जाते थे, इसलिए उन्होंने form header से एक feature जोड़ा। Production में उस cell की निगरानी ने फिर पुष्टि की कि सुधार टिका रहा।"
+ },
+ "accuracy": {
+  "n": "Accuracy",
+  "d": "Accuracy सही predictions का अंश है: true positives और true negatives की संख्या को उदाहरणों की कुल संख्या से भाग देने पर। यह सबसे सहज classification metric है और तब अच्छा काम करता है जब classes लगभग संतुलित हों और हर प्रकार की error की लागत समान हो।\n\nइसकी बड़ी कमज़ोरी class imbalance है। अगर केवल 1% transactions fraudulent हैं, तो हर चीज़ के लिए “not fraud” अनुमान लगाने वाला मॉडल कुछ भी न पकड़ते हुए 99% accuracy हासिल कर लेता है। ऐसे मामलों में precision, recall, F1, PR-AUC या balanced accuracy—प्रति-class recall का औसत—अधिक ईमानदार तस्वीर देते हैं। Accuracy यह भी छिपाती है कि कौन सी errors होती हैं और decision threshold पर निर्भर करती है, इसलिए समान accuracy वाले दो मॉडल बहुत अलग व्यवहार कर सकते हैं। एक अच्छी आदत है accuracy की तुलना हमेशा majority-class baseline से करना। Top-k accuracy, जो prediction को सही मानती है अगर वास्तविक class k सबसे ऊँचे स्कोर वाली classes में हो, image classification और recommendation में आम है।",
+  "u": [
+   "संतुलित multiclass image classifiers का मूल्यांकन",
+   "बड़े label spaces के लिए top-k accuracy",
+   "Majority baseline के सामने त्वरित बुनियादी जाँच"
+  ],
+  "x": "Product photos को संतुलित categories में classify करने वाली एक e-commerce टीम top-1 और top-5 accuracy को अपने मुख्य metrics के रूप में रिपोर्ट करती है। इसके विपरीत, अपने returns-fraud मॉडल के लिए वे जानबूझकर accuracy से बचते हैं, क्योंकि fraud दुर्लभ है और एक तुच्छ मॉडल उत्कृष्ट दिखेगा। उस मॉडल का मूल्यांकन इसके बजाय एक निश्चित review क्षमता पर precision से किया जाता है।"
+ },
+ "precision": {
+  "n": "Precision (परिशुद्धता)",
+  "d": "Precision उन positive predictions का अंश है जो वास्तव में positive हैं। यह इस प्रश्न का उत्तर देता है: जब मॉडल alarm बजाता है, तो वह कितनी बार सही होता है? यह सही तरीके से अस्वीकृत negatives और छूटे हुए positives को अनदेखा करता है।\n\nPrecision सबसे अधिक तब मायने रखता है जब false positives महँगे हों, उदाहरण के लिए जब flag किया गया भुगतान किसी वैध ग्राहक को रोक दे या जब हर alert को मानवीय समीक्षा चाहिए। Decision threshold बढ़ाने से आम तौर पर precision बढ़ता है और recall घटता है, इसलिए दोनों को साथ रिपोर्ट करना चाहिए या F1 जैसी एक संख्या में जोड़ना चाहिए। Precision class prior पर निर्भर करता है: वही मॉडल उस population पर कम precision दिखाएगा जहाँ positives अधिक दुर्लभ हों, भले ही classes को अलग करने की उसकी क्षमता न बदली हो। Precision at k, यानी शीर्ष k ranked items में precision, search और review queues के लिए मानक रूप है। जब मॉडल कोई positive prediction नहीं करता तो precision अपरिभाषित होता है, और तब libraries एक चेतावनी के साथ 0 लौटाती हैं।",
+  "u": [
+   "सीमित मानवीय समीक्षा क्षमता वाले alert systems",
+   "Spam filtering जहाँ false positives users को नुकसान पहुँचाते हैं",
+   "Search परिणामों की गुणवत्ता के लिए precision at k"
+  ],
+  "x": "एक bank की anti-money-laundering टीम प्रतिदिन केवल निश्चित संख्या में alerts की जाँच कर सकती है, इसलिए वे मॉडल के threshold को शीर्ष-ranked मामलों में precision अधिकतम करने के लिए tune करते हैं। वे समग्र accuracy के बजाय उस दैनिक क्षमता पर precision रिपोर्ट करते हैं। Precision गिरने पर investigators का समय false alarms पर जाता है, इसलिए इसे साप्ताहिक ट्रैक किया जाता है।"
+ },
+ "recall": {
+  "n": "Recall (रिकॉल)",
+  "d": "Recall, जिसे sensitivity या true positive rate भी कहते हैं, वास्तविक positives का वह अंश है जिसे मॉडल सही पहचानता है। यह इस प्रश्न का उत्तर देता है: जितने मामले हमें पकड़ने चाहिए थे, उनमें से हमने कितने पकड़े?\n\nRecall तब मुख्य metric है जब किसी positive को चूकना महँगा हो, जैसे cancer screening, fraud detection या safety-critical defect inspection में। Decision threshold घटाने से recall बढ़ता है, लेकिन इससे अधिक false positives भी बनते हैं और precision घटता है, इसलिए हर चीज़ को positive अनुमानित करके recall को अकेले हमेशा पूर्ण बनाया जा सकता है। इसलिए इसे precision के साथ या specificity—negative class के recall—के साथ रिपोर्ट करना चाहिए। Precision के विपरीत, recall class prior पर निर्भर नहीं करता, क्योंकि यह केवल वास्तविक positives को देखता है। Retrieval और recommendation में recall at k मापता है कि सभी प्रासंगिक items का कितना अंश शीर्ष k परिणामों में आता है, जो recommender के candidate generation चरण या vector search index के मूल्यांकन का सामान्य metric है।",
+  "u": [
+   "रोग screening जहाँ चूक ख़तरनाक है",
+   "Retrieval candidate generation के लिए recall at k",
+   "Manufacturing lines पर defect detection"
+  ],
+  "x": "एक semiconductor निर्माता अपने wafer defect detector का threshold इस तरह तय करता है कि ज्ञात defects के held-out set पर recall, quality engineers के साथ सहमत लक्ष्य से ऊपर रहे। परिणामी false alarms की समीक्षा एक दूसरे, धीमे inspection चरण में होती है। हर नई product line पर recall दोबारा निकाला जाता है, क्योंकि नए प्रकार के defects अक्सर शुरुआत में छूट जाते हैं।"
+ },
+ "f1": {
+  "n": "F1 Score",
+  "d": "F1 score, precision और recall का harmonic mean है, जो एक ऐसी संख्या देता है जो तभी ऊँची होती है जब दोनों ऊँचे हों। चूँकि harmonic mean पर छोटा मान हावी रहता है, precision 1.0 और recall 0.1 वाले मॉडल का F1 लगभग 0.18 होता है, न कि 0.55 जैसा साधारण औसत देता।\n\nF1 imbalanced classification में और named entity recognition जैसे tasks में आम है, जहाँ true negatives बहुत अधिक और असूचनात्मक होते हैं; F1, TN का बिल्कुल उपयोग नहीं करता। अधिक सामान्य F-beta score recall को precision से β गुना weight देता है, इसलिए F2 recall को और F0.5 precision को प्राथमिकता देता है। Multiclass समस्याओं के लिए macro-F1 प्रति-class F1 का समान औसत लेता है, जो दुर्लभ classes को उजागर करता है, जबकि micro-F1 सभी गिनतियों को मिलाता है और single-label multiclass tasks के लिए accuracy के बराबर होता है। F1 decision threshold पर निर्भर करता है, इसलिए डिफ़ॉल्ट 0.5 पर मॉडलों की तुलना भ्रामक हो सकती है। यह यह भी मानता है कि precision और recall समान रूप से मायने रखते हैं, जो व्यवहार में शायद ही सच होता है।",
+  "u": [
+   "Named entity recognition और extraction का मूल्यांकन",
+   "Imbalanced classification मॉडलों की तुलना",
+   "दुर्लभ classes वाले multiclass tasks के लिए macro-F1"
+  ],
+  "x": "एक legal tech कंपनी अपने clause extraction मॉडल का मूल्यांकन entity-स्तर के F1 से करती है, क्योंकि छूटे हुए clauses और ग़लत extractions दोनों समीक्षा का काम बढ़ाते हैं। वे clause प्रकारों पर macro-F1 ट्रैक करते हैं ताकि दुर्लभ लेकिन महत्वपूर्ण clauses आम clauses के पीछे न छिपें। जब कोई client पूर्णता को प्राथमिकता देता है, तो वे इसके बजाय F2 रिपोर्ट करते हैं।"
+ },
+ "roc": {
+  "n": "ROC Curve",
+  "d": "ROC (receiver operating characteristic) curve दिखाता है कि decision threshold खिसकने पर एक binary classifier true positives और false positives के बीच कैसे संतुलन बनाता है। हर point एक threshold के लिए true positive rate (recall) को false positive rate के सापेक्ष plot करता है, जिससे (0, 0) से (1, 1) तक एक curve बनता है।\n\nएक पूर्ण classifier ऊपरी-बाएँ कोने तक पहुँचता है, जबकि random अनुमान diagonal पर होता है। चूँकि दोनों दरें एक ही class के भीतर निकाली जाती हैं, class अनुपात बदलने पर curve नहीं बदलता, जो इसे datasets के बीच मॉडल की ranking क्षमता की तुलना के लिए उपयोगी बनाता है। यही गुण भारी imbalance में कमज़ोरी है: जब negatives की संख्या positives से कहीं अधिक हो, तो 1% की false positive rate का अर्थ फिर भी हज़ारों false alarms हो सकता है, जो ROC plot पर छोटा दिखता है। वहाँ precision–recall curve अधिक सूचनात्मक है। ROC curve केवल स्कोरों के क्रम पर निर्भर करता है, इसलिए यह इस बारे में कुछ नहीं बताता कि अनुमानित probabilities calibrated हैं या नहीं।",
+  "u": [
+   "Classifier के लिए operating point चुनना",
+   "मॉडलों के बीच ranking गुणवत्ता की तुलना",
+   "चिकित्सा में diagnostic test का मूल्यांकन"
+  ],
+  "x": "एक radiology AI vendor अस्पतालों को अपने fracture detector के ROC curves दिखाता है, साथ में व्यवहार में इस्तेमाल होने वाले operating point पर sensitivity और specificity भी। फिर हर अस्पताल false alarms के प्रति अपनी सहनशीलता से मेल खाता threshold चुन सकता है। Vendor प्रदर्शन में बदलाव उजागर करने के लिए हर scanner निर्माता के लिए curve अलग से रिपोर्ट करता है।"
+ },
+ "rocauc": {
+  "n": "ROC-AUC",
+  "d": "ROC-AUC, ROC curve के नीचे का क्षेत्रफल है, जो सारांशित करता है कि मॉडल सभी thresholds पर positives को negatives से ऊपर कितनी अच्छी तरह rank करता है। इसका सीधा probabilistic अर्थ है: AUC इस probability के बराबर है कि randomly चुने गए positive उदाहरण को randomly चुने गए negative उदाहरण से ऊँचा स्कोर मिले, बराबरी को आधा गिनते हुए।\n\n0.5 का मान random ranking और 1.0 पूर्ण अलगाव दर्शाता है। चूँकि यह threshold-मुक्त है और class अनुपात के प्रति असंवेदनशील, ROC-AUC credit scoring, चिकित्सा और advertising में मॉडलों की तुलना का मानक metric है। यह केवल ranking मापता है, इसलिए अच्छे AUC वाला मॉडल फिर भी ख़राब calibrated हो सकता है। भारी class imbalance में ऊँचा AUC ख़राब precision के साथ मौजूद हो सकता है, क्योंकि क्षेत्रफल का बड़ा हिस्सा अनुपयोगी रूप से ऊँची false positive दरों से आता है; वहाँ PR-AUC या partial AUC अक्सर अधिक प्रासंगिक होता है। Credit scoring में Gini coefficient, 2·AUC − 1 के बराबर है।",
+  "u": [
+   "Credit scoring मॉडलों की तुलना",
+   "Diagnostic tests का threshold-मुक्त मूल्यांकन",
+   "Click मॉडलों की ranking गुणवत्ता ट्रैक करना"
+  ],
+  "x": "एक consumer credit टीम मॉडल के क्षरण की निगरानी के लिए loans के हर मासिक cohort पर ROC-AUC ट्रैक करती है, जिसे Gini (2·AUC − 1) के रूप में रिपोर्ट किया जाता है। गिरावट होने पर loss दरों में calibration समस्याएँ दिखने से पहले data drift की जाँच शुरू होती है। चूँकि AUC calibration को अनदेखा करता है, वे अनुमानित बनाम observed default दरों की अलग से निगरानी भी करते हैं।"
+ },
+ "prcurve": {
+  "n": "Precision–Recall Curve",
+  "d": "Precision–recall curve एक binary classifier के हर संभव decision threshold के लिए precision को recall के सापेक्ष plot करता है। Threshold घटाने से recall बढ़ता है, आम तौर पर precision की कीमत पर, इसलिए curve ठीक-ठीक दिखाता है कि positives के किसी दिए गए हिस्से को पकड़ने के लिए कितने false alarms स्वीकार करने होंगे।\n\nROC curve के विपरीत, PR curve true negatives को अनदेखा करता है, जो इसे तब कहीं अधिक सूचनात्मक बनाता है जब positives दुर्लभ और negatives प्रचुर हों, जैसे fraud, दुर्लभ रोग या information retrieval में। Random classifier का baseline positive दर पर एक क्षैतिज रेखा है, diagonal नहीं, इसलिए curve का अर्थ class अनुपात पर निर्भर करता है। PR curves monotonic नहीं होते: threshold बदलने पर precision ऊपर-नीचे जा सकता है, और सामान्य प्रथा interpolated precision रिपोर्ट करना है, यानी कम से कम उतने बड़े किसी भी recall पर अधिकतम precision। टीमें आम तौर पर curve का उपयोग ऐसा operating threshold चुनने के लिए करती हैं जो न्यूनतम precision या recall की आवश्यकता पूरी करे।",
+  "u": [
+   "दुर्लभ-घटना detectors के लिए thresholds चुनना",
+   "Information retrieval systems का मूल्यांकन",
+   "अत्यधिक imbalanced डेटा पर मॉडलों की तुलना"
+  ],
+  "x": "दुर्भावनापूर्ण logins का पता लगाने वाली एक cybersecurity कंपनी precision–recall curves plot करती है, क्योंकि हमले traffic का बहुत छोटा अंश हैं और ROC curve भ्रामक रूप से अच्छा दिखता था। वे वह threshold चुनते हैं जहाँ precision उस स्तर से ऊपर रहे जिसे उनके security analysts संभाल सकें। Curves हर हफ़्ते दोबारा निकाले जाते हैं, क्योंकि हमलों की दर baseline बदल देती है।"
+ },
+ "prauc": {
+  "n": "PR-AUC",
+  "d": "PR-AUC, precision–recall curve के नीचे का क्षेत्रफल है, जो सारांशित करता है कि classifier सभी thresholds पर कई false positives बनाए बिना positives को कितनी अच्छी तरह ढूँढता है। इसे अक्सर average precision (AP) के रूप में निकाला जाता है—हर threshold पर precision मानों का औसत, recall में वृद्धि से weight देकर—जो curve points के बीच linear interpolation के आशावादी bias से बचता है।\n\nइसका मुख्य गुण यह है कि random-classifier baseline positive दर के बराबर है। 1% positives वाले dataset पर 0.3 का PR-AUC एक उत्कृष्ट परिणाम हो सकता है, जबकि उसी डेटा पर 0.9 का ROC-AUC बहुत कम precision छिपा सकता है। यह PR-AUC को fraud, defect detection और retrieval जैसी दुर्लभ-घटना समस्याओं के लिए पसंदीदा सारांश metric बनाता है, जहाँ queries या classes पर mean average precision (mAP) मानक है। चूँकि baseline प्रसार (prevalence) पर निर्भर करता है, अलग positive दरों वाले datasets के बीच PR-AUC मानों की तुलना नहीं की जा सकती। यह ऊँचे-स्कोर वाले क्षेत्र पर भी ज़ोर देता है, इसलिए यह शीर्ष-ranked कुछ ग़लतियों के प्रति संवेदनशील है।",
+  "u": [
+   "Fraud और anomaly detection मॉडल चयन",
+   "Object detection में mean average precision",
+   "Retrieval और ranking गुणवत्ता का मूल्यांकन"
+  ],
+  "x": "एक payments कंपनी time-based holdout पर average precision से fraud मॉडल चुनती है, क्योंकि fraud transactions के एक प्रतिशत से काफ़ी कम है। AP के साथ positive दर रिपोर्ट करने से stakeholders देख पाते हैं कि मॉडल random से कितना ऊपर है। ROC-AUC फिर भी log किया जाता है, लेकिन इसने candidate मॉडलों के बीच शायद ही कभी अंतर दिखाया।"
+ },
+ "threshold": {
+  "n": "Decision Threshold",
+  "d": "Decision threshold वह cutoff है जो मॉडल के continuous स्कोर या probability को class label में बदलता है: अगर स्कोर कम से कम t हो तो positive अनुमानित करें। 0.5 का डिफ़ॉल्ट केवल एक परंपरा है और शायद ही कभी optimal होता है।\n\nThreshold बदलने से मॉडल बिना retraining के अपने ROC और precision–recall curves पर खिसकता है, false positives और false negatives के बीच अदला-बदली करते हुए। सही मान error लागतों और क्षमता पर निर्भर करता है। अगर probabilities calibrated हैं और false negative की लागत C_FN और false positive की लागत C_FP है, तो लागत न्यूनतम करने वाला नियम है p ≥ C_FP / (C_FP + C_FN) होने पर positive अनुमानित करना। अन्यथा टीमें लक्षित recall, precision या दैनिक alert मात्रा पाने के लिए validation डेटा पर t चुनती हैं। Class संतुलन या स्कोर distribution में drift होने पर threshold पर दोबारा विचार करना होता है। Training डेटा का resampling स्कोरों को और इसलिए उचित threshold को भी खिसका देता है।",
+  "u": [
+   "Alert मात्रा को review टीम की क्षमता से मिलाना",
+   "Fraud और credit में लागत-संवेदी फ़ैसले",
+   "Safety screening के लिए न्यूनतम recall पूरा करना"
+  ],
+  "x": "एक e-commerce fraud टीम calibrated probabilities का उपयोग करके decline threshold इस तरह तय करती है कि fraud नुकसान और खोई हुई वैध बिक्री की अपेक्षित लागत न्यूनतम हो। एक निचला दूसरा threshold सीमा-रेखा वाले orders को अस्वीकार करने के बजाय manual review में भेजता है। मॉडल retrain होने पर दोनों thresholds दोबारा निकाले जाते हैं, क्योंकि स्कोर distribution खिसक जाता है।"
+ },
+ "calibration": {
+  "n": "Probability Calibration",
+  "d": "कोई classifier तब अच्छी तरह calibrated होता है जब उसकी अनुमानित probabilities observed आवृत्तियों से मेल खाती हैं: 0.8 पर अनुमानित सभी मामलों में से लगभग 80% वास्तव में positive होने चाहिए। Calibration, ranking गुणवत्ता से अलग है; किसी मॉडल का AUC उत्कृष्ट होने पर भी वह व्यवस्थित रूप से बहुत ऊँची या बहुत नीची probabilities दे सकता है।\n\nकई मॉडल डिफ़ॉल्ट रूप से miscalibrated होते हैं। Naive Bayes और boosted trees अक्सर probabilities को चरम की ओर धकेलते हैं, random forests चरम से बचने की प्रवृत्ति रखते हैं, और आधुनिक deep networks अक्सर अति-आत्मविश्वासी होते हैं। इसकी जाँच reliability diagram से होती है, जो प्रति bin औसत prediction और observed दर की तुलना करता है, और इसे expected calibration error या Brier score से सारांशित किया जाता है। इसे training के बाद held-out set से ठीक किया जाता है: Platt scaling स्कोरों पर एक logistic function fit करता है, isotonic regression एक लचीला monotonic mapping fit करता है लेकिन उसे अधिक डेटा चाहिए, और temperature scaling neural network logits को एक सीखे गए constant से भाग देता है। जब भी probabilities अपेक्षित लागत या pricing जैसे फ़ैसलों में जाती हैं, calibration मायने रखता है।",
+  "u": [
+   "Risk scores को भरोसेमंद probabilities में बदलना",
+   "Pricing और bidding में expected-value फ़ैसले",
+   "अति-आत्मविश्वासी neural networks के लिए temperature scaling"
+  ],
+  "x": "एक online advertising platform अनुमानित click probabilities को सीधे अपनी bid गणना में इस्तेमाल करता है, इसलिए व्यवस्थित अति-अनुमान का अर्थ होगा हर impression के लिए अधिक भुगतान। हर retraining के बाद वे हाल के holdout पर isotonic calibration fit करते हैं और जाँचते हैं कि हर bucket में अनुमानित और observed click दरें मेल खाती हैं। Calibration drift की दैनिक निगरानी होती है और यह recalibration शुरू करता है।"
+ },
+ "logloss": {
+  "n": "Log Loss (Cross-Entropy)",
+  "d": "Log loss, जिसे cross-entropy loss भी कहते हैं, सही class को दी गई probability के औसत negative log के ज़रिए मापता है कि अनुमानित probabilities वास्तविक labels से कितनी अच्छी तरह मेल खाती हैं। आत्मविश्वासी सही prediction की लगभग कोई कीमत नहीं होती, जबकि आत्मविश्वासी ग़लत prediction बहुत महँगा पड़ता है: घटित होने वाली घटना के लिए 0.01 अनुमान लगाने की कीमत लगभग 4.6 nats है।\n\nयह logistic regression और neural network classifiers के लिए मानक training loss है, क्योंकि इसे न्यूनतम करना डेटा की likelihood को maximize करने के समकक्ष है, और यह एक strictly proper scoring rule है, यानी अपेक्षित loss केवल वास्तविक probabilities रिपोर्ट करने पर ही न्यूनतम होता है। Metric के रूप में यह ranking और calibration दोनों को पुरस्कृत करता है। Language मॉडलों के लिए औसत प्रति-token cross-entropy ही perplexity के पीछे की मात्रा है, जो cross-entropy के exp के बराबर है। असीमित penalty एक व्यावहारिक ख़तरा है: observed घटना के लिए ठीक 0 का एक अकेला prediction अनंत loss देता है, इसलिए implementations probabilities को clip करते हैं, और कुछ ग़लत label वाले उदाहरण हावी हो सकते हैं।",
+  "u": [
+   "Classifiers और language मॉडलों के लिए training loss",
+   "Probabilistic click-through predictions का मूल्यांकन",
+   "जहाँ calibration मायने रखता है वहाँ मॉडलों की तुलना"
+  ],
+  "x": "एक ad-ranking टीम normalized log loss को अपने प्राथमिक offline metric के रूप में इस्तेमाल करती है, क्योंकि bids केवल ranking पर नहीं, सटीक click probabilities पर निर्भर करती हैं। जो मॉडल बदलाव AUC सुधारे लेकिन log loss बिगाड़े, उसकी launch से पहले जाँच होती है। वे औसत में छिपी calibration समस्याओं को पकड़ने के लिए metric को traffic segment के अनुसार भी विभाजित करते हैं।"
+ },
+ "mse": {
+  "n": "MSE / RMSE",
+  "d": "Mean squared error, predictions और वास्तविक मानों के बीच के अंतरों के वर्गों का औसत है, और root mean squared error उसका square root है, जो metric को target की इकाइयों में वापस लाता है। वर्ग करने से बड़ी errors पर छोटी errors की तुलना में कहीं अधिक penalty लगती है।\n\nMSE, regression के लिए डिफ़ॉल्ट loss है क्योंकि linear मॉडलों के लिए यह smooth और convex है, और इसे न्यूनतम करने वाला prediction target का conditional mean है। यह उन मामलों के लिए उपयुक्त है जहाँ बड़ी errors विशेष रूप से हानिकारक हों या noise लगभग Gaussian हो। यही वर्ग करना इसे outliers के प्रति संवेदनशील बनाता है: कुछ चरम points training और मूल्यांकन दोनों पर हावी हो सकते हैं, ऐसी स्थिति में MAE या Huber loss अधिक robust है। RMSE scale-निर्भर है, इसलिए targets के बीच मानों की तुलना नहीं की जा सकती; वहाँ R² या normalized RMSE मदद करता है। ध्यान दें कि RMSE हमेशा कम से कम MAE जितना बड़ा होता है, और उनके बीच बड़ा अंतर संकेत देता है कि कुछ बड़ी errors मौजूद हैं।",
+  "u": [
+   "डिफ़ॉल्ट regression training loss",
+   "जहाँ बड़ी चूकें महँगी हों वहाँ forecasts का मूल्यांकन",
+   "एक ही target पर regression मॉडलों की तुलना"
+  ],
+  "x": "एक energy utility अपने घंटेवार load forecasts का मूल्यांकन RMSE से करती है, क्योंकि बड़ी forecast errors महँगी आख़िरी-मिनट बिजली ख़रीद के लिए मजबूर करती हैं। वे RMSE को MAE के साथ रिपोर्ट करते हैं ताकि operators देख सकें कि errors कई छोटी चूकों से आ रही हैं या कुछ बड़ी चूकों से। Peak घंटों का अलग से मूल्यांकन होता है, क्योंकि वहाँ की errors सबसे महँगी हैं।"
+ },
+ "mae": {
+  "n": "MAE",
+  "d": "Mean absolute error, predictions और वास्तविक मानों के बीच absolute अंतरों का औसत है। यह target की इकाइयों में होता है और समझाना आसान है: 3 का MAE अर्थ है कि predictions औसतन 3 इकाई दूर हैं।\n\nचूँकि errors quadratically के बजाय linearly बढ़ती हैं, MAE, MSE की तुलना में outliers से कहीं कम प्रभावित होता है, और इसे न्यूनतम करने वाला prediction mean के बजाय conditional median है। यह delivery समय जैसे skewed targets के लिए, और ऐसी स्थितियों के लिए उपयुक्त है जहाँ error की हर इकाई की लागत समान हो। Training loss के रूप में इसे optimize करना कठिन है, क्योंकि इसके gradient का परिमाण स्थिर है और शून्य पर अपरिभाषित है; Huber loss, जो शून्य के पास quadratic और एक threshold के बाद linear होता है, एक आम समझौता है। MAE scale-निर्भर है, इसलिए targets के बीच इसकी तुलना नहीं हो सकती; MAPE और MASE जैसे scaled variants इसका समाधान करते हैं, हालाँकि वास्तविक मान शून्य के पास होने पर MAPE विफल हो जाता है।",
+  "u": [
+   "Business stakeholders के लिए forecast accuracy रिपोर्टिंग",
+   "Target में outliers के साथ robust मूल्यांकन",
+   "Skewed मात्राओं का median-उन्मुख अनुमान"
+  ],
+  "x": "एक food delivery platform अपने अनुमानित delivery समय का MAE मिनटों में रिपोर्ट करता है, क्योंकि ग्राहक और operations टीमें इसे सीधे समझती हैं। वे Huber loss से train करते हैं ताकि गंभीर मौसम जैसी वजहों से होने वाली दुर्लभ चरम देरियाँ सामान्य predictions को विकृत न करें। स्थानीय समस्याएँ पकड़ने के लिए MAE को शहर और दिन के समय के अनुसार ट्रैक किया जाता है।"
+ }
+}

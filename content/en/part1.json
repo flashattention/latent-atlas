@@ -1,0 +1,578 @@
+{
+ "eda": {
+  "n": "Exploratory Data Analysis (EDA)",
+  "d": "Exploratory data analysis is the systematic first inspection of a dataset to understand its structure, quality and relationships before any model is built. A practitioner checks column types, row counts, missing-value patterns, duplicates, value ranges and the distribution of each feature, then studies relationships between features and with the target using summary statistics, histograms, box plots, scatter plots and correlation matrices.\n\nThe goal is to form hypotheses and catch problems early: skewed features that need a transform, categorical columns with thousands of levels, label errors, impossible values such as negative ages, or a column that is suspiciously predictive because it encodes the answer. EDA also guides the choice of validation scheme, for example by revealing time ordering or grouped records. A common mistake is running EDA on the full dataset, including the test set, and then making preprocessing decisions from it; this quietly leaks test information into the modeling choices.",
+  "f": "",
+  "u": [
+   "Auditing data quality before model training",
+   "Discovering skew, outliers and missing patterns",
+   "Finding leaky or target-encoding columns early"
+  ],
+  "x": "A retail analytics team receiving a new point-of-sale export first profiles every column, plots weekly sales per store and checks missing rates by region. The analysis reveals that one region reports refunds as negative sales and that a store ID changed format mid-year, both of which are fixed before a demand forecasting model is trained.",
+  "c": "import pandas as pd\nimport numpy as np\n\ndf = pd.read_csv(\"transactions.csv\", parse_dates=[\"date\"])\n\n# Structure and quality\ndf.info()\nsummary = df.describe(include=\"all\").T\nmissing = df.isna().mean().sort_values(ascending=False)\ndupes = df.duplicated().sum()\n\n# Distribution checks: skewness of numeric columns\nskew = df.select_dtypes(\"number\").skew().sort_values()\n\n# Cardinality of categorical columns\ncard = df.select_dtypes(\"object\").nunique().sort_values(ascending=False)\n\n# Correlation with the target (numeric features only)\ncorr = df.select_dtypes(\"number\").corr()[\"target\"].drop(\"target\")\nprint(corr.abs().sort_values(ascending=False).head(10))"
+ },
+ "supervised": {
+  "n": "Supervised Learning",
+  "d": "Supervised learning trains a model to map inputs to known outputs using examples that are labeled with the correct answer. Given pairs (x, y), the algorithm adjusts its parameters to minimize a loss that measures how far its predictions are from the labels, and then applies the learned function to new, unlabeled inputs.\n\nProblems split into classification, where y is a category such as spam or not spam, and regression, where y is a continuous value such as a price. Typical algorithms range from linear and logistic regression to gradient-boosted trees and deep neural networks. Supervised learning is the default choice whenever reliable labels exist and the prediction target is clearly defined.\n\nIts main limitation is the cost and quality of labels: models learn label noise and annotator bias as faithfully as true signal. Performance must be measured on held-out data drawn from the same distribution as production traffic, because low training error alone says nothing about generalization.",
+  "f": "θ* = argmin_θ (1/n) Σᵢ L(f_θ(xᵢ), yᵢ)",
+  "u": [
+   "Email spam classification from labeled messages",
+   "House price prediction from property attributes",
+   "Medical image diagnosis from annotated scans"
+  ],
+  "x": "An insurance company trains a gradient-boosted classifier on years of historical claims labeled as fraudulent or legitimate by investigators. The model scores each new claim within milliseconds, and the team retrains it quarterly because fraud patterns change and newly confirmed labels arrive with a delay.",
+  "c": "from sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import accuracy_score\n\nX, y = load_breast_cancer(return_X_y=True)  # features and labels\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, stratify=y, random_state=0)\n\n# Learn a mapping from inputs to labels\nmodel = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))\nmodel.fit(X_train, y_train)\n\n# Evaluate on unseen labeled data\ny_pred = model.predict(X_test)\nprint(\"test accuracy:\", accuracy_score(y_test, y_pred))"
+ },
+ "unsupervised": {
+  "n": "Unsupervised Learning",
+  "d": "Unsupervised learning finds structure in data that has no labels. Instead of predicting a known target, the algorithm models the data itself: it groups similar points, compresses them into fewer dimensions, estimates their density or flags points that do not fit.\n\nThe main families are clustering (k-means, DBSCAN, Gaussian mixtures, hierarchical clustering), dimensionality reduction (PCA, UMAP, autoencoders) and density estimation or anomaly detection (isolation forest, kernel density). These methods are useful when labels are expensive or undefined, for exploring a new dataset, for creating features for a later supervised model, and for detecting unusual behavior.\n\nThe central difficulty is evaluation. Without ground truth there is no single correct answer, so results depend heavily on feature scaling, the distance metric and hyperparameters such as the number of clusters. Internal scores like the silhouette coefficient measure geometric separation, not business usefulness, so clusters must be validated by domain experts or downstream impact.",
+  "f": "k-means: min Σₖ Σ_{x∈Cₖ} ‖x − μₖ‖²",
+  "u": [
+   "Customer segmentation from purchase behavior",
+   "Anomaly detection in server or sensor metrics",
+   "Compressing embeddings for visualization and search"
+  ],
+  "x": "A subscription streaming service clusters users by viewing-time patterns, genres and device usage to discover audience segments that marketing had not defined. Analysts review each cluster's profile before naming it, and the segment labels are then used as features in churn models and for targeting campaigns.",
+  "c": "import numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.cluster import KMeans\nfrom sklearn.metrics import silhouette_score\n\nrng = np.random.default_rng(0)\nX = np.vstack([rng.normal(loc, 1.0, size=(200, 2)) for loc in (0, 5, 10)])\n\nX_scaled = StandardScaler().fit_transform(X)  # distances need comparable scales\n\n# Try several cluster counts and compare silhouette scores\nfor k in range(2, 6):\n    km = KMeans(n_clusters=k, n_init=10, random_state=0).fit(X_scaled)\n    score = silhouette_score(X_scaled, km.labels_)\n    print(k, round(score, 3))\n\nlabels = KMeans(n_clusters=3, n_init=10, random_state=0).fit_predict(X_scaled)"
+ },
+ "selfsup": {
+  "n": "Self-Supervised Learning",
+  "d": "Self-supervised learning creates its own training signal from unlabeled data by hiding or transforming part of an input and training a model to recover it. Because the labels come from the data itself, no human annotation is needed.\n\nCommon pretext tasks include predicting the next token (GPT-style language models), predicting masked tokens (BERT), reconstructing masked image patches (MAE) and contrastive learning, where two augmented views of the same example are pulled together in embedding space while views of different examples are pushed apart (SimCLR, CLIP). The pretrained network is then fine-tuned or used as a frozen feature extractor for downstream tasks with few labels.\n\nThis paradigm underlies modern foundation models. A frequent misconception is that it is the same as unsupervised clustering; in fact it uses an ordinary supervised loss on automatically generated targets. The choice of pretext task and augmentations strongly determines which features are learned, and a poor choice can teach shortcuts that do not transfer.",
+  "f": "L = −Σ_{i∈masked} log p_θ(x_i | x_{\\masked})",
+  "u": [
+   "Pretraining language models on raw web text",
+   "Learning image features without manual labels",
+   "Building embeddings for retrieval and transfer learning"
+  ],
+  "x": "A medical imaging group has hundreds of thousands of unlabeled chest X-rays but only a few thousand with radiologist labels. They pretrain a vision encoder with a masked-autoencoder objective on all images, then fine-tune it on the labeled subset, which gives better accuracy than training from scratch on the small labeled set.",
+  "c": "import torch\nfrom transformers import AutoTokenizer, AutoModelForMaskedLM, DataCollatorForLanguageModeling\n\ntok = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = AutoModelForMaskedLM.from_pretrained(\"bert-base-uncased\")\n\ntexts = [\"Self-supervised models learn from raw text.\",\n         \"Labels are created by masking input tokens.\"]\nenc = [tok(t) for t in texts]\n\n# The collator masks 15% of tokens and sets labels to the originals\ncollator = DataCollatorForLanguageModeling(tok, mlm=True, mlm_probability=0.15)\nbatch = collator(enc)\n\nout = model(**batch)  # loss is computed only on masked positions\nout.loss.backward()\nprint(\"MLM loss:\", out.loss.item())"
+ },
+ "rl": {
+  "n": "Reinforcement Learning",
+  "d": "Reinforcement learning trains an agent to choose actions that maximize cumulative reward through trial-and-error interaction with an environment. At each step the agent observes a state, takes an action, receives a scalar reward and moves to a new state; it must learn a policy without being told which action was correct.\n\nValue-based methods such as Q-learning and DQN estimate the expected return of each action and act greedily on those estimates. Policy-gradient methods such as REINFORCE and PPO adjust the policy directly in the direction that increases expected return. A discount factor γ weights near-term against long-term reward, and the agent must balance exploring unfamiliar actions with exploiting known good ones.\n\nReinforcement learning fits sequential decision problems: games, robotics and aligning language models with human preferences (RLHF). It is sample-inefficient, sensitive to reward design and often unstable. A poorly specified reward is easily exploited: agents learn behavior that scores well but does not achieve the intended goal.",
+  "f": "Q(s,a) ← Q(s,a) + α[r + γ maxₐ′ Q(s′,a′) − Q(s,a)]",
+  "u": [
+   "Game-playing agents and simulators",
+   "Robot control and locomotion policies",
+   "Fine-tuning LLMs with human preference rewards"
+  ],
+  "x": "A data center operator trains a reinforcement learning controller in a simulator to adjust cooling setpoints based on temperature and load readings, with reward tied to energy use and safety limits. Before deployment, the learned policy runs in recommendation mode, and hard constraints override any action outside approved operating ranges.",
+  "c": "import numpy as np\nimport gymnasium as gym\n\nenv = gym.make(\"FrozenLake-v1\", is_slippery=False)\nQ = np.zeros((env.observation_space.n, env.action_space.n))\nalpha, gamma, eps = 0.1, 0.99, 0.1\n\nfor episode in range(2000):\n    s, _ = env.reset()\n    done = False\n    while not done:\n        # Epsilon-greedy: explore sometimes, otherwise exploit\n        a = env.action_space.sample() if np.random.rand() < eps else int(Q[s].argmax())\n        s2, r, terminated, truncated, _ = env.step(a)\n        done = terminated or truncated\n        target = r + gamma * Q[s2].max() * (not terminated)\n        Q[s, a] += alpha * (target - Q[s, a])  # temporal-difference update\n        s = s2\n\npolicy = Q.argmax(axis=1)"
+ },
+ "split": {
+  "n": "Train / Validation / Test Split",
+  "d": "A train, validation and test split divides data into three disjoint sets with separate jobs: the model learns parameters on the training set, hyperparameters and design choices are tuned on the validation set, and the test set is used once at the end to estimate performance on unseen data.\n\nEvery decision made by looking at a score adapts the model to that data. After many rounds of tuning on one set, its score becomes optimistically biased, so a final untouched set is needed for an honest estimate. Typical ratios are 70/15/15 or 80/10/10, with smaller holdouts when data is plentiful.\n\nThe split must mirror how the model will be used. For time series, split by time so validation and test come after training. When several rows share an entity such as a patient or user, split by group so the same entity never appears on both sides. A random split in these cases produces misleadingly high scores.",
+  "f": "D = D_train ∪ D_val ∪ D_test,  pairwise disjoint",
+  "u": [
+   "Tuning hyperparameters without touching test data",
+   "Reporting an unbiased final performance estimate",
+   "Comparing candidate models on a fixed holdout"
+  ],
+  "x": "A credit risk team trains on loans issued in earlier years, tunes on the following quarter and reports final metrics on the most recent quarter, mimicking how the model will score future applicants. The test quarter is locked in a separate storage location so that analysts cannot accidentally use it during feature selection.",
+  "c": "import numpy as np\nfrom sklearn.model_selection import train_test_split\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(1000, 5))\ny = (X[:, 0] + rng.normal(size=1000) > 0).astype(int)\n\n# First carve out the test set (15%)\nX_tmp, X_test, y_tmp, y_test = train_test_split(\n    X, y, test_size=0.15, stratify=y, random_state=42)\n\n# Then split the remainder into train and validation (about 70/15 overall)\nX_train, X_val, y_train, y_val = train_test_split(\n    X_tmp, y_tmp, test_size=0.15 / 0.85, stratify=y_tmp, random_state=42)\n\nprint(len(X_train), len(X_val), len(X_test))"
+ },
+ "cv": {
+  "n": "Cross-Validation",
+  "d": "Cross-validation estimates how well a model generalizes by training and evaluating it several times on different partitions of the data. In k-fold cross-validation the data is split into k folds; each fold serves once as the validation set while the model is trained on the other k − 1 folds, and the k scores are averaged.\n\nUnlike a single holdout split, every example is used for both training and validation, giving a less noisy estimate plus a standard deviation that shows model stability. Variants handle special structure: stratified k-fold preserves class proportions, group k-fold keeps all rows of one entity in the same fold, and time-series split always validates on data that comes after the training window.\n\nCross-validation costs k times the training time. When it is used to select hyperparameters, the averaged score of the winning configuration is optimistically biased; nested cross-validation or a separate test set is required for an unbiased final estimate.",
+  "f": "CV_k = (1/k) Σᵢ₌₁ᵏ Score(model trained without fold i, fold i)",
+  "u": [
+   "Comparing models on small or medium datasets",
+   "Hyperparameter search with reliable score estimates",
+   "Estimating performance variance across data subsets"
+  ],
+  "x": "A pharmaceutical analytics team with only a few hundred patient records uses grouped 5-fold cross-validation so that all visits from one patient stay in the same fold. They report the mean and standard deviation of the AUC across folds, which reveals that one candidate model is far less stable than its average score suggests.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_classification\nfrom sklearn.model_selection import StratifiedKFold, cross_val_score\nfrom sklearn.ensemble import RandomForestClassifier\n\nX, y = make_classification(n_samples=500, n_features=20, random_state=0)\n\ncv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)\nmodel = RandomForestClassifier(n_estimators=200, random_state=0)\n\n# Train on 4 folds, score on the held-out fold, repeated 5 times\nscores = cross_val_score(model, X, y, cv=cv, scoring=\"roc_auc\")\nprint(f\"AUC = {scores.mean():.3f} +/- {scores.std():.3f}\")"
+ },
+ "stratified": {
+  "n": "Stratified Sampling",
+  "d": "Stratified sampling splits or samples data so that each subset keeps the same proportion of a chosen variable, usually the class label, as the full dataset. The data is divided into strata by that variable, and the same fraction is drawn from each stratum.\n\nIt is mostly used for train/test splits and cross-validation folds. With imbalanced labels, a plain random split can by chance place very few positive examples in a validation fold, which makes metrics noisy or even undefined. Stratification removes this source of variance, so scores across folds are more comparable. It can also be applied to other key variables, such as region or device type, and in regression by stratifying on binned target values.\n\nStratification only controls the distribution of the chosen variable; it does not prevent leakage between related rows. It also does not fix class imbalance itself. A stratified split of a 1% positive dataset still gives each subset about 1% positives.",
+  "f": "n_h = n · (N_h / N)",
+  "u": [
+   "Train/test splits for imbalanced classification",
+   "Stable cross-validation folds for rare classes",
+   "Survey sampling across demographic groups"
+  ],
+  "x": "A fraud detection team with a 0.3% positive rate uses stratified 5-fold cross-validation so that every fold contains a comparable number of fraud cases. Without it, some folds had so few positives that the PR-AUC varied wildly between runs, making model comparisons unreliable.",
+  "c": "import numpy as np\nfrom sklearn.model_selection import train_test_split, StratifiedKFold\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(10_000, 8))\ny = (rng.random(10_000) < 0.02).astype(int)  # 2% positives\n\n# stratify=y keeps the 2% positive rate in both subsets\nX_tr, X_te, y_tr, y_te = train_test_split(\n    X, y, test_size=0.2, stratify=y, random_state=0)\nprint(y_tr.mean(), y_te.mean())\n\n# Stratified folds for cross-validation\nskf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)\nfor tr_idx, va_idx in skf.split(X_tr, y_tr):\n    print(round(y_tr[va_idx].mean(), 4))"
+ },
+ "leak": {
+  "n": "Data Leakage",
+  "d": "Data leakage occurs when information that would not be available at prediction time enters model training, producing evaluation scores that are far better than real-world performance.\n\nLeakage takes several forms. Target leakage happens when a feature is derived from the label or recorded after the outcome, such as a refund flag used to predict fraud. Train-test contamination happens when preprocessing such as scaling, imputation, target encoding or feature selection is fitted on the full dataset before splitting. Temporal leakage happens when a random split lets the model train on the future and predict the past, and group leakage happens when the same customer or patient appears in both training and test data.\n\nTypical symptoms are a suspiciously high score or one feature with overwhelming importance. Prevention means fitting all preprocessing inside a pipeline on the training fold only, splitting by time or group when appropriate, and checking for every feature exactly when its value becomes known.",
+  "f": "",
+  "u": [
+   "Auditing features for post-outcome information",
+   "Building leak-free preprocessing pipelines",
+   "Diagnosing models that fail after deployment"
+  ],
+  "x": "A hospital readmission model reached near-perfect validation AUC, and an audit showed that one feature was a discharge code assigned only after a patient was readmitted. After removing it and rebuilding features from data available at discharge time, the score dropped to a realistic level and matched later production results.",
+  "c": "from sklearn.datasets import make_classification\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.feature_selection import SelectKBest, f_classif\nfrom sklearn.linear_model import LogisticRegression\n\nX, y = make_classification(n_samples=300, n_features=500, n_informative=5, random_state=0)\n\n# WRONG: selecting features on all data leaks label information into CV\nX_leaky = SelectKBest(f_classif, k=20).fit_transform(X, y)\nleaky = cross_val_score(LogisticRegression(max_iter=1000), X_leaky, y, cv=5).mean()\n\n# RIGHT: every fitted step lives inside the pipeline, refit per fold\npipe = Pipeline([(\"scale\", StandardScaler()),\n                 (\"select\", SelectKBest(f_classif, k=20)),\n                 (\"clf\", LogisticRegression(max_iter=1000))])\nclean = cross_val_score(pipe, X, y, cv=5).mean()\nprint(f\"leaky={leaky:.3f}  clean={clean:.3f}\")"
+ },
+ "overfit": {
+  "n": "Overfitting",
+  "d": "Overfitting happens when a model learns patterns specific to its training data, including noise, so that it performs well on training examples but poorly on new data. The tell-tale sign is a large and growing gap between training and validation performance.\n\nIt occurs when model capacity is high relative to the amount and quality of data: deep trees, high-degree polynomials, many features with few rows, or neural networks trained for too long. The model memorizes examples instead of the underlying relationship. Remedies include more data, simpler models, regularization (L1, L2, dropout, weight decay), early stopping, data augmentation and bagging.\n\nOverfitting can also happen at the level of the experiment. Repeatedly tuning hyperparameters or selecting features against the same validation set adapts the whole pipeline to that set. Low training loss is not a problem in itself; very large networks can fit training data perfectly and still generalize well, so the validation curve is the signal to watch.",
+  "f": "Generalization gap = Error_val − Error_train",
+  "u": [
+   "Diagnosing train/validation gaps during training",
+   "Choosing tree depth or polynomial degree",
+   "Deciding when to stop neural network training"
+  ],
+  "x": "A demand forecasting team noticed that a deep gradient-boosted model scored almost perfectly on training weeks but missed badly on recent weeks. Limiting tree depth, raising the minimum samples per leaf and using early stopping on a time-based validation set closed most of the gap.",
+  "c": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import mean_squared_error\n\nrng = np.random.default_rng(0)\nX = rng.uniform(0, 6, size=(300, 1))\ny = np.sin(X[:, 0]) + rng.normal(0, 0.3, size=300)\nX_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=0.3, random_state=0)\n\nfor depth in [2, 4, 8, None]:  # None = grow until leaves are pure\n    tree = DecisionTreeRegressor(max_depth=depth, random_state=0).fit(X_tr, y_tr)\n    tr = mean_squared_error(y_tr, tree.predict(X_tr))\n    va = mean_squared_error(y_va, tree.predict(X_va))\n    # A deep tree drives train error to ~0 while validation error rises\n    print(depth, round(tr, 3), round(va, 3))"
+ },
+ "underfit": {
+  "n": "Underfitting",
+  "d": "Underfitting is when a model is too simple or too constrained to capture the real structure of the data, so it performs poorly on both training and validation sets. Unlike overfitting, there is little gap between the two errors; both are simply high.\n\nCommon causes are a model family that cannot express the relationship (a straight line for a curved pattern), too few or uninformative features, excessive regularization, stopping training too early, or a learning rate so low that the optimizer barely moves. In bias-variance terms, an underfit model has high bias.\n\nFixes go in the opposite direction from overfitting: use a more flexible model, add or engineer features such as interactions and nonlinear transforms, reduce regularization strength, or train longer. A useful check is whether the model can overfit a tiny subset of the data; if even that fails, the problem is likely a bug, a bad learning rate or a broken data pipeline rather than genuine underfitting.",
+  "f": "High bias: Error_train ≈ Error_val ≫ Error_target",
+  "u": [
+   "Diagnosing models that plateau at high training error",
+   "Deciding to add features or model capacity",
+   "Tuning regularization strength that is too strong"
+  ],
+  "x": "A pricing team's linear model for delivery times had similar but disappointing error on training and validation data. Adding distance-by-traffic interaction features and switching to a gradient-boosted model reduced both errors, confirming that the original model lacked capacity rather than data.",
+  "c": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import r2_score\n\nrng = np.random.default_rng(0)\nX = rng.uniform(-3, 3, size=(400, 1))\ny = X[:, 0] ** 2 + rng.normal(0, 0.5, size=400)  # quadratic relationship\nX_tr, X_va, y_tr, y_va = train_test_split(X, y, random_state=0)\n\n# A straight line underfits: low R^2 on both train and validation\nlin = LinearRegression().fit(X_tr, y_tr)\nprint(\"linear\", r2_score(y_tr, lin.predict(X_tr)), r2_score(y_va, lin.predict(X_va)))\n\n# Adding capacity (degree-2 features) fixes the high bias\npoly = make_pipeline(PolynomialFeatures(2), LinearRegression()).fit(X_tr, y_tr)\nprint(\"poly2 \", r2_score(y_tr, poly.predict(X_tr)), r2_score(y_va, poly.predict(X_va)))"
+ },
+ "biasvar": {
+  "n": "Bias–Variance Tradeoff",
+  "d": "The bias-variance tradeoff describes how a model's expected prediction error splits into systematic error from overly simple assumptions (bias) and sensitivity to the particular training sample (variance). For squared error, expected error equals bias squared plus variance plus irreducible noise.\n\nBias measures how far the average prediction, taken over many possible training sets, is from the true function. Variance measures how much predictions change from one training set to another. Simple models such as linear regression tend to have high bias and low variance; flexible models such as deep decision trees have low bias and high variance. Regularization, ensembling and more data shift this balance: bagging mainly lowers variance, while boosting mainly lowers bias.\n\nThe classical picture says test error is U-shaped in model complexity. Modern overparameterized networks can show double descent, where error falls again beyond the point of interpolating the training data, so the tradeoff is a guide rather than a strict law.",
+  "f": "E[(y − f̂(x))²] = Bias[f̂(x)]² + Var[f̂(x)] + σ²",
+  "u": [
+   "Choosing model complexity and regularization",
+   "Explaining why bagging and boosting help",
+   "Diagnosing underfitting versus overfitting"
+  ],
+  "x": "A team forecasting energy load compared a linear model with a fully grown decision tree and found the first missed peaks while the second changed sharply when retrained on different months. Switching to a random forest kept low bias while averaging away much of the variance, giving more stable forecasts.",
+  "c": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\nrng = np.random.default_rng(0)\nf = lambda x: np.sin(2 * x)\nx_test = np.linspace(0, 3, 50)\n\ndef bias_variance(depth, n_runs=200, n=60):\n    preds = []\n    for _ in range(n_runs):  # many independent training sets\n        x = rng.uniform(0, 3, n)\n        y = f(x) + rng.normal(0, 0.3, n)\n        m = DecisionTreeRegressor(max_depth=depth).fit(x[:, None], y)\n        preds.append(m.predict(x_test[:, None]))\n    preds = np.array(preds)\n    bias2 = ((preds.mean(0) - f(x_test)) ** 2).mean()\n    var = preds.var(0).mean()\n    return bias2, var\n\nfor d in [1, 3, 10]:\n    print(d, [round(v, 3) for v in bias_variance(d)])"
+ },
+ "curse": {
+  "n": "Curse of Dimensionality",
+  "d": "The curse of dimensionality refers to the set of problems that appear when data has many features: the volume of the space grows exponentially, so data becomes sparse and many intuitions from two or three dimensions stop working.\n\nTo cover a unit hypercube at a fixed density, the number of samples needed grows exponentially with the number of dimensions. Distances also concentrate: in high dimensions the nearest and farthest neighbors of a point end up at nearly the same distance, which weakens distance-based methods such as k-nearest neighbors, k-means and kernel methods with isotropic kernels. Most of the volume of a high-dimensional ball lies near its surface, and random vectors are almost orthogonal.\n\nIt motivates feature selection, dimensionality reduction and models with strong inductive biases. The curse is less severe than worst-case theory suggests when real data lies near a low-dimensional manifold, which is why deep networks and embeddings work well on images and text despite their huge nominal dimension.",
+  "f": "(d_max − d_min) / d_min → 0  as  dimension → ∞",
+  "u": [
+   "Explaining why k-NN degrades with many features",
+   "Motivating feature selection and PCA",
+   "Choosing distance metrics for embedding search"
+  ],
+  "x": "A team building a nearest-neighbor recommender on raw one-hot product features found that similarity scores barely differed between relevant and irrelevant items. Projecting items into a learned 128-dimensional embedding space restored meaningful distances and made approximate nearest-neighbor search practical.",
+  "c": "import numpy as np\n\nrng = np.random.default_rng(0)\n\nfor d in [2, 10, 100, 1000, 10000]:\n    X = rng.uniform(size=(500, d))\n    q = rng.uniform(size=d)\n    dist = np.linalg.norm(X - q, axis=1)\n    # Relative contrast shrinks: nearest and farthest become similar\n    contrast = (dist.max() - dist.min()) / dist.min()\n    print(f\"d={d:>5}  relative contrast={contrast:.3f}\")\n\n# Random high-dimensional vectors are nearly orthogonal\na, b = rng.normal(size=(2, 10000))\nprint(\"cosine:\", a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))"
+ },
+ "learncurve": {
+  "n": "Learning Curve",
+  "d": "A learning curve plots a model's training and validation performance against the amount of training data (or, in deep learning, against training steps). It shows whether more data, more capacity or more regularization is the most promising next step.\n\nTo build one, the model is trained on increasing subsets of the training set, often with cross-validation at each size, and both scores are recorded. If training and validation errors converge at a high value, the model has high bias, and more data will not help much; a richer model or better features are needed. If a large gap remains between low training error and higher validation error that keeps shrinking as data grows, the model has high variance and collecting more data is likely to pay off.\n\nSmall-sample points are noisy, so averaging across folds matters. The curve must be computed on validation data that matches production; otherwise it only describes performance on a different distribution.",
+  "f": "",
+  "u": [
+   "Deciding whether collecting more data is worthwhile",
+   "Diagnosing high bias versus high variance",
+   "Estimating labeling budget for a new task"
+  ],
+  "x": "A document classification team considered paying for 50,000 more labeled examples. Their learning curve showed validation accuracy had already flattened and matched training accuracy, so they invested in a stronger pretrained encoder instead of additional labeling.",
+  "c": "import numpy as np\nfrom sklearn.datasets import load_digits\nfrom sklearn.model_selection import learning_curve\nfrom sklearn.svm import SVC\n\nX, y = load_digits(return_X_y=True)\n\nsizes, train_scores, val_scores = learning_curve(\n    SVC(gamma=0.001), X, y,\n    train_sizes=np.linspace(0.1, 1.0, 6),  # fractions of the training set\n    cv=5, scoring=\"accuracy\", n_jobs=-1)\n\nfor n, tr, va in zip(sizes, train_scores.mean(1), val_scores.mean(1)):\n    # A shrinking gap with more data signals variance; a high plateau signals bias\n    print(f\"n={n:4d}  train={tr:.3f}  val={va:.3f}  gap={tr - va:.3f}\")"
+ },
+ "drift": {
+  "n": "Data Drift & Distribution Shift",
+  "d": "Distribution shift means the data a model sees in production differs from the data it was trained on, which can silently degrade accuracy. Data drift usually refers to changes in the input distribution P(X); concept drift refers to changes in the relationship P(y | X), where the same inputs now map to different outcomes.\n\nShift has many sources: new user segments, seasonality, product changes, upstream pipeline bugs, sensor recalibration or feedback from the model itself. Monitoring compares production feature distributions with a reference window using statistics such as the population stability index (PSI), Kolmogorov-Smirnov tests or Jensen-Shannon divergence, and tracks prediction distributions and, when labels arrive, actual performance.\n\nResponses include retraining on recent data, time-weighted training and fallback rules. A key pitfall is assuming that detected input drift always hurts accuracy, or that no input drift means the model is fine. Concept drift can occur without any visible change in P(X), so label-based monitoring remains essential.",
+  "f": "PSI = Σᵢ (pᵢ − qᵢ) · ln(pᵢ / qᵢ)",
+  "u": [
+   "Monitoring production feature distributions",
+   "Triggering scheduled or alert-based retraining",
+   "Detecting upstream data pipeline breakages"
+  ],
+  "x": "A payments company computes daily PSI for each model feature against the training window and alerts when a value exceeds an agreed threshold. One alert traced a sudden shift in a transaction-amount feature to a currency conversion change upstream, which was fixed before fraud recall dropped noticeably.",
+  "c": "import numpy as np\nfrom scipy.stats import ks_2samp\n\ndef psi(reference, current, bins=10):\n    # Bin edges from reference quantiles so each bin holds ~10% of reference\n    edges = np.quantile(reference, np.linspace(0, 1, bins + 1))\n    edges[0], edges[-1] = -np.inf, np.inf\n    p = np.histogram(reference, edges)[0] / len(reference)\n    q = np.histogram(current, edges)[0] / len(current)\n    p, q = np.clip(p, 1e-6, None), np.clip(q, 1e-6, None)\n    return float(np.sum((p - q) * np.log(p / q)))\n\nrng = np.random.default_rng(0)\ntrain_amounts = rng.lognormal(3.0, 1.0, 50_000)\nprod_amounts = rng.lognormal(3.3, 1.1, 10_000)  # shifted production data\n\nprint(\"PSI:\", round(psi(train_amounts, prod_amounts), 3))\nprint(\"KS p-value:\", ks_2samp(train_amounts, prod_amounts).pvalue)"
+ },
+ "minmax": {
+  "n": "Min-Max Normalization",
+  "d": "Min-max normalization rescales each feature linearly to a fixed range, usually [0, 1], by subtracting the feature's minimum and dividing by its range. The shape of the distribution is unchanged; only its location and scale move.\n\nIt is useful when a model or downstream step expects bounded inputs, for example pixel intensities fed to a neural network, features for distance-based methods such as k-nearest neighbors, or inputs to algorithms that assume values in a known interval. The minimum and maximum must be learned from the training data only and then applied unchanged to validation, test and production data.\n\nIts main weakness is sensitivity to outliers: a single extreme value sets the range and squeezes all other values into a narrow band. New data outside the training range maps outside [0, 1], which some systems do not expect. Tree-based models are invariant to monotonic rescaling, so they gain nothing from it.",
+  "f": "x′ = (x − x_min) / (x_max − x_min)",
+  "u": [
+   "Scaling image pixel values for neural networks",
+   "Equalizing feature ranges for k-NN and k-means",
+   "Bounding inputs for sigmoid-based models"
+  ],
+  "x": "A computer vision team divides 8-bit pixel values by 255, a fixed min-max scaling, before training a defect detection network on factory images. Because the range is fixed by the sensor format rather than learned from data, the same preprocessing works unchanged on every production camera.",
+  "c": "import numpy as np\nfrom sklearn.preprocessing import MinMaxScaler\n\nrng = np.random.default_rng(0)\nX_train = rng.normal(50, 10, size=(100, 3))\nX_test = rng.normal(50, 10, size=(20, 3))\n\nscaler = MinMaxScaler(feature_range=(0, 1))\nX_train_s = scaler.fit_transform(X_train)  # learn min and max on train only\nX_test_s = scaler.transform(X_test)        # reuse them; may fall outside [0, 1]\n\nprint(scaler.data_min_, scaler.data_max_)\nprint(X_test_s.min(), X_test_s.max())\n\n# Equivalent manual formula\nmanual = (X_train - X_train.min(0)) / (X_train.max(0) - X_train.min(0))\nassert np.allclose(manual, X_train_s)"
+ },
+ "standard": {
+  "n": "Standardization (Z-score)",
+  "d": "Standardization transforms each feature to have zero mean and unit standard deviation by subtracting the mean and dividing by the standard deviation. The result, called a z-score, expresses each value as a number of standard deviations from the average.\n\nMany algorithms are sensitive to feature scale. Gradient descent converges faster when features have similar scales, regularized linear models penalize coefficients fairly only when features are comparable, and PCA, SVMs, k-means and k-nearest neighbors all depend on distances or variances that a large-scale feature would dominate. Standardization is the usual default for these methods.\n\nThe mean and standard deviation must be computed on training data only and reused for all later data. Standardization does not make a distribution normal; a skewed feature stays skewed. It is also influenced by outliers, since both the mean and the standard deviation are, so robust scaling may be better for heavy-tailed data. Tree-based models do not need it.",
+  "f": "z = (x − μ) / σ",
+  "u": [
+   "Preprocessing for linear models and SVMs",
+   "Preparing features before PCA",
+   "Speeding up gradient descent convergence"
+  ],
+  "x": "A marketing analytics team fits a regularized logistic regression on features ranging from age to annual spend in thousands of dollars. Standardizing inside a scikit-learn pipeline ensures that the L2 penalty treats every feature fairly and that the same scaling parameters are stored and applied by the production scoring service.",
+  "c": "import numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\n\nrng = np.random.default_rng(0)\nX_train = np.column_stack([rng.normal(40, 12, 500),       # age\n                           rng.normal(52_000, 15_000, 500)])  # income\ny_train = (X_train[:, 1] > 55_000).astype(int)\n\nscaler = StandardScaler().fit(X_train)   # learns mean_ and scale_\nprint(scaler.mean_, scaler.scale_)\nZ = scaler.transform(X_train)\nprint(Z.mean(0).round(3), Z.std(0).round(3))  # ~0 and ~1\n\n# In practice, keep the scaler inside a pipeline to avoid leakage\nmodel = make_pipeline(StandardScaler(), LogisticRegression()).fit(X_train, y_train)"
+ },
+ "robust": {
+  "n": "Robust Scaling",
+  "d": "Robust scaling centers each feature on its median and divides by its interquartile range (IQR), the distance between the 25th and 75th percentiles. Because the median and IQR ignore the extreme tails, a few outliers do not distort the scaling of the remaining values.\n\nWith standardization or min-max scaling, one huge value can inflate the standard deviation or the range so much that typical values collapse into a tiny interval. Robust scaling keeps the bulk of the data on a sensible scale while outliers stay large after transformation, which is useful when they carry information. It suits spiky features such as transaction amounts or response times in linear models, SVMs or neural networks.\n\nRobust scaling does not remove or cap outliers; it only stops them from setting the scale. If a model is itself sensitive to extreme inputs, clipping or a log transform may still be needed. As with any scaler, the statistics must be fitted on training data only.",
+  "f": "x′ = (x − median) / (Q₃ − Q₁)",
+  "u": [
+   "Scaling transaction amounts with rare huge values",
+   "Preprocessing sensor data with spikes",
+   "Linear models on heavy-tailed features"
+  ],
+  "x": "An observability team trains an anomaly detector on service latency metrics, where rare spikes are thousands of times the typical value. Robust scaling keeps normal latencies well spread out so the model can learn their structure, while the spikes remain clearly extreme after scaling.",
+  "c": "import numpy as np\nfrom sklearn.preprocessing import RobustScaler, StandardScaler\n\nrng = np.random.default_rng(0)\nlatency = rng.normal(100, 10, size=(1000, 1))\nlatency[:5] = 50_000  # a few extreme spikes\n\nrobust = RobustScaler(quantile_range=(25.0, 75.0)).fit(latency)\nstandard = StandardScaler().fit(latency)\n\nprint(\"median, IQR:\", robust.center_, robust.scale_)\ntypical = latency[5:15]\n# Typical values keep a useful spread after robust scaling\nprint(robust.transform(typical).ravel().round(2))\n# With standard scaling they are squashed near the same value\nprint(standard.transform(typical).ravel().round(3))"
+ },
+ "logtf": {
+  "n": "Log Transform",
+  "d": "A log transform replaces a positive value x with log(x), or log(1 + x) when zeros are present. It compresses large values much more than small ones, turning right-skewed, multiplicative data into a more symmetric, additive form.\n\nIncomes, prices, counts and file sizes often span several orders of magnitude. On the log scale, a change from 10 to 100 counts the same as a change from 100 to 1,000, so ratios become differences. This often linearizes relationships, stabilizes variance and tames very large values. Applied to a regression target, it turns a model trained with squared error into one that focuses on relative rather than absolute error.\n\nLog is undefined for zero and negative values, so log1p or a shift is needed, and the shift is an arbitrary choice. When a model is trained on a log target, exponentiating its predictions estimates the median rather than the mean, which biases totals downward unless corrected.",
+  "f": "x′ = log(1 + x)",
+  "u": [
+   "Modeling prices or incomes with heavy right tails",
+   "Stabilizing variance of count features",
+   "Predicting log-sales to focus on relative error"
+  ],
+  "x": "A real estate platform predicts sale prices with a gradient-boosted model trained on log(price), so that a 10% error on a cheap apartment and on a luxury house are penalized similarly. Predictions are converted back with exp, and the team checks aggregate bias on a validation set because the back-transform tends to underestimate mean prices.",
+  "c": "import numpy as np\nfrom sklearn.compose import TransformedTargetRegressor\nfrom sklearn.linear_model import Ridge\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(500, 4))\ny = np.exp(1.0 + X @ np.array([0.5, -0.3, 0.2, 0.1]) + rng.normal(0, 0.3, 500))\n\nprint(\"skew before:\", round(float(((y - y.mean())**3).mean() / y.std()**3), 2))\ny_log = np.log1p(y)  # log(1 + y) handles zeros safely\n\n# Fit on the log target, predict on the original scale automatically\nmodel = TransformedTargetRegressor(regressor=Ridge(alpha=1.0),\n                                   func=np.log1p, inverse_func=np.expm1)\nmodel.fit(X, y)\npred = model.predict(X[:5])"
+ },
+ "boxcox": {
+  "n": "Box-Cox Transform",
+  "d": "The Box-Cox transform is a family of power transformations, indexed by a parameter λ, that makes strictly positive data closer to normally distributed. The value of λ is chosen by maximum likelihood so that the transformed data best fits a normal distribution.\n\nWhen λ = 1 the data is only shifted, λ = 0.5 is close to a square-root transform, and λ = 0 is defined as the natural logarithm. By searching over λ, Box-Cox picks the strength of compression that best reduces skewness and stabilizes variance, instead of assuming a log transform. It is applied to features and targets in linear models and time-series forecasting.\n\nBox-Cox requires strictly positive inputs; for data with zeros or negative values the Yeo-Johnson transform is the usual alternative. The fitted λ must come from training data only. As with the log transform, inverting predictions made on the transformed scale does not give an unbiased estimate of the original mean.",
+  "f": "x(λ) = (x^λ − 1) / λ  if λ ≠ 0;   ln x  if λ = 0",
+  "u": [
+   "Normalizing skewed features for linear models",
+   "Stabilizing variance in time-series forecasting",
+   "Meeting normality assumptions in statistical tests"
+  ],
+  "x": "A utility company forecasting daily electricity consumption applies Box-Cox to the series before fitting an ETS model, because the seasonal swing grows with the overall level. The fitted λ is stored with the model, and forecasts are inverse-transformed before being sent to planners.",
+  "c": "import numpy as np\nfrom scipy import stats\nfrom sklearn.preprocessing import PowerTransformer\n\nrng = np.random.default_rng(0)\nx = rng.lognormal(mean=2.0, sigma=0.8, size=1000)  # positive, right-skewed\n\n# SciPy: returns transformed data and the maximum-likelihood lambda\nx_bc, lam = stats.boxcox(x)\nprint(\"lambda:\", round(lam, 3), \"skew:\", round(stats.skew(x), 2), \"->\", round(stats.skew(x_bc), 2))\n\n# scikit-learn: fit on train, reuse lambda, then standardize the output\npt = PowerTransformer(method=\"box-cox\", standardize=True)\nX_train = x[:800].reshape(-1, 1)\nX_test = x[800:].reshape(-1, 1)\nZ_train = pt.fit_transform(X_train)\nZ_test = pt.transform(X_test)\nX_back = pt.inverse_transform(Z_test)  # back to the original scale"
+ },
+ "impute": {
+  "n": "Missing Value Imputation",
+  "d": "Missing value imputation fills in absent entries in a dataset for models that cannot handle them. The replacement can be a simple statistic, a value predicted from other features or a model-specific default.\n\nSimple strategies use the mean or median for numeric columns and the most frequent value or a dedicated \"missing\" category for categorical ones. Advanced methods use similar rows (k-nearest neighbors) or iteratively regress each feature on the others (MICE). Adding a binary indicator that marks which values were missing is often valuable, because the fact that a value is missing can itself be predictive.\n\nThe right method depends on why data is missing: completely at random, at random given other features, or not at random, where missingness depends on the unseen value itself. Imputation statistics must be fitted on training data only. Mean imputation shrinks variance and weakens correlations, and gradient-boosting libraries such as LightGBM and XGBoost handle missing values natively, so imputation is not always needed.",
+  "f": "x̂ᵢⱼ = median{ x_kj : x_kj observed in training data }",
+  "u": [
+   "Filling missing lab results in clinical data",
+   "Handling optional form fields in applications",
+   "Preparing incomplete sensor data for linear models"
+  ],
+  "x": "A lending team scoring loan applications finds that many applicants leave the employment-length field empty. They impute the median within a training-only pipeline and add a missing-indicator feature, which turns out to be predictive because applicants who skip the field default at a different rate.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.experimental import enable_iterative_imputer  # noqa: F401\nfrom sklearn.impute import IterativeImputer\n\nX_train = pd.DataFrame({\"age\": [25, np.nan, 47, 33, np.nan],\n                        \"income\": [40_000, 52_000, np.nan, 61_000, 38_000]})\nX_test = pd.DataFrame({\"age\": [np.nan, 29], \"income\": [45_000, np.nan]})\n\n# Median imputation plus binary columns marking what was missing\nsimple = SimpleImputer(strategy=\"median\", add_indicator=True)\nXtr_simple = simple.fit_transform(X_train)   # learn medians on train only\nXte_simple = simple.transform(X_test)\n\n# Model-based imputation: each feature regressed on the others\niterative = IterativeImputer(max_iter=10, random_state=0)\nXtr_iter = iterative.fit_transform(X_train)\nXte_iter = iterative.transform(X_test)"
+ },
+ "outlier": {
+  "n": "Outlier Handling",
+  "d": "Outlier handling is the process of detecting data points that are far from the bulk of the distribution and deciding whether to keep, correct, cap, transform or remove them. The decision depends on whether it is an error or a genuine rare event.\n\nDetection rules include z-scores (for example |z| > 3), the IQR rule that flags values beyond 1.5 × IQR outside the quartiles, and multivariate methods such as isolation forest, local outlier factor or Mahalanobis distance, which catch points that look normal on each feature separately but unusual in combination. Data-entry errors can then be corrected or removed, while legitimate extremes can be capped, log-transformed or handled with robust losses such as Huber.\n\nOutliers matter most for models based on squared error, means and distances, and less for trees. A frequent mistake is to delete outliers automatically: in fraud detection, fault monitoring or rare-disease diagnosis, the outliers may be exactly the cases the model needs to learn.",
+  "f": "Outlier if x < Q₁ − 1.5·IQR  or  x > Q₃ + 1.5·IQR",
+  "u": [
+   "Cleaning data-entry errors in tabular datasets",
+   "Protecting linear regression from extreme points",
+   "Flagging unusual sensor readings for review"
+  ],
+  "x": "An e-commerce analytics team found order values of exactly 9,999,999 caused by a test account and a default placeholder in one system. They removed those rows as errors, but kept genuine large business orders and capped their influence with a Huber loss in the revenue forecasting model.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.ensemble import IsolationForest\n\nrng = np.random.default_rng(0)\ndf = pd.DataFrame({\"amount\": np.r_[rng.normal(100, 20, 995), [900, 1200, -50, 5000, 3000]],\n                   \"items\": np.r_[rng.integers(1, 6, 995), [1, 2, 1, 3, 40]]})\n\n# Univariate IQR rule\nq1, q3 = df[\"amount\"].quantile([0.25, 0.75])\niqr = q3 - q1\niqr_flag = (df[\"amount\"] < q1 - 1.5 * iqr) | (df[\"amount\"] > q3 + 1.5 * iqr)\n\n# Multivariate detection: isolation forest scores combinations of features\niso = IsolationForest(contamination=0.01, random_state=0)\niso_flag = iso.fit_predict(df[[\"amount\", \"items\"]]) == -1  # -1 means outlier\n\nprint(iqr_flag.sum(), iso_flag.sum())\nreview = df[iqr_flag | iso_flag]  # inspect before deciding what to do"
+ },
+ "clipwin": {
+  "n": "Clipping & Winsorizing",
+  "d": "Clipping and winsorizing limit extreme values by replacing anything beyond a chosen threshold with the threshold itself. Clipping uses fixed bounds, such as 0 and 1,000; winsorizing sets the bounds at percentiles of the data, such as the 1st and 99th, so the cut adapts to each feature.\n\nUnlike deleting outliers, both methods keep every row and its ordering among non-extreme values while limiting how much a single point can pull a mean, a regression coefficient or a gradient. They are common for heavy-tailed features in linear models and neural networks, for robust summary statistics, and for financial ratios in which a few firms have enormous values.\n\nPercentile thresholds must be computed on training data and reused unchanged. Capping erases information about how extreme a value was, which is harmful if the extremes are the signal of interest, as in fraud. Tree models are largely unaffected by monotonic tails, so the step is often unnecessary for them.",
+  "f": "x′ = min(max(x, q_low), q_high)",
+  "u": [
+   "Limiting heavy-tailed features for linear regression",
+   "Robust averages of financial ratios",
+   "Stabilizing neural network inputs with rare spikes"
+  ],
+  "x": "A quantitative research team winsorizes company valuation ratios at the 1st and 99th percentiles within each month before fitting cross-sectional regressions. This prevents a handful of firms with near-zero earnings and enormous ratios from dominating the coefficient estimates.",
+  "c": "import numpy as np\nfrom scipy.stats.mstats import winsorize\n\nrng = np.random.default_rng(0)\nx_train = np.r_[rng.normal(50, 10, 990), rng.normal(500, 100, 10)]\nx_test = np.array([30.0, 60.0, 900.0])\n\n# Winsorize: thresholds at the 1st and 99th percentiles of TRAINING data\nlo, hi = np.percentile(x_train, [1, 99])\nx_train_w = np.clip(x_train, lo, hi)\nx_test_w = np.clip(x_test, lo, hi)   # reuse train thresholds\nprint(round(lo, 1), round(hi, 1), x_test_w)\n\n# Fixed-bound clipping, e.g. a known valid range\nratio = np.clip(rng.normal(0.5, 0.4, 100), 0.0, 1.0)\n\n# SciPy helper that winsorizes 1% from each tail in place of the extremes\nx_w2 = winsorize(x_train, limits=[0.01, 0.01])"
+ },
+ "onehot": {
+  "n": "One-Hot Encoding",
+  "d": "One-hot encoding converts a categorical variable with k categories into k binary columns, exactly one of which is 1 for each row. It lets models that require numeric input use categories without implying any order or distance between them.\n\nAssigning integers such as red = 1, green = 2, blue = 3 would tell a linear model or neural network that blue is three times red and that green lies between them. One-hot vectors avoid this, giving each category its own coefficient. For linear models with an intercept, one column is often dropped to avoid perfect multicollinearity, the so-called dummy variable trap. Encoders should be fitted on training data and handle unseen categories.\n\nThe main limitation is dimensionality: a column with tens of thousands of values, such as a user ID or ZIP code, produces a huge sparse matrix and very few examples per column. Alternatives for high cardinality include target encoding, frequency encoding, hashing or learned embeddings.",
+  "f": "onehot(c) = e_c ∈ {0,1}ᵏ,  Σⱼ e_cⱼ = 1",
+  "u": [
+   "Encoding low-cardinality categories for linear models",
+   "Representing product type or day of week",
+   "Preparing nominal features for neural networks"
+  ],
+  "x": "An airline's pricing team encodes cabin class, booking channel and departure weekday as one-hot features in a logistic regression that predicts no-shows. The encoder runs inside the deployed pipeline with unknown categories ignored, so a newly launched booking channel does not break scoring.",
+  "c": "import pandas as pd\nfrom sklearn.preprocessing import OneHotEncoder\n\nX_train = pd.DataFrame({\"color\": [\"red\", \"green\", \"blue\", \"green\"],\n                        \"size\": [\"S\", \"M\", \"L\", \"M\"]})\nX_test = pd.DataFrame({\"color\": [\"blue\", \"purple\"], \"size\": [\"S\", \"XL\"]})\n\nenc = OneHotEncoder(handle_unknown=\"ignore\",   # unseen categories -> all zeros\n                    sparse_output=False)\nXtr = enc.fit_transform(X_train)               # learn categories on train only\nXte = enc.transform(X_test)\n\nprint(enc.get_feature_names_out())\nprint(Xte)\n\n# For linear models with an intercept, drop one level per feature\nenc_drop = OneHotEncoder(drop=\"first\", sparse_output=False).fit(X_train)\n\n# Quick pandas alternative for exploration\ndummies = pd.get_dummies(X_train, columns=[\"color\", \"size\"])"
+ },
+ "targetenc": {
+  "n": "Target Encoding",
+  "d": "Target encoding replaces each category with a statistic of the target computed over rows of that category, typically the mean of the label, so a high-cardinality feature becomes a single informative numeric column.\n\nFor a binary target, a city becomes the fraction of positive outcomes in that city. Rare categories give noisy means, so the estimate is smoothed toward the global mean with a weight that grows with the category count. This keeps dimensionality low even for features such as merchant ID or ZIP code, and suits both linear and tree models.\n\nThe major risk is target leakage: if a row's own label contributes to its encoding, the model sees a distorted version of the answer and overfits. The safe approach is out-of-fold encoding, where each training row is encoded using statistics from other folds only, then fitting the encoder on all training data to transform test data. scikit-learn's TargetEncoder applies this cross-fitting automatically in fit_transform.",
+  "f": "enc(c) = (n_c · ȳ_c + m · ȳ) / (n_c + m)",
+  "u": [
+   "Encoding merchant or ZIP code for fraud models",
+   "Compressing high-cardinality IDs for linear models",
+   "Click-through prediction with many advertiser categories"
+  ],
+  "x": "An online marketplace predicts whether a listing will sell within a week using seller ID, which has hundreds of thousands of values. Out-of-fold smoothed target encoding turns the ID into one column reflecting each seller's historical sell-through, while heavy smoothing keeps new sellers close to the global average.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.preprocessing import TargetEncoder\nfrom sklearn.linear_model import LogisticRegression\n\nrng = np.random.default_rng(0)\ncities = rng.choice([f\"city_{i}\" for i in range(300)], size=5000)\ny = (rng.random(5000) < 0.2 + 0.3 * (pd.Series(cities).str[-1] == \"7\")).astype(int)\nX_train = pd.DataFrame({\"city\": cities})\nX_test = pd.DataFrame({\"city\": [\"city_7\", \"city_12\", \"city_999\"]})\n\n# fit_transform uses internal cross-fitting so a row never sees its own label\nenc = TargetEncoder(target_type=\"binary\", smooth=\"auto\", cv=5, random_state=0)\nXtr_enc = enc.fit_transform(X_train, y)\n\n# transform uses statistics from the full training set; unseen city -> global mean\nXte_enc = enc.transform(X_test)\n\nclf = LogisticRegression().fit(Xtr_enc, y)"
+ },
+ "freqenc": {
+  "n": "Frequency Encoding",
+  "d": "Frequency encoding replaces each category with how often it appears in the training data, either as a raw count or as a proportion. It turns a categorical column of any cardinality into one numeric feature without using the target.\n\nThe intuition is that popularity is often informative on its own: frequent merchants, common device models or popular products may behave differently from rare ones. Because it ignores labels, it carries no target-leakage risk, is cheap and handles very high cardinality. It pairs well with tree models, which can split on count thresholds, and is often combined with other encodings.\n\nIts main limitation is that categories with the same frequency become indistinguishable, even if they behave very differently. The counts must come from training data and be stored; unseen categories in production typically receive a count of zero or a small default. If the data volume changes over time, raw counts drift, so normalized frequencies are usually safer.",
+  "f": "enc(c) = count(c) / N",
+  "u": [
+   "Encoding device model or browser in click logs",
+   "Capturing popularity of merchants or products",
+   "Cheap leakage-free encoding for gradient boosting"
+  ],
+  "x": "An ad-tech team adds frequency-encoded publisher domain and app ID to a LightGBM click-through model. The counts are computed from a fixed training window and stored as a lookup table in the feature service, with unseen domains mapped to zero so that new publishers are treated as rare.",
+  "c": "import pandas as pd\n\nX_train = pd.DataFrame({\"device\": [\"iphone14\", \"pixel7\", \"iphone14\", \"galaxyS23\",\n                                   \"iphone14\", \"pixel7\", \"moto_g\"]})\nX_test = pd.DataFrame({\"device\": [\"pixel7\", \"new_phone\"]})\n\n# Learn normalized frequencies on training data only\nfreq = X_train[\"device\"].value_counts(normalize=True)\n\nX_train[\"device_freq\"] = X_train[\"device\"].map(freq)\n# Unseen categories get 0 so they are treated as rare\nX_test[\"device_freq\"] = X_test[\"device\"].map(freq).fillna(0.0)\n\nprint(freq.to_dict())\nprint(X_test)"
+ },
+ "binning": {
+  "n": "Binning (Discretization)",
+  "d": "Binning converts a continuous feature into a categorical one by dividing its range into intervals and assigning each value to the interval it falls in. Common schemes are equal-width bins, equal-frequency (quantile) bins and bins chosen by domain knowledge or by a decision tree.\n\nBinning lets a linear model capture nonlinear effects, because each bin gets its own coefficient, and it limits the influence of outliers, which simply fall into the end bins. Binned features are easy to explain, which is why credit scorecards assign points per bin. Quantile binning is robust to skew, while equal-width binning can leave some bins almost empty.\n\nThe cost is lost information: values near a boundary are treated as different, while values at opposite ends of a bin are treated as identical. The number and placement of bins are additional hyperparameters that can overfit. Flexible models such as gradient-boosted trees learn their own split points, so binning rarely helps them.",
+  "f": "bin(x) = i  such that  b_{i−1} ≤ x < b_i",
+  "u": [
+   "Building points-based credit scorecards",
+   "Letting linear models capture nonlinear effects",
+   "Grouping ages or incomes into report categories"
+  ],
+  "x": "A bank's credit risk team bins applicant age, income and utilization into quantile-based groups and fits a logistic regression scorecard. Regulators and loan officers can read the points assigned to each bin directly, which a black-box model would not allow.",
+  "c": "import numpy as np\nfrom sklearn.preprocessing import KBinsDiscretizer\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.pipeline import make_pipeline\n\nrng = np.random.default_rng(0)\nX = rng.uniform(18, 80, size=(1000, 1))                # age\ny = np.where(X[:, 0] < 30, 1.0, np.where(X[:, 0] < 60, 2.5, 1.5)) + rng.normal(0, 0.2, 1000)\n\n# Quantile bins with one-hot output: one coefficient per bin\nbinner = KBinsDiscretizer(n_bins=6, encode=\"onehot-dense\", strategy=\"quantile\")\nmodel = make_pipeline(binner, LinearRegression()).fit(X, y)\nprint(binner.bin_edges_[0].round(1))\n\n# A plain linear fit on raw age cannot capture the step-shaped effect\nraw = LinearRegression().fit(X, y)\nprint(model.score(X, y), raw.score(X, y))"
+ },
+ "featureeng": {
+  "n": "Feature Engineering",
+  "d": "Feature engineering is the creation of new input variables from raw data so that a model can learn the relevant pattern more easily. It encodes domain knowledge that the model would otherwise need much more data, or a much more flexible form, to discover.\n\nTypical techniques include ratios (debt divided by income), interactions, date parts such as hour of day, aggregates over a customer's history (orders in the last 30 days), distances between locations and log transforms. For tabular data, well-designed features often matter more than the choice between strong algorithms, and they also make models easier to explain.\n\nEvery feature must be computable at prediction time using only information available then; aggregates that peek into the future are a classic source of leakage. The same code should produce features for training and serving, often through a feature store, to avoid training-serving skew. Deep learning reduces manual feature engineering for images and text but not for most tabular problems.",
+  "f": "",
+  "u": [
+   "Customer-history aggregates for churn prediction",
+   "Ratio and interaction features for credit scoring",
+   "Time and location features for delivery estimates"
+  ],
+  "x": "A food delivery company improved its delivery-time model by adding features such as restaurant preparation time over the last hour, courier distance to the restaurant and current order backlog. These features are computed in a shared feature store, so the training pipeline and the real-time prediction service use exactly the same definitions.",
+  "c": "import pandas as pd\nimport numpy as np\n\norders = pd.DataFrame({\n    \"customer_id\": [1, 1, 2, 2, 2],\n    \"ts\": pd.to_datetime([\"2024-01-02 09:10\", \"2024-01-09 19:45\", \"2024-01-03 12:00\",\n                          \"2024-01-04 13:30\", \"2024-01-20 08:05\"]),\n    \"amount\": [25.0, 40.0, 12.0, 18.0, 30.0],\n    \"items\": [2, 3, 1, 2, 2]})\n\n# Row-level features\norders[\"hour\"] = orders[\"ts\"].dt.hour\norders[\"is_weekend\"] = orders[\"ts\"].dt.dayofweek >= 5\norders[\"amount_per_item\"] = orders[\"amount\"] / orders[\"items\"]\norders[\"log_amount\"] = np.log1p(orders[\"amount\"])\n\n# History features use only PAST orders of the same customer (no leakage)\norders = orders.sort_values([\"customer_id\", \"ts\"])\ng = orders.groupby(\"customer_id\")\norders[\"prev_order_count\"] = g.cumcount()\norders[\"prev_avg_amount\"] = g[\"amount\"].transform(lambda s: s.shift(1).expanding().mean())\norders[\"days_since_prev\"] = g[\"ts\"].diff().dt.days"
+ },
+ "lagfeat": {
+  "n": "Lag Features",
+  "d": "Lag features are past values of a time series used as inputs for predicting its current or future value. A lag-k feature at time t is simply the observed value at time t − k, so the model can learn autocorrelation and seasonality from history.\n\nThey turn forecasting into ordinary supervised learning. Useful lags reflect the data's rhythm: lag 1 for momentum, lag 7 for weekly cycles in daily data, lag 24 or 168 for hourly data, and lag 52 for weekly data with yearly seasonality. Lags of related series, such as price, are also common.\n\nThe forecast horizon constrains which lags are legal. If predictions are made seven days ahead, any lag shorter than seven days is not available at prediction time, and using it leaks future information and inflates validation scores. Lagging also creates missing values at the start of each series, and splits must respect time order.",
+  "f": "lag_k(y)_t = y_{t−k}",
+  "u": [
+   "Daily sales forecasting with gradient-boosted trees",
+   "Hourly electricity load prediction",
+   "Predicting next-day demand per store and item"
+  ],
+  "x": "A grocery chain forecasts item demand per store 14 days ahead with LightGBM, using lags of 14, 21, 28 and 364 days computed per store-item pair. Shorter lags were deliberately excluded because they would not exist at the time the replenishment order is placed.",
+  "c": "import pandas as pd\nimport numpy as np\n\nrng = np.random.default_rng(0)\ndates = pd.date_range(\"2024-01-01\", periods=120, freq=\"D\")\ndf = pd.DataFrame({\"store\": np.repeat([\"A\", \"B\"], 120),\n                   \"date\": np.tile(dates, 2),\n                   \"sales\": rng.poisson(50, 240)})\ndf = df.sort_values([\"store\", \"date\"])\n\nhorizon = 7  # we forecast 7 days ahead, so lags must be >= 7\nfor k in [7, 14, 28]:\n    # shift within each store so series do not bleed into each other\n    df[f\"sales_lag_{k}\"] = df.groupby(\"store\")[\"sales\"].shift(k)\n\ntrain = df.dropna()  # first rows of each series lack history\nprint(train.head())"
+ },
+ "rollfeat": {
+  "n": "Rolling Window Features",
+  "d": "Rolling window features summarize a time series over a sliding window of recent observations, for example the mean, standard deviation, minimum, maximum or sum of the last seven days. They capture the local level, trend and volatility of a series more smoothly than single lag values.\n\nA rolling mean reduces noise and shows the recent level; a rolling standard deviation measures recent volatility; rolling counts or sums capture activity, such as transactions in the past hour. Exponentially weighted means give more weight to recent points without a hard cut-off. Several window lengths, such as 7, 28 and 90 days, are usually combined per entity.\n\nThe window must end at or before the last information available at prediction time. A rolling mean that includes the current target value, or any value inside the forecast horizon, leaks the answer. The standard safe pattern is to shift the series by the horizon first and then compute the rolling statistic.",
+  "f": "roll_mean_w(y)_t = (1/w) Σ_{i=1}^{w} y_{t−i}",
+  "u": [
+   "Transaction velocity features for fraud detection",
+   "Recent average demand for sales forecasting",
+   "Volatility features for financial risk models"
+  ],
+  "x": "A card issuer computes, for each card, the number and total amount of transactions in the last 1 hour, 24 hours and 7 days, and compares the current amount with the 30-day rolling average. These velocity features are maintained in a streaming system so that they are fresh within seconds for real-time fraud scoring.",
+  "c": "import pandas as pd\nimport numpy as np\n\nrng = np.random.default_rng(0)\ndf = pd.DataFrame({\"store\": np.repeat([\"A\", \"B\"], 90),\n                   \"date\": np.tile(pd.date_range(\"2024-01-01\", periods=90), 2),\n                   \"sales\": rng.poisson(40, 180).astype(float)})\ndf = df.sort_values([\"store\", \"date\"])\n\ng = df.groupby(\"store\")[\"sales\"]\n# shift(1) first so the window only contains past values\npast = g.shift(1)\nfor w in [7, 28]:\n    df[f\"roll_mean_{w}\"] = past.groupby(df[\"store\"]).transform(lambda s: s.rolling(w).mean())\n    df[f\"roll_std_{w}\"] = past.groupby(df[\"store\"]).transform(lambda s: s.rolling(w).std())\n\n# Exponentially weighted mean of past values\ndf[\"ewm_7\"] = past.groupby(df[\"store\"]).transform(lambda s: s.ewm(span=7).mean())"
+ },
+ "imbalance": {
+  "n": "Class Imbalance",
+  "d": "Class imbalance occurs when one class is much rarer than the others, such as fraud, defects or disease, so a model can reach high accuracy by always predicting the majority class while being useless for the cases that matter.\n\nDuring training, the loss is dominated by majority examples, and the model may rarely predict the minority class. During evaluation, accuracy becomes misleading; precision, recall, F1, PR-AUC and cost-based metrics are more informative. PR-AUC is especially useful because its random baseline equals the positive rate, which makes small gains visible. Common remedies are class weights, resampling (oversampling, SMOTE, undersampling), cost-based threshold choice and collecting more minority examples.\n\nImbalance alone is not always the problem. A well-specified probabilistic model trained on imbalanced data can still produce good rankings and calibrated probabilities; often only the threshold needs to change. Resampling changes the predicted probabilities, so they must be recalibrated if the outputs are used as real probabilities.",
+  "f": "PR-AUC random baseline = P(y = 1)",
+  "u": [
+   "Fraud detection with rare positive transactions",
+   "Manufacturing defect detection from sensor data",
+   "Rare disease screening from patient records"
+  ],
+  "x": "A manufacturing quality team predicts defective parts, which make up a fraction of a percent of output. They train with class weights, evaluate with PR-AUC and recall at a fixed inspection budget, and choose a threshold so that the number of flagged parts matches what inspectors can review each shift.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_classification\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import accuracy_score, average_precision_score, recall_score\n\nX, y = make_classification(n_samples=20_000, weights=[0.99, 0.01], random_state=0)\nX_tr, X_te, y_tr, y_te = train_test_split(X, y, stratify=y, random_state=0)\n\n# Trivial baseline: always predict the majority class\nprint(\"all-negative accuracy:\", accuracy_score(y_te, np.zeros_like(y_te)))\n\nclf = LogisticRegression(class_weight=\"balanced\", max_iter=1000).fit(X_tr, y_tr)\nproba = clf.predict_proba(X_te)[:, 1]\n\nprint(\"PR-AUC:\", average_precision_score(y_te, proba), \"baseline:\", y_te.mean())\n# Choose the threshold from costs or review capacity, not the default 0.5\nthr = np.quantile(proba, 0.98)  # flag the top 2% for review\nprint(\"recall@top2%:\", recall_score(y_te, proba >= thr))"
+ },
+ "smote": {
+  "n": "SMOTE Oversampling",
+  "d": "SMOTE (Synthetic Minority Over-sampling Technique) balances a dataset by creating new synthetic minority-class examples instead of duplicating existing ones. Each synthetic point is placed at a random position on the line segment between a minority example and one of its k nearest minority neighbors.\n\nCompared with random oversampling, which copies rows and encourages a model to memorize them, SMOTE fills in the region around minority examples and gives classifiers a broader decision region for the rare class. Variants include Borderline-SMOTE, ADASYN and SMOTE-NC for mixed numeric and categorical features.\n\nSMOTE must be applied only to the training fold, inside the cross-validation loop; resampling before splitting leaks synthetic copies of validation points into training. Interpolation assumes that the space between minority points is also minority territory, which can fail with overlapping classes, noisy labels or categorical features. In practice, class weights or threshold tuning with gradient boosting often perform as well, and SMOTE distorts predicted probabilities.",
+  "f": "x_new = xᵢ + λ · (x_nn − xᵢ),  λ ~ U(0, 1)",
+  "u": [
+   "Balancing rare fraud cases for classical classifiers",
+   "Augmenting minority classes in small tabular datasets",
+   "Rare failure prediction from equipment sensors"
+  ],
+  "x": "A telecom team predicting rare network equipment failures applies SMOTE inside an imbalanced-learn pipeline so that each cross-validation fold is resampled independently. They compare it against class weighting and keep whichever yields better PR-AUC on an untouched, time-based test period.",
+  "c": "from sklearn.datasets import make_classification\nfrom sklearn.model_selection import StratifiedKFold, cross_val_score\nfrom sklearn.linear_model import LogisticRegression\nfrom imblearn.over_sampling import SMOTE\nfrom imblearn.pipeline import Pipeline  # resamples only during fit\n\nX, y = make_classification(n_samples=5000, weights=[0.97, 0.03],\n                           n_informative=5, random_state=0)\n\npipe = Pipeline([\n    (\"smote\", SMOTE(k_neighbors=5, sampling_strategy=0.3, random_state=0)),\n    (\"clf\", LogisticRegression(max_iter=1000)),\n])\n\ncv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)\n# SMOTE is fitted on each training fold only; validation folds stay untouched\nscores = cross_val_score(pipe, X, y, cv=cv, scoring=\"average_precision\")\nprint(scores.mean())"
+ },
+ "undersample": {
+  "n": "Undersampling",
+  "d": "Undersampling balances an imbalanced dataset by removing examples from the majority class rather than adding minority examples. The simplest form keeps all minority rows and a random subset of majority rows.\n\nIt cuts training time and memory, which matters for click logs with hundreds of millions of rows, and makes the minority class weigh more in the loss. Informed variants such as Tomek links and edited nearest neighbors remove majority points near the boundary or likely mislabeled. Ensembles such as balanced random forests or EasyEnsemble train many models on different undersampled subsets so that little information is lost overall.\n\nThe obvious cost is discarded data, which can increase variance and hurt the model's view of the majority class. Undersampling also shifts predicted probabilities upward; if the model's scores are used as probabilities, they must be corrected for the sampling rate. It should be applied only to training data, never to validation or test sets.",
+  "f": "p = p_s / (p_s + (1 − p_s) / β),  β = majority sampling rate",
+  "u": [
+   "Reducing massive click logs for CTR models",
+   "Speeding up training on highly imbalanced data",
+   "Balanced bagging ensembles for rare events"
+  ],
+  "x": "An advertising platform keeps every click but only a small random fraction of non-click impressions when training its click-through model, which cuts training cost substantially. Because served bids depend on calibrated probabilities, predictions are corrected for the negative sampling rate before use.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_classification\nfrom sklearn.linear_model import LogisticRegression\nfrom imblearn.under_sampling import RandomUnderSampler\n\nX, y = make_classification(n_samples=50_000, weights=[0.98, 0.02], random_state=0)\n\nbeta = 0.1  # keep 10% of negatives\nrus = RandomUnderSampler(sampling_strategy={0: int((y == 0).sum() * beta)}, random_state=0)\nX_res, y_res = rus.fit_resample(X, y)\nprint(np.bincount(y), \"->\", np.bincount(y_res))\n\nclf = LogisticRegression(max_iter=1000).fit(X_res, y_res)\np_s = clf.predict_proba(X[:5])[:, 1]\n\n# Correct probabilities for the negative sampling rate\np = p_s / (p_s + (1 - p_s) / beta)\nprint(p_s.round(3), p.round(3))"
+ },
+ "classweight": {
+  "n": "Class Weights",
+  "d": "Class weights scale each example's contribution to the training loss according to its class, so that errors on rare classes cost more than errors on common ones.\n\nA common choice, called balanced weighting, sets each class weight inversely proportional to its frequency, so every class contributes equally to the total loss. Weights can also reflect business costs, for example making a missed fraud case ten times as costly as a false alarm. Most libraries support this directly: class_weight in scikit-learn, scale_pos_weight in XGBoost and LightGBM, and weight arguments in PyTorch losses.\n\nCompared with resampling, class weights use all the data and add no synthetic points, which makes them a clean first option. They shift the decision boundary and inflate predicted probabilities for the minority class, so outputs are no longer calibrated and may need recalibration. Extreme weights can make training unstable, especially with stochastic gradients and very few minority examples per batch.",
+  "f": "w_c = N / (K · N_c)",
+  "u": [
+   "Imbalanced classification with logistic regression or SVMs",
+   "Cost-sensitive fraud and churn models",
+   "Weighted cross-entropy for rare classes in deep learning"
+  ],
+  "x": "A customer-support team classifies tickets into many categories, a few of which, such as security incidents, are rare but urgent. They train a text classifier with weighted cross-entropy that raises the cost of missing those categories, and monitor per-class recall rather than overall accuracy.",
+  "c": "import numpy as np\nimport torch\nimport torch.nn as nn\nfrom sklearn.utils.class_weight import compute_class_weight\nfrom sklearn.linear_model import LogisticRegression\n\ny_train = np.array([0] * 950 + [1] * 50)\nX_train = np.random.default_rng(0).normal(size=(1000, 4))\n\n# Balanced weights: N / (K * N_c)\nw = compute_class_weight(\"balanced\", classes=np.array([0, 1]), y=y_train)\nprint(w)  # about [0.53, 10.0]\n\nclf = LogisticRegression(class_weight=\"balanced\").fit(X_train, y_train)\n\n# PyTorch: weighted cross-entropy for a multi-class head\nloss_fn = nn.CrossEntropyLoss(weight=torch.tensor(w, dtype=torch.float32))\nlogits = torch.randn(8, 2)\ntarget = torch.randint(0, 2, (8,))\nloss = loss_fn(logits, target)"
+ },
+ "featsel": {
+  "n": "Feature Selection",
+  "d": "Feature selection chooses a subset of the available input features, aiming for a simpler, faster and often more robust model with similar or better accuracy.\n\nMethods fall into three groups. Filter methods score each feature independently of the model, using correlation, mutual information or statistical tests, and are fast but blind to interactions. Wrapper methods such as recursive feature elimination or forward selection repeatedly train a model on candidate subsets, which captures interactions but is expensive. Embedded methods select during training, as L1 regularization drives some coefficients to exactly zero and tree models provide importance scores.\n\nSelection reduces overfitting from noisy features, lowers data-collection costs and improves interpretability. Selection must happen inside the cross-validation loop; choosing features on the full dataset and then cross-validating gives optimistic scores. Importance-based selection is unstable when features are correlated, because the model can use either of two redundant features, and impurity-based importances in trees are biased toward high-cardinality features.",
+  "f": "",
+  "u": [
+   "Removing noisy features from wide tabular data",
+   "Reducing feature-collection cost in production",
+   "Simplifying models for interpretability or regulation"
+  ],
+  "x": "A credit team started with several hundred candidate features from bureau and application data. Using L1-regularized logistic regression and permutation importance inside cross-validation, they kept a few dozen features, which reduced dependency on costly data vendors without lowering validation AUC.",
+  "c": "from sklearn.datasets import make_classification\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.feature_selection import SelectKBest, mutual_info_classif, RFECV\nfrom sklearn.linear_model import LogisticRegression\n\nX, y = make_classification(n_samples=1000, n_features=100, n_informative=8, random_state=0)\n\n# Filter method inside a pipeline so selection is refit in every CV fold\nfilt = Pipeline([(\"sel\", SelectKBest(mutual_info_classif, k=15)),\n                 (\"scale\", StandardScaler()),\n                 (\"clf\", LogisticRegression(max_iter=1000))])\nprint(\"filter CV AUC:\", cross_val_score(filt, X, y, cv=5, scoring=\"roc_auc\").mean())\n\n# Wrapper method: recursive elimination with CV-chosen feature count\nrfe = RFECV(LogisticRegression(max_iter=1000), step=5, cv=5, scoring=\"roc_auc\")\nrfe.fit(StandardScaler().fit_transform(X), y)\nprint(\"features kept:\", rfe.n_features_)"
+ },
+ "vif": {
+  "n": "Multicollinearity & VIF",
+  "d": "Multicollinearity occurs when two or more features are strongly linearly related, which makes the individual coefficients of a linear model unstable and hard to interpret. The variance inflation factor (VIF) measures how much the variance of a coefficient is inflated by this redundancy.\n\nTo compute the VIF for feature j, regress it on all the other features and take R²ⱼ from that regression; VIF = 1 / (1 − R²ⱼ). A VIF of 1 means no linear relation; values above roughly 5 to 10 are commonly treated as problematic. With high VIF, small data changes can flip coefficient signs, and standard errors and p-values become unreliable.\n\nRemedies include dropping or merging redundant features, using domain-motivated ratios, applying PCA, or using ridge regression, which stabilizes correlated coefficients. Multicollinearity mainly harms interpretation and inference; it usually does not hurt predictive accuracy as long as the correlation structure stays the same in production. Compute VIF with an intercept included.",
+  "f": "VIFⱼ = 1 / (1 − R²ⱼ)",
+  "u": [
+   "Checking regressors before interpreting coefficients",
+   "Cleaning features for econometric or pricing models",
+   "Diagnosing unstable coefficient signs"
+  ],
+  "x": "A pricing analytics team building an explanatory regression for insurance premiums found that vehicle weight, engine size and horsepower had VIFs well above 10, and their coefficients changed sign between quarters. They kept horsepower and a weight-to-power ratio, which made the model's effects stable enough to present to actuaries.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom statsmodels.stats.outliers_influence import variance_inflation_factor\nfrom statsmodels.tools.tools import add_constant\n\nrng = np.random.default_rng(0)\nweight = rng.normal(1500, 200, 500)\nengine = weight * 0.002 + rng.normal(0, 0.1, 500)       # strongly tied to weight\nhp = engine * 60 + rng.normal(0, 10, 500)\nage = rng.uniform(0, 15, 500)\nX = pd.DataFrame({\"weight\": weight, \"engine\": engine, \"hp\": hp, \"age\": age})\n\nXc = add_constant(X)  # include the intercept when computing VIF\nvif = pd.Series([variance_inflation_factor(Xc.values, i) for i in range(1, Xc.shape[1])],\n                index=X.columns)\nprint(vif.round(1))  # weight/engine/hp high, age near 1"
+ },
+ "dimred": {
+  "n": "Dimensionality Reduction",
+  "d": "Dimensionality reduction maps data with many features to a smaller number of dimensions while preserving the structure that matters, such as variance, neighborhoods or class separation.\n\nLinear methods include principal component analysis (PCA), which finds orthogonal directions of maximum variance, and truncated SVD, which works on sparse matrices such as text. Nonlinear methods such as t-SNE and UMAP preserve local neighborhoods and are mainly used for visualization, while autoencoders learn compressed representations with neural networks. Supervised variants like linear discriminant analysis use labels to keep directions that separate classes.\n\nIt helps fight the curse of dimensionality, removes redundancy among correlated features, speeds up training and storage, and makes data visible in two or three dimensions. The reduced features are harder to interpret, and unsupervised reduction may discard low-variance directions that are highly predictive. t-SNE and UMAP plots distort global distances and cluster sizes, so they should not be read as faithful maps of the data.",
+  "f": "PCA: Z = X_c · W_k,  W_k = top-k eigenvectors of XᵀX/(n−1)",
+  "u": [
+   "Visualizing embeddings or cell types in 2D",
+   "Compressing correlated sensor features",
+   "Speeding up nearest-neighbor search"
+  ],
+  "x": "A single-cell genomics group reduces expression profiles of thousands of genes to 50 principal components, then runs UMAP on those components for visualization and clustering. The PCA step removes noise and makes the neighbor graph computation fast enough for datasets with millions of cells.",
+  "c": "from sklearn.datasets import load_digits\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.decomposition import PCA\nimport umap  # umap-learn\n\nX, y = load_digits(return_X_y=True)          # 64 features per image\nX_s = StandardScaler().fit_transform(X)\n\npca = PCA(n_components=0.95, svd_solver=\"full\")  # keep 95% of variance\nZ = pca.fit_transform(X_s)\nprint(\"components kept:\", pca.n_components_)\n\n# Nonlinear 2D embedding for visualization, computed on the PCA output\nemb = umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=0).fit_transform(Z)\nprint(emb.shape)  # (n_samples, 2)"
+ },
+ "l1": {
+  "n": "L1 Regularization (Lasso)",
+  "d": "L1 regularization adds the sum of the absolute values of a model's weights to the loss, which pushes many weights to exactly zero and therefore performs automatic feature selection. In linear regression this is called the lasso.\n\nThe absolute-value penalty has a corner at zero: its subgradient there is the whole interval [−λ, λ], so a weight stays exactly at zero unless its feature reduces the loss by more than λ. Geometrically, the diamond-shaped constraint region touches the loss contours at its corners, where some coordinates are zero. Lasso is solved with coordinate descent or proximal methods, since the penalty is not differentiable at zero.\n\nL1 is useful when many features are expected to be irrelevant, when a compact model is needed. With highly correlated features, lasso tends to pick one somewhat arbitrarily and drop the others, and the selection can change between data samples. Features must be standardized first, since the penalty depends on coefficient scale.",
+  "f": "L(w) = Loss(w) + λ Σⱼ |wⱼ|",
+  "u": [
+   "Sparse linear models with many candidate features",
+   "Selecting genes or biomarkers from wide data",
+   "Compact, interpretable scoring models"
+  ],
+  "x": "A marketing analytics team fits a lasso model on hundreds of campaign, channel and seasonality features to explain weekly sign-ups. The cross-validated penalty leaves a small set of nonzero coefficients that analysts can review, and the team checks selection stability across bootstrap samples before trusting individual features.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_regression\nfrom sklearn.linear_model import LassoCV\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.pipeline import make_pipeline\n\nX, y = make_regression(n_samples=300, n_features=100, n_informative=10,\n                       noise=10.0, random_state=0)\n\n# Standardize first: the penalty depends on coefficient scale\nmodel = make_pipeline(StandardScaler(), LassoCV(cv=5, random_state=0))\nmodel.fit(X, y)\n\nlasso = model[-1]\nprint(\"chosen alpha:\", lasso.alpha_)\nprint(\"nonzero coefficients:\", np.sum(lasso.coef_ != 0), \"of\", X.shape[1])"
+ },
+ "l2": {
+  "n": "L2 Regularization (Ridge)",
+  "d": "L2 regularization adds the sum of squared weights to the loss, which shrinks all weights smoothly toward zero and reduces variance. In linear regression it is called ridge regression.\n\nThe squared penalty's gradient is proportional to the weight itself, so large weights are pulled in strongly and small weights only slightly; weights rarely become exactly zero. Ridge has a closed-form solution, w = (XᵀX + λI)⁻¹Xᵀy, and adding λI makes the matrix invertible even when features are collinear or outnumber samples. With correlated features, L2 spreads weight across them, shrinking correlated coefficients toward equal values instead of choosing one. From a Bayesian view, it corresponds to a Gaussian prior on the weights.\n\nL2 is the default regularizer for linear models and neural networks when most features are expected to contribute a little. It does not produce sparse models, so it is not a feature selector. Features should be standardized first, and the intercept is normally not penalized.",
+  "f": "L(w) = Loss(w) + λ Σⱼ wⱼ²",
+  "u": [
+   "Stabilizing regression with correlated predictors",
+   "Regularizing logistic regression on many features",
+   "Preventing large weights in neural networks"
+  ],
+  "x": "An energy trading desk predicts next-day prices from dozens of strongly correlated weather and load forecasts. Ridge regression keeps all inputs but stabilizes their coefficients, so day-to-day retraining does not produce large swings in the model's behavior.",
+  "c": "import numpy as np\nfrom sklearn.linear_model import RidgeCV, LinearRegression\n\nrng = np.random.default_rng(0)\nx1 = rng.normal(size=200)\nx2 = x1 + rng.normal(scale=0.01, size=200)    # almost identical feature\nX = np.column_stack([x1, x2])\ny = 3 * x1 + rng.normal(scale=0.5, size=200)\n\nols = LinearRegression().fit(X, y)\nridge = RidgeCV(alphas=np.logspace(-3, 3, 13)).fit(X, y)\n\nprint(\"OLS:\", ols.coef_.round(2))      # unstable, can be large with opposite signs\nprint(\"Ridge:\", ridge.coef_.round(2))  # shrunk toward equal values, about 1.5 each\n\n# Closed form: w = (X^T X + lambda I)^-1 X^T y (no intercept here)\nlam = 1.0\nw = np.linalg.solve(X.T @ X + lam * np.eye(2), X.T @ y)"
+ },
+ "elasticnet": {
+  "n": "Elastic Net",
+  "d": "Elastic net regularization combines the L1 (lasso) and L2 (ridge) penalties, giving sparse models like lasso while handling groups of correlated features more gracefully.\n\nTwo hyperparameters control it: an overall strength α and a mixing ratio (l1_ratio in scikit-learn) between L1 and L2. With l1_ratio = 1 it is the lasso, and with l1_ratio = 0 it is ridge. The L1 part sets irrelevant weights to exactly zero; the L2 part makes the problem strictly convex and encourages correlated features to enter or leave the model together, instead of lasso's tendency to pick one arbitrarily. It also behaves well when features outnumber samples, where lasso selects at most n features.\n\nIt is a strong default for wide, correlated data such as genomics, text n-grams or marketing features. Both hyperparameters should be tuned by cross-validation, and features must be standardized. The combined penalty adds bias to the nonzero coefficients, so refitting on the selected features is sometimes used for interpretation.",
+  "f": "L(w) = Loss(w) + α[ρ Σ|wⱼ| + ((1 − ρ)/2) Σ wⱼ²]",
+  "u": [
+   "Gene expression models with correlated genes",
+   "Text regression on many correlated n-grams",
+   "Wide marketing-mix or survey data"
+  ],
+  "x": "A biotech team predicts drug response from thousands of gene expression measurements on a few hundred patients. Elastic net keeps groups of co-expressed genes together rather than picking one per group, which makes the selected signatures more consistent across resamples and easier to discuss with biologists.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_regression\nfrom sklearn.linear_model import ElasticNetCV\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.pipeline import make_pipeline\n\n# More features than samples, as in genomics\nX, y = make_regression(n_samples=150, n_features=1000, n_informative=30,\n                       effective_rank=50, noise=5.0, random_state=0)\n\nenet = ElasticNetCV(l1_ratio=[0.1, 0.5, 0.9, 0.99],  # mix of L1 vs L2\n                    n_alphas=50, cv=5, max_iter=5000, random_state=0)\nmodel = make_pipeline(StandardScaler(), enet).fit(X, y)\n\nfitted = model[-1]\nprint(\"alpha:\", fitted.alpha_, \"l1_ratio:\", fitted.l1_ratio_)\nprint(\"nonzero:\", np.sum(fitted.coef_ != 0))"
+ },
+ "weightdecay": {
+  "n": "Weight Decay",
+  "d": "Weight decay shrinks a neural network's weights by a small fraction at every optimization step, which keeps weights small and acts as a regularizer. The update multiplies each weight by (1 − ηλ) before or alongside the gradient step.\n\nFor plain stochastic gradient descent, weight decay is mathematically equivalent to adding an L2 penalty (λ/2)‖w‖² to the loss. For adaptive optimizers such as Adam, the two are not equivalent: an L2 term added to the loss is divided by Adam's per-parameter scaling, so weights with large gradient history are barely regularized. AdamW fixes this by applying decay directly to the weights, separately from the adaptive gradient step, and is the standard optimizer for training transformers.\n\nTypical values are around 0.01 to 0.1 with AdamW. Biases and normalization parameters (LayerNorm and BatchNorm scales and shifts) are usually excluded from decay. Because decay is multiplied by the learning rate in common implementations, changing the schedule also changes the effective regularization.",
+  "f": "θ ← θ − η(∇L(θ) + λθ)   (AdamW: θ ← θ − η(m̂/(√v̂+ε) + λθ))",
+  "u": [
+   "Regularizing transformer pretraining with AdamW",
+   "Improving generalization of image classifiers",
+   "Fine-tuning pretrained models without drifting far"
+  ],
+  "x": "A team fine-tuning a language model for customer-support classification uses AdamW with weight decay 0.01 and excludes biases and LayerNorm weights from decay, following common transformer practice. They tune decay together with the learning rate, since both control how far the weights move from the pretrained values.",
+  "c": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(nn.Linear(128, 256), nn.LayerNorm(256), nn.GELU(), nn.Linear(256, 10))\n\n# Apply decay to weight matrices only; skip biases and normalization parameters\ndecay, no_decay = [], []\nfor name, p in model.named_parameters():\n    (no_decay if p.ndim < 2 else decay).append(p)\n\noptimizer = torch.optim.AdamW([\n    {\"params\": decay, \"weight_decay\": 0.01},\n    {\"params\": no_decay, \"weight_decay\": 0.0},\n], lr=3e-4)\n\nx, y = torch.randn(32, 128), torch.randint(0, 10, (32,))\nloss = nn.functional.cross_entropy(model(x), y)\nloss.backward()\noptimizer.step()      # decoupled decay: w <- w - lr * wd * w, plus Adam step\noptimizer.zero_grad()"
+ },
+ "dropout": {
+  "n": "Dropout",
+  "d": "Dropout is a regularization technique that randomly sets a fraction of a layer's activations to zero during each training step, which prevents neurons from relying too heavily on specific other neurons.\n\nWith drop probability p, each unit is kept with probability 1 − p. Modern frameworks use inverted dropout: kept activations are scaled by 1/(1 − p) during training, so the expected activation is unchanged and no rescaling is needed at inference, when dropout is turned off. Dropout can be viewed as training an ensemble of weight-sharing subnetworks whose average the full network approximates at test time.\n\nTypical rates are 0.1 in transformers and 0.2 to 0.5 in fully connected layers. Forgetting to switch the model to evaluation mode, so dropout stays active at inference, is a common bug that makes predictions noisy. Dropout also slows convergence. Many large language models trained on huge datasets use little or no dropout because overfitting is not their main problem.",
+  "f": "h̃ = (m ⊙ h) / (1 − p),  mᵢ ~ Bernoulli(1 − p)",
+  "u": [
+   "Regularizing fully connected layers in small-data tasks",
+   "Attention and residual dropout in transformers",
+   "Monte Carlo dropout for uncertainty estimates"
+  ],
+  "x": "A team training a tabular neural network for insurance risk on a modest dataset adds dropout of 0.3 after each hidden layer, which narrows the gap between training and validation loss. For uncertainty estimates, they also run Monte Carlo dropout at inference by keeping dropout active and averaging multiple forward passes.",
+  "c": "import torch\nimport torch.nn as nn\n\ndef inverted_dropout(h, p, training=True):\n    if not training or p == 0:\n        return h\n    mask = (torch.rand_like(h) > p).float()  # keep each unit with prob 1 - p\n    return h * mask / (1 - p)                # rescale so E[output] = h\n\nmodel = nn.Sequential(nn.Linear(20, 64), nn.ReLU(), nn.Dropout(p=0.3),\n                      nn.Linear(64, 1))\nx = torch.randn(8, 20)\n\nmodel.train()               # dropout active\ny_train_mode = model(x)\nmodel.eval()                # dropout disabled at inference\nwith torch.no_grad():\n    y_eval = model(x)\n\nh = torch.ones(10000)\nprint(inverted_dropout(h, 0.3).mean())  # close to 1.0"
+ },
+ "earlystop": {
+  "n": "Early Stopping",
+  "d": "Early stopping halts training when performance on a validation set stops improving and keeps the model from the best validation step. It prevents an iterative learner from continuing to fit noise after it has learned the generalizable signal.\n\nValidation loss is checked periodically. A patience parameter sets how many evaluations without improvement are allowed before stopping, and the weights from the best evaluation are restored. Early stopping is used in neural network training and is built into gradient-boosting libraries, where it chooses the number of trees. It acts as implicit regularization, similar to an L2 penalty for linear models trained with gradient descent.\n\nThe validation set used for stopping becomes part of model selection, so its score is optimistic, and a separate test set is still needed. Noisy validation curves can trigger a stop too early, so patience and a minimum improvement threshold should be set sensibly. When retraining on all data, the best iteration count is often reused.",
+  "f": "stop when L_val has not improved for `patience` evaluations; keep θ at argmin L_val",
+  "u": [
+   "Choosing the number of trees in gradient boosting",
+   "Stopping neural network training at the best epoch",
+   "Saving compute in hyperparameter searches"
+  ],
+  "x": "A ranking team trains LightGBM models with up to several thousand trees and early stopping on a time-based validation week. The best iteration is logged with each run, and the production model is retrained on all data with that iteration count scaled slightly for the larger training set.",
+  "c": "import lightgbm as lgb\nfrom sklearn.datasets import make_classification\nfrom sklearn.model_selection import train_test_split\n\nX, y = make_classification(n_samples=20_000, n_features=30, random_state=0)\nX_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=0.2, random_state=0)\n\nmodel = lgb.LGBMClassifier(n_estimators=5000, learning_rate=0.05, verbose=-1)\nmodel.fit(\n    X_tr, y_tr,\n    eval_set=[(X_va, y_va)],\n    eval_metric=\"binary_logloss\",\n    # stop after 100 rounds without improvement on the validation set\n    callbacks=[lgb.early_stopping(stopping_rounds=100), lgb.log_evaluation(0)],\n)\nprint(\"best iteration:\", model.best_iteration_)"
+ },
+ "augment": {
+  "n": "Data Augmentation",
+  "d": "Data augmentation creates new training examples by applying label-preserving transformations to existing ones, which increases the effective size and diversity of the dataset and teaches the model useful invariances.\n\nFor images, standard transforms are random crops, horizontal flips, rotations, color jitter and scaling, along with mixing methods such as Mixup and CutMix that blend two images and their labels. For audio, augmentations include time shifts, added noise and SpecAugment masking. For text, options include back-translation and paraphrasing. Augmentations are applied randomly on the fly, so each epoch sees new variants.\n\nAugmentation is one of the most effective regularizers in computer vision and is central to contrastive self-supervised learning. Transformations must truly preserve the label: flipping a digit 6 vertically may turn it into a 9, and horizontal flips are wrong for text in images or left-right medical findings. Augmentation is applied only to training data, not to validation or test sets, except for deliberate test-time augmentation.",
+  "f": "L = E_{(x,y)~D, t~T}[ℓ(f(t(x)), y)]",
+  "u": [
+   "Training image classifiers on limited labeled data",
+   "Making speech models robust to background noise",
+   "Contrastive self-supervised pretraining of image encoders"
+  ],
+  "x": "A retail company builds a shelf-product recognition model from photos taken in stores with varied lighting and angles. Random crops, rotations, brightness changes and blur during training make the model robust to new stores, while horizontal flips are disabled because they mirror the text on product packaging.",
+  "c": "import torch\nfrom torchvision.transforms import v2\n\ntrain_tf = v2.Compose([\n    v2.RandomResizedCrop(224, scale=(0.6, 1.0)),  # random crop and resize\n    v2.RandomHorizontalFlip(p=0.5),               # only if left/right does not change the label\n    v2.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),\n    v2.RandomRotation(degrees=10),\n    v2.ToDtype(torch.float32, scale=True),\n    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),\n])\n\n# Validation uses deterministic preprocessing only\nval_tf = v2.Compose([v2.Resize(256), v2.CenterCrop(224),\n                     v2.ToDtype(torch.float32, scale=True),\n                     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])\n\nimg = torch.randint(0, 256, (3, 300, 400), dtype=torch.uint8)\nx_aug = train_tf(img)  # a new random view on every call"
+ },
+ "labelsmooth": {
+  "n": "Label Smoothing",
+  "d": "Label smoothing replaces hard one-hot training targets with soft targets that put most of the probability on the correct class and spread a small amount, ε, across all classes.\n\nWith hard targets, cross-entropy keeps rewarding the model for pushing the correct logit ever higher relative to the others, which can lead to overconfident predictions and large logits. With smoothing, the target for the correct class becomes 1 − ε + ε/K and every other class gets ε/K, so the optimal logits stay finite. Typical values are ε = 0.1. It is widely used in image classification and machine translation and often improves accuracy and calibration.\n\nLabel smoothing also has costs. It erases information about which wrong classes are similar to the right one, which makes a smoothed teacher a weaker source for knowledge distillation. It can hurt calibration when combined with other calibration methods, and for language models it raises perplexity even when translation quality improves.",
+  "f": "y_smooth = (1 − ε)·y_onehot + ε/K",
+  "u": [
+   "Regularizing large image classifiers",
+   "Training neural machine translation models",
+   "Reducing overconfidence in noisy-label datasets"
+  ],
+  "x": "A team training an image classifier on product photos with some mislabeled examples uses cross-entropy with label smoothing of 0.1. The model becomes less overconfident on ambiguous images, which reduces the number of high-confidence errors that bypass human review.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nK, eps = 5, 0.1\nlogits = torch.randn(4, K)\ntarget = torch.tensor([0, 2, 1, 4])\n\n# Built-in support in PyTorch\nloss_builtin = nn.CrossEntropyLoss(label_smoothing=eps)(logits, target)\n\n# Manual version: mix the one-hot target with a uniform distribution\none_hot = F.one_hot(target, K).float()\nsoft = (1 - eps) * one_hot + eps / K\nloss_manual = -(soft * F.log_softmax(logits, dim=-1)).sum(-1).mean()\n\nprint(loss_builtin.item(), loss_manual.item())  # identical"
+ },
+ "batchnorm": {
+  "n": "Batch Normalization",
+  "d": "Batch normalization normalizes each feature or channel using the mean and variance computed over the current mini-batch, then applies a learned scale γ and shift β.\n\nDuring training, every activation is standardized with batch statistics, and running averages of the mean and variance are updated. At inference, those stored running statistics are used instead, so the output for an example does not depend on other examples. In convolutional networks, statistics are shared over the batch and spatial positions of each channel. Batch normalization allows higher learning rates, reduces sensitivity to initialization and adds a mild regularizing noise, mostly because it smooths the optimization landscape.\n\nIt depends on batch size: with very small batches, the statistics are noisy and accuracy suffers, and distributed training may need synchronized batch norm. Forgetting to switch to evaluation mode, or a mismatch between training and serving distributions, gives wrong outputs. These limitations are why transformers and recurrent models use layer normalization instead.",
+  "f": "y = γ · (x − μ_B) / √(σ²_B + ε) + β",
+  "u": [
+   "Training deep convolutional image networks",
+   "Stabilizing high learning rates in CNNs",
+   "Faster convergence in residual networks"
+  ],
+  "x": "A medical imaging team trains a ResNet on 3D scans where GPU memory allows only two volumes per device. Plain batch normalization performed poorly with such tiny batches, so they switched to synchronized batch norm across GPUs, later comparing it with group normalization, which does not depend on batch size.",
+  "c": "import torch\nimport torch.nn as nn\n\nx = torch.randn(32, 16, 8, 8)      # (batch, channels, height, width)\nbn = nn.BatchNorm2d(16, momentum=0.1, eps=1e-5)\n\nbn.train()\ny = bn(x)                          # uses batch statistics, updates running stats\n\n# Manual equivalent: per-channel stats over batch and spatial dims\nmu = x.mean(dim=(0, 2, 3), keepdim=True)\nvar = x.var(dim=(0, 2, 3), unbiased=False, keepdim=True)\ny_manual = (x - mu) / torch.sqrt(var + 1e-5)  # gamma=1, beta=0 at init\nprint(torch.allclose(y, y_manual, atol=1e-5))\n\nbn.eval()                          # inference uses running_mean / running_var\ny_eval = bn(x[:1])\nprint(bn.running_mean[:4])"
+ },
+ "layernorm": {
+  "n": "Layer Normalization",
+  "d": "Layer normalization standardizes the activations of each individual example across its feature dimension, then applies a learned scale and shift. Unlike batch normalization, its statistics do not depend on other examples in the batch.\n\nFor a token vector in a transformer, the mean and variance are computed over its hidden dimension, the vector is normalized, and per-feature parameters γ and β restore representational flexibility. Because the computation is identical at training and inference and works with any batch size or sequence length, layer normalization is the standard choice in transformers and recurrent networks. Placement matters: Post-LN (after the residual addition) was used in the original transformer, while Pre-LN (before each sublayer) trains more stably in deep models without long learning-rate warmup, and is now more common.\n\nIn convolutional networks it often performs worse than batch normalization. Many recent large language models replace it with RMSNorm, which drops the mean-centering step and the bias for slightly lower cost.",
+  "f": "y = γ ⊙ (x − μ) / √(σ² + ε) + β,  μ, σ² over the feature dimension",
+  "u": [
+   "Normalization inside transformer blocks",
+   "Stabilizing recurrent neural network training",
+   "Models with variable or tiny batch sizes"
+  ],
+  "x": "A team training a domain-specific transformer for legal text moved from Post-LN to Pre-LN blocks after seeing loss spikes early in training. The change let them train deeper models with a shorter warmup, while LayerNorm parameters were excluded from weight decay.",
+  "c": "import torch\nimport torch.nn as nn\n\nx = torch.randn(2, 10, 64)          # (batch, seq_len, hidden)\nln = nn.LayerNorm(64, eps=1e-5)\ny = ln(x)\n\n# Manual: statistics per token over the hidden dimension only\nmu = x.mean(-1, keepdim=True)\nvar = x.var(-1, unbiased=False, keepdim=True)\ny_manual = (x - mu) / torch.sqrt(var + 1e-5) * ln.weight + ln.bias\nprint(torch.allclose(y, y_manual, atol=1e-5))\n\n# Pre-LN residual block, as used in most modern transformers\nclass PreLNBlock(nn.Module):\n    def __init__(self, d):\n        super().__init__()\n        self.norm, self.ff = nn.LayerNorm(d), nn.Sequential(nn.Linear(d, 4 * d), nn.GELU(), nn.Linear(4 * d, d))\n    def forward(self, h):\n        return h + self.ff(self.norm(h))  # normalize before the sublayer"
+ },
+ "rmsnorm": {
+  "n": "RMSNorm",
+  "d": "RMSNorm (root mean square normalization) rescales each activation vector by its root mean square and a learned per-feature gain, without subtracting the mean and usually without a bias. It is a simpler and cheaper variant of layer normalization.\n\nThe vector x is divided by √(mean(x²) + ε) and multiplied by a learned weight g. Skipping mean-centering saves one reduction and the bias parameter while matching LayerNorm's stability in transformers. The original paper argued that re-scaling invariance, not re-centering, is what makes layer normalization effective. RMSNorm is used in many modern large language models, including LLaMA, Mistral and Gemma, typically in a Pre-norm arrangement before attention and feed-forward sublayers.\n\nBecause it does not center activations, RMSNorm is not a drop-in replacement for LayerNorm in a pretrained model; weights trained with one will not work with the other. Precision also matters: implementations often compute the norm in float32 even in bfloat16 models.",
+  "f": "y = g ⊙ x / √((1/d) Σᵢ xᵢ² + ε)",
+  "u": [
+   "Normalization layers in LLaMA-style language models",
+   "Reducing normalization cost in large transformers",
+   "Pre-norm blocks for stable deep training"
+  ],
+  "x": "An LLM team training a LLaMA-style model uses RMSNorm before every attention and MLP sublayer and a final RMSNorm before the output head. Their fused kernel computes the norm in float32 within a bfloat16 model, which avoids rare numerical spikes in long training runs.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass RMSNorm(nn.Module):\n    def __init__(self, dim, eps=1e-6):\n        super().__init__()\n        self.eps = eps\n        self.weight = nn.Parameter(torch.ones(dim))  # learned gain, no bias\n\n    def forward(self, x):\n        dtype = x.dtype\n        x = x.float()  # compute in float32 for numerical stability\n        rms_inv = torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)\n        return (x * rms_inv).to(dtype) * self.weight\n\nx = torch.randn(2, 16, 512, dtype=torch.bfloat16)\nnorm = RMSNorm(512).to(torch.bfloat16)\ny = norm(x)\n\n# Recent PyTorch versions include a built-in equivalent\nref = nn.RMSNorm(512, eps=1e-6)\nprint(y.shape)"
+ }
+}

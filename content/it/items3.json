@@ -1,0 +1,482 @@
+{
+ "r2": {
+  "n": "R² (coefficiente di determinazione)",
+  "d": "R² misura la frazione della varianza del target spiegata da un modello di regressione, rispetto a una previsione che restituisca sempre la media. È pari a uno meno il rapporto tra la somma dei quadrati dei residui e la somma totale dei quadrati. Un valore di 1 indica previsioni perfette, 0 indica che il modello non fa meglio della media e, sui dati di hold-out, il punteggio può diventare negativo quando il modello è peggiore di questa baseline costante.\n\nR² è utile per confrontare modelli sullo stesso dataset perché è adimensionale. Non è invece confrontabile tra dataset con varianza del target diversa, e un valore alto non dimostra che il modello sia corretto o privo di bias. Sui dati di training, R² non diminuisce mai quando si aggiungono feature, ed è per questo che per i modelli lineari esiste l'R² corretto (adjusted R²). Un equivoco diffuso è che R² sia il quadrato di una correlazione per qualunque modello: questa identità vale solo per la regressione lineare ai minimi quadrati con intercetta, valutata sui dati di training.",
+  "u": [
+   "Riportare la bontà di adattamento dei modelli di regressione",
+   "Confrontare regressori candidati su un unico validation set",
+   "Verificare un modello rispetto alla baseline della media"
+  ],
+  "x": "Un team di analisi immobiliare riporta l'R² su un set di compravendite tenuto da parte per periodo temporale, insieme al MAE in dollari. L'R² dice agli stakeholder quanta parte della variabilità dei prezzi il modello cattura, mentre il MAE indica l'entità tipica dell'errore. Il team monitora entrambi nella propria dashboard perché l'R² può calare semplicemente quando l'intervallo dei prezzi in un nuovo mercato si restringe."
+ },
+ "mdi": {
+  "n": "Mean Decrease in Impurity (MDI)",
+  "d": "La Mean Decrease in Impurity assegna un punteggio a una feature in base a quanto riduce l'impurità dei nodi, sommando su tutti gli split che la utilizzano, pesando per la frazione di campioni che raggiunge ciascun nodo e mediando sugli alberi dell'ensemble. È l'attributo predefinito feature_importances_ dei modelli ad albero di scikit-learn e si ottiene gratuitamente dopo il training.\n\nPoiché viene calcolata sui dati di training durante il fitting, la MDI è veloce e non richiede passaggi aggiuntivi. Questa comodità ha però un prezzo. È distorta a favore delle feature con molti possibili punti di split, come le variabili continue o le categoriche ad alta cardinalità, e può attribuire importanza a feature di puro rumore che gli alberi hanno usato per andare in overfitting. Quando due feature sono correlate, il merito viene ripartito tra loro in modo arbitrario. Inoltre la MDI non dice nulla sulla direzione di un effetto. Usala per un primo sguardo rapido e conferma le conclusioni importanti con la permutation importance su dati di hold-out o con i valori SHAP.",
+  "u": [
+   "Ranking rapido delle feature dopo il training di una foresta",
+   "Eliminare colonne palesemente inutili prima di riaddestrare",
+   "Capire su quali input si basa un modello ad albero durante il debug"
+  ],
+  "x": "Un team antifrode che addestra una random forest su feature delle transazioni esamina la MDI dopo ogni riaddestramento per individuare cambiamenti improvvisi negli input dominanti. Quando un merchant ID ad alta cardinalità è balzato in cima alla classifica, il team ha verificato la permutation importance su un validation set scoprendo che si trattava soprattutto di overfitting, e lo ha sostituito con un rischio del merchant ottenuto tramite target encoding."
+ },
+ "permimp": {
+  "n": "Permutation importance",
+  "d": "La permutation importance misura quanto cala il punteggio di un modello quando i valori di una feature vengono rimescolati casualmente, spezzando la relazione di quella feature con il target ma mantenendone la distribuzione. Un calo consistente indica che il modello dipende da quella feature per le sue previsioni.\n\nIl metodo è model-agnostic: richiede soltanto un modello addestrato, un dataset e una metrica. Calcolarla su un set di hold-out rivela ciò che aiuta davvero la generalizzazione, evitando il bias verso il training set dei punteggi basati sull'impurità. Ripetere il rimescolamento più volte fornisce una media e una dispersione. L'insidia principale sono le feature correlate. Quando due colonne contengono la stessa informazione, rimescolarne una lascia intatta l'altra, per cui entrambe possono sembrare poco importanti anche se il segnale condiviso conta. Il rimescolamento crea inoltre righe irrealistiche, come un bambino alto 2 metri, costringendo il modello a estrapolare. Raggruppare le feature correlate e permutarle insieme, oppure clusterizzare prima le feature, attenua questi problemi.",
+  "u": [
+   "Ranking model-agnostic delle feature su dati di validazione",
+   "Individuare feature di leakage su cui il modello si appoggia troppo",
+   "Confrontare la dipendenza dalle feature tra famiglie di modelli diverse"
+  ],
+  "x": "Un team di rischio di credito calcola la permutation importance su un mese di validazione out-of-time per ogni modello candidato prima dell'approvazione. Eseguirla su dati di hold-out ha fatto emergere un campo con il timestamp della domanda che aiutava solo sui dati di training, e raggruppare i campi di reddito correlati in un unico blocco di permutazione ha dato ai regolatori un quadro più chiaro di ciò che guidava le decisioni."
+ },
+ "shap": {
+  "n": "SHAP (valori di Shapley)",
+  "d": "SHAP spiega una singola previsione assegnando a ciascuna feature una quota della differenza tra quella previsione e l'output medio del modello, usando i valori di Shapley della teoria dei giochi cooperativi. Le quote sommano esattamente alla previsione meno la baseline.\n\nIl valore di Shapley di una feature è il suo contributo marginale medio su tutti i possibili ordini in cui le feature potrebbero essere aggiunte all'input. Le feature assenti da una coalizione vengono sostituite con valori estratti da un dataset di background. SHAP è l'unica attribuzione additiva che soddisfa efficienza, simmetria, dummy e additività, il che lo rende una scelta fondata sia per le spiegazioni locali sia per i riepiloghi globali, come lo SHAP assoluto medio per feature. Il calcolo esatto è esponenziale nel numero di feature, perciò gli strumenti pratici usano algoritmi specifici per il modello o approssimazioni basate sul campionamento. I risultati dipendono dai dati di background e, con feature correlate, l'approccio interventional predefinito può valutare il modello su input irrealistici. SHAP spiega il modello, non gli effetti causali nel mondo reale.",
+  "u": [
+   "Spiegare singole decisioni su prestiti o sinistri",
+   "Importanza globale delle feature con la direzione dell'effetto",
+   "Fare debug di previsioni inattese nei modelli in produzione"
+  ],
+  "x": "Una compagnia assicurativa allega i tre principali contributi SHAP a ogni sinistro segnalato per la revisione manuale, così i periti vedono perché il modello lo ha valutato rischioso. Le spiegazioni vengono precalcolate nel job di scoring batch per non aggiungere latenza, e la distribuzione dei valori SHAP per feature viene monitorata per rilevare drift nel comportamento del modello."
+ },
+ "treeshap": {
+  "n": "TreeSHAP",
+  "d": "TreeSHAP è un algoritmo che calcola valori di Shapley esatti per ensemble di alberi in tempo polinomiale, sfruttando la struttura degli alberi invece di enumerare ogni sottoinsieme di feature. La stima SHAP generica è esponenziale nel numero di feature; TreeSHAP gira in O(T·L·D²) per T alberi con L foglie e profondità D.\n\nL'algoritmo fa scendere contemporaneamente tutti i sottoinsiemi di feature lungo ciascun albero, tenendo traccia di quale proporzione segue ogni percorso. Esistono due varianti. La versione path-dependent usa i conteggi di copertura del training memorizzati nei nodi e non richiede dati di background, mentre la versione interventional media su un dataset di background e aderisce meglio alla definizione interventional di tipo causale. Questa velocità rende praticabile spiegare milioni di previsioni di XGBoost, LightGBM, CatBoost o delle foreste di scikit-learn, e calcolare i valori di interazione SHAP. Un limite noto è che la variante path-dependent può assegnare un merito non nullo a feature che il modello in realtà non usa, quando le feature sono correlate.",
+  "u": [
+   "Spiegare ogni previsione di modelli gradient boosting su alberi",
+   "Calcolare i valori di interazione SHAP tra coppie di feature",
+   "Importanza globale rapida per grandi modelli tabellari"
+  ],
+  "x": "Un team di marketing che ogni notte assegna un punteggio a decine di milioni di clienti con LightGBM usa TreeSHAP per salvare nel feature store i reason code di ciascun cliente. Il calcolo esatto basato sugli alberi si conclude nella stessa finestra batch dello scoring, cosa che un explainer basato sul campionamento non potrebbe fare su questa scala."
+ },
+ "pdp": {
+  "n": "Partial Dependence Plot (PDP)",
+  "d": "Un partial dependence plot mostra come cambia la previsione media di un modello quando una o due feature vengono fatte variare su una griglia, mentre tutte le altre feature mantengono i valori osservati. Ogni punto della griglia è la previsione media sull'intero dataset con la feature scelta forzata a quel valore.\n\nI PDP offrono una visione globale e model-agnostic della forma di un effetto: monotona, a soglia, a saturazione o a U. I PDP a due feature rivelano le interazioni sotto forma di curve di livello non parallele. Sono utili per verificare che il modello abbia appreso relazioni plausibili, come un rischio che cresce con il debito. Il metodo presuppone che la feature fatta variare sia approssimativamente indipendente dalle altre. Quando le feature sono correlate, la griglia crea combinazioni che non compaiono mai nei dati e la curva riflette un'estrapolazione. La media può inoltre nascondere l'eterogeneità: se metà dei campioni sale e metà scende, il PDP appare piatto. Le curve ICE e i grafici accumulated local effects (ALE) affrontano queste due debolezze.",
+  "u": [
+   "Validare la direzione degli effetti delle feature",
+   "Visualizzare le interazioni tra due feature",
+   "Comunicare il comportamento del modello a revisori non tecnici"
+  ],
+  "x": "Una utility costruisce partial dependence plot della domanda elettrica prevista in funzione della temperatura per ogni modello regionale. I revisori verificano la presenza dell'attesa forma a U dovuta a riscaldamento e raffrescamento, e una regione la cui curva si appiattiva alle alte temperature ha rivelato che nel training mancavano i dati sul carico dei condizionatori."
+ },
+ "ice": {
+  "n": "ICE plot (Individual Conditional Expectation)",
+  "d": "Un grafico Individual Conditional Expectation traccia una curva per ogni punto dati, mostrando come cambia la previsione di quel punto quando si fa variare una singola feature mantenendo fisse le altre. Il partial dependence plot è esattamente la media di queste curve.\n\nI grafici ICE mettono in luce l'eterogeneità che la media nasconde. Se le curve sono all'incirca parallele, la feature agisce in modo additivo; se si incrociano o si aprono a ventaglio, la feature interagisce con altre. Le ICE centrate (c-ICE) sottraggono a ogni curva il suo valore in un punto di riferimento, così le differenze di forma emergono rispetto alle differenze di livello. Colorare le curve in base a un'altra feature aiuta a capire quale variabile guida l'interazione. Con molti campioni il grafico diventa confuso, per cui di solito si usa un sottoinsieme casuale di qualche centinaio di curve. Le ICE condividono la debolezza principale dei PDP: quando la feature fatta variare è correlata con altre, molti punti della griglia descrivono input irrealistici e le curve mostrano in parte un'estrapolazione anziché il comportamento su dati reali.",
+  "u": [
+   "Rilevare interazioni nascoste dalla partial dependence",
+   "Esaminare come specifici clienti rispondono a una feature",
+   "Verificare la monotonicità a livello individuale"
+  ],
+  "x": "Il team pricing di un retailer online traccia curve ICE centrate della conversione prevista in funzione del livello di sconto. Le curve hanno mostrato che i clienti fedeli reagiscono appena agli sconti mentre i nuovi visitatori reagiscono fortemente, un'interazione che il PDP, apparentemente piatto, nascondeva; ne sono nate regole promozionali specifiche per segmento."
+ },
+ "lime": {
+  "n": "LIME (Local Interpretable Model-agnostic Explanations)",
+  "d": "LIME spiega una singola previsione adattando un modello semplice e interpretabile, di solito un modello lineare sparso, al comportamento del modello black-box in un piccolo intorno di quell'input. I coefficienti del modello surrogato costituiscono la spiegazione.\n\nLa procedura perturba l'istanza molte volte (per i dati tabellari campionando i valori delle feature, per il testo rimuovendo parole, per le immagini nascondendo superpixel), interroga il modello black-box su ogni perturbazione, pesa i campioni in base alla vicinanza all'originale e adatta una regressione lineare pesata. Funziona con qualsiasi modello che restituisca previsioni e produce spiegazioni in termini comprensibili, come parole o regioni dell'immagine. La sua debolezza principale è l'instabilità: seed casuali, ampiezze del kernel o schemi di perturbazione diversi possono produrre spiegazioni sensibilmente diverse per lo stesso input. I campioni perturbati possono inoltre cadere fuori dalla varietà dei dati. A differenza di SHAP, LIME non garantisce che le attribuzioni sommino alla previsione, quindi verifica la stabilità delle spiegazioni prima di farvi affidamento.",
+  "u": [
+   "Spiegare parola per parola le decisioni di un classificatore di testo",
+   "Evidenziare le regioni dell'immagine alla base di una previsione",
+   "Debug ad hoc di qualsiasi modello black-box"
+  ],
+  "x": "Un team di assistenza clienti usa LIME sul proprio classificatore testuale per l'instradamento dei ticket, per mostrare agli operatori quali parole hanno fatto finire un ticket nella coda della fatturazione. Poiché le spiegazioni variavano da un'esecuzione all'altra, il team ha fissato il seed casuale, aumentato il numero di campioni e mostrato solo le parole che comparivano in modo coerente in cinque esecuzioni ripetute."
+ },
+ "counterfactual": {
+  "n": "Spiegazioni controfattuali",
+  "d": "Una spiegazione controfattuale descrive la più piccola modifica realistica a un input che ribalterebbe la decisione del modello, per esempio «il prestito sarebbe approvato se il reddito annuo fosse più alto di 4.000 e il saldo della carta di credito più basso di 1.500». Risponde alla domanda su cosa dovrebbe essere diverso, anziché sul perché si è ottenuto l'output attuale.\n\nGenerarne una è un problema di ottimizzazione: trovare un punto vicino all'originale che riceva la previsione desiderata. Le buone controfattuali sono sparse (cambiano poche feature), plausibili (stanno vicino alla distribuzione dei dati), azionabili (evitano feature immutabili come età o luogo di nascita) e diversificate quando si offrono più opzioni. Metodi come DiCE producono più controfattuali con vincoli su quali feature possono variare. Sono molto usate per le comunicazioni di esito negativo (adverse action notice) e per offrire possibilità di rimedio agli utenti. Un'insidia fondamentale è che una controfattuale descrive il modello, non il mondo: seguire il consiglio potrebbe non cambiare l'esito reale e, se il modello viene riaddestrato, la stessa modifica potrebbe non ribaltare più la decisione.",
+  "u": [
+   "Suggerimenti di rimedio per richiedenti di prestiti respinti",
+   "Spiegare le previsioni di churn con leve azionabili",
+   "Verificare se i modelli dipendono da attributi immutabili"
+  ],
+  "x": "Un istituto di credito al consumo genera controfattuali per le domande rifiutate, limitando le modifiche alle feature che il richiedente può controllare, come il saldo debitorio e l'importo richiesto. Il team offre due o tre opzioni diversificate e le ricontrolla con l'ultima versione del modello prima dell'invio, perché un modello riaddestrato potrebbe non rispettare più i consigli dati in precedenza."
+ },
+ "kmeans": {
+  "n": "Clustering k-means",
+  "d": "k-means suddivide i dati in k cluster assegnando ripetutamente ogni punto al centroide più vicino e spostando poi ciascun centroide sulla media dei punti assegnati. Minimizza la somma delle distanze quadratiche all'interno dei cluster, detta anche inerzia.\n\nL'algoritmo (algoritmo di Lloyd) converge sempre, ma solo a un minimo locale, quindi i centroidi iniziali contano. L'inizializzazione k-means++ distanzia i centroidi iniziali e più riavvii consentono di tenere il risultato migliore. k-means è veloce, scala a milioni di punti con le varianti mini-batch e funziona bene con cluster compatti, approssimativamente sferici e di dimensioni simili. È diffuso per la segmentazione della clientela, la quantizzazione vettoriale e la costruzione di codebook. Le sue ipotesi sono anche i suoi limiti: usa la distanza euclidea, perciò le feature vanno scalate; non riesce a trovare forme allungate o annidate; e costringe ogni punto, outlier compresi, in un cluster. La scelta di k richiede un giudizio esterno, aiutato dal metodo del gomito o dal silhouette score, che forniscono indicazioni e non risposte definitive.",
+  "u": [
+   "Segmentazione della clientela da feature comportamentali",
+   "Quantizzazione dei colori e compressione delle immagini",
+   "Costruzione di codebook per indici di ricerca vettoriale"
+  ],
+  "x": "Un servizio di streaming in abbonamento raggruppa gli utenti con k-means in una manciata di segmenti in base a feature standardizzate sul tempo di visione, e poi assegna a ogni segmento un layout diverso della home page. Il modello viene riaddestrato ogni mese, i nuovi centroidi vengono abbinati ai vecchi per mantenere stabili le etichette dei segmenti e si usa MiniBatchKMeans perché la base utenti conta decine di milioni di righe."
+ },
+ "hierclust": {
+  "n": "Clustering gerarchico",
+  "d": "Il clustering gerarchico costruisce un albero di cluster annidati, detto dendrogramma, invece di un'unica partizione piatta. La comune versione agglomerativa parte considerando ogni punto come un cluster a sé e unisce ripetutamente i due cluster più vicini finché ne rimane uno solo.\n\nIl criterio di linkage definisce la distanza tra cluster. Il single linkage usa la coppia di punti più vicina e può seguire lunghe catene; il complete linkage usa la coppia più lontana e favorisce gruppi compatti; l'average linkage usa la distanza media tra coppie; il Ward linkage unisce la coppia che aumenta di meno la varianza totale intra-cluster e si comporta come un k-means gerarchico. Tagliare il dendrogramma a un'altezza o a un numero di cluster prestabiliti produce un clustering piatto, e l'albero stesso mostra la struttura a più scale. È adatto a dataset di dimensioni piccole e medie, alla costruzione di tassonomie e all'analisi esplorativa. Le implementazioni standard richiedono memoria O(n²) per la matrice delle distanze, il che le limita a decine di migliaia di punti, e le fusioni iniziali non possono mai essere annullate.",
+  "u": [
+   "Costruire tassonomie di prodotti o documenti",
+   "Clustering di profili di espressione genica in biologia",
+   "Esplorare la struttura a più livelli di granularità"
+  ],
+  "x": "Il team del catalogo di un e-commerce raggruppa gli embedding dei prodotti all'interno di ogni categoria con il Ward linkage per proporre alberi di sottocategorie. I merchandiser esaminano il dendrogramma e scelgono l'altezza di taglio per ciascuna categoria, cosa che un metodo piatto come k-means non permetterebbe, e il costo O(n²) è accettabile perché ogni categoria contiene solo qualche migliaio di articoli."
+ },
+ "dbscan": {
+  "n": "DBSCAN",
+  "d": "DBSCAN (Density-Based Spatial Clustering of Applications with Noise) raggruppa i punti che si trovano in regioni dense ed etichetta come rumore quelli nelle regioni sparse. Non richiede di fissare in anticipo il numero di cluster e può scoprire cluster di forma arbitraria.\n\nDue parametri definiscono la densità: eps, il raggio dell'intorno, e min_samples, il numero di punti che devono trovarsi entro eps perché un punto sia un core point. I cluster crescono collegando i core point che distano al massimo eps l'uno dall'altro; i border point entrano in un cluster senza estenderlo e tutto il resto è rumore, etichettato con −1. Questo rende DBSCAN utile per i dati spaziali, per il clustering attento alle anomalie e per forme come gli anelli che k-means non riesce a separare. Il suo limite principale è un'unica soglia di densità globale: quando i cluster hanno densità molto diverse, nessun valore di eps va bene per tutti. I risultati sono sensibili a eps e peggiorano in alta dimensionalità, dove le distanze tendono a concentrarsi. Un k-distance plot aiuta a scegliere eps, e HDBSCAN elimina la necessità di un eps fisso.",
+  "u": [
+   "Raggruppare punti GPS in luoghi o fermate",
+   "Separare il rumore dai gruppi densi nei dati dei sensori",
+   "Trovare cluster di forma irregolare negli embedding"
+  ],
+  "x": "Un'azienda di consegne esegue DBSCAN con distanza haversine sui punti GPS di consegna dei corrieri per individuare gli ingressi effettivi degli edifici, che spesso differiscono dagli indirizzi geocodificati. I punti isolati diventano rumore e vengono ignorati, e il team calibra eps in metri per ciascuna città perché le densità urbane e suburbane sono diverse."
+ },
+ "gmm": {
+  "n": "Gaussian Mixture Model (GMM)",
+  "d": "Un Gaussian Mixture Model rappresenta la distribuzione dei dati come somma pesata di più componenti gaussiane, ciascuna con la propria media e covarianza. A ogni punto viene assegnata una probabilità di appartenenza a ciascuna componente: si parla di soft clustering.\n\nI parametri vengono stimati con l'algoritmo Expectation-Maximization, alternando il calcolo delle responsabilità di ciascuna componente per ogni punto e la nuova stima di pesi, medie e covarianze a partire da tali responsabilità. Le matrici di covarianza complete permettono ai cluster di essere ellissi allungate e inclinate, che k-means non può rappresentare; k-means equivale grosso modo a un GMM con varianza uguale, sferica e condivisa e assegnazioni nette. Essendo un modello di densità, un GMM fornisce anche log-verosimiglianze per l'anomaly detection e consente di campionare nuovi punti. Il numero di componenti si può scegliere con BIC o AIC. Tra le insidie ci sono la sensibilità all'inizializzazione, la convergenza a ottimi locali e le covarianze singolari quando una componente collassa su pochi punti, che la regolarizzazione (reg_covar) previene. Le covarianze complete richiedono inoltre molti parametri in alta dimensionalità.",
+  "u": [
+   "Segmentazione soft della clientela con probabilità di appartenenza",
+   "Scoring di anomalie basato sulla densità per letture di sensori",
+   "Modellazione del parlatore nei sistemi vocali classici"
+  ],
+  "x": "Un team di produzione adatta un GMM alle letture multivariate di vibrazione e temperatura provenienti da macchine sane e segnala le letture la cui log-verosimiglianza scende sotto un percentile basso dei punteggi di training. La covarianza completa cattura la correlazione tra vibrazione e temperatura, e il BIC ha selezionato automaticamente il numero di modalità operative."
+ },
+ "em": {
+  "n": "Algoritmo EM (Expectation-Maximization)",
+  "d": "L'algoritmo Expectation-Maximization trova i parametri di massima verosimiglianza per modelli con variabili latenti alternando due passi finché la verosimiglianza smette di migliorare. È il metodo standard per stimare misture gaussiane, hidden Markov model e molti problemi con dati mancanti.\n\nNell'E-step l'algoritmo usa i parametri correnti per calcolare la distribuzione a posteriori delle variabili latenti, per esempio la probabilità di ciascun punto di appartenere a ogni cluster. Nell'M-step massimizza la log-verosimiglianza attesa dei dati completi sotto quella posteriori, che spesso ha una soluzione in forma chiusa, come una media pesata. Ogni iterazione garantisce di non far diminuire la verosimiglianza dei dati osservati, perché EM massimizza un lower bound (l'ELBO) che coincide con la vera verosimiglianza nei parametri correnti. La garanzia riguarda solo il miglioramento monotono, non l'ottimo globale: EM converge a un massimo locale o a un punto di sella, perciò è prassi eseguire più riavvii casuali. La convergenza può essere lenta quando le variabili latenti trasportano molta informazione.",
+  "u": [
+   "Stimare modelli a mistura gaussiana",
+   "Addestrare hidden Markov model (Baum-Welch)",
+   "Stimare parametri in presenza di dati mancanti"
+  ],
+  "x": "Un laboratorio di genomica usa EM per stimare le frequenze alleliche quando i genotipi individuali sono osservati solo in parte nel sequenziamento a bassa copertura. L'E-step calcola le probabilità dei genotipi per ciascun campione e l'M-step aggiorna le frequenze nella popolazione, con diversi riavvii casuali perché la superficie di verosimiglianza ha più picchi."
+ },
+ "pca": {
+  "n": "PCA (analisi delle componenti principali)",
+  "d": "L'analisi delle componenti principali trova un nuovo insieme di assi ortogonali, le componenti principali, ordinati in base a quanta varianza dei dati catturano. Proiettare sulle prime componenti fornisce una rappresentazione a dimensionalità ridotta che conserva quanta più varianza possibile.\n\nDopo aver centrato i dati, le componenti sono gli autovettori della matrice di covarianza o, in modo equivalente, i vettori singolari destri della SVD della matrice dei dati; gli autovalori danno la varianza spiegata da ciascuna. La PC1 minimizza la somma delle distanze ortogonali al quadrato dai punti alla retta, ed è per questo che differisce da una retta di regressione, che minimizza gli errori verticali. La PCA si usa per compressione, denoising, visualizzazione, decorrelazione degli input e per velocizzare i modelli a valle. Standardizza prima le feature quando hanno unità di misura diverse, altrimenti le variabili su scala ampia domineranno. La PCA è lineare e non supervisionata: cattura solo la struttura lineare, e le direzioni di massima varianza non sono necessariamente le più utili per prevedere un target.",
+  "u": [
+   "Comprimere feature ad alta dimensionalità prima della modellazione",
+   "Visualizzare i dati in due o tre dimensioni",
+   "Ridurre il rumore nei segnali scartando le componenti a bassa varianza"
+  ],
+  "x": "Una fab di semiconduttori applica la PCA a centinaia di letture di sensori correlate per ogni wafer e monitora i punteggi delle prime componenti insieme all'errore di ricostruzione. Un aumento dell'errore di ricostruzione segnala un nuovo tipo di deviazione di processo, e il numero ridotto di componenti rende le carte di controllo gestibili per gli ingegneri."
+ },
+ "kpca": {
+  "n": "Kernel PCA",
+  "d": "La kernel PCA esegue l'analisi delle componenti principali in uno spazio delle feature implicito ad alta dimensionalità definito da una funzione kernel, il che le permette di catturare la struttura non lineare che la PCA lineare non vede. Non calcola mai direttamente la mappatura delle feature, ma solo i prodotti scalari tramite il kernel.\n\nIl metodo costruisce la matrice kernel n×n, la centra nello spazio delle feature e ne prende gli autovettori principali. Le proiezioni dei nuovi punti sono combinazioni di questi autovettori pesate dal kernel. Con un kernel RBF, cerchi concentrici o varietà curve possono diventare linearmente separabili nelle prime componenti. È utile come preprocessing non lineare prima di un classificatore lineare e per il denoising quando si apprende una mappa inversa approssimata. Poiché la matrice kernel è n×n, memoria e tempo crescono rispettivamente in modo quadratico e cubico con il numero di campioni, quindi il metodo è limitato a decine di migliaia di punti a meno di usare approssimazioni come Nyström. I risultati dipendono molto dal kernel e dalla sua ampiezza di banda, e le componenti non hanno un'interpretazione diretta in termini di feature di input.",
+  "u": [
+   "Estrazione di feature non lineari prima di classificatori lineari",
+   "Srotolare varietà curve per la visualizzazione",
+   "Denoising di immagini con ricostruzione della pre-immagine"
+  ],
+  "x": "Un team di spettroscopia che classifica campioni di materiali applica la kernel PCA con kernel RBF a qualche migliaio di spettri e poi addestra una regressione logistica sulle prime componenti. La proiezione non lineare ha separato due gradi di materiale che con la PCA lineare si sovrapponevano, e le dimensioni ridotte del dataset hanno mantenuto accettabile il costo quadratico del kernel."
+ },
+ "svd": {
+  "n": "Decomposizione ai valori singolari (SVD)",
+  "d": "La decomposizione ai valori singolari fattorizza qualsiasi matrice reale A come UΣVᵀ, dove U e V hanno colonne ortonormali e Σ è una matrice diagonale di valori singolari non negativi ordinati dal più grande al più piccolo. Ogni matrice ammette una SVD, comprese quelle rettangolari e di rango non pieno.\n\nDal punto di vista geometrico, A ruota l'input (Vᵀ), scala ciascun asse (Σ) e ruota di nuovo (U). Tenere solo i primi k valori singolari fornisce la migliore approssimazione di rango k sia in norma di Frobenius sia in norma spettrale, un risultato noto come teorema di Eckart–Young. Questo fa della SVD la base di PCA, latent semantic analysis, compressione a basso rango, completamento di matrici per le raccomandazioni, pseudo-inverse e risolutori ai minimi quadrati. Le SVD randomizzata e troncata la estendono a grandi matrici sparse come quelle TF-IDF. Un'avvertenza pratica: i vettori singolari sono definiti solo a meno del segno, e a meno di una rotazione quando i valori singolari coincidono, per cui confrontare le componenti tra esecuzioni diverse richiede un allineamento. La SVD completa di una grande matrice densa è costosa, quindi si preferiscono i metodi troncati.",
+  "u": [
+   "Latent semantic analysis su matrici TF-IDF",
+   "Compressione a basso rango di pesi o immagini",
+   "Collaborative filtering tramite fattorizzazione di matrici"
+  ],
+  "x": "Un team di ricerca documentale applica la SVD troncata a una grande matrice TF-IDF sparsa per ottenere qualche centinaio di dimensioni tematiche dense per ogni documento. Il solver randomizzato gestisce l'input sparso senza renderlo denso, e i vettori risultanti alimentano un indice nearest-neighbor per suggerire articoli correlati."
+ },
+ "tsne": {
+  "n": "t-SNE",
+  "d": "t-SNE (t-distributed Stochastic Neighbor Embedding) è un metodo non lineare che proietta dati ad alta dimensionalità in due o tre dimensioni per la visualizzazione, cercando di mantenere vicini i punti simili. Si concentra sulla conservazione degli intorni locali anziché delle distanze globali.\n\nL'algoritmo converte le distanze tra coppie in probabilità di vicinanza con un kernel gaussiano la cui ampiezza è fissata per ogni punto dal parametro perplexity, che corrisponde grosso modo al numero effettivo di vicini. Nella mappa a bassa dimensionalità usa una distribuzione t di Student a code pesanti, che permette ai punti dissimili di allontanarsi e riduce l'affollamento. Minimizza poi la divergenza KL tra le due distribuzioni con la discesa del gradiente. t-SNE produce immagini nitide dei cluster in embedding, dati single-cell e feature di immagini. Il suo output è però facile da fraintendere: le dimensioni dei cluster e le distanze tra cluster non hanno significato, i risultati cambiano con la perplexity e il seed casuale, e non esiste una trasformazione per i nuovi punti. Usalo per l'esplorazione, non come fonte di feature per modelli a valle.",
+  "u": [
+   "Visualizzare gli embedding appresi dalle reti neurali",
+   "Esplorare i tipi cellulari nei dati di RNA single-cell",
+   "Esaminare la separazione tra classi negli spazi delle feature"
+  ],
+  "x": "Un team di computer vision traccia mappe t-SNE degli embedding delle immagini estratti dal penultimo layer del proprio classificatore, per individuare esempi etichettati male e classi confuse. Prima di trarre conclusioni prova diversi valori di perplexity e diversi seed, e nelle note di revisione evita esplicitamente di interpretare le distanze tra i cluster."
+ },
+ "umap": {
+  "n": "UMAP",
+  "d": "UMAP (Uniform Manifold Approximation and Projection) è un metodo non lineare di riduzione della dimensionalità che costruisce un grafo dei vicini nello spazio originale e poi cerca una disposizione a bassa dimensionalità il cui grafo sia il più simile possibile. Si usa sia per la visualizzazione sia come passo di riduzione di uso generale.\n\nUMAP collega prima ogni punto ai suoi k vicini più prossimi con pesi degli archi che decadono con la distanza relativa alla scala locale, quindi rende simmetrico questo grafo fuzzy. Ottimizza un obiettivo di cross-entropy con la discesa stocastica del gradiente e il negative sampling, avvicinando i punti connessi e allontanando coppie casuali. Rispetto a t-SNE è di solito più veloce, scala a milioni di punti, tende a preservare più struttura globale e supporta transform() per i nuovi dati. n_neighbors bilancia il dettaglio locale con la struttura globale, mentre min_dist controlla quanto strettamente si addensano i punti. Come per t-SNE, le dimensioni dei cluster e gli spazi tra cluster nel grafico non vanno letti come densità o distanze reali, e i risultati variano con gli iperparametri e i seed.",
+  "u": [
+   "Visualizzare in 2D grandi collezioni di embedding",
+   "Ridurre le dimensioni prima di un clustering basato sulla densità",
+   "Proiettare nuovi campioni su una mappa esistente"
+  ],
+  "x": "Un gruppo di ricerca mappa milioni di profili single-cell con UMAP e poi esegue HDBSCAN su un output UMAP a 10 dimensioni per proporre popolazioni cellulari. Poiché UMAP supporta transform, i nuovi batch sperimentali vengono proiettati sulla mappa di riferimento, e i biologi confermano le popolazioni con i geni marcatori invece di fidarsi della sola disposizione."
+ },
+ "autoencoder": {
+  "n": "Autoencoder",
+  "d": "Un autoencoder è una rete neurale addestrata a ricostruire il proprio input dopo averlo fatto passare attraverso una rappresentazione intermedia più stretta, detta collo di bottiglia (bottleneck) o codice latente. L'encoder comprime l'input e il decoder cerca di ricostruirlo, quindi il codice latente deve conservare la struttura più informativa.\n\nIl training minimizza una loss di ricostruzione come l'errore quadratico medio o la cross-entropy e non richiede etichette. Con layer lineari ed errore quadratico, un autoencoder apprende lo stesso sottospazio della PCA; i layer non lineari gli permettono di catturare varietà curve. Le varianti cambiano il vincolo: i denoising autoencoder ricostruiscono input puliti a partire da input corrotti, gli sparse autoencoder penalizzano le unità attive e i variational autoencoder impongono uno spazio latente probabilistico adatto alla generazione. Gli usi comuni sono compressione, denoising e anomaly detection, dove un errore di ricostruzione elevato segnala input insoliti. Un'insidia frequente è che un autoencoder molto potente può ricostruire bene anche le anomalie, per cui dimensione del bottleneck e capacità vanno calibrate su dati di validazione che contengano anomalie note.",
+  "u": [
+   "Anomaly detection basata sulla ricostruzione nei dati dei sensori",
+   "Apprendere embedding compatti senza etichette",
+   "Denoising di immagini o segnali"
+  ],
+  "x": "Una società di pagamenti addestra un autoencoder sui pattern normali delle transazioni dei merchant e invia in revisione le transazioni con errore di ricostruzione superiore a una soglia validata. Il modello assegna il punteggio in pochi millisecondi su CPU, e la soglia viene ricalibrata ogni settimana perché i pattern di spesa legittimi cambiano con le stagioni."
+ },
+ "isoforest": {
+  "n": "Isolation Forest",
+  "d": "Isolation Forest rileva le anomalie misurando con quanta facilità un punto può essere separato dal resto dei dati tramite split casuali. Le anomalie sono poche e diverse, quindi tendono a essere isolate dopo pochi split, mentre i punti normali si trovano in profondità negli alberi.\n\nOgni albero viene costruito su un piccolo sottocampione casuale, di solito 256 punti, scegliendo ripetutamente una feature casuale e una soglia casuale tra il suo minimo e il suo massimo finché i punti non sono isolati. La lunghezza media del percorso sugli alberi viene normalizzata in un anomaly score tra 0 e 1, dove valori vicini a 1 indicano probabili anomalie. Il metodo non richiede calcoli di distanza, gira in tempo lineare, gestisce bene dati tabellari ad alta dimensionalità e non ha bisogno di etichette. Il limite principale è che gli split casuali paralleli agli assi faticano con anomalie che sono insolite solo in una combinazione di feature; inoltre il parametro contamination fissa soltanto la soglia di decisione, quindi deve riflettere un tasso di anomalie realistico e non una stima a caso.",
+  "u": [
+   "Screening antifrode non supervisionato sulle feature delle transazioni",
+   "Rilevare letture difettose nei flussi di sensori IoT",
+   "Segnalare metriche anomale dei server da analizzare"
+  ],
+  "x": "Un cloud provider esegue Isolation Forest sulle metriche di risorse per host, come CPU, memoria, latenza del disco ed errori di rete, per far emergere le macchine anomale agli ingegneri reperibili. L'addestramento su piccoli sottocampioni mantiene economico il riaddestramento orario, e il team fissa la soglia di allerta a partire da percentili del punteggio verificati sugli incidenti passati, invece di affidarsi al valore predefinito di contamination."
+ },
+ "lof": {
+  "n": "Local Outlier Factor (LOF)",
+  "d": "Il Local Outlier Factor assegna un punteggio a ogni punto confrontando la sua densità locale con quelle dei suoi vicini più prossimi. Un punto che si trova in una regione più rarefatta dei suoi vicini ottiene un punteggio superiore a 1 ed è considerato un outlier.\n\nPer ogni punto, LOF calcola la reachability distance dai suoi k vicini, prende l'inverso della media per ottenere la local reachability density e divide la densità media dei vicini per la densità del punto stesso. Poiché il confronto è relativo, LOF riesce a trovare outlier vicino a un cluster denso anche quando un cluster rarefatto altrove contiene punti più lontani, cosa che un'unica soglia di distanza globale non coglierebbe. Funziona bene su dati a dimensionalità bassa o moderata con cluster di densità variabile. Tra gli svantaggi ci sono il costo quadratico in assenza di un indice, la sensibilità alla scelta di k e prestazioni peggiori in alta dimensionalità, dove le distanze diventano meno informative. In scikit-learn, per valutare dati non visti serve novelty=True, e in quel caso fit_predict sul training set non è disponibile.",
+  "u": [
+   "Trovare anomalie locali in cluster di densità variabile",
+   "Rilevare flussi di rete insoliti nei log di sicurezza",
+   "Ripulire i dataset di training dagli outlier"
+  ],
+  "x": "Un team di sicurezza di rete applica LOF a feature a livello di flusso provenienti dalla rete di ciascun ufficio, dove la densità del traffico normale varia molto da sede a sede. Un punteggio di densità relativa individua gli host che si comportano in modo insolito per la propria sede, e il team usa la modalità novelty per valutare i nuovi flussi rispetto a una finestra di riferimento aggiornata ogni giorno."
+ },
+ "spectral": {
+  "n": "Clustering spettrale",
+  "d": "Il clustering spettrale raggruppa i punti costruendo un grafo di similarità, calcolando gli autovettori del suo laplaciano e clusterizzando i punti in quello spazio di autovettori. Trova cluster definiti dalla connettività anziché dalla distanza da un centro.\n\nLa pipeline parte da una matrice di affinità, come un kernel RBF o un grafo k-nearest-neighbor. I primi autovettori del laplaciano normalizzato immergono ogni punto in modo che i gruppi ben connessi finiscano in regioni compatte, che k-means separa poi. La procedura risolve in modo approssimato il problema del normalized cut, che minimizza le connessioni tra cluster in rapporto alla loro dimensione. Gestisce forme non convesse come le mezzelune intrecciate ed è adatto a dati su grafo come i social network. Il costo è il limite principale: la matrice di affinità e la decomposizione agli autovalori scalano male oltre le decine di migliaia di punti, a meno di usare grafi sparsi e solver approssimati. I risultati sono sensibili all'ampiezza dell'affinità o al numero di vicini, e il numero di cluster va comunque scelto, spesso con l'euristica dell'eigengap.",
+  "u": [
+   "Clustering di forme non convesse in bassa dimensionalità",
+   "Community detection in grafi sociali o di citazioni",
+   "Segmentazione di immagini da grafi di similarità tra pixel"
+  ],
+  "x": "Un team di analytics di una compagnia di telecomunicazioni applica il clustering spettrale al grafo delle chiamate tra account aziendali per trovare gruppi di imprese che comunicano soprattutto tra loro. La matrice di affinità sparsa precalcolata tiene sotto controllo la memoria, e l'eigengap del laplaciano ha guidato la scelta del numero di cluster."
+ },
+ "stationarity": {
+  "n": "Stazionarietà",
+  "d": "Una serie temporale è stazionaria quando le sue proprietà statistiche, come media, varianza e autocorrelazione, non cambiano nel tempo. La maggior parte dei modelli di previsione classici, ARMA compreso, presuppone la stazionarietà, perché in tal caso i pattern appresi dal passato restano validi per il futuro.\n\nLa stazionarietà debole (in covarianza) richiede media costante, varianza costante e un'autocovarianza che dipende solo dal lag. Trend, stagionalità e volatilità variabile la violano. I rimedi abituali sono la differenziazione per rimuovere trend o radici unitarie, la differenziazione stagionale e le trasformazioni logaritmiche o di Box-Cox per stabilizzare la varianza. Il test di Dickey-Fuller aumentato (ADF) ha come ipotesi nulla la presenza di una radice unitaria, mentre il test KPSS ha come ipotesi nulla la stazionarietà, per cui eseguirli entrambi fornisce un verdetto più affidabile. Un'insidia comune è la sovra-differenziazione, che introduce un'autocorrelazione negativa artificiale e gonfia la varianza delle previsioni. Inoltre, non rifiutare l'ipotesi nulla dell'ADF non dimostra l'esistenza di una radice unitaria, soprattutto nelle serie brevi, dove il test ha bassa potenza.",
+  "u": [
+   "Preparare le serie per i modelli della famiglia ARIMA",
+   "Testare la presenza di radici unitarie nei dati economici",
+   "Scegliere le trasformazioni prima del feature engineering"
+  ],
+  "x": "Un team di pianificazione della domanda nel retail esegue i test ADF e KPSS su ogni serie negozio-prodotto prima del fitting automatico ARIMA. Le serie con trend ricevono una differenziazione regolare e quelle fortemente stagionali una differenziazione stagionale; le vendite vengono prima trasformate con il logaritmo perché la varianza cresce con i volumi."
+ },
+ "acf": {
+  "n": "Autocorrelazione (ACF / PACF)",
+  "d": "La funzione di autocorrelazione (ACF) misura la correlazione tra una serie temporale e le sue copie ritardate a ciascun lag. La funzione di autocorrelazione parziale (PACF) misura la correlazione al lag k dopo aver rimosso gli effetti di tutti i lag più brevi.\n\nInsieme sono gli strumenti classici per identificare gli ordini di un ARIMA. Per un processo AR(p) puro, la PACF si interrompe dopo il lag p mentre l'ACF decade gradualmente; per un processo MA(q) puro, l'ACF si interrompe dopo il lag q mentre la PACF decade. Picchi ai multipli del periodo stagionale rivelano la stagionalità. L'ACF dei residui del modello è anche una diagnostica fondamentale, poiché un buon modello lascia residui privi di autocorrelazione significativa, cosa che il test di Ljung-Box verifica formalmente. I grafici mostrano di solito bande di confidenza approssimate al 95%. Con molti lag, alcune barre supereranno le bande per puro caso e, su una serie non stazionaria, l'ACF decade molto lentamente nascondendo la struttura; rendi quindi stazionaria la serie prima di leggere gli ordini dai grafici.",
+  "u": [
+   "Scegliere gli ordini AR e MA per un ARIMA",
+   "Individuare i periodi stagionali in una serie",
+   "Verificare che nei residui del modello non resti struttura"
+  ],
+  "x": "Il team di workforce management di un call center esamina l'ACF dei volumi di chiamate a intervalli di mezz'ora e trova forti picchi ai lag giornaliero e settimanale, segno che il modello deve includere entrambi i periodi stagionali. Dopo il fitting, un test di Ljung-Box sui residui funge da controllo di qualità automatico nella pipeline di previsione."
+ },
+ "decomp": {
+  "n": "Decomposizione stagionale",
+  "d": "La decomposizione stagionale scompone una serie temporale in una componente di trend, una componente stagionale ricorrente e un residuo. Rende visibili i pattern sottostanti ed è spesso un passo di preprocessing prima della modellazione o dell'anomaly detection.\n\nUna decomposizione additiva, y = trend + stagionale + residuo, si adatta alle serie le cui oscillazioni stagionali hanno ampiezza costante; una moltiplicativa, y = trend × stagionale × residuo, si adatta alle oscillazioni che crescono con il livello ed equivale alla decomposizione additiva dopo una trasformazione logaritmica. La decomposizione classica stima il trend con una media mobile centrata e media i valori detrendizzati per ciascuna stagione. STL (Seasonal-Trend decomposition using Loess) è più flessibile: permette al pattern stagionale di evolvere, gestisce qualsiasi periodo e ha un'opzione robusta che riduce il peso degli outlier. La decomposizione è descrittiva. Di per sé non è una previsione, il metodo classico perde valori alle estremità della serie, e scegliere il periodo sbagliato o la forma sbagliata tra additiva e moltiplicativa lascia stagionalità nel residuo.",
+  "u": [
+   "Destagionalizzare i dati prima dell'analisi del trend",
+   "Anomaly detection sulla componente residua",
+   "Comunicare i pattern stagionali ai team di business"
+  ],
+  "x": "Un team di web analytics esegue una STL robusta sul traffico orario con periodo settimanale e genera un alert quando il residuo supera diverse deviazioni standard robuste. Rimuovere i cicli giornalieri e settimanali attesi ha ridotto i falsi allarmi del lunedì mattina, e il fitting robusto impedisce che un vecchio disservizio distorca il profilo stagionale."
+ },
+ "arima": {
+  "n": "ARIMA",
+  "d": "ARIMA (AutoRegressive Integrated Moving Average) prevede una serie temporale modellando ogni valore come combinazione lineare dei propri valori passati e degli errori di previsione passati, dopo aver differenziato la serie per renderla stazionaria. Il modello si scrive ARIMA(p, d, q).\n\nLa parte AR usa p valori ritardati, la parte I applica d differenziazioni e la parte MA usa q errori ritardati. Gli ordini si scelgono dai grafici ACF e PACF oppure minimizzando un criterio informativo come l'AIC, spesso tramite una ricerca automatica. I parametri vengono stimati per massima verosimiglianza e il modello fornisce intervalli di previsione oltre alle previsioni puntuali. ARIMA funziona bene per singole serie univariate abbastanza brevi con autocorrelazione stabile ed è una baseline solida. Tra i limiti: la linearità, un unico pattern stagionale e solo tramite l'estensione SARIMA, e un fitting per singola serie che diventa costoso su migliaia di serie. Gli intervalli di previsione presuppongono errori normali e omoschedastici e, per le serie integrate, si allargano rapidamente al crescere dell'orizzonte.",
+  "u": [
+   "Previsione a breve termine di una singola metrica di business",
+   "Modello baseline per benchmark di forecasting",
+   "Previsione di indicatori macroeconomici con intervalli"
+  ],
+  "x": "Il team operativo di un ospedale prevede i ricoveri giornalieri dal pronto soccorso con modelli ARIMA selezionati tramite AIC e riaddestrati ogni notte sugli ultimi due anni di dati. Gli intervalli di previsione orientano i livelli minimi di personale, e le diagnostiche sui residui vengono registrate per intercettare la deriva del modello dopo cambi di policy."
+ },
+ "sarima": {
+  "n": "SARIMA",
+  "d": "SARIMA estende ARIMA con termini stagionali autoregressivi, di differenziazione e a media mobile che operano a un lag stagionale fisso, per esempio 12 per dati mensili con ciclo annuale. Si scrive ARIMA(p, d, q)(P, D, Q)ₛ.\n\nLa parte stagionale moltiplica i polinomi non stagionali, così il modello può catturare sia la dipendenza a breve raggio sia la relazione tra un valore e la stessa stagione dei cicli precedenti. La differenziazione stagionale (D = 1) sottrae il valore di un periodo prima, rimuovendo un pattern stagionale stabile. Con regressori esogeni il modello prende il nome di SARIMAX e può includere festività o prezzi. SARIMA è una scelta ben compresa per dati aziendali mensili o trimestrali con un'unica stagionalità chiara. Fatica con periodi stagionali lunghi, per esempio 365 per dati giornalieri o 168 per dati orari, perché la stima diventa lenta e instabile; termini di Fourier come regressori esogeni o modelli di tipo TBATS li gestiscono meglio. Inoltre supporta direttamente un solo periodo stagionale.",
+  "u": [
+   "Previsione delle vendite mensili con stagionalità annuale",
+   "Serie economiche trimestrali con pattern stagionali",
+   "Previsione della domanda stagionale con regressori per le festività"
+  ],
+  "x": "Un distributore di bevande prevede le spedizioni mensili per regione con un SARIMAX(1,1,1)(1,1,1)₁₂ e un regressore per il numero di festività in ciascun mese. La struttura stagionale cattura il picco estivo, e i pianificatori usano l'intervallo all'80% per fissare la scorta di sicurezza invece di affidarsi alla sola previsione puntuale."
+ },
+ "prophet": {
+  "n": "Prophet",
+  "d": "Prophet è una libreria open source di forecasting sviluppata da Meta che adatta un modello additivo con trend a tratti, stagionalità basate su serie di Fourier ed effetti delle festività. È pensata per serie temporali aziendali con forti pattern stagionali e per analisti che vogliono previsioni ragionevoli con poca messa a punto.\n\nIl trend è lineare a tratti o logistico, con changepoint posizionati automaticamente la cui flessibilità è controllata da una prior scale. Le stagionalità annuale, settimanale e giornaliera sono modellate con serie di Fourier, mentre festività o eventi personalizzati entrano come regressori aggiuntivi. Il fitting avviene con Stan e l'output include intervalli di incertezza. Prophet tollera dati mancanti e timestamp irregolari e produce grafici delle componenti interpretabili. È un approccio di curve fitting, non autoregressivo, quindi ignora la dinamica recente dei residui e spesso perde contro baseline semplici o contro il gradient boosting sulle serie in cui conta l'autocorrelazione a breve termine. Anche l'estrapolazione del trend può derivare in modo irrealistico su orizzonti lunghi, per cui le impostazioni dei changepoint vanno validate con una cross-validation temporale.",
+  "u": [
+   "Previsione giornaliera di metriche di business con festività",
+   "Capacity planning per traffico web stagionale",
+   "Previsioni rapide su molte serie da parte degli analisti"
+  ],
+  "x": "Un'azienda di food delivery prevede gli ordini giornalieri per città con Prophet, aggiungendo le festività regionali e un regressore per i grandi eventi sportivi. Gli analisti esaminano i grafici delle componenti per spiegare le variazioni ai responsabili operativi, e prima di ogni ciclo di pianificazione trimestrale confrontano Prophet con una baseline seasonal naive in una cross-validation a finestra mobile."
+ },
+ "holtwinters": {
+  "n": "Smoothing esponenziale (Holt-Winters)",
+  "d": "Lo smoothing esponenziale prevede una serie a partire da medie pesate delle osservazioni passate, con pesi che decrescono esponenzialmente per i dati più vecchi. Holt-Winters estende lo smoothing semplice con una componente di trend e una componente stagionale, ciascuna aggiornata dal proprio parametro di smoothing.\n\nTre equazioni aggiornano a ogni passo il livello (α), il trend (β) e l'indice stagionale (γ), e le previsioni combinano l'ultimo livello, il trend e l'indice stagionale corrispondente. La parte stagionale può essere additiva, per oscillazioni di ampiezza costante, o moltiplicativa, per oscillazioni proporzionali al livello. Un trend smorzato (damped) appiattisce le previsioni a lungo orizzonte ed è spesso più accurato di un trend lineare non smorzato. Formulati come modelli ETS in spazio degli stati, questi metodi forniscono verosimiglianze, selezione basata su AIC e intervalli di previsione. Holt-Winters è veloce, robusto e costituisce una baseline solida per molte serie di domanda e operative. Gestisce un solo periodo stagionale, nella forma standard non può usare regressori esterni e le versioni moltiplicative falliscono quando la serie contiene zeri o valori negativi.",
+  "u": [
+   "Previsione della domanda di magazzino per molti prodotti",
+   "Previsione a breve termine dei carichi stagionali delle utility",
+   "Baseline rapida per competizioni di forecasting"
+  ],
+  "x": "Una catena di supermercati prevede la domanda settimanale di migliaia di prodotti con modelli ETS selezionati automaticamente, scegliendo per ogni articolo la stagionalità additiva o moltiplicativa tramite AIC. I modelli si adattano in pochi secondi per serie, il che consente un aggiornamento completo ogni notte, e un trend smorzato evita previsioni fuori controllo per gli articoli in promozione."
+ },
+ "tssplit": {
+  "n": "Validazione temporale",
+  "d": "La validazione temporale valuta un modello di previsione o temporale addestrandolo sempre sui dati precedenti e testandolo su quelli successivi, rispecchiando il modo in cui il modello verrà usato in produzione. Gli split K-fold casuali fanno trapelare informazioni future nel training e producono punteggi eccessivamente ottimistici.\n\nLo schema abituale è la valutazione rolling-origin o a finestra espansiva: diversi fold, ciascuno con un periodo di training che termina a un cutoff e un periodo di test che lo segue. Una finestra scorrevole mantiene fissa la lunghezza del training, il che è utile quando i dati vecchi non sono più rappresentativi. Un intervallo (gap) tra periodo di training e di test dovrebbe corrispondere al ritardo reale tra disponibilità dei dati e previsione, e feature come le medie mobili vanno calcolate solo con i dati disponibili a ciascun cutoff. Mediare gli errori sui fold fornisce una stima più stabile di un singolo split. Un errore comune è adattare scaler, encoder o selezione delle feature sull'intero dataset prima di dividerlo, facendo trapelare statistiche future in ogni fold.",
+  "u": [
+   "Valutazione onesta dei modelli di previsione della domanda",
+   "Tuning degli iperparametri per modelli di churn o antifrode",
+   "Backtesting di strategie di trading o di pricing"
+  ],
+  "x": "Un team antifrode valuta ogni modello candidato sui quattro mesi più recenti come fold separati, addestrando solo sulle transazioni precedenti con un gap di due settimane per tenere conto del ritardo delle etichette di chargeback. Gli split casuali avevano sovrastimato le prestazioni perché gli stessi gruppi di frodatori comparivano sia nei dati di training sia in quelli di test."
+ },
+ "multistep": {
+  "n": "Previsione multi-step",
+  "d": "La previsione multi-step stima più passi temporali futuri contemporaneamente, come le prossime 24 ore o le prossime 12 settimane, anziché solo il valore successivo. La scelta della strategia influisce su accuratezza, costo e modo in cui gli errori si accumulano lungo l'orizzonte.\n\nLa strategia ricorsiva addestra un modello a un passo e reimmette le sue stesse previsioni come input: è semplice, ma lascia che gli errori si accumulino. La strategia diretta addestra un modello separato per ogni passo dell'orizzonte, evitando gli errori di retroazione ma moltiplicando il costo di training e ignorando la dipendenza tra i passi. La strategia multi-output (MIMO) prevede l'intero vettore dell'orizzonte con un solo modello, come fanno molti modelli di forecasting neurali. Le strategie ibride combinano questi approcci, per esempio modelli diretti che usano anche le previsioni dei passi precedenti. La valutazione dovrebbe riportare l'errore per ciascun orizzonte, poiché l'accuratezza di solito peggiora con la distanza. Un'insidia frequente della strategia ricorsiva è usare feature, come valori ritardati futuri o medie mobili, che per i passi successivi non saranno effettivamente note al momento della previsione.",
+  "u": [
+   "Previsione oraria del carico elettrico per il giorno successivo",
+   "Previsioni settimanali della domanda su un orizzonte di pianificazione",
+   "Previsione del traffico o della domanda di corse su più ore"
+  ],
+  "x": "Un gestore della rete elettrica produce previsioni day-ahead per ciascuna delle prossime 24 ore con una strategia diretta, usando un modello gradient boosting per ogni ora dell'orizzonte. L'approccio diretto ha evitato l'accumulo di errori di un modello ricorsivo nelle ore serali, e gli errori vengono monitorati per ciascun passo dell'orizzonte."
+ },
+ "gbmts": {
+  "n": "Gradient boosting per serie temporali",
+  "d": "Il gradient boosting per serie temporali trasforma la previsione in un problema di regressione tabellare: ogni riga descrive una serie in un dato istante con feature di lag, statistiche mobili, campi di calendario e variabili esterne, e un modello come LightGBM prevede il valore futuro. È uno degli approcci di maggior successo nelle grandi competizioni di forecasting per il retail.\n\nIl vantaggio principale è che un unico modello globale viene addestrato su migliaia di serie correlate, condividendo i pattern e gestendo identificatori categorici, prezzi, promozioni e festività. Loss come Tweedie o Poisson si adattano alle vendite intermittenti, e la quantile loss fornisce intervalli di previsione. Il grosso del lavoro lo fa il feature engineering, che deve rispettare il tempo: ogni lag e ogni finestra mobile devono essere calcolabili al momento della previsione, il che per orizzonti multi-step significa lag almeno pari alla lunghezza dell'orizzonte. I modelli ad albero non sanno estrapolare oltre l'intervallo del target visto in training, per cui i trend marcati si gestiscono con la differenziazione o prevedendo rapporti rispetto a un livello recente.",
+  "u": [
+   "Previsione delle vendite negozio-articolo su migliaia di serie",
+   "Previsione della domanda di corse con meteo ed eventi",
+   "Previsione del carico energetico con feature di calendario"
+  ],
+  "x": "Una grande catena di supermercati prevede le vendite giornaliere in unità per ogni negozio e prodotto con un unico modello LightGBM globale, usando la loss Tweedie per i numerosi giorni a vendite zero. I lag partono da 28 giorni, così il modello può coprire un orizzonte completo di quattro settimane senza retroazione ricorsiva, e le feature di prezzo e promozione provengono dal sistema di pianificazione."
+ },
+ "nbeats": {
+  "n": "N-BEATS",
+  "d": "N-BEATS (Neural Basis Expansion Analysis for Time Series) è un'architettura di deep learning per il forecasting costruita solo con layer fully connected, organizzati in stack di blocchi collegati da connessioni residue. Ha dimostrato che un modello di puro deep learning poteva superare gli ensemble statistici sul benchmark M4.\n\nOgni blocco prende una finestra di lookback, la fa passare attraverso un MLP e produce due vettori di coefficienti di espansione su una base: un backcast che ricostruisce parte dell'input e un forecast per l'orizzonte. Il backcast viene sottratto dall'input del blocco prima del blocco successivo, così i blocchi successivi modellano ciò che i precedenti non hanno colto, e la previsione finale è la somma dei forecast di tutti i blocchi. Nella variante interpretabile i blocchi sono vincolati a basi polinomiali per il trend e di Fourier per la stagionalità, fornendo una decomposizione in trend e stagionalità. La variante generica usa basi apprese ed è di solito più accurata. Il modello originale è univariato; le estensioni N-BEATSx e N-HiTS aggiungono input esogeni e una maggiore efficienza sugli orizzonti lunghi.",
+  "u": [
+   "Previsione univariata su molte serie correlate",
+   "Decomposizione interpretabile in trend e stagionalità",
+   "Baseline neurale solida per i benchmark di forecasting"
+  ],
+  "x": "Un'azienda di logistica addestra un unico modello N-BEATS globale sui volumi settimanali di spedizione di migliaia di tratte, usando la variante interpretabile così i pianificatori possono vedere separatamente le previsioni di trend e di stagionalità. L'addestramento su molte serie contemporaneamente fornisce al modello dati sufficienti, e l'inferenza su GPU è abbastanza veloce per gli aggiornamenti batch settimanali."
+ },
+ "tft": {
+  "n": "Temporal Fusion Transformer (TFT)",
+  "d": "Il Temporal Fusion Transformer è un'architettura di deep learning per il forecasting multi-orizzonte che combina layer ricorrenti, attention e gating per gestire insieme attributi statici, input passati osservati e input futuri noti. Produce previsioni per quantili ed espone pesi interpretabili.\n\nLe variable selection network apprendono quanto conta ciascuna feature di input a ogni passo temporale. Le covariate statiche, come il tipo di negozio, condizionano la rete tramite vettori di contesto. Un encoder-decoder LSTM elabora i pattern locali della sequenza, mentre una multi-head attention interpretabile lungo il tempo cattura le dipendenze a lungo raggio; le gated residual network permettono al modello di saltare i componenti di cui non ha bisogno. Il training usa la quantile loss, quindi il modello prevede direttamente, per esempio, il 10°, il 50° e il 90° percentile. TFT è adatto a problemi con covariate ricche come promozioni, prezzi, festività e meteo. È più oneroso da addestrare e calibrare rispetto al gradient boosting, richiede una notevole quantità di dati, e i suoi pesi di attention e di selezione indicano su cosa si appoggia il modello, non un'influenza causale.",
+  "u": [
+   "Previsione della domanda retail con calendari promozionali",
+   "Previsione dei prezzi dell'elettricità con covariate meteo",
+   "Previsioni probabilistiche per le decisioni di magazzino"
+  ],
+  "x": "Un desk di trading energetico usa TFT per prevedere i prezzi day-ahead con output per quantili, fornendogli come input futuri noti le previsioni meteo e i fermi programmati degli impianti. I quantili previsti determinano i limiti di rischio delle offerte, e i pesi di selezione delle variabili aiutano gli analisti a verificare che il modello risponda ai driver attesi."
+ },
+ "patchtst": {
+  "n": "PatchTST",
+  "d": "PatchTST è un Transformer per il forecasting a lungo orizzonte che suddivide ogni serie in brevi patch, eventualmente sovrapposte, e tratta ciascuna patch come un token. Inoltre elabora ogni canale di una serie multivariata in modo indipendente, con pesi condivisi.\n\nIl patching riduce il numero di token di un fattore pari all'incirca allo stride, quindi il costo dell'attention cala drasticamente e il modello può guardare molto più indietro. Ogni token porta anche informazioni sulla forma locale che un singolo passo temporale non ha, il che aiuta l'attention a trovare pattern significativi. L'indipendenza tra canali significa che un dataset multivariato con molte variabili viene trattato come tante serie univariate che condividono un unico modello: ciò agisce da regolarizzazione e ha aiutato PatchTST a battere i precedenti Transformer per il forecasting che mescolavano i canali a ogni passo. La normalizzazione per istanza (RevIN) gestisce gli spostamenti di livello tra finestre di training e di test. Il modello supporta anche il pretraining self-supervised tramite mascheramento delle patch. Questa scelta progettuale ha un costo: la pura indipendenza tra canali non può sfruttare direttamente le relazioni tra variabili, che in alcune applicazioni, come i sensori correlati, sono importanti.",
+  "u": [
+   "Previsione a lungo orizzonte del carico elettrico",
+   "Previsione di molti canali di sensori con pesi condivisi",
+   "Pretraining self-supervised su serie temporali non etichettate"
+  ],
+  "x": "Il team operativo di un data center prevede i prossimi 96 intervalli di temperatura e assorbimento elettrico per centinaia di rack con PatchTST, usando una finestra di lookback lunga che sarebbe troppo costosa per un Transformer punto per punto. L'indipendenza tra canali permette a un solo modello di servire tutti i rack, e RevIN mantiene stabili le previsioni quando il carico di base di un rack cambia."
+ },
+ "tsfm": {
+  "n": "Foundation model per serie temporali",
+  "d": "I foundation model per serie temporali sono grandi reti neurali preaddestrate su raccolte molto ampie ed eterogenee di serie temporali, in modo da poter prevedere nuove serie in zero-shot, senza addestramento sui dati di destinazione. Tra gli esempi figurano Chronos di Amazon, TimesFM di Google, Moirai di Salesforce e Lag-Llama.\n\nI design variano. Chronos scala e quantizza i valori in token e addestra su di essi un language model in stile T5, producendo previsioni probabilistiche tramite campionamento. TimesFM è un Transformer decoder-only che lavora su patch della serie. Moirai usa il patching con più dimensioni di patch e supporta input multivariati e covariate. Il pretraining combina serie reali e sintetiche. Sono utili come baseline solide, per problemi di cold start con molte serie brevi e quando un team non può mantenere modelli specifici per ogni dataset. Tra i limiti ci sono l'uso limitato o nullo delle covariate in alcuni modelli, il costo di inferenza elevato rispetto ai metodi classici e il rischio che i dati dei benchmark si sovrappongano a quelli di pretraining. Il fine-tuning o un modello di gradient boosting ben calibrato possono comunque risultare migliori su dati specifici di un dominio.",
+  "u": [
+   "Previsioni zero-shot per nuovi prodotti privi di storico",
+   "Baseline rapide su molte serie eterogenee",
+   "Previsioni probabilistiche senza addestramento per singola serie"
+  ],
+  "x": "Un team di infrastruttura cloud usa un modello Chronos preaddestrato per produrre previsioni di capacità zero-shot per migliaia di servizi appena lanciati che hanno solo poche settimane di storico. Ogni mese lo confronta con baseline seasonal naive e LightGBM e mantiene il foundation model solo per le serie in cui vince, poiché l'inferenza su GPU costa più dei modelli classici."
+ },
+ "gd": {
+  "n": "Discesa del gradiente",
+  "d": "La discesa del gradiente minimizza una funzione spostando ripetutamente i parametri di un piccolo passo nella direzione del gradiente negativo, cioè la direzione di massima decrescita locale. È il fondamento di quasi tutto l'addestramento delle reti neurali.\n\nA ogni iterazione si calcola il gradiente della loss rispetto a ciascun parametro e lo si sottrae, scalato per il learning rate. Nella discesa del gradiente full-batch il gradiente è calcolato sull'intero training set, per cui ogni passo è esatto ma costoso. Per funzioni convesse e lisce, con un learning rate adeguato, converge al minimo globale; per loss non convesse come quelle delle reti profonde raggiunge un punto stazionario che dipende dall'inizializzazione. Il learning rate è cruciale: troppo piccolo spreca calcolo, troppo grande provoca oscillazioni o divergenza, e il limite di sicurezza è fissato dalla curvatura della loss. Feature scalate male creano valli allungate che fanno procedere a zig-zag e lentamente la discesa del gradiente semplice, ed è per questo che scaling delle feature, momentum e metodi adattivi aiutano.",
+  "u": [
+   "Stimare modelli di regressione lineare e logistica",
+   "Addestrare reti neurali tramite backpropagation",
+   "Risolvere problemi di ottimizzazione lisci nel calcolo scientifico"
+  ],
+  "x": "Un team di modellazione del rischio adatta una regressione logistica su alcuni milioni di righe con un'ottimizzazione basata sul gradiente full-batch, perché la loss convessa garantisce una soluzione unica che gli auditor possono riprodurre esattamente. Le feature vengono prima standardizzate, il che riduce sensibilmente il numero di iterazioni necessarie a convergere."
+ },
+ "sgd": {
+  "n": "Discesa stocastica del gradiente (SGD)",
+  "d": "La discesa stocastica del gradiente aggiorna i parametri del modello usando il gradiente calcolato su un singolo esempio o su un piccolo sottoinsieme casuale invece che sull'intero dataset. Ogni passo è economico e rumoroso, ma in media punta nella direzione giusta perché il gradiente campionato è una stima non distorta del gradiente completo.\n\nCiò rende praticabile l'addestramento su dataset molto più grandi della memoria, poiché il costo di ogni aggiornamento non cresce con la dimensione del dataset. Anche il rumore ha dei vantaggi: aiuta l'ottimizzatore a sfuggire a minimi stretti e punti di sella, e si ritiene che favorisca soluzioni che generalizzano bene. Nel deep learning, \"SGD\" indica quasi sempre la SGD mini-batch, spesso con momentum. La SGD semplice con learning rate costante non converge esattamente: continua a rimbalzare in una regione attorno al minimo la cui ampiezza scala con il learning rate, per cui per convergere serve uno schedule decrescente. La SGD è inoltre più sensibile dei metodi adattivi al learning rate e allo scaling delle feature.",
+  "u": [
+   "Addestrare grandi modelli lineari su dati in streaming",
+   "Addestrare reti convoluzionali per la classificazione di immagini",
+   "Online learning con dati che arrivano di continuo"
+  ],
+  "x": "Un'azienda ad-tech addestra con SGD modelli logistici di previsione dei clic su un flusso continuo di eventi, aggiornando i pesi man mano che arrivano nuove impression. Gli aggiornamenti per singolo esempio mantengono costante la memoria indipendentemente dal volume di traffico, e un learning rate decrescente mantiene stabile il modello pur continuando ad adattarlo alle nuove campagne."
+ },
+ "minibatch": {
+  "n": "Mini-batch",
+  "d": "Un mini-batch è un piccolo sottoinsieme casuale di esempi di training, tipicamente tra 16 e qualche migliaio, usato per calcolare una stima del gradiente e un aggiornamento dei parametri. L'addestramento a mini-batch si colloca tra la discesa del gradiente full-batch e la SGD a singolo esempio ed è lo standard nel deep learning.\n\nMediare il gradiente su B esempi ne riduce la varianza all'incirca di un fattore B, e il batching permette alle GPU di elaborare molti esempi in parallelo, per cui il throughput cresce nettamente finché l'hardware non è saturo. Batch più grandi danno aggiornamenti più regolari ma meno numerosi per epoca; la linear scaling rule suggerisce di aumentare il learning rate in proporzione alla dimensione del batch, di solito con un warmup. Oltre una certa dimensione critica del batch, aggiungere esempi non riduce più il numero di passi necessari e spreca semplicemente calcolo. Quando la memoria limita il batch, la gradient accumulation somma i gradienti su diversi batch più piccoli prima di un unico aggiornamento. La dimensione del batch interagisce anche con la batch normalization, le cui statistiche diventano inaffidabili con batch molto piccoli.",
+  "u": [
+   "Addestramento efficiente su GPU di reti neurali profonde",
+   "Gradient accumulation per il fine-tuning di LLM con memoria limitata",
+   "Scalare l'addestramento su più dispositivi"
+  ],
+  "x": "Un team che esegue il fine-tuning di un language model su una singola GPU usa un batch per dispositivo di 4 con 16 passi di gradient accumulation, per arrivare a un batch effettivo di 64. Così ha replicato le impostazioni stabili delle esecuzioni multi-GPU restando nei limiti di memoria, e ha scalato il learning rate in base alla dimensione effettiva del batch."
+ },
+ "momentum": {
+  "n": "Momentum",
+  "d": "Il momentum accelera la discesa del gradiente accumulando una media a decadimento esponenziale dei gradienti passati e spostando i parametri lungo questa velocità invece che lungo il gradiente grezzo. Le direzioni in cui i gradienti concordano acquistano velocità, mentre quelle in cui oscillano si annullano.\n\nCon un coefficiente β, comunemente 0,9, la velocità integra circa 1/(1 − β) gradienti recenti, così il passo effettivo in una direzione coerente diventa fino a dieci volte più grande. Nelle valli strette e curve, dove la discesa del gradiente semplice procede a zig-zag tra le pareti, il momentum smorza l'oscillazione e avanza più rapidamente lungo il fondo della valle. Attenua anche il rumore dei gradienti stocastici. La SGD con momentum resta un ottimizzatore solido per le reti convoluzionali ed è alla base della stima del primo momento di Adam. Esistono due convenzioni: alcune librerie scalano il gradiente per (1 − β) e altre no, il che cambia il learning rate effettivo, per cui gli iperparametri non si trasferiscono direttamente da un'implementazione all'altra. Un momentum alto con un learning rate alto può oltrepassare il minimo e causare instabilità.",
+  "u": [
+   "Addestrare con SGD classificatori di immagini in stile ResNet",
+   "Accelerare la convergenza in problemi mal condizionati",
+   "Attenuare i gradienti rumorosi nell'addestramento con batch piccoli"
+  ],
+  "x": "Un team di imaging medico addestra un modello convoluzionale di segmentazione con SGD con momentum 0,9 e uno schedule cosine, dopo aver scoperto che generalizzava leggermente meglio di Adam sui dati ospedalieri di hold-out. Il momentum resta fisso e si calibra solo il learning rate, il che ha semplificato la ricerca degli iperparametri."
+ },
+ "nesterov": {
+  "n": "Nesterov Accelerated Gradient",
+  "d": "Il Nesterov Accelerated Gradient è una variante del momentum che valuta il gradiente nella posizione che i parametri stanno per raggiungere, anziché in quella attuale. Questo sguardo in avanti (look-ahead) permette all'ottimizzatore di correggere la propria velocità prima di oltrepassare il minimo.\n\nIl momentum classico aggiunge il gradiente corrente alla velocità accumulata; Nesterov si sposta prima lungo la velocità e poi misura lì il gradiente. Se la velocità sta portando i parametri oltre un minimo, il gradiente look-ahead punta già all'indietro, quindi l'aggiornamento rallenta prima e oscilla di meno. Per problemi convessi lisci, il metodo di Nesterov raggiunge il tasso di convergenza ottimale O(1/t²) tra i metodi del primo ordine, contro O(1/t) della discesa del gradiente semplice. Nel deep learning il guadagno pratico rispetto al momentum classico è di solito modesto ma costante, e nella maggior parte dei framework si attiva con un solo flag. Le implementazioni usano una riformulazione equivalente che calcola il gradiente nei parametri correnti, quindi non serve un forward pass aggiuntivo. Nadam combina la stessa idea con Adam.",
+  "u": [
+   "Addestrare reti convoluzionali con SGD",
+   "Ottimizzazione convessa accelerata nel ML classico",
+   "Ridurre le oscillazioni rispetto al momentum classico"
+  ],
+  "x": "Un team di computer vision che confrontava ottimizzatori per un classificatore di immagini è passato dal momentum classico al momentum di Nesterov mantenendo lo stesso schedule del learning rate. Il cambiamento non ha avuto costi di calcolo e ha prodotto curve di loss leggermente più regolari, così è stato adottato come impostazione predefinita nel template di addestramento."
+ },
+ "rmsprop": {
+  "n": "RMSProp",
+  "d": "RMSProp è un ottimizzatore adattivo che divide il gradiente di ciascun parametro per una radice della media quadratica mobile dei suoi gradienti recenti. I parametri con gradienti costantemente grandi ricevono passi più piccoli, mentre quelli con gradienti piccoli ricevono passi più grandi.\n\nIl metodo mantiene una media mobile esponenziale dei gradienti al quadrato, di solito con decadimento ρ = 0,9 o 0,99, e scala l'aggiornamento per l'inverso della radice quadrata di tale media più un piccolo ε. Risolve la debolezza principale di AdaGrad, la cui somma accumulata dei gradienti al quadrato può solo crescere e finisce per ridurre il learning rate quasi a zero; la media mobile permette a RMSProp di continuare ad adattarsi durante addestramenti lunghi. Funziona bene su obiettivi non stazionari ed era una scelta comune per le reti ricorrenti e il reinforcement learning. Adam lo estende con momentum e correzione del bias. RMSProp non ha correzione del bias, quindi i primi aggiornamenti possono essere grandi mentre la media si stabilizza, e il valore di ε, talvolta posto dentro la radice quadrata, può cambiare sensibilmente il comportamento.",
+  "u": [
+   "Addestrare reti ricorrenti su dati sequenziali",
+   "Deep reinforcement learning, per esempio agenti DQN",
+   "Ottimizzare obiettivi che cambiano durante l'addestramento"
+  ],
+  "x": "Uno studio di videogiochi che addestra agenti di reinforcement learning per il playtesting automatizzato usa RMSProp, seguendo le impostazioni di implementazioni DQN consolidate. Lo scaling per parametro gestisce il segnale di ricompensa che cambia al variare della policy dell'agente, e il team applica il gradient clipping per evitare che rari aggiornamenti molto grandi destabilizzino la value network."
+ },
+ "adam": {
+  "n": "Adam",
+  "d": "Adam (Adaptive Moment Estimation) è un ottimizzatore che combina il momentum con passi adattivi per ciascun parametro. Mantiene medie mobili esponenziali del gradiente e del gradiente al quadrato, le corregge entrambe per la loro inizializzazione a zero e ne usa il rapporto come aggiornamento.\n\nIl primo momento m agisce come un momentum e rende più regolare la direzione di aggiornamento; il secondo momento v scala il passo di ciascun parametro per l'inverso dell'ampiezza tipica del suo gradiente. La correzione del bias divide ogni media per 1 − βᵗ, evitando passi minuscoli o eccessivi nelle prime iterazioni. I suoi valori predefiniti funzionano su molti problemi, il che ha reso Adam l'ottimizzatore standard per i Transformer e per buona parte del deep learning. L'ampiezza dei suoi aggiornamenti è approssimativamente limitata dal learning rate, il che lo rende robusto alla scala dei gradienti. Tra i limiti ci sono un maggiore uso di memoria, poiché per ogni parametro si memorizzano due valori aggiuntivi, e una generalizzazione talvolta peggiore rispetto a una SGD ben calibrata nei task di visione. Con il weight decay, la penalità L2 viene riscalata da v, per cui si preferisce AdamW.",
+  "u": [
+   "Addestrare Transformer e language model",
+   "Ottimizzatore predefinito per prototipare reti neurali",
+   "Addestrare modelli con gradienti sparsi o rumorosi"
+  ],
+  "x": "Un team di raccomandazione che addestra un modello di retrieval two-tower con grandi tabelle di embedding sparse usa Adam perché gli embedding degli articoli visti di rado ricevono gradienti poco frequenti, e lo scaling adattivo concede loro passi effettivi più grandi. Lo stato dell'ottimizzatore triplica la memoria degli embedding, quindi il team usa una variante sparse di Adam che aggiorna solo le righe presenti in ciascun batch."
+ },
+ "adamw": {
+  "n": "AdamW",
+  "d": "AdamW è Adam con weight decay disaccoppiato: invece di aggiungere una penalità L2 alla loss, riduce direttamente i pesi di una frazione fissa a ogni passo, separatamente dall'aggiornamento adattivo basato sul gradiente. È l'ottimizzatore standard per l'addestramento e il fine-tuning dei Transformer.\n\nIn Adam semplice, un termine L2 viene aggiunto al gradiente e poi diviso per il denominatore adattivo √v̂, per cui i parametri con una storia di gradienti grandi vengono regolarizzati appena, mentre quelli aggiornati di rado vengono penalizzati pesantemente. Ciò rende la regolarizzazione L2 e il weight decay non equivalenti per i metodi adattivi. AdamW applica θ ← θ − ηλθ al di fuori dello scaling adattivo, così ogni peso decade allo stesso tasso relativo, il che migliora la generalizzazione e rende più facile calibrare in modo indipendente learning rate e intensità del decay. Nella pratica comune si escludono dal decay i bias e i pesi di normalizzazione. Nota che in PyTorch il decay è moltiplicato per il learning rate, quindi modificare lo schedule cambia anche la regolarizzazione effettiva.",
+  "u": [
+   "Pretraining e fine-tuning di large language model",
+   "Addestrare Vision Transformer ed encoder in stile BERT",
+   "Addestramento regolarizzato di qualsiasi modello basato su Adam"
+  ],
+  "x": "Un team NLP esegue il fine-tuning di un encoder in stile BERT per la classificazione di documenti con AdamW, weight decay 0,01 e warmup lineare seguito da decadimento lineare, in linea con i valori predefiniti di Hugging Face Trainer. I parametri di bias e di LayerNorm sono esclusi dal decay, seguendo la ricetta originale di BERT ed evitando di ridurre verso zero le scale di normalizzazione."
+ },
+ "lr": {
+  "n": "Learning rate (tasso di apprendimento)",
+  "d": "Il learning rate è lo scalare che stabilisce quanto è grande il passo che l'ottimizzatore compie lungo la direzione di aggiornamento a ogni iterazione. Di solito è l'iperparametro più importante in assoluto nell'addestramento di una rete neurale.\n\nSe è troppo piccolo, l'addestramento è lento e può bloccarsi sui plateau; se è troppo grande, la loss oscilla o diverge, cosa che spesso si manifesta con valori NaN. Per una loss quadratica, la discesa del gradiente è stabile solo quando il learning rate è inferiore a 2 diviso la curvatura massima. Il valore migliore dipende da ottimizzatore, dimensione del batch, dimensione del modello e architettura: gli ottimizzatori in stile Adam usano comunemente valori tra 1e-4 e 1e-3, mentre la SGD sui modelli di visione parte spesso intorno a 0,1. Un learning rate range test, che aumenta il tasso in modo esponenziale durante una breve esecuzione osservando la loss, aiuta a trovare un buon valore di partenza. Il fine-tuning di un modello preaddestrato richiede in genere un tasso molto più piccolo rispetto all'addestramento da zero, per non distruggere le feature apprese.",
+  "u": [
+   "Calibrare il primo iperparametro di qualsiasi addestramento",
+   "Scegliere tassi piccoli per il fine-tuning di modelli preaddestrati",
+   "Diagnosticare divergenze e picchi della loss"
+  ],
+  "x": "Un team di piattaforma ML esegue un breve learning rate range test prima di ogni nuova famiglia di modelli, esplorando in modo esponenziale diversi ordini di grandezza e scegliendo un valore un po' inferiore al punto in cui la loss inizia a salire. Questo ha sostituito lunghe grid search e ha intercettato diverse configurazioni in cui il tasso predefinito divergeva dopo un cambio di dimensione del batch."
+ },
+ "lrsched": {
+  "n": "Schedule del learning rate",
+  "d": "Uno schedule del learning rate modifica il learning rate durante l'addestramento secondo una regola predefinita, di solito partendo alto per progredire rapidamente e terminando basso per assestarsi in un buon minimo. Quasi tutte le ricette di addestramento moderne ne usano uno.\n\nTra gli schedule più comuni ci sono lo step decay, che divide il tasso per un fattore a epoche fisse; il decadimento esponenziale; il cosine annealing, che segue mezza cosinusoide dal picco fino a un piccolo minimo; il decadimento lineare fino a zero, standard per il fine-tuning dei Transformer; e il one-cycle, che sale e poi scende all'interno di una singola esecuzione. Gli schedule reduce-on-plateau reagiscono alla metrica di validazione invece di seguire un piano fisso. I passi grandi iniziali esplorano ampiamente e aggiungono rumore utile, mentre i passi piccoli finali abbassano il livello di rumore dei gradienti stocastici, così la loss può scendere ulteriormente. Un'insidia pratica è che gli schedule cosine e lineari dipendono dal numero totale di passi, per cui prolungare l'addestramento in seguito richiede di ripartire o di usare uno schedule come il warmup-stable-decay.",
+  "u": [
+   "Decadimento cosine per il pretraining di language model",
+   "Decadimento lineare per il fine-tuning dei Transformer",
+   "Step decay per l'addestramento di classificatori di immagini"
+  ],
+  "x": "Un team che esegue il pretraining di un language model di medie dimensioni usa uno schedule warmup-stable-decay, mantenendo costante il learning rate per la maggior parte dell'addestramento e facendolo decadere solo nella fase finale. Questo ha permesso di diramare ulteriori esecuzioni di decay da checkpoint intermedi quando si è deciso di addestrare su più token, cosa che uno schedule cosine fisso non avrebbe consentito."
+ },
+ "warmup": {
+  "n": "Warmup",
+  "d": "Il warmup del learning rate avvia l'addestramento con un learning rate piccolo e lo aumenta, di solito in modo lineare, fino al valore obiettivo nel corso delle prime centinaia o migliaia di passi. Previene aggiornamenti instabili all'inizio dell'addestramento, quando il modello e le statistiche dell'ottimizzatore sono ancora mal calibrati.\n\nNelle prime fasi dell'addestramento i gradienti possono essere grandi e irregolari, e gli ottimizzatori adattivi come Adam hanno stime del secondo momento basate su pochi campioni, che possono produrre passi eccessivi anche con la correzione del bias. Nei Transformer, grandi aggiornamenti iniziali possono spingere la rete in una regione da cui non si riprende più. Il warmup lascia che queste statistiche si stabilizzino e che il modello raggiunga una regione più regolare prima che inizino i passi a piena ampiezza. È importante anche quando si usano batch grandi con un learning rate scalato di conseguenza. Le durate tipiche del warmup vanno dall'1 al 10 percento dei passi di addestramento per il fine-tuning, o qualche migliaio di passi per il pretraining. Il warmup non sostituisce uno schedule di decadimento, e un warmup eccessivamente lungo spreca budget di addestramento.",
+  "u": [
+   "Stabilizzare le prime fasi di addestramento di Transformer e LLM",
+   "Addestramento a batch grandi con learning rate scalati",
+   "Fine-tuning di modelli preaddestrati con AdamW"
+  ],
+  "x": "Un gruppo di ricerca che aumentava la dimensione del batch su molte GPU ha scoperto che il learning rate scalato divergeva nelle prime centinaia di passi. Aggiungere un warmup lineare sulle prime epoche, come nelle ricette pubblicate per l'addestramento di ImageNet a batch grandi, ha eliminato la divergenza senza modificare il resto dello schedule."
+ }
+}

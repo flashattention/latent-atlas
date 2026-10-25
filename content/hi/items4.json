@@ -1,0 +1,482 @@
+{
+ "landscape": {
+  "n": "Loss Landscape",
+  "d": "Loss landscape वह सतह है जो मॉडल का loss उसके parameters के function के रूप में बनाता है, और इसका आकार तय करता है कि gradient-based training कितनी आसानी से अच्छे solutions ढूँढ पाती है। लाखों weights होने पर यह सतह लाखों dimensions वाली होती है, इसलिए शोधकर्ता इसे low-dimensional slices के ज़रिए देखते हैं: दो checkpoints के बीच एक सीधी रेखा पर loss, या random directions से बने 2D plane पर loss, जिन directions को filter-normalize किया जाता है ताकि layers के scale में अंतर तस्वीर को विकृत न करे।\n\nये visualizations कई व्यावहारिक प्रभावों को समझाते हैं। Skip connections और batch normalization साफ़ तौर पर ज़्यादा smooth सतहें बनाते हैं, चौड़े networks में आम तौर पर low-loss क्षेत्र अधिक जुड़े हुए होते हैं, और बड़े learning rates संकरी घाटियों से उछलकर बाहर निकल जाते हैं। Landscape analysis architectures की तुलना करने, अस्थिर training का निदान करने और solutions के बीच mode connectivity का अध्ययन करने में उपयोगी है। इसकी मुख्य सीमा यह है कि एक विशाल space का 2D slice चुनी गई directions के आधार पर convex या अव्यवस्थित, कुछ भी दिख सकता है, इसलिए किसी एक plot से निकाले गए निष्कर्षों को सावधानी से लेना चाहिए।",
+  "u": [
+   "Skip connections वाले और बिना skip connections वाले architectures की smoothness की तुलना",
+   "Training के दौरान divergence और loss spikes का निदान",
+   "स्वतंत्र रूप से train किए गए checkpoints के बीच mode connectivity का अध्ययन"
+  ],
+  "x": "एक नई normalization layer का मूल्यांकन कर रही research टीम baseline और नए मॉडल, दोनों के अंतिम checkpoints के आसपास 2D loss slices plot करती है। नए variant का अधिक smooth और चौड़ा basin उसे अपनाने के पक्ष में जाता है, और टीम इन plots को learning-rate sweeps के साथ जोड़ती है, क्योंकि अकेला slice निर्णायक नहीं होता।"
+ },
+ "saddle": {
+  "n": "Saddle Points (सैडल पॉइंट)",
+  "d": "Saddle point वह स्थान है जहाँ gradient शून्य होता है, लेकिन सतह कुछ directions में ऊपर की ओर और कुछ में नीचे की ओर मुड़ती है, इसलिए वह न minimum है न maximum। औपचारिक रूप से, उस बिंदु पर Hessian के eigenvalues धनात्मक और ऋणात्मक दोनों होते हैं।\n\nHigh-dimensional neural network losses में saddle points खराब local minima की तुलना में कहीं अधिक आम होते हैं: किसी critical point के minimum होने के लिए लाखों curvature directions में से हर एक को ऊपर की ओर होना चाहिए, जो ऊँचे loss मानों पर असंभावित है। Saddle के पास gradient बहुत छोटा हो जाता है, इसलिए सामान्य gradient descent लंबे plateaus पर धीमा पड़ सकता है, भले ही नीचे जाने की direction मौजूद हो। Gradient noise और momentum parameters को negative-curvature directions में धकेलकर बाहर निकलने में मदद करते हैं। Training plateaus अक्सर खराब local minima के बजाय saddles और समतल क्षेत्रों के कारण होते हैं। शुद्ध Newton's method saddles की ओर आकर्षित होता है, और यही एक कारण है कि deep learning में इसे बिना बदलाव के शायद ही इस्तेमाल किया जाता है।",
+  "u": [
+   "Deep networks में लंबे training plateaus की व्याख्या",
+   "Noisy या momentum-based optimizers की ज़रूरत को समझाना",
+   "Hessian eigenvalues के ज़रिए critical points का विश्लेषण"
+  ],
+  "x": "एक deep recommendation मॉडल train कर रही टीम देखती है कि loss हज़ारों steps तक अटका रहता है और फिर नीचे आता है। Hessian-vector products से सबसे बड़े और सबसे छोटे Hessian eigenvalues निकालने पर एक negative-curvature direction दिखती है, इसलिए वे नए initialization से दोबारा शुरू करने के बजाय momentum और एक छोटा learning-rate warmup जोड़ते हैं।"
+ },
+ "sharpflat": {
+  "n": "Sharp बनाम Flat Minima",
+  "d": "Sharp और flat minima इस बात में अलग होते हैं कि parameters को थोड़ा बदलने पर loss कितनी तेज़ी से बढ़ता है: flat minimum में loss एक बड़े पड़ोस में कम बना रहता है, जबकि sharp minimum में छोटा-सा बदलाव भी loss को बहुत बढ़ा देता है। Sharpness को आम तौर पर सबसे बड़े Hessian eigenvalue से, या weights के आसपास एक छोटी ball के भीतर worst-case loss वृद्धि से मापा जाता है।\n\nआम धारणा यह है कि flat minima बेहतर generalize करते हैं, क्योंकि test loss की सतह training सतह का थोड़ा खिसका हुआ रूप होती है, और एक चौड़ा basin उस खिसकाव को सह लेता है। छोटे batch वाला SGD, बड़े learning rates और Sharpness-Aware Minimization (SAM), तीनों training को अधिक flat क्षेत्रों की ओर झुकाते हैं। यह विचार batch size, learning-rate schedules और optimizers चुनने में उपयोगी है। एक महत्वपूर्ण चेतावनी यह है कि sharpness reparameterization के प्रति invariant नहीं है: ReLU network में weights को rescale करके function बदले बिना किसी minimum को मनचाहे ढंग से sharp बनाया जा सकता है, इसलिए flatness generalization का गारंटीशुदा predictor नहीं, बल्कि एक उपयोगी heuristic है।",
+  "u": [
+   "Batch size और learning rate को साथ मिलाकर चुनना",
+   "Robustness के लिए Sharpness-Aware Minimization से training",
+   "प्रतिस्पर्धी checkpoints के generalization की तुलना"
+  ],
+  "x": "एक image classification टीम देखती है कि training तेज़ करने के लिए batch size बढ़ाने से test accuracy घट जाती है। वे छोटे neighborhood radius के साथ SAM अपनाते हैं और प्रति step लगभग दोगुना compute स्वीकार करते हैं, क्योंकि हर update के लिए दो forward-backward passes चाहिए, और खोई हुई accuracy वापस पा लेते हैं।"
+ },
+ "convex": {
+  "n": "Convex Optimization (उत्तल अनुकूलन)",
+  "d": "Convex optimization किसी convex set पर convex function को minimize करने का अध्ययन है, ऐसी स्थिति जिसमें हर local minimum global minimum भी होता है। कोई function convex तब होता है जब उसके graph के किन्हीं दो बिंदुओं को जोड़ने वाली सीधी रेखा graph पर या उसके ऊपर रहती है; दो बार differentiable functions के लिए इसका अर्थ है कि Hessian हर जगह positive semidefinite है।\n\nयह गुण convex problems को भरोसेमंद बनाता है: gradient descent, Newton's method और interior-point solvers सिद्ध की जा सकने वाली दरों के साथ global optimum तक converge करते हैं, और duality optimality के प्रमाणपत्र देती है। Linear regression, logistic regression, linear SVMs, LASSO और कई portfolio व scheduling problems convex हैं, इसलिए इन्हें सटीक और reproducible ढंग से हल किया जा सकता है। Deep neural network की training convex नहीं है, फिर भी convex analysis learning-rate के चुनाव और convergence proofs का मार्गदर्शन करता है। एक आम गलती यह मान लेना है कि convex loss एक अद्वितीय solution की गारंटी देता है; minimizer तभी अद्वितीय होता है जब function strictly convex हो, और यही एक कारण है कि under-determined problems में L2 regularization जोड़ा जाता है।",
+  "u": [
+   "Logistic regression और linear SVMs की training",
+   "Risk constraints के तहत portfolio optimization",
+   "Linear constraints के साथ resource allocation और scheduling"
+  ],
+  "x": "एक asset management टीम हर रात एक convex quadratic program से mean-variance portfolio problem हल करती है। Problem convex होने के कारण solver duality-gap प्रमाणपत्र के साथ global optimum लौटाता है, जिससे compliance review के लिए allocation auditable और reproducible बनता है।"
+ },
+ "newton": {
+  "n": "Second-Order Methods (Newton)",
+  "d": "Second-order methods हर optimization step की direction और आकार, दोनों चुनने के लिए केवल gradient ही नहीं, बल्कि Hessian से मिलने वाली curvature जानकारी का भी उपयोग करते हैं। Newton's method loss का एक local quadratic मॉडल fit करता है और सीधे उसके minimum पर पहुँचता है, जिससे update θ ← θ − H⁻¹∇L मिलता है।\n\nकिसी अच्छे व्यवहार वाले minimum के पास यह quadratically converge करता है, अक्सर कुछ ही iterations में, और उन poorly conditioned directions को अपने-आप rescale कर देता है जिनकी वजह से gradient descent zigzag करता है। इसीलिए Newton और L-BFGS जैसे quasi-Newton variants logistic regression, GLMs और अन्य छोटे से मध्यम आकार के convex problems के लिए मानक हैं। Deep networks में Hessian के n² entries होते हैं और उसे invert करने की लागत O(n³) होती है, जो लाखों parameters के साथ असंभव है, इसलिए व्यावहारिक methods K-FAC, Shampoo या Hessian-vector products जैसे approximations का उपयोग करते हैं। एक और खतरा यह है कि non-convex losses पर कच्चा Newton step किसी भी critical point की ओर बढ़ता है, जिसमें saddles और maxima भी शामिल हैं, इसलिए damping या trust regions ज़रूरी होते हैं।",
+  "u": [
+   "IRLS के साथ logistic regression और GLMs को fit करना",
+   "L-BFGS के साथ full-batch optimization",
+   "K-FAC या Shampoo के साथ preconditioned training"
+  ],
+  "x": "एक credit risk टीम scikit-learn के lbfgs या newton-cg solver से कुछ सौ features पर regularized logistic regression fit करती है। Quasi-Newton solver दसियों iterations में converge हो जाता है, जो SGD से कहीं तेज़ है, और deterministic coefficients देता है जिन्हें model validation समूह हूबहू reproduce कर सकता है।"
+ },
+ "gridsearch": {
+  "n": "Grid Search",
+  "d": "Grid search हर hyperparameter के लिए candidate मानों की एक तय सूची के हर संयोजन का मूल्यांकन करके hyperparameters को tune करता है। हर संयोजन को आम तौर पर cross-validation से score किया जाता है, और सबसे अच्छे score वाली setting को फिर पूरे training डेटा पर दोबारा fit किया जाता है।\n\nयह तरीका सरल है, अपने grid के भीतर exhaustive है, आसानी से parallel चलता है और पूरी तरह reproducible है, इसलिए यह तब अच्छा विकल्प है जब केवल एक से तीन hyperparameters हों और हर एक के कुछ ही समझदार मान हों, जैसे SVM की regularization strength C और kernel width gamma। इसकी लागत hyperparameters की संख्या के साथ exponentially बढ़ती है: पाँच-पाँच मानों वाले पाँच parameters के लिए ही प्रति fold 3,125 fits चाहिए। यह budget भी बर्बाद करता है: जब केवल एक या दो hyperparameters मायने रखते हैं, तो ज़्यादातर grid points उन्हीं मानों को दोहराते हैं। Scale भी मायने रखता है, इसलिए learning rates जैसे मानों को logarithmic अंतराल पर रखना चाहिए। अंत में, विजेता का cross-validation score आशावादी रूप से biased होता है; ईमानदार अनुमान के लिए अलग held-out test set या nested cross-validation का उपयोग करें।",
+  "u": [
+   "SVM के लिए C और gamma की tuning",
+   "Linear मॉडलों के लिए regularization strength का चयन",
+   "Baseline reports के लिए छोटे, reproducible sweeps"
+  ],
+  "x": "एक fraud analytics टीम C और gamma पर 6×6 logarithmic grid के साथ RBF-kernel SVM को tune करती है, PR-AUC से score किए गए five-fold stratified cross-validation का उपयोग करते हुए। सभी 180 fits एक ही मशीन पर parallel चलते हैं, और selection bias से बचने के लिए अंतिम metric एक अलग time-based holdout पर रिपोर्ट किया जाता है।"
+ },
+ "randsearch": {
+  "n": "Random Search",
+  "d": "Random search grid की हर संभावना गिनने के बजाय निर्दिष्ट distributions से configurations की एक तय संख्या sample करके hyperparameters को tune करता है। हर sampled configuration का मूल्यांकन किया जाता है, आम तौर पर cross-validation से, और सबसे अच्छी configuration रखी जाती है।\n\nBergstra और Bengio ने दिखाया कि इसका लाभ इस तथ्य से आता है कि आम तौर पर केवल कुछ hyperparameters ही performance को ज़ोरदार ढंग से प्रभावित करते हैं। 25 points का grid हर parameter के केवल 5 अलग मान जाँचता है, जबकि 25 random samples हर parameter के 25 अलग मान जाँचते हैं, इसलिए उसी budget में महत्वपूर्ण parameters कहीं अधिक घनत्व से explore होते हैं। Random search continuous और log-uniform distributions निर्दिष्ट करने देता है, किसी भी समय रोका जा सकता है और पूरी तरह parallel चलता है, इसलिए gradient boosting या neural networks जैसे कई hyperparameters वाले मॉडलों के लिए यह एक मज़बूत default है। इसकी सीमा यह है कि यह पिछले नतीजों को नज़रअंदाज़ करता है, इसलिए samples को आशाजनक क्षेत्रों में केंद्रित नहीं करता; जब हर मूल्यांकन महँगा हो, तब Bayesian optimization या Hyperband अधिक कुशल हो सकते हैं।",
+  "u": [
+   "कई hyperparameters वाले gradient boosting की tuning",
+   "Neural network training के लिए तेज़ baseline sweeps",
+   "Learning rates जैसी continuous ranges को explore करना"
+  ],
+  "x": "एक marketing analytics टीम log-uniform learning rates और leaves व depth की integer ranges से 60 random configurations निकालकर LightGBM churn मॉडल को tune करती है। यह sweep रात भर एक छोटे cluster पर चलता है, और चूँकि हर trial स्वतंत्र है, विफल jobs को बिना दूसरों को प्रभावित किए बस छोड़ दिया जाता है।"
+ },
+ "bayesopt": {
+  "n": "Bayesian Optimization",
+  "d": "Bayesian optimization objective का एक probabilistic surrogate मॉडल fit करके और उसके सहारे यह तय करके कि अगली कौन-सी configuration आज़माई जाए, कम मूल्यांकनों में अच्छे hyperparameters ढूँढता है। Surrogate, जो अक्सर Gaussian process या tree-structured Parzen estimator (TPE) होता है, हर candidate के लिए अपेक्षित score और उसकी uncertainty, दोनों का अनुमान देता है।\n\nExpected Improvement या Upper Confidence Bound जैसा acquisition function अच्छे अनुमानित क्षेत्रों के exploitation और अनिश्चित क्षेत्रों के exploration के बीच संतुलन बनाता है। हर trial के बाद surrogate update होता है, इसलिए sampling आशाजनक क्षेत्रों में केंद्रित होती जाती है। इस कारण यह तरीका महँगे black-box objectives के लिए उपयुक्त है: बड़ा मॉडल train करना, simulation चलाना या किसी भौतिक प्रक्रिया को tune करना, जहाँ केवल दसियों से लेकर कुछ सौ मूल्यांकन ही वहन किए जा सकते हैं। Optuna जैसी libraries कमज़ोर trials को जल्दी रोकने के लिए pruning जोड़ती हैं। मुख्य सीमाएँ ये हैं कि इसकी sequential प्रकृति parallelism घटाती है, Gaussian-process surrogates लगभग बीस dimensions से आगे ठीक से scale नहीं होते, और noisy objectives मॉडल को गुमराह कर सकते हैं।",
+  "u": [
+   "सीमित budget में deep learning hyperparameters की tuning",
+   "Simulation या experiment settings का optimization",
+   "Automated machine learning pipeline configuration"
+  ],
+  "x": "एक speech टीम ऐसे मॉडल के लिए learning rate, warmup length, dropout और weight decay tune करती है जिसकी हर training run में कई GPU घंटे लगते हैं। TPE sampler और median pruner के साथ Optuna का उपयोग करके वे कमज़ोर runs को कुछ epochs के बाद रोक देते हैं और random sweep की तुलना में कहीं कम पूर्ण runs में एक मज़बूत configuration तक पहुँच जाते हैं।"
+ },
+ "neuron": {
+  "n": "Artificial Neuron (कृत्रिम न्यूरॉन)",
+  "d": "Artificial neuron अपने inputs का weighted sum निकालता है, उसमें bias जोड़ता है, और परिणाम को एक nonlinear activation function से गुज़ारता है। यह हर neural network layer की बुनियादी इकाई है।\n\nWeights तय करते हैं कि हर input output को कितनी मज़बूती से प्रभावित करे, और bias उस बिंदु को खिसकाता है जहाँ neuron प्रतिक्रिया देता है। ज्यामितीय रूप से, weighted sum एक hyperplane परिभाषित करता है, और activation तय करता है कि input के उस hyperplane के पार जाने पर output कैसे बदले। Sigmoid activation वाला एक अकेला neuron ठीक logistic regression है, और step function के साथ यह classic perceptron है। कई neurons को layers में stack करने से, हर एक में nonlinearity के साथ, networks जटिल functions को दर्शा पाते हैं। एक मुख्य सीमा यह है कि एक neuron classes को केवल linear boundary से अलग कर सकता है, इसलिए वह XOR जैसी problems हल नहीं कर सकता। जैविक तुलना ढीली है: असली neurons समयबद्ध spikes के ज़रिए संवाद करते हैं और उनकी dynamics इस सरल सूत्र से कहीं अधिक समृद्ध होती है।",
+  "u": [
+   "Dense और convolutional layers की बुनियादी इकाई",
+   "Logistic regression के रूप में binary classification",
+   "Linear separability और decision boundaries सिखाना"
+  ],
+  "x": "एक payments टीम एक अकेले sigmoid neuron, यानी logistic regression, को हल्के first-stage fraud filter के रूप में deploy करती है जो हर transaction पर microseconds में चलता है। इसके weights सीधे interpretable हैं, इसलिए किसी भारी मॉडल द्वारा flagged मामलों की जाँच से पहले risk analysts देख सकते हैं कि कौन-से features score को ऊपर धकेलते हैं।"
+ },
+ "mlp": {
+  "n": "Multilayer Perceptron (MLP)",
+  "d": "Multilayer perceptron fully connected layers से बना एक feedforward neural network है, जिसमें हर layer एक linear transformation और उसके बाद एक nonlinear activation लागू करती है। डेटा input layer से एक या अधिक hidden layers से होते हुए output layer तक बहता है, बिना किसी loop के।\n\nहर hidden layer पिछली layer के outputs के संयोजनों के रूप में नए features सीखती है, इसलिए गहरी layers क्रमशः अधिक abstract patterns पकड़ सकती हैं। Training में backpropagation और gradient-based optimizer से cross-entropy या mean squared error जैसे loss को minimize किया जाता है। MLPs तय आकार के feature vectors पर, pretrained encoders के ऊपर classification या regression heads के रूप में, और हर Transformer layer के अंदर feed-forward blocks के रूप में अच्छा काम करते हैं। Nonlinear activations के बिना linear layers का कोई भी stack एक ही linear map में सिमट जाता है, इसलिए activation अनिवार्य है। कच्चे tabular डेटा पर MLPs अक्सर gradient-boosted trees से पीछे रह जाते हैं, जब तक features को सावधानी से scale न किया जाए और network अच्छी तरह regularize न हो, और वे उस spatial या sequential संरचना को नज़रअंदाज़ करते हैं जिसका CNNs और Transformers लाभ उठाते हैं।",
+  "u": [
+   "Pretrained embeddings के ऊपर classification heads",
+   "Standardized numeric feature vectors पर regression",
+   "Transformer blocks के अंदर feed-forward sublayers"
+  ],
+  "x": "एक recommendation टीम user और item embeddings को तीन layers वाले MLP में डालती है जो click probability का अनुमान लगाता है। MLP इतना छोटा है कि कड़े latency budget के भीतर हर request पर हज़ारों candidates को score कर सके, और टीम हर हफ़्ते calibration की निगरानी करती है क्योंकि feature drift अनुमानित probabilities को खिसका देता है।"
+ },
+ "backprop": {
+  "n": "Backpropagation",
+  "d": "Backpropagation वह algorithm है जो output से पीछे की ओर chain rule लागू करके neural network के हर parameter के सापेक्ष loss का gradient निकालता है। यही deep networks की gradient-based training को व्यावहारिक बनाता है।\n\nForward pass के दौरान हर layer अपने outputs निकालती है और ज़रूरी intermediate मान store करती है। Backward pass के दौरान output के सापेक्ष loss का gradient layer-दर-layer पीछे भेजा जाता है: हर layer आने वाले gradient को अपने local Jacobian से गुणा करके अपने weights और अपने inputs के gradients पाती है, और inputs वाले gradients पिछली layer को भेज दिए जाते हैं। Intermediate परिणामों के दोबारा उपयोग के कारण पूरे gradient की लागत हर parameter के लिए एक pass के बजाय एक forward pass की लगभग दो से तीन गुना होती है। Backpropagation केवल gradients निकालता है; weights को कैसे update करना है यह SGD या Adam जैसा optimizer तय करता है। Training memory में stored activations का हिस्सा सबसे बड़ा होता है, इसीलिए gradient checkpointing जैसी तकनीकें memory बचाने के लिए उनमें से कुछ को दोबारा compute करती हैं।",
+  "u": [
+   "किसी भी differentiable neural network की training",
+   "Saliency maps के लिए input gradients निकालना",
+   "Training memory घटाने के लिए gradient checkpointing"
+  ],
+  "x": "एक language model टीम की GPU memory खत्म हो जाती है क्योंकि लंबे sequences के लिए stored activations बहुत बड़े हैं। वे activation checkpointing चालू करते हैं, जो forward pass में ज़्यादातर activations हटा देता है और backpropagation के दौरान उन्हें फिर से compute करता है; इस तरह लगभग एक-तिहाई अधिक compute के बदले वे लंबे contexts के साथ train कर पाते हैं।"
+ },
+ "autograd": {
+  "n": "Chain Rule & Autograd",
+  "d": "Automatic differentiation, यानी autograd, programs के elementary operations को record करके और उन पर chain rule लागू करके सटीक derivatives निकालता है। Chain rule कहता है कि composed function का derivative उसके हिस्सों के derivatives का गुणनफल होता है।\n\nPyTorch और JAX जैसे frameworks code चलने के साथ एक computational graph बनाते हैं। हर operation अपना local derivative जानता है, इसलिए reverse-mode differentiation graph पर पीछे की ओर चलता है, vector-Jacobian products को गुणा करता है, और forward pass की लागत के एक छोटे स्थिर गुणज पर एक scalar loss का सभी inputs के सापेक्ष gradient प्राप्त करता है। यही दक्षता कारण है कि बहुत सारे parameters और एक loss वाले neural networks में reverse mode का उपयोग होता है। जब inputs कम और outputs ज़्यादा हों, तब forward mode सस्ता पड़ता है। Autograd न तो symbolic differentiation है, जो expressions में हेरफेर करता है, न ही numerical finite differences, जो अनुमानित होते हैं। आम गलतियों में saved tensors को overwrite करने वाले in-place operations और steps के बीच accumulated gradients को reset करना भूल जाना शामिल है।",
+  "u": [
+   "हाथ से derive किए gradients के बिना neural networks की training",
+   "विश्लेषण के लिए Hessian-vector products निकालना",
+   "Physics simulations और custom losses को differentiate करना"
+  ],
+  "x": "एक robotics टीम अपना rigid-body simulator PyTorch में लिखती है ताकि autograd controller parameters के सापेक्ष trajectory error को differentiate कर सके। इससे हाथ से gradients derive करने की ज़रूरत खत्म हो जाती है, और हर release से पहले वे torch.autograd.gradcheck से gradients को finite differences के सामने validate करते हैं।"
+ },
+ "relu": {
+  "n": "ReLU",
+  "d": "Rectified Linear Unit (ReLU) एक activation function है जो input धनात्मक होने पर उसे वैसे ही लौटाता है और अन्यथा शून्य देता है। कई convolutional और fully connected networks में यह default nonlinearity है।\n\nधनात्मक inputs के लिए इसका derivative ठीक 1 होता है, इसलिए active units से gradients बिना सिकुड़े गुज़रते हैं, जिससे sigmoid और tanh की तुलना में deep networks की training काफ़ी आसान हो गई। इसे compute करना भी बहुत सस्ता है और यह sparse activations देता है, क्योंकि किसी सामान्य input के लिए लगभग आधी units शून्य output देती हैं। ReLU स्वाभाविक रूप से He initialization के साथ जुड़ता है, जो उसके द्वारा छोड़े गए आधे signal की भरपाई करता है। इसकी मुख्य कमज़ोरी dying ReLU problem है: यदि किसी unit का pre-activation सभी inputs के लिए ऋणात्मक हो जाए, उदाहरण के लिए किसी बड़े update के बाद, तो उसका gradient शून्य हो जाता है और वह कभी उबर नहीं पाती। Leaky ReLU, ELU और GELU ऋणात्मक inputs के लिए छोटी प्रतिक्रिया की अनुमति देकर इसका समाधान करते हैं। शून्य पर frameworks gradient के रूप में 0 का उपयोग करते हैं।",
+  "u": [
+   "Image recognition के लिए CNNs की hidden layers",
+   "Fully connected networks में default activation",
+   "Mobile और edge hardware पर तेज़ inference"
+  ],
+  "x": "एक mobile vision टीम on-device object detector में ReLU-आधारित convolutional blocks का उपयोग करती है, क्योंकि quantized integer inference में यह operation convolution के साथ आसानी से fuse हो जाता है। Training के बाद वे dead channels के अनुपात की निगरानी करते हैं और जब बहुत सारी units activate होना बंद कर दें तो learning rate घटा देते हैं।"
+ },
+ "sigmoid": {
+  "n": "Sigmoid",
+  "d": "Sigmoid, यानी logistic function, किसी भी वास्तविक संख्या को एक smooth S-आकार के वक्र के साथ 0 और 1 के बीच के मान में बदलता है। एक अकेले logit को probability में बदलने का यही मानक तरीका है।\n\nBinary classification और multi-label problems में हर output logit एक sigmoid से गुज़रकर एक स्वतंत्र probability देता है, और मॉडल को binary cross-entropy से train किया जाता है। Sigmoids LSTMs और GRUs के अंदर gates के रूप में भी काम करते हैं, जहाँ 0 के पास का मान जानकारी को रोकता है और 1 के पास का मान उसे जाने देता है। हालाँकि hidden-layer activation के रूप में sigmoid को काफ़ी हद तक हटा दिया गया है: इसका derivative अधिकतम 0.25 होता है और बड़े धनात्मक या ऋणात्मक inputs पर शून्य के करीब पहुँच जाता है, इसलिए कई layers से गुज़रते हुए gradients तेज़ी से सिकुड़ते हैं, और इसके outputs शून्य पर केंद्रित नहीं होते, जिससे optimization धीमा होता है। एक numerical गलती sigmoid और फिर log को अलग-अलग लागू करना है; BCEWithLogitsLoss जैसे संयुक्त, स्थिर function का उपयोग करें।",
+  "u": [
+   "Binary classification के लिए output layer",
+   "Multi-label tagging के लिए स्वतंत्र probabilities",
+   "LSTM और GRU cells में gating mechanisms"
+  ],
+  "x": "एक content moderation टीम एक multi-label classifier train करती है जिसमें एक post spam और offensive, दोनों हो सकती है, इसलिए हर label को अपना अलग sigmoid output मिलता है। हर policy category के अलग precision लक्ष्यों को पूरा करने के लिए प्रति-label thresholds को validation set पर tune किया जाता है।"
+ },
+ "tanh": {
+  "n": "Tanh",
+  "d": "Hyperbolic tangent (tanh) एक S-आकार का activation function है जो inputs को −1 से 1 की range में map करता है और शून्य पर केंद्रित होता है। यह एक rescaled sigmoid है: tanh(x) = 2σ(2x) − 1।\n\nचूँकि इसके outputs शून्य के आसपास सममित होते हैं, अगली layer के inputs का mean लगभग शून्य रहता है, जिससे optimization आम तौर पर sigmoid की तुलना में बेहतर व्यवहार करता है। Origin पर इसका अधिकतम derivative 1 है, जो sigmoid का चार गुना है। Tanh अब भी recurrent networks के अंदर आम है, जहाँ यह LSTMs और GRUs के candidate cell state और hidden state को दबाकर कई time steps तक मानों को सीमित रखता है। यह उन मॉडलों के output में भी दिखता है जो किसी तय range में मानों का अनुमान लगाते हैं, जैसे reinforcement learning में normalized actions या कुछ GAN generators में pixel मान। मुख्य कमी saturation है: बड़े inputs पर gradient शून्य के करीब पहुँच जाता है, इसलिए tanh layers के गहरे stacks vanishing gradients से पीड़ित होते हैं।",
+  "u": [
+   "LSTMs में hidden और cell state updates",
+   "Reinforcement learning में सीमित continuous actions",
+   "−1 से 1 की range में scaled generator outputs"
+  ],
+  "x": "एक robotics टीम ऐसी robotic arm के लिए policy network train करती है जिसके joint commands तय सीमाओं के भीतर रहने चाहिए। Tanh output layer हर action को −1 से 1 की range में map करती है, जिसे फिर भौतिक torque सीमाओं तक scale किया जाता है, ताकि controller कभी कोई असुरक्षित मान न माँग सके।"
+ },
+ "gelu": {
+  "n": "GELU",
+  "d": "Gaussian Error Linear Unit (GELU) एक smooth activation function है जो हर input को उस probability से गुणा करता है कि एक standard normal variable उससे छोटा हो। बड़े धनात्मक inputs लगभग बिना बदले गुज़र जाते हैं, बड़े ऋणात्मक inputs शून्य की ओर दबा दिए जाते हैं, और शून्य के पास के मान smoothly scale होते हैं।\n\nReLU के विपरीत, GELU का मध्यम ऋणात्मक inputs के लिए gradient शून्य नहीं होता और इसमें शून्य से थोड़ा नीचे एक हल्का झुकाव होता है, जिससे optimization आम तौर पर अधिक smooth होता है। यह BERT, GPT-2 और Vision Transformers में मानक activation बन गया, आम तौर पर हर layer के feed-forward block के अंदर। Implementations error function वाला exact version और एक तेज़ tanh approximation, दोनों देते हैं; training और inference के बीच इन्हें मिलाने से छोटे numerical अंतर आते हैं, इसलिए checkpoints को उसी variant के साथ चलाना चाहिए जिससे वे train हुए थे। GELU की compute लागत ReLU से अधिक है, हालाँकि matrix multiplications की तुलना में यह अंतर छोटा है। कई हालिया large language models इसकी जगह SwiGLU जैसे gated variants अपना चुके हैं।",
+  "u": [
+   "BERT और GPT-शैली के मॉडलों में feed-forward blocks",
+   "Vision Transformers के अंदर MLP layers",
+   "Fine-tuned encoders के लिए smooth activation"
+  ],
+  "x": "एक search टीम BERT-आधारित reranker को fine-tune करती है और उसे एक optimized inference runtime में export करती है। वे पुष्टि करते हैं कि runtime वही exact GELU उपयोग करता है जो मूल checkpoint में था, क्योंकि validation के दौरान tanh approximation पर जाने से ranking scores में छोटे लेकिन मापने योग्य बदलाव आए थे।"
+ },
+ "swiglu": {
+  "n": "SwiGLU",
+  "d": "SwiGLU आधुनिक Transformers में उपयोग होने वाली एक gated feed-forward layer है, जिसमें input का एक linear projection Swish (SiLU) activation से गुज़रकर दूसरे linear projection से element-wise गुणा किया जाता है। एक तीसरा projection परिणाम को वापस model dimension में map करता है।\n\nGate network को हर hidden unit और हर token के लिए यह नियंत्रित करने देता है कि signal का कितना हिस्सा आगे जाए, जो अनुभवजन्य रूप से समान compute पर ReLU या GELU feed-forward blocks की तुलना में language-modeling गुणवत्ता सुधारता है। LLaMA, Mistral, PaLM और कई अन्य large language models इसका उपयोग करते हैं। चूँकि SwiGLU में दो के बजाय तीन weight matrices होती हैं, implementations parameter count को तुलनीय रखने के लिए hidden size को आम तौर पर सामान्य 4× expansion के लगभग दो-तिहाई तक घटा देते हैं, जिसे अक्सर hardware-अनुकूल गुणज तक round किया जाता है। SwiGLU कोई साधारण activation function नहीं, बल्कि learned weights वाली एक पूरी layer है, और इसका लाभ केवल Swish के आकार से नहीं, बल्कि multiplicative gating से आता है।",
+  "u": [
+   "LLaMA-शैली के language models में feed-forward blocks",
+   "Transformer pretraining में GELU MLPs की जगह लेना",
+   "Vision और speech Transformers में gated MLP layers"
+  ],
+  "x": "एक in-house code मॉडल को pretrain कर रही टीम SwiGLU feed-forward layers वाला LLaMA block design अपनाती है और hidden size को model width का लगभग 8/3 रखती है, जिसे 256 के गुणज तक round किया जाता है। यह rounding उनके GPUs पर matrix shapes को कुशल रखती है और पिछले GELU baseline के parameter budget से मेल खाती है।"
+ },
+ "softmax": {
+  "n": "Softmax",
+  "d": "Softmax वास्तविक-मान वाले scores के एक vector, जिन्हें logits कहते हैं, को एक probability distribution में बदलता है: हर output धनात्मक होता है और सभी outputs का योग 1 होता है। यह हर score का exponential लेता है और उसे exponentials के योग से भाग देता है।\n\nExponentiation अंतरों को बढ़ा देता है, इसलिए सबसे बड़े logit को probability का अधिकांश हिस्सा मिलता है, जबकि classes का क्रम बना रहता है। Softmax multi-class classification की output layer है, Transformers में attention scores को normalize करता है, और language models में next-token distributions देता है, जहाँ logits को temperature से भाग देने पर distribution अधिक नुकीला या अधिक सपाट हो जाता है। सभी logits में एक ही constant जोड़ने से परिणाम नहीं बदलता, जिसका उपयोग numerical stability के लिए होता है: overflow से बचने के लिए implementations exponentiation से पहले अधिकतम logit घटा देते हैं। Training में softmax को अलग से लागू करने के बजाय cross-entropy loss के अंदर log के साथ fuse करना चाहिए। एक आम भ्रांति यह है कि softmax outputs calibrated probabilities होते हैं; आधुनिक networks अक्सर overconfident होते हैं और उन्हें temperature scaling जैसे calibration की ज़रूरत होती है।",
+  "u": [
+   "Multi-class classification की output layers",
+   "Transformers में attention weights को normalize करना",
+   "Language models में temperature-नियंत्रित sampling"
+  ],
+  "x": "एक document routing टीम आने वाले support tickets को softmax output के साथ बीस queues में classify करती है। कच्ची probabilities overconfident होने के कारण वे validation set पर एक अकेला temperature parameter fit करते हैं, जिससे calibration सुधरता है और confidence threshold से नीचे के tickets भरोसेमंद ढंग से किसी इंसान को भेजे जाते हैं।"
+ },
+ "xent": {
+  "n": "Cross-Entropy Loss",
+  "d": "Cross-entropy loss सही class को दी गई probability का negative log लेकर मापता है कि अनुमानित class probabilities असली labels से कितनी अच्छी तरह मेल खाती हैं। इसे minimize करना एक categorical मॉडल के लिए maximum likelihood estimation के बराबर है।\n\nजब मॉडल सही उत्तर को ऊँची probability देता है तो loss लगभग शून्य होता है, और जैसे-जैसे वह probability शून्य की ओर जाती है, loss असीमित रूप से बढ़ता है, इसलिए आत्मविश्वास भरी गलतियों को कड़ी सज़ा मिलती है। Softmax के साथ मिलकर, logits के सापेक्ष इसका gradient केवल अनुमानित probabilities में से one-hot target घटाना है, जो साफ़ और अच्छी तरह scaled updates देता है। यह classification और language models में next-token prediction का मानक loss है, जहाँ इसका exponential perplexity होता है। व्यावहारिक variants में imbalance के लिए class weights, overconfidence घटाने के लिए label smoothing और कठिन examples के लिए focal loss शामिल हैं। एक आम bug PyTorch के CrossEntropyLoss से पहले softmax लागू करना है, जो पहले से ही कच्चे logits की अपेक्षा करता है और अंदर log-softmax लागू करता है; ऐसा करने से gradients चुपचाप कमज़ोर हो जाते हैं।",
+  "u": [
+   "Image और text classifiers की training",
+   "Language model pretraining में next-token prediction",
+   "Soft teacher targets के साथ knowledge distillation"
+  ],
+  "x": "हज़ारों categories पर product categorization मॉडल train कर रही टीम 0.1 के label smoothing के साथ cross-entropy का उपयोग करती है, क्योंकि कई products पड़ोसी categories में भी उचित रूप से फिट होते हैं। वे validation loss और accuracy को साथ-साथ ट्रैक करते हैं, क्योंकि loss accuracy बदलने से पहले ही बढ़ते overconfidence को उजागर कर देता है।"
+ },
+ "vanishing": {
+  "n": "Vanishing & Exploding Gradients",
+  "d": "Vanishing और exploding gradients तब होते हैं जब कई layers या time steps से पीछे की ओर propagate होते हुए gradients शून्य की ओर सिकुड़ जाते हैं या असीमित रूप से बढ़ जाते हैं। दोनों ही स्थितियों में शुरुआती layers की प्रभावी training टूट जाती है।\n\nBackpropagation हर layer के लिए एक Jacobian से गुणा करता है। यदि ये गुणक आम तौर पर परिमाण में 1 से छोटे हों, तो गुणनफल exponentially घटता है और पहली layers मुश्किल से सीखती हैं; यदि 1 से बड़े हों, तो यह exponentially बढ़ता है और updates अस्थिर हो जाते हैं, जिससे NaN losses आते हैं। Sigmoid जैसे saturating activations, खराब weight scales और लंबे unrolled recurrent networks समस्या को बदतर बनाते हैं। मानक उपाय हैं ReLU-परिवार के activations, Xavier या He initialization, normalization layers, residual connections, LSTM जैसे gated architectures, और gradient clipping, जो gradient norm को सीमित करता है और मुख्यतः explosion को संभालता है। Training के दौरान प्रति-layer gradient norms की निगरानी सबसे सीधा निदान है। ध्यान दें कि clipping vanishing gradients को ठीक नहीं करता; उसके लिए architectural बदलाव चाहिए।",
+  "u": [
+   "रुकी हुई या अस्थिर deep network training का निदान",
+   "RNNs के लिए gradient clipping thresholds चुनना",
+   "Residual और gated architectures की ज़रूरत को समझाना"
+  ],
+  "x": "Mixed precision के साथ Transformer train कर रही टीम को कभी-कभी loss spikes और फिर NaNs दिखते हैं। वे प्रति-layer gradient norms log करते हैं, 1.0 पर global gradient-norm clipping जोड़ते हैं, और learning-rate warmup का उपयोग करते हैं, जिससे convergence धीमा किए बिना spikes खत्म हो जाते हैं।"
+ },
+ "residual": {
+  "n": "Residual Connections",
+  "d": "Residual connection, जिसे skip connection भी कहते हैं, किसी block के input को सीधे उसके output में जोड़ता है, ताकि block को केवल identity में एक सुधार सीखना पड़े: y = x + F(x)। यही वह मुख्य घटक है जो बहुत गहरे networks को trainable बनाता है।\n\nIdentity path gradients को पीछे जाने का सीधा रास्ता देता है: x के सापेक्ष y का derivative I और F के derivative का योग है, इसलिए signal को कभी केवल छोटे Jacobians के लंबे गुणनफल से नहीं गुज़रना पड़ता। यदि कोई layer उपयोगी नहीं है, तो block F ≈ 0 सीखकर representation को अपरिवर्तित छोड़ सकता है, जिससे depth जोड़ना कम हानिकारक हो जाता है। Residual connections ResNets, हर Transformer layer, U-Nets और diffusion models में दिखते हैं। एक व्यावहारिक बात यह है कि normalization कहाँ रखा जाए: pre-norm Transformers attention या MLP से पहले branch के अंदर LayerNorm लागू करते हैं, जो गहराई पर post-norm की तुलना में अधिक स्थिरता से train होता है, हालाँकि residual stream का परिमाण depth के साथ बढ़ सकता है।",
+  "u": [
+   "ResNet जैसे बहुत गहरे CNNs की training",
+   "Transformer layers में pre-norm residual streams",
+   "U-Net और diffusion backbones में skip paths"
+  ],
+  "x": "Transformer को 12 से 48 layers तक scale कर रही टीम पाती है कि post-norm version training की शुरुआत में ही diverge हो जाता है। Pre-norm residual blocks पर जाने से, जहाँ हर sublayer अपना output एक अछूती residual stream में जोड़ती है, गहरा मॉडल उसी learning rate schedule के साथ स्थिरता से train हो पाता है।"
+ },
+ "init": {
+  "n": "Weight Initialization (Xavier / He)",
+  "d": "Weight initialization network के weights के शुरुआती मान इस तरह तय करता है कि activations और gradients layer-दर-layer एक स्थिर scale बनाए रखें। Xavier (Glorot) और He (Kaiming) initialization हर layer के inputs और outputs की संख्या के आधार पर weight variance चुनते हैं।\n\nयदि weights बहुत बड़े हों, तो signals हर layer के साथ बढ़ते हुए explode हो जाते हैं; बहुत छोटे हों, तो शून्य की ओर सिकुड़ जाते हैं। Xavier initialization 2/(fan_in + fan_out) का variance उपयोग करता है, जो tanh जैसे सममित activations के लिए variance को लगभग स्थिर रखता है। He initialization 2/fan_in का उपयोग करता है, जो variance को दोगुना करके इस बात की भरपाई करता है कि ReLU अपने लगभग आधे inputs को शून्य कर देता है। Weights random भी होने चाहिए: किसी layer के सभी weights को एक ही मान पर initialize करने से हर unit एक ही चीज़ compute करती है और एक ही gradient पाती है, इसलिए symmetry कभी नहीं टूटती। Biases को आम तौर पर शून्य रखा जाता है। आधुनिक deep models normalization जोड़ते हैं और कभी-कभी residual branch outputs को depth के अनुसार scale करते हैं, क्योंकि अच्छा initialization अकेले स्थिरता की गारंटी नहीं देता।",
+  "u": [
+   "गहरे ReLU convolutional networks को initialize करना",
+   "Tanh networks के लिए स्थिर शुरुआती scales",
+   "शुरू से लिखे मॉडल implementations में custom layers"
+  ],
+  "x": "Medical imaging के लिए custom convolutional architecture बना रही टीम पाती है कि training शुरुआत में ही रुक जाती है। सभी ReLU layers के लिए default छोटे normal initialization की जगह He initialization लगाने से depth भर में activation variance स्थिर रहता है, और loss पहले epoch से ही घटने लगता है।"
+ },
+ "uat": {
+  "n": "Universal Approximation Theorem (सार्वत्रिक सन्निकटन प्रमेय)",
+  "d": "Universal Approximation Theorem कहता है कि एक hidden layer और उपयुक्त nonlinear activation वाला feedforward network, पर्याप्त hidden units दिए जाने पर, किसी bounded, closed domain पर किसी भी continuous function को मनचाही सटीकता तक approximate कर सकता है।\n\nसहज रूप से, हर hidden unit एक सरल उभार या step का योगदान देती है, और ऐसे टुकड़ों का पर्याप्त बड़ा weighted sum किसी भी continuous आकार को बना सकता है। यह परिणाम sigmoid, ReLU और अधिकांश अन्य non-polynomial activations के लिए सही है। यह समझाता है कि neural networks सिद्धांत रूप में regression और classification के लिए पर्याप्त expressive क्यों हैं। हालाँकि, यह theorem पूरी तरह अस्तित्व के बारे में है। यह नहीं बताता कि कितनी units चाहिए, जो input dimension के साथ exponentially बढ़ सकती हैं, न यह कि gradient descent सही weights ढूँढ लेगा, न यह कि solution सीमित डेटा से generalize करेगा। व्यवहार में depth मदद करती है, क्योंकि deep networks shallow networks की तुलना में कहीं कम parameters के साथ कई functions दर्शा सकते हैं। एक आम भ्रांति यह है कि यह theorem एक अकेली चौड़ी hidden layer के उपयोग को उचित ठहराता है।",
+  "u": [
+   "Neural networks को लचीले function approximators के रूप में उचित ठहराना",
+   "Interviews में expressiveness बनाम learnability समझाना",
+   "Physics simulations के लिए surrogate models की ज़रूरत समझाना"
+  ],
+  "x": "एक engineering simulation टीम धीमे fluid solver की जगह एक neural surrogate लगाती है जो design parameters को drag से map करता है। Theorem उन्हें आश्वस्त करता है कि network इस mapping को दर्शा सकता है, लेकिन फिर भी वे held-out designs पर validate करते हैं, क्योंकि theorem यह कुछ नहीं बताता कि सटीकता के लिए कितना डेटा या training चाहिए।"
+ },
+ "embedding": {
+  "n": "Embedding Layer",
+  "d": "Embedding layer हर discrete identifier, जैसे token, user या product ID, को एक dense, learned vector से map करती है। यह एक lookup table है जिसमें हर item के लिए एक trainable row होती है।\n\nएक row चुनना गणितीय रूप से one-hot vector को weight matrix से गुणा करने के समान है, लेकिन lookup कहीं सस्ता है। Training के दौरान केवल batch में उपयोग हुई rows को gradients मिलते हैं, और समान contexts में दिखने वाले items के vectors समान बन जाते हैं, इसलिए embedding space में दूरियाँ उपयोगी संबंधों को पकड़ती हैं। Embedding layers हर language model का input चरण हैं और लाखों users और items वाले recommendation systems का केंद्र हैं, जहाँ tables मॉडल के आकार का बड़ा हिस्सा हो सकती हैं। व्यावहारिक समस्याओं में अनदेखे IDs शामिल हैं, जिन्हें आम तौर पर एक आरक्षित unknown index या hashing से संभाला जाता है, और दुर्लभ items जिनके vectors ठीक से train नहीं होते। Language models parameters बचाने के लिए अक्सर input embedding को output projection से tie करते हैं। Embeddings semantic search के लिए तभी उपयुक्त होते हैं जब उन्हें उपयुक्त objective से train किया गया हो।",
+  "u": [
+   "Language models में token embeddings",
+   "Recommender systems में user और item vectors",
+   "Tabular मॉडलों में high-cardinality categorical features को encode करना"
+  ],
+  "x": "एक streaming सेवा two-tower recommender train करती है जिसमें user IDs और show IDs अपनी-अपनी embedding tables से गुज़रते हैं। तेज़ candidate retrieval के लिए show vectors को एक approximate nearest-neighbor index में export किया जाता है, और बिना इतिहास वाले नए shows interactions जमा होने तक content-based embeddings पर निर्भर रहते हैं।"
+ },
+ "cnn": {
+  "n": "Convolutional Neural Network (CNN)",
+  "d": "Convolutional neural network मुख्य रूप से convolutional layers से बना network है, जो image, spectrogram या time series जैसे grid-संरचित input पर छोटे learned filters को सरकाती हैं। Stacked convolutions, nonlinearities और downsampling कच्चे pixels को क्रमशः अधिक abstract feature maps में बदलते हैं, जिसके बाद classification, detection या segmentation के लिए एक head आता है।\n\nदो design विकल्प CNNs को कुशल बनाते हैं। Local connectivity का अर्थ है कि हर output केवल एक छोटे पड़ोस पर निर्भर करता है, और weight sharing का अर्थ है कि हर स्थिति पर वही filter लागू होता है, इसलिए parameter count image के आकार के साथ नहीं बढ़ता और कोई pattern जहाँ भी दिखे, पकड़ा जाता है। शुरुआती layers edges और textures सीखती हैं; receptive field बढ़ने के साथ गहरी layers उन्हें हिस्सों और objects में जोड़ती हैं। सीमित डेटा और edge devices पर vision के लिए CNNs अब भी मज़बूत हैं। एक आम भ्रांति यह है कि वे पूरी तरह translation invariant होते हैं; convolution translation equivariant है, और strided downsampling उसे भी तोड़ देता है, इसलिए छोटे खिसकाव भी predictions बदल सकते हैं।",
+  "u": [
+   "Image classification और visual defect inspection",
+   "Cameras के लिए object detection backbones",
+   "Spectrograms से audio classification"
+  ],
+  "x": "एक manufacturing कंपनी assembly line पर photograph किए गए पुर्ज़ों पर खरोंच और गड्ढे पकड़ने के लिए एक compact CNN train करती है। मॉडल camera के पास एक edge GPU पर line के cycle time के भीतर चलता है, और inspectors द्वारा flag की गई नई defect images हर महीने training set में जोड़ी जाती हैं।"
+ },
+ "convolution": {
+  "n": "Convolution",
+  "d": "Deep learning में उपयोग होने वाला convolution learned weights के एक छोटे kernel को input पर सरकाता है और हर स्थिति पर dot product निकालता है, जिससे एक feature map बनता है जो दिखाता है कि kernel का pattern कहाँ दिखाई देता है। सख्ती से कहें तो अधिकांश libraries kernel को flip किए बिना cross-correlation compute करती हैं, लेकिन चूँकि weights learned होते हैं, यह अंतर मायने नहीं रखता।\n\nOutput का आकार kernel size k, padding p और stride s पर निर्भर करता है: out = ⌊(n + 2p − k)/s⌋ + 1। हर output channel का अपना kernel होता है जो सभी input channels पर फैला होता है, इसलिए एक layer में k·k·C_in·C_out weights और biases होते हैं। Variants में dilated convolutions शामिल हैं, जो बिना अतिरिक्त parameters के receptive field चौड़ा करते हैं, depthwise separable convolutions, जो mobile models में computation घटाते हैं, और 1×1 convolutions, जो channels को मिलाते हैं। Convolutions 1D signals और 3D volumes पर भी लागू होते हैं। एक आम गलती output shapes का गलत हिसाब है; odd kernels के लिए stride 1 के साथ padding = k // 2 spatial आकार को बनाए रखता है।",
+  "u": [
+   "Images और video frames से feature extraction",
+   "1D sensor और audio signals को filter करना",
+   "1×1 convolutions से channel mixing"
+  ],
+  "x": "एक predictive maintenance टीम औद्योगिक pumps से आने वाले vibration signals पर 1D dilated convolutions लागू करती है। Dilation कुछ ही layers के साथ हर output को कई सेकंड का इतिहास देखने देता है, जिससे inference इतना सस्ता रहता है कि वह एक साथ कई pumps की निगरानी करने वाले gateway device पर चल सके।"
+ },
+ "pooling": {
+  "n": "Pooling",
+  "d": "Pooling छोटे पड़ोसों को एक अकेले मान, आम तौर पर अधिकतम या औसत, से सारांशित करके feature maps का spatial आकार घटाता है। इसमें कोई learned parameters नहीं होते।\n\nMax pooling हर window में सबसे मज़बूत response रखता है, जो यह सुरक्षित रखता है कि कोई feature पकड़ा गया या नहीं, जबकि उसकी सटीक स्थिति छोड़ देता है, और इससे खिसकाव के प्रति थोड़ी robustness आती है। Average pooling response को smooth करता है। Downsampling बाद की layers के receptive field को भी बढ़ाता है और computation घटाता है। Global average pooling हर channel को एक संख्या में समेट देता है, आधुनिक CNNs में बड़ी fully connected layers की जगह लेता है और अलग-अलग आकार के inputs को संभव बनाता है। Sequence models में token embeddings पर mean या max pooling तय आकार के sentence vectors देता है, जहाँ padding tokens को mask करना ज़रूरी है। कई हालिया architectures pooling की जगह strided convolutions का उपयोग करते हैं, जो downsample करना खुद सीखते हैं। Pooling spatial विवरण खो देता है, जो segmentation जैसे dense prediction कार्यों को नुकसान पहुँचाता है, इसलिए U-Net-शैली के मॉडल skip connections से उसे वापस लाते हैं।",
+  "u": [
+   "CNN backbones में feature maps को downsample करना",
+   "Classifier head से पहले global average pooling",
+   "Token vectors से sentence embeddings बनाना"
+  ],
+  "x": "एक semantic search टीम Transformer encoder के token outputs पर mean pooling करके sentence embeddings बनाती है, और attention mask से padding tokens को बाहर रखती है। उनके offline evaluation में केवल पहले token के vector के उपयोग की तुलना में mean pooling ने अधिक स्थिर retrieval गुणवत्ता दी।"
+ },
+ "resnet": {
+  "n": "ResNet",
+  "d": "ResNet (Residual Network) एक convolutional architecture है जो residual blocks को stack करता है, जिनमें से हर एक अपने input को कुछ convolutional layers के output में जोड़ता है। 2015 में पेश किए गए इस architecture ने सौ से अधिक layers वाले networks को trainable बनाया और उस वर्ष की ImageNet प्रतियोगिता जीती।\n\nResNet से पहले केवल layers जोड़ने से अक्सर training error बढ़ जाती थी, एक degradation problem जो overfitting के बजाय optimization की कठिनाई से होती थी। Residual blocks इसे ठीक करते हैं, क्योंकि हर block केवल identity में एक सुधार F(x) सीखता है, और gradients skip paths से सीधे बहते हैं। ResNet-18 और ResNet-34 दो 3×3 convolutions वाले basic blocks उपयोग करते हैं; ResNet-50 और उससे गहरे मॉडल लागत घटाने के लिए 1×1, 3×3 और 1×1 convolutions वाले bottleneck blocks उपयोग करते हैं। जब shape बदलता है, तो shortcut एक strided 1×1 convolution का उपयोग करता है। ResNets अब भी detection, segmentation और transfer learning के लिए backbones के रूप में व्यापक रूप से उपयोग होते हैं। हालाँकि, उनकी BatchNorm layers training और evaluation mode में अलग व्यवहार करती हैं, इसलिए model.eval() भूल जाना असंगत predictions का एक आम कारण है।",
+  "u": [
+   "Image classification के लिए transfer learning backbone",
+   "Detection और segmentation के लिए feature extractor",
+   "Vision benchmarks के लिए baseline architecture"
+  ],
+  "x": "एक retail कंपनी product photos को catalog categories में classify करने के लिए ImageNet-pretrained ResNet-50 को fine-tune करती है। Pretrained weights से शुरू करने से वे सीमित labeled डेटा के साथ अच्छी accuracy तक पहुँचते हैं, और नई listings पर batch inference के लिए मॉडल को ONNX में export करते हैं।"
+ },
+ "rnn": {
+  "n": "Recurrent Neural Network (RNN)",
+  "d": "Recurrent neural network किसी sequence को एक-एक step करके process करता है और साथ में एक hidden state रखता है जो अब तक देखी गई हर चीज़ का सारांश होती है। हर step पर वही weights current input को पिछली hidden state के साथ मिलाकर नई hidden state बनाते हैं।\n\nसमय के साथ weight sharing RNN को तय संख्या के parameters के साथ किसी भी लंबाई के sequences संभालने देता है, और प्रति step स्थिर memory इसे streaming डेटा के लिए उपयुक्त बनाती है। Training backpropagation through time से होती है, जो network को पूरे sequence पर unroll करता है। साधारण (Elman) RNNs लंबी दूरी की dependencies में संघर्ष करते हैं, क्योंकि हर step पर gradients को recurrent Jacobian से गुणा किया जाता है और वे vanish या explode हो जाते हैं; LSTMs और GRUs इसके समाधान के लिए gates जोड़ते हैं। Training के दौरान RNNs को time steps के पार parallelize भी नहीं किया जा सकता, और यही मुख्य कारण है कि बड़े पैमाने के language modeling में Transformers ने उनकी जगह ले ली। Mamba जैसे आधुनिक state space models recurrent विचार को ऐसे designs के साथ फिर से अपनाते हैं जो parallel में train होते हैं।",
+  "u": [
+   "Streaming sensor और time-series modeling",
+   "छोटे मॉडलों के लिए character-level text generation",
+   "कम latency वाली on-device sequence processing"
+  ],
+  "x": "एक wearable device कंपनी accelerometer डेटा से चलना या दौड़ना जैसी गतिविधियाँ पहचानने के लिए device पर एक छोटा RNN चलाती है। हर नए sample के साथ recurrent state update होती है, इसलिए memory का उपयोग स्थिर रहता है और पिछले डेटा की कोई window store नहीं करनी पड़ती।"
+ },
+ "lstm": {
+  "n": "LSTM",
+  "d": "Long Short-Term Memory (LSTM) एक recurrent network cell है जो एक अलग cell state और तीन gates जोड़ता है, ताकि यह नियंत्रित हो सके कि memory में क्या लिखा जाए, क्या रखा जाए और क्या पढ़ा जाए। इसे साधारण RNN की तुलना में कहीं अधिक time steps के पार dependencies सीखने के लिए डिज़ाइन किया गया था।\n\nForget gate तय करता है कि पिछली cell state का कितना हिस्सा रखना है, input gate तय करता है कि नए candidate का कितना हिस्सा जोड़ना है, और output gate तय करता है कि cell state का कितना हिस्सा hidden state के रूप में सामने लाना है। चूँकि cell state additively update होती है, और ज़रूरत पड़ने पर forget gate 1 के करीब गुणक के रूप में काम करता है, gradients लंबी अवधि तक बिना vanish हुए बह सकते हैं। Transformers से पहले LSTMs speech recognition, translation और time-series forecasting के लिए मानक थे, और streaming व कम डेटा वाले sequence कार्यों के लिए अब भी व्यावहारिक हैं। वे फिर भी steps को क्रम से process करते हैं, जिससे लंबे sequences पर training धीमी होती है, और उनकी प्रभावी memory सिद्धांत से कम होती है।",
+  "u": [
+   "Demand और traffic time-series forecasting",
+   "Streaming speech और keyword recognition",
+   "Sensor sequences में anomaly detection"
+  ],
+  "x": "एक शहरी परिवहन टीम पिछले कुछ घंटों की speeds, time-of-day features और event flags से भरे LSTM के साथ सड़क खंडों पर अगले घंटे की traffic speed का forecast करती है। मॉडल हर हफ़्ते retrain होता है, और forecast error की प्रति खंड निगरानी की जाती है ताकि सड़क में बदलाव के बाद आने वाला drift समीक्षा शुरू कर दे।"
+ },
+ "gru": {
+  "n": "GRU",
+  "d": "Gated Recurrent Unit (GRU) एक recurrent cell है जो समय के साथ hidden state के बदलाव को नियंत्रित करने के लिए दो gates, update और reset, का उपयोग करती है। यह LSTM का एक सरल विकल्प है, जिसमें कोई अलग cell state नहीं होती।\n\nUpdate gate पिछली hidden state और एक नई candidate state के बीच interpolate करता है, और LSTM के forget तथा input gates की संयुक्त भूमिका निभाता है। Reset gate तय करता है कि candidate की गणना में पिछली state का कितना हिस्सा उपयोग हो, जिससे unit अप्रासंगिक इतिहास को नज़रअंदाज़ कर सके। प्रति unit कम parameters के साथ, जो समान आकार के LSTM का लगभग तीन-चौथाई है, GRUs कुछ तेज़ी से train होते हैं और अक्सर तुलनीय performance देते हैं, ख़ासकर छोटे और मध्यम datasets पर। कोई भी cell लगातार बेहतर नहीं है, इसलिए चुनाव आम तौर पर प्रयोग के आधार पर किया जाता है। सभी classic RNNs की तरह GRUs भी time steps को क्रम से process करते हैं और बहुत लंबी dependencies में अब भी संघर्ष करते हैं। PyTorch का GRU reset gate को मूल paper से थोड़ा अलग तरीके से लागू करता है।",
+  "u": [
+   "E-commerce में session-based next-item recommendation",
+   "हल्के time-series forecasting मॉडल",
+   "सीमित संसाधनों वाले devices पर sequence encoding"
+  ],
+  "x": "एक e-commerce टीम GRU-आधारित session मॉडल से अनुमान लगाती है कि visitor मौजूदा session में देखे गए items के क्रम के आधार पर अगला कौन-सा product click करेगा। GRU को LSTM पर इसलिए चुना गया क्योंकि वह समान accuracy के साथ तेज़ी से train हुआ, और latency कम रखने के लिए हर click के बाद hidden state को incrementally update किया जाता है।"
+ },
+ "bidir": {
+  "n": "Bidirectional RNN",
+  "d": "Bidirectional RNN एक ही sequence पर दो recurrent layers चलाता है, एक शुरुआत से अंत की ओर और दूसरी अंत से शुरुआत की ओर, और हर स्थिति पर उनकी hidden states को मिलाता है। इसलिए हर output के पास अतीत और भविष्य, दोनों का context होता है।\n\nForward और backward hidden states को आम तौर पर concatenate किया जाता है, जिससे feature का आकार दोगुना हो जाता है। यह उन tagging कार्यों में मूल्यवान है जहाँ किसी token का अर्थ उसके बाद आने वाले शब्दों पर निर्भर करता है, जैसे named entity recognition, part-of-speech tagging और पूरे utterances पर speech recognition। CRF layer के साथ bidirectional LSTMs, BERT जैसे Transformer encoders से पहले मानक sequence-labeling मॉडल थे; BERT self-attention के ज़रिए bidirectional context हासिल करता है। मुख्य सीमा यह है कि कोई भी output बनने से पहले पूरा sequence उपलब्ध होना चाहिए, इसलिए bidirectional मॉडल real-time streaming prediction या autoregressive generation के लिए उपयोग नहीं किए जा सकते। Forecasting के लिए इसका उपयोग करने से भविष्य की जानकारी predictions में leak हो जाएगी।",
+  "u": [
+   "Named entity recognition और part-of-speech tagging",
+   "पूरी recordings पर offline speech recognition",
+   "Translation के लिए source वाक्यों को encode करना"
+  ],
+  "x": "एक legal tech कंपनी CPU fleet पर चलने वाले bidirectional LSTM tagger से contracts में से पक्षों के नाम, तारीखें और राशियाँ निकालती है। चूँकि पूरे documents offline process होते हैं, मॉडल हर token के दोनों ओर का context उपयोग कर सकता है, और इसे serve करना किसी बड़े Transformer से सस्ता है।"
+ },
+ "seq2seq": {
+  "n": "Seq2Seq",
+  "d": "Sequence-to-sequence (Seq2Seq) मॉडल encoder और decoder का उपयोग करके एक input sequence को संभवतः अलग लंबाई वाले output sequence में map करते हैं। Encoder input को आंतरिक representations में पढ़ता है, और decoder उन representations तथा अपने द्वारा पहले से बनाए गए tokens के आधार पर output को एक-एक token करके generate करता है।\n\n2014 के मूल मॉडल LSTMs का उपयोग करते थे और पूरे input को एक तय आकार के vector में संकुचित करते थे, जो लंबे वाक्यों के लिए bottleneck बन गया। Attention ने decoder को हर step पर सभी encoder states को देखने देकर इसे हटा दिया, और T5 व BART जैसे Transformer encoder-decoders ने इस design को सामान्यीकृत किया। Training के दौरान teacher forcing decoder को असली पिछला token देता है; inference पर मॉडल अपने ही predictions वापस देता है, आम तौर पर beam search या sampling के साथ। इस असंगति को exposure bias कहते हैं, और इसका अर्थ है कि शुरुआती गलतियाँ आगे बढ़ती जा सकती हैं। Seq2Seq मॉडल translation, summarization, speech recognition और text-to-SQL के लिए उपयुक्त हैं, जहाँ input और output अलग-अलग sequences होते हैं।",
+  "u": [
+   "भाषाओं के बीच machine translation",
+   "लंबे documents का abstractive summarization",
+   "Natural language प्रश्नों को SQL में बदलना"
+  ],
+  "x": "एक customer support platform T5-शैली के encoder-decoder को fine-tune करता है ताकि लंबी chat transcripts को agents के लिए छोटे case notes में सारांशित किया जा सके। Generation में length limit के साथ beam search का उपयोग होता है, और summaries की हर हफ़्ते नमूना जाँच होती है क्योंकि मॉडल कभी-कभी मुख्य विवरण छोड़ सकता है।"
+ },
+ "word2vec": {
+  "n": "Word2Vec",
+  "d": "Word2Vec एक shallow network को पड़ोसी शब्दों से शब्दों का अनुमान लगाने के लिए train करके कच्चे text से शब्दों के dense vector representations सीखता है। समान contexts में आने वाले शब्दों के vectors समान बन जाते हैं।\n\nइसके दो variants हैं। Skip-gram एक केंद्रीय शब्द से आसपास के शब्दों का अनुमान लगाता है और दुर्लभ शब्दों के लिए अच्छा काम करता है, जबकि CBOW अपने context के औसत से केंद्रीय शब्द का अनुमान लगाता है और तेज़ी से train होता है। पूरी vocabulary पर full softmax के बजाय training में आम तौर पर negative sampling का उपयोग होता है: मॉडल असली word-context जोड़ों को randomly sample किए गए जोड़ों से ऊँचा score देना सीखता है। परिणामी vectors semantic और syntactic नियमितताओं को पकड़ते हैं, जिसका classic उदाहरण है कि king − man + woman का परिणाम queen के पास आता है। यह domain-specific vocabularies और sessions से item embeddings के लिए अब भी उपयोगी है। इसकी मुख्य सीमा यह है कि हर शब्द को context से स्वतंत्र एक ही static vector मिलता है, इसलिए 'bank' का embedding नदी वाले वाक्य और finance वाले वाक्य में एक जैसा होता है; BERT जैसे contextual मॉडल इसका समाधान करते हैं।",
+  "u": [
+   "आंतरिक text से domain-specific word embeddings",
+   "User browsing sessions से item embeddings",
+   "Search query expansion के लिए समान terms ढूँढना"
+  ],
+  "x": "एक travel booking साइट हर user द्वारा देखी गई listings के क्रम को एक वाक्य मानकर लाखों sessions पर skip-gram Word2Vec train करती है। परिणामी listing embeddings 'मिलती-जुलती listings' feature को चलाते हैं, और मॉडल रोज़ retrain होता है क्योंकि नई listings को जल्दी vectors चाहिए।"
+ },
+ "unet": {
+  "n": "U-Net",
+  "d": "U-Net dense prediction के लिए एक encoder-decoder convolutional network है जो हर encoder स्तर को skip connections के ज़रिए संबंधित decoder स्तर से जोड़ता है, जिससे इसका विशिष्ट U आकार बनता है। इसे 2015 में biomedical image segmentation के लिए पेश किया गया था।\n\nEncoder context पकड़ने के लिए image को बार-बार downsample करता है, और decoder उसे वापस पूर्ण resolution तक upsample करता है। चूँकि downsampling बारीक spatial विवरण खो देता है, skip connections high-resolution encoder features को decoder में concatenate करते हैं, ताकि output global context का उपयोग करते हुए भी सटीक सीमाएँ खींच सके। U-Net छोटे datasets पर अच्छी तरह train होता है, ख़ासकर भारी augmentation के साथ, और हर pixel के लिए prediction देता है। Medical imaging, satellite imagery और manufacturing में segmentation के अलावा, attention layers और timestep conditioning वाला U-Net कई diffusion models में मानक noise-prediction network है। एक व्यावहारिक खतरा input size है: dimensions को 2 की उतनी घात से विभाज्य होना चाहिए जितने downsampling steps हैं, अन्यथा skip connections पर features align नहीं होंगे।",
+  "u": [
+   "Medical scans में tumor और organ segmentation",
+   "Satellite images से इमारतों और सड़कों का extraction",
+   "Diffusion models में noise prediction backbone"
+  ],
+  "x": "एक radiology software टीम CT slices में liver lesions को segment करने के लिए U-Net train करती है, और छोटे lesion क्षेत्र को संभालने के लिए Dice और cross-entropy loss को मिलाती है। Predictions की समीक्षा radiologists करते हैं, और inputs को 16 के गुणज तक pad किया जाता है ताकि हर स्तर पर skip connections align रहें।"
+ },
+ "gnn": {
+  "n": "Graph Neural Network (GNN)",
+  "d": "Graph neural network जुड़े हुए nodes के बीच बार-बार messages भेजकर nodes, edges या पूरे graphs के representations सीखता है। हर layer में हर node अपने पड़ोसियों से जानकारी aggregate करता है और उसे अपने features के साथ मिलाकर एक updated embedding बनाता है।\n\nk layers के बाद किसी node का embedding उसके k-hop पड़ोस को दर्शाता है। Sum, mean या attention जैसे aggregation functions permutation invariant होने चाहिए, क्योंकि पड़ोसियों का कोई स्वाभाविक क्रम नहीं होता। लोकप्रिय variants में GCN शामिल है, जो normalized adjacency matrix का उपयोग करता है; GraphSAGE, जो पड़ोसियों को sample करता है ताकि training बड़े graphs तक scale हो सके; और GAT, जो पड़ोसियों पर attention weights सीखता है। GNNs ऐसे डेटा के लिए उपयुक्त हैं जहाँ संबंध features जितने ही मायने रखते हैं: molecules, social और transaction networks, knowledge graphs और road networks। एक मुख्य सीमा over-smoothing है: कई layers के साथ node embeddings लगभग एक जैसे हो जाते हैं, इसलिए अधिकांश व्यावहारिक GNNs केवल दो या तीन layers उपयोग करते हैं। बहुत ऊँची degree वाले nodes पूरे पड़ोस के aggregation को भी महँगा बना देते हैं, इसीलिए sampling आम है।",
+  "u": [
+   "Transaction networks में fraud rings का पता लगाना",
+   "Drug discovery के लिए molecular property prediction",
+   "Graphs पर friend और product recommendation"
+  ],
+  "x": "एक payments कंपनी accounts, devices और cards को जोड़ने वाला graph बनाती है और fraud rings से जुड़े होने की संभावना वाले accounts को flag करने के लिए GraphSAGE मॉडल train करती है। Neighbor sampling बहुत बड़े graph पर training को संभव रखता है, और embeddings हर घंटे दोबारा compute होते हैं ताकि नए जुड़े accounts जल्दी score हो सकें।"
+ },
+ "vit": {
+  "n": "Vision Transformer (ViT)",
+  "d": "Vision Transformer हर image को तय आकार के patches में बाँटकर और हर patch को एक token मानकर images पर एक मानक Transformer encoder लागू करता है। एक सामान्य setup 224×224 image को 16×16 patches में काटता है, जिससे 196 tokens मिलते हैं।\n\nहर patch को flatten करके linearly एक embedding में project किया जाता है, एक learned position embedding जोड़ा जाता है, और अक्सर शुरुआत में एक विशेष class token जोड़ा जाता है जिसकी अंतिम state classifier को जाती है। Self-attention पहली layer से ही हर patch को हर दूसरे patch से interact करने देता है, इसलिए मॉडल local convolutions से धीरे-धीरे बनाने के बजाय global संबंधों को सीधे पकड़ता है। ViTs में CNNs की तुलना में locality के बारे में अंतर्निहित मान्यताएँ कमज़ोर होती हैं, इसलिए CNNs की बराबरी के लिए उन्हें बड़े pretraining datasets या मज़बूत augmentation की ज़रूरत होती है, लेकिन वे बहुत अच्छी तरह scale होते हैं और CLIP तथा कई multimodal language models के image encoders के रूप में काम करते हैं। Attention की लागत patches की संख्या के साथ quadratically बढ़ती है, इसलिए high-resolution inputs महँगे होते हैं, और resolution बदलने के लिए position embeddings को interpolate करना पड़ता है।",
+  "u": [
+   "बड़े pretrained backbones के साथ image classification",
+   "Multimodal language models के लिए image encoder",
+   "Retrieval के लिए self-supervised visual features"
+  ],
+  "x": "एक retail कंपनी visual similar-item search के लिए product photos को embed करने हेतु self-supervised ViT backbone का उपयोग करती है। Pretrained features बिना labels के सभी categories में काम करते हैं, और interpolated position embeddings से गुणवत्ता गिरने से बचने के लिए टीम सभी images को pretraining resolution पर resize करती है।"
+ },
+ "clip": {
+  "n": "CLIP",
+  "d": "CLIP (Contrastive Language-Image Pretraining), जिसे OpenAI ने 2021 में जारी किया, एक image encoder और एक text encoder को साथ-साथ train करता है ताकि मेल खाने वाली images और captions एक साझा embedding space में पास-पास के vectors पर map हों। इसे web से जुटाए गए करोड़ों image-text जोड़ों पर train किया गया था।\n\nN जोड़ों के batch के लिए मॉडल सभी N×N cosine similarities निकालता है और एक symmetric cross-entropy loss लागू करता है जो हर image को उसके अपने caption की ओर और बाकी captions से दूर धकेलता है, और इसके उलट भी, एक learned temperature के साथ। Training के बाद zero-shot classification इस तरह काम करता है: हर class के लिए 'a photo of a dog' जैसे prompts को embed किया जाता है और वह class चुनी जाती है जिसका text embedding image के सबसे करीब हो। CLIP embeddings text-to-image search, content filtering और image generators की text conditioning को चलाते हैं। सीमाओं में कमज़ोर गिनती और spatial reasoning, prompt की शब्दावली के प्रति संवेदनशीलता, और web डेटा से विरासत में मिले सामाजिक biases शामिल हैं।",
+  "u": [
+   "Text prompts के साथ zero-shot image classification",
+   "Text-to-image और image-to-image search",
+   "बड़े image datasets को filter और deduplicate करना"
+  ],
+  "x": "एक stock photo platform अपनी image library को CLIP image encoder से embed करता है और vectors को एक approximate nearest-neighbor index में रखता है। Search के समय user के text queries को text encoder से embed किया जाता है, जिससे हाथ से लिखे tags के बिना natural-language search संभव होता है।"
+ },
+ "contrastive": {
+  "n": "Contrastive Learning",
+  "d": "Contrastive learning एक encoder को इस तरह train करता है कि संबंधित examples, जिन्हें positive pairs कहते हैं, embedding space में पास-पास हों और असंबंधित examples, जिन्हें negatives कहते हैं, दूर-दूर हों। Positives एक ही image के दो augmented views, एक query और उसका प्रासंगिक document, या एक image और उसका caption हो सकते हैं।\n\nसबसे आम objective InfoNCE है: हर anchor के लिए एक positive और कई negatives से similarities पर softmax को positive चुनने के लिए train किया जाता है, और temperature नियंत्रित करता है कि hard negatives को कितनी सख्ती से दंडित किया जाए। SimCLR और MoCo जैसे methods बिना labels के visual features सीखते हैं, जबकि CLIP और dense retrieval मॉडल cross-modal या query-document embeddings सीखते हैं। In-batch negatives training को कुशल बनाते हैं, इसलिए बड़े batches आम तौर पर मदद करते हैं। यह approach शक्तिशाली है क्योंकि labels अक्सर मुफ़्त मिल जाते हैं, लेकिन गुणवत्ता इस पर बहुत निर्भर करती है कि positives कैसे परिभाषित किए गए हैं: augmentations तय करते हैं कि कौन-सी invariances सीखी जाएँगी, और false negatives, जैसे negatives माने गए लगभग-duplicate documents, परिणाम खराब कर सकते हैं।",
+  "u": [
+   "Semantic search के लिए dense retrievers की training",
+   "Image encoders की self-supervised pretraining",
+   "Recommendation के लिए user और item embeddings सीखना"
+  ],
+  "x": "एक enterprise search टीम users के प्रश्नों और उन्हें हल करने वाले help articles के जोड़ों पर in-batch negatives के साथ एक sentence embedding मॉडल को fine-tune करती है। वे मौजूदा retriever के top परिणामों से hard negatives निकालते हैं, लेकिन false negatives से बचने के लिए असली article के लगभग-duplicates को छाँटकर बाहर कर देते हैं।"
+ },
+ "gan": {
+  "n": "Generative Adversarial Network (GAN)",
+  "d": "Generative adversarial network दो networks को एक-दूसरे के विरुद्ध train करता है: एक generator जो random noise को synthetic samples में बदलता है, और एक discriminator जो असली samples को generated samples से अलग पहचानने की कोशिश करता है। जैसे-जैसे discriminator बेहतर होता है, generator को ऐसे gradients मिलते हैं जो उसके outputs को असली data distribution की ओर धकेलते हैं।\n\nयह setup दो खिलाड़ियों वाला एक minimax game है। व्यवहार में generator आम तौर पर log D(G(z)) को maximize करता है, जिसे non-saturating loss कहते हैं, क्योंकि मूल objective training की शुरुआत में vanishing gradients देता है। GANs sharp images बनाते हैं और एक ही forward pass में sample करते हैं, इसलिए inference पर तेज़ होते हैं; StyleGAN ने photorealistic चेहरों का मानक स्थापित किया। इनका उपयोग image synthesis, super-resolution और data augmentation के लिए होता है। Training बदनाम रूप से अस्थिर है: mode collapse, जिसमें generator डेटा के केवल कुछ modes को cover करता है, और दोनों खिलाड़ियों के बीच दोलन आम हैं। Spectral normalization, gradient penalties वाले Wasserstein losses और learning rates का सावधानीपूर्ण संतुलन जैसी तकनीकें मदद करती हैं। उच्च विविधता वाले image generation में diffusion models ने काफ़ी हद तक GANs की जगह ले ली है।",
+  "u": [
+   "Image super-resolution और enhancement",
+   "दुर्लभ defect classes के लिए synthetic training images",
+   "Inference पर तेज़ single-step image generation"
+  ],
+  "x": "एक camera software टीम device पर कम रोशनी वाली photos को upscale करने के लिए GAN-आधारित super-resolution मॉडल का उपयोग करती है। Adversarial loss केवल pixel loss की तुलना में अधिक sharp textures देता है, और एक ही forward pass latency budget में फिट हो जाता है; टीम उन गढ़े हुए विवरणों पर कड़ी नज़र रखती है जो दृश्य में मौजूद ही नहीं हैं।"
+ },
+ "vae": {
+  "n": "Variational Autoencoder (VAE)",
+  "d": "Variational autoencoder एक generative मॉडल है जो हर input को एक अकेले बिंदु के बजाय latent space पर एक probability distribution में encode करता है, और उस distribution से लिए गए samples को वापस डेटा में decode करता है। चूँकि latent space को एक सरल prior की ओर regularize किया जाता है, prior से sample करके decode करने पर नया डेटा मिलता है।\n\nEncoder हर latent dimension के लिए mean और variance देता है। Reparameterization trick, z = μ + σ·ε, जहाँ ε एक standard normal से लिया जाता है, sampling को differentiable रखती है ताकि मॉडल backpropagation से train हो सके। Loss, यानी negative evidence lower bound (ELBO), एक reconstruction term को KL divergence के साथ जोड़ता है जो हर encoded distribution को standard normal की ओर खींचता है। VAEs smooth latent spaces देते हैं जो interpolation, anomaly detection और compression के लिए उपयोगी हैं, और latent diffusion एक VAE variant का उपयोग करता है। इनके samples GANs या diffusion models की तुलना में अधिक धुंधले होते हैं, और शक्तिशाली decoders के साथ KL term collapse हो सकता है, जिससे latent code अनुपयोगी रह जाता है।",
+  "u": [
+   "Reconstruction error से anomaly detection",
+   "Diffusion के लिए images को latents में compress करना",
+   "Molecular structures का generation और interpolation"
+  ],
+  "x": "एक industrial monitoring टीम सामान्य रूप से चल रही मशीनों की sensor windows पर एक VAE train करती है। Production में ऊँचे reconstruction error या कम ELBO वाली windows को anomalies के रूप में flag किया जाता है, और thresholds एक validation अवधि पर तय किए जाते हैं ताकि alert दर operators के लिए संभालने योग्य बनी रहे।"
+ },
+ "diffusion": {
+  "n": "Diffusion Models",
+  "d": "Diffusion models धीरे-धीरे noise जोड़ने वाली प्रक्रिया को उलटना सीखकर डेटा generate करते हैं। Training के दौरान असली samples में randomly चुने गए noise स्तर पर Gaussian noise जोड़ा जाता है, और एक network उस noise का अनुमान लगाना सीखता है; generation शुद्ध noise से शुरू होता है और उसे step-दर-step हटाता है।\n\nForward process का एक closed form होता है, इसलिए किसी भी timestep t पर noisy sample को schedule ᾱₜ का उपयोग करके साफ़ डेटा से सीधे बनाया जा सकता है। Training objective असली और अनुमानित noise के बीच एक सरल mean squared error है, जो adversarial training से कहीं अधिक स्थिर है। Sampling में denoiser कई बार चलता है; DDPM सैकड़ों steps उपयोग करता है, जबकि DDIM और आधुनिक solvers इसे कुछ दर्जन तक घटा देते हैं, और distillation कुछ ही steps तक पहुँच सकता है। Classifier-free guidance कुछ विविधता की कीमत पर text prompt के पालन को मज़बूत करता है। Image, video और audio generation की गुणवत्ता में ये सबसे आगे हैं। इनकी मुख्य कमी single-pass generators की तुलना में धीमी, compute-भारी sampling है।",
+  "u": [
+   "Text-to-image generation और editing",
+   "Audio और speech synthesis",
+   "Molecule और protein structure generation"
+  ],
+  "x": "एक design tool कंपनी GPUs पर serve किए गए diffusion मॉडल के साथ text-to-image generation देती है। वे लगभग बीस से तीस steps वाले तेज़ sampler और classifier-free guidance का उपयोग करते हैं, prompt के प्रति निष्ठा और image विविधता के बीच संतुलन के लिए guidance scale को tune करते हैं, और हर output पर safety classifiers चलाते हैं।"
+ },
+ "latentdiff": {
+  "n": "Latent Diffusion",
+  "d": "Latent diffusion, diffusion process को सीधे pixels पर चलाने के बजाय एक pretrained autoencoder के संकुचित latent space में चलाता है। Stable Diffusion इसका सबसे प्रसिद्ध उदाहरण है।\n\nपहले एक variational autoencoder image को compress करता है, उदाहरण के लिए 512×512×3 pixels को 64×64×4 latent में, यानी हर तरफ़ 8× की कमी। Diffusion मॉडल, आम तौर पर एक U-Net या diffusion Transformer, इन latents को denoise करना सीखता है, और decoder अंतिम latent को वापस image में बदलता है। चूँकि latent कहीं छोटा है और autoencoder पहले ही अगोचर high-frequency विवरण हटा चुका है, समान गुणवत्ता पर training और sampling में pixel-space diffusion की तुलना में बहुत कम compute लगता है। Text conditioning CLIP या T5 जैसे text encoder के embeddings पर cross-attention के ज़रिए आती है। यह approach image-to-image editing, inpainting और LoRA व DreamBooth जैसे fine-tuning methods का भी समर्थन करता है। इसकी गुणवत्ता की ऊपरी सीमा autoencoder तय करता है: diffusion मॉडल पूर्ण होने पर भी छोटा text, बारीक चेहरे और सटीक textures decoder द्वारा विकृत हो सकते हैं।",
+  "u": [
+   "सामान्य GPUs पर text-to-image generation",
+   "Inpainting और image-to-image editing",
+   "LoRA fine-tuning से custom styles"
+  ],
+  "x": "एक marketing टीम campaign concepts generate करने के लिए स्वीकृत brand imagery पर LoRA के साथ Stable Diffusion मॉडल को fine-tune करती है। Diffusion latent space में चलने के कारण training और generation दोनों एक ही GPU पर हो जाते हैं, और उपयोग से पहले सभी outputs की मानवीय समीक्षा होती है।"
+ },
+ "flowmatch": {
+  "n": "Flow Matching",
+  "d": "Flow matching एक generative मॉडल को ऐसा velocity field सीखने के लिए train करता है जो samples को एक सरल noise distribution से data distribution तक लगातार ले जाता है। फिर generation इस field को noise से डेटा तक एक ordinary differential equation के रूप में integrate करता है।\n\nआम rectified flow variant में एक training example इस तरह बनता है: एक data point x₁ और एक noise point x₀ लिया जाता है, किसी random समय t पर linear interpolation xₜ = (1−t)x₀ + t·x₁ किया जाता है, और network के output को स्थिर velocity x₁ − x₀ पर regress किया जाता है। Loss एक सामान्य mean squared error है, जिसमें न कोई adversarial game है और न training के दौरान ODE simulation। सीधे paths classic diffusion की तुलना में कम steps में sampling संभव बनाते हैं, और यह framework diffusion को सामान्यीकृत करता है, जो घुमावदार paths उपयोग करता है। Stable Diffusion 3 और कई video व speech मॉडल इसका उपयोग करते हैं। सीखे गए trajectories बिल्कुल सीधे नहीं होते: velocity field एक-दूसरे को काटने वाले जोड़ों पर औसत लेता है, इसलिए आगे rectify न किए जाने पर paths मुड़ जाते हैं।",
+  "u": [
+   "कम sampling steps के साथ text-to-image generation",
+   "Speech और audio generation मॉडल",
+   "Molecular और protein conformation generation"
+  ],
+  "x": "एक speech synthesis टीम अपने diffusion-आधारित acoustic decoder की जगह flow matching मॉडल लगाती है। Training loss सरल और अधिक स्थिर है, और कम steps वाला ODE solver real-time voice responses के लिए कम latency पर तुलनीय audio गुणवत्ता देता है।"
+ },
+ "autoregressive": {
+  "n": "Autoregressive Models",
+  "d": "Autoregressive मॉडल किसी sequence को एक-एक element करके generate करता है, और हर element का अनुमान उससे पहले के सभी elements से लगाता है। यह chain rule का उपयोग करके sequence की joint probability को conditional probabilities के गुणनफल में factorize करता है।\n\nGPT-शैली के language models सबसे प्रमुख उदाहरण हैं: एक causal Transformer अगले token पर distribution का अनुमान लगाता है, greedy decoding या sampling से एक token चुना जाता है, उसे input में जोड़ा जाता है, और प्रक्रिया दोहराई जाती है। Training कुशल है क्योंकि causal masking और teacher forcing के साथ sequence की सभी स्थितियों के losses एक ही parallel pass में निकल जाते हैं। यही विचार time series के लिए classical AR मॉडलों, images के लिए PixelCNN और audio के लिए WaveNet का आधार है। Autoregressive मॉडल सटीक likelihoods देते हैं और बहुत लचीले हैं, लेकिन generation स्वाभाविक रूप से sequential है, इसलिए latency output की लंबाई के साथ बढ़ती है; KV caching और speculative decoding इस लागत को घटाते हैं। गलतियाँ भी बढ़ती जा सकती हैं, क्योंकि हर prediction मॉडल के अपने पिछले outputs पर आधारित होता है।",
+  "u": [
+   "GPT-शैली के language models से text generation",
+   "AR और ARIMA मॉडलों से time-series forecasting",
+   "Developer tools में code completion"
+  ],
+  "x": "एक developer tools कंपनी inline completion के लिए एक autoregressive code मॉडल serve करती है। चूँकि tokens एक-एक करके generate होते हैं, वे completion की लंबाई सीमित रखते हैं, keystrokes के बीच KV cache का दोबारा उपयोग करते हैं, और suggestions को interactive latency budget के भीतर रखने के लिए एक छोटे draft मॉडल के साथ speculative decoding उपयोग करते हैं।"
+ },
+ "dlm": {
+  "n": "Diffusion Language Models",
+  "d": "Diffusion language models बाएँ से दाएँ एक-एक token बनाने के बजाय पूरी तरह masked या noised sequence से शुरू करके कई steps में अनेक स्थितियों को parallel में refine करते हुए text generate करते हैं। अधिकांश Gaussian noise के बजाय discrete masking का उपयोग करते हैं।\n\nTraining के दौरान tokens के एक random हिस्से को mask token से बदल दिया जाता है, और एक bidirectional Transformer masked स्थितियों पर मूल tokens का अनुमान लगाना सीखता है, जिसमें loss को masking ratio के अनुसार weight किया जाता है। Inference पर मॉडल पूरी तरह mask वाले sequence से शुरू करता है, हर स्थिति का अनुमान लगाता है, सबसे आत्मविश्वासी predictions रखता है और बाकी को फिर से mask कर देता है, और text पूरा होने तक यह दोहराता है। उदाहरणों में LLaDA, Mercury और Gemini Diffusion शामिल हैं। पूरा context दिखते हुए हर step में कई tokens तय करने से तेज़ decoding और बीच में text editing संभव होती है। सीमाओं में तय या अनुमानित output लंबाई, मानक KV caching के दोबारा उपयोग में कठिनाई, और कई benchmarks पर तुलनीय autoregressive मॉडलों से अब भी पीछे रहने वाली गुणवत्ता शामिल हैं।",
+  "u": [
+   "कम latency वाला parallel text और code generation",
+   "Text infilling और बीच में editing",
+   "Non-autoregressive decoding पर शोध"
+  ],
+  "x": "एक coding assistant टीम तेज़ code infilling के लिए diffusion language model पर प्रयोग करती है, जहाँ मॉडल cursor से पहले और बाद के मौजूदा code के बीच का अंतराल भरता है। Parallel decoding छोटे हिस्सों के लिए latency घटाता है, लेकिन लंबे completions के लिए वे fallback के रूप में autoregressive मॉडल रखते हैं, जहाँ उसकी गुणवत्ता अब भी ऊँची है।"
+ },
+ "attention": {
+  "n": "Attention Mechanism",
+  "d": "Attention मॉडल को हर output को value vectors के एक समूह के weighted average के रूप में निकालने देता है, जहाँ weights इस पर निर्भर करते हैं कि query हर संबंधित key से कितनी अच्छी तरह मेल खाती है। इस तरह मॉडल input के सबसे प्रासंगिक हिस्सों पर ध्यान केंद्रित कर सकता है।\n\nScaled dot-product attention में query-key dot products को key dimension के square root से भाग दिया जाता है, जो softmax को saturate होने से बचाता है, और फिर softmax से उन्हें ऐसे weights में normalize किया जाता है जिनका योग 1 हो। Attention को इसलिए पेश किया गया था ताकि translation decoders एक संकुचित vector के बजाय सभी encoder states को देख सकें, और यह Transformers का मुख्य operation है। Cross-attention एक sequence से queries और दूसरे से keys व values लेता है, जैसे encoder-decoder मॉडलों या text-conditioned image generation में। मानक attention की time और memory लागत sequence length के साथ quadratic होती है; FlashAttention पूरी weight matrix store किए बिना इसे tiles में compute करके memory घटाता है। Attention weights मॉडल के निर्णयों की भरोसेमंद व्याख्या नहीं हैं।",
+  "u": [
+   "Translation में source और target शब्दों को align करना",
+   "Text prompts से image features पर cross-attention",
+   "Learned weights के साथ परिवर्ती लंबाई वाले inputs की pooling"
+  ],
+  "x": "एक machine translation टीम एक encoder-decoder Transformer serve करती है जिसमें हर decoder layer encoded source वाक्य पर cross-attend करती है। वे GPU memory घटाने के लिए एक fused attention kernel का उपयोग करते हैं, जिससे लंबे documents पर बड़े batches और अधिक throughput संभव होता है।"
+ },
+ "selfattn": {
+  "n": "Self-Attention",
+  "d": "Self-attention वह attention है जिसमें queries, keys और values तीनों एक ही sequence से आते हैं, इसलिए हर token उस sequence के हर दूसरे token को देखकर अपना नया representation बनाता है। यह Transformer layers की मुख्य इकाई है।\n\nहर token का vector तीन learned matrices द्वारा एक query, एक key और एक value में project किया जाता है। Token i की query की तुलना सभी tokens की keys से करके attention weights बनते हैं, और token i का output उनके values का weighted sum होता है। Multi-head self-attention कम dimension वाले projections पर ऐसे कई operations parallel में चलाता है, ताकि अलग-अलग heads अलग-अलग संबंधों को ट्रैक कर सकें। RNN के विपरीत, कोई भी दो स्थितियाँ एक ही step में interact करती हैं, और पूरा sequence parallel में process होता है। Self-attention permutation equivariant है, इसलिए शब्द-क्रम जानने के लिए उसे positional encodings चाहिए। Decoder मॉडल एक causal mask जोड़ते हैं ताकि हर token केवल पहले की स्थितियाँ देखे। लागत sequence length के साथ quadratically बढ़ती है।",
+  "u": [
+   "Language models में contextual token representations",
+   "Documents में लंबी दूरी की dependencies को model करना",
+   "Vision Transformers में image patches को आपस में जोड़ना"
+  ],
+  "x": "एक legal document टीम एक Transformer encoder को fine-tune करती है जिसकी self-attention layers हर clause को contract में कहीं और दी गई परिभाषाओं पर attend करने देती हैं। चूँकि लागत लंबाई के साथ quadratically बढ़ती है, वे contracts को तय token संख्या वाली overlapping windows में बाँटते हैं और बाद में predictions को मिला देते हैं।"
+ }
+}

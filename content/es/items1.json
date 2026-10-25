@@ -1,0 +1,482 @@
+{
+ "eda": {
+  "n": "Análisis exploratorio de datos (EDA)",
+  "d": "El análisis exploratorio de datos es la primera inspección sistemática de un conjunto de datos para entender su estructura, su calidad y sus relaciones antes de construir ningún modelo. Se revisan los tipos de las columnas, el número de filas, los patrones de valores faltantes, los duplicados, los rangos de valores y la distribución de cada variable, y después se estudian las relaciones entre variables y con la variable objetivo mediante estadísticos descriptivos, histogramas, diagramas de caja, diagramas de dispersión y matrices de correlación.\n\nEl objetivo es formular hipótesis y detectar problemas pronto: variables asimétricas que necesitan una transformación, columnas categóricas con miles de niveles, errores en las etiquetas, valores imposibles como edades negativas, o una columna sospechosamente predictiva porque codifica la respuesta. El EDA también orienta la elección del esquema de validación, por ejemplo al revelar un orden temporal o registros agrupados. Un error frecuente es hacer el EDA sobre todo el conjunto de datos, incluido el de prueba, y tomar después decisiones de preprocesamiento a partir de él; esto filtra de forma silenciosa información de prueba a las decisiones de modelado.",
+  "u": [
+   "Auditar la calidad de los datos antes de entrenar un modelo",
+   "Descubrir asimetrías, atípicos y patrones de valores faltantes",
+   "Detectar pronto columnas con fuga de información o que codifican el objetivo"
+  ],
+  "x": "Un equipo de analítica de retail que recibe una nueva exportación de los puntos de venta perfila primero cada columna, grafica las ventas semanales por tienda y revisa las tasas de valores faltantes por región. El análisis revela que una región registra las devoluciones como ventas negativas y que el ID de una tienda cambió de formato a mitad de año, y ambas cosas se corrigen antes de entrenar un modelo de predicción de la demanda."
+ },
+ "supervised": {
+  "n": "Aprendizaje supervisado",
+  "d": "El aprendizaje supervisado entrena un modelo para relacionar entradas con salidas conocidas a partir de ejemplos etiquetados con la respuesta correcta. Dados pares (x, y), el algoritmo ajusta sus parámetros para minimizar una pérdida que mide cuánto se alejan sus predicciones de las etiquetas, y después aplica la función aprendida a entradas nuevas sin etiquetar.\n\nLos problemas se dividen en clasificación, donde y es una categoría, como spam o no spam, y regresión, donde y es un valor continuo, como un precio. Los algoritmos típicos van desde la regresión lineal y logística hasta los árboles con gradient boosting y las redes neuronales profundas. El aprendizaje supervisado es la opción por defecto siempre que existen etiquetas fiables y el objetivo de predicción está claramente definido.\n\nSu principal limitación es el coste y la calidad de las etiquetas: los modelos aprenden el ruido de las etiquetas y el sesgo de los anotadores con la misma fidelidad que la señal real. El rendimiento debe medirse con datos reservados extraídos de la misma distribución que el tráfico de producción, porque un error de entrenamiento bajo por sí solo no dice nada sobre la generalización.",
+  "u": [
+   "Clasificación de spam a partir de correos etiquetados",
+   "Predicción del precio de viviendas a partir de sus atributos",
+   "Diagnóstico médico por imagen a partir de escáneres anotados"
+  ],
+  "x": "Una aseguradora entrena un clasificador de gradient boosting con años de siniestros históricos que los investigadores etiquetaron como fraudulentos o legítimos. El modelo puntúa cada nuevo siniestro en milisegundos, y el equipo lo reentrena cada trimestre porque los patrones de fraude cambian y las nuevas etiquetas confirmadas llegan con retraso."
+ },
+ "unsupervised": {
+  "n": "Aprendizaje no supervisado",
+  "d": "El aprendizaje no supervisado encuentra estructura en datos que no tienen etiquetas. En lugar de predecir un objetivo conocido, el algoritmo modela los propios datos: agrupa los puntos similares, los comprime en menos dimensiones, estima su densidad o señala los puntos que no encajan.\n\nLas principales familias son el clustering (k-means, DBSCAN, mezclas gaussianas, clustering jerárquico), la reducción de dimensionalidad (PCA, UMAP, autoencoders) y la estimación de densidad o detección de anomalías (Isolation Forest, densidad por kernel). Estos métodos son útiles cuando las etiquetas son caras o no están definidas, para explorar un conjunto de datos nuevo, para crear variables para un modelo supervisado posterior y para detectar comportamientos inusuales.\n\nLa dificultad central es la evaluación. Sin una verdad de referencia no existe una única respuesta correcta, por lo que los resultados dependen mucho del escalado de las variables, de la métrica de distancia y de hiperparámetros como el número de clústeres. Las puntuaciones internas, como el coeficiente de silueta, miden la separación geométrica, no la utilidad para el negocio, así que los clústeres deben validarlos expertos del dominio o su impacto en procesos posteriores.",
+  "u": [
+   "Segmentación de clientes a partir del comportamiento de compra",
+   "Detección de anomalías en métricas de servidores o sensores",
+   "Comprimir embeddings para visualización y búsqueda"
+  ],
+  "x": "Un servicio de streaming por suscripción agrupa a sus usuarios según sus patrones de tiempo de visionado, géneros y uso de dispositivos para descubrir segmentos de audiencia que marketing no había definido. Los analistas revisan el perfil de cada clúster antes de ponerle nombre, y las etiquetas de segmento se usan después como variables en modelos de abandono y para dirigir campañas."
+ },
+ "selfsup": {
+  "n": "Aprendizaje autosupervisado",
+  "d": "El aprendizaje autosupervisado crea su propia señal de entrenamiento a partir de datos sin etiquetar, ocultando o transformando parte de una entrada y entrenando un modelo para recuperarla. Como las etiquetas proceden de los propios datos, no hace falta anotación humana.\n\nEntre las tareas pretexto habituales están predecir el siguiente token (modelos de lenguaje de tipo GPT), predecir tokens enmascarados (BERT), reconstruir parches de imagen enmascarados (MAE) y el aprendizaje contrastivo, en el que dos vistas aumentadas del mismo ejemplo se acercan en el espacio de embeddings mientras que las vistas de ejemplos distintos se alejan (SimCLR, CLIP). La red preentrenada se ajusta después con fine-tuning o se usa como extractor de características congelado para tareas posteriores con pocas etiquetas.\n\nEste paradigma es la base de los modelos fundacionales modernos. Un malentendido frecuente es pensar que equivale al clustering no supervisado; en realidad usa una pérdida supervisada corriente sobre objetivos generados automáticamente. La elección de la tarea pretexto y de los aumentos determina en gran medida qué características se aprenden, y una mala elección puede enseñar atajos que no se transfieren.",
+  "u": [
+   "Preentrenar modelos de lenguaje con texto web sin procesar",
+   "Aprender características de imagen sin etiquetas manuales",
+   "Construir embeddings para recuperación y transfer learning"
+  ],
+  "x": "Un grupo de imagen médica dispone de cientos de miles de radiografías de tórax sin etiquetar, pero solo de unos pocos miles con etiquetas de radiólogos. Preentrenan un codificador visual con un objetivo de autoencoder enmascarado sobre todas las imágenes y después hacen fine-tuning con el subconjunto etiquetado, lo que da mejor precisión que entrenar desde cero con el pequeño conjunto etiquetado."
+ },
+ "rl": {
+  "n": "Aprendizaje por refuerzo",
+  "d": "El aprendizaje por refuerzo entrena a un agente para elegir acciones que maximicen la recompensa acumulada mediante la interacción por ensayo y error con un entorno. En cada paso, el agente observa un estado, realiza una acción, recibe una recompensa escalar y pasa a un nuevo estado; debe aprender una política sin que nadie le diga qué acción era la correcta.\n\nLos métodos basados en valor, como Q-learning y DQN, estiman el retorno esperado de cada acción y actúan de forma voraz según esas estimaciones. Los métodos de gradiente de política, como REINFORCE y PPO, ajustan directamente la política en la dirección que aumenta el retorno esperado. Un factor de descuento γ pondera la recompensa a corto plazo frente a la de largo plazo, y el agente debe equilibrar la exploración de acciones desconocidas con la explotación de las que ya sabe que son buenas.\n\nEl aprendizaje por refuerzo se adapta a problemas de decisión secuencial: juegos, robótica y alineamiento de modelos de lenguaje con las preferencias humanas (RLHF). Es poco eficiente en muestras, sensible al diseño de la recompensa y a menudo inestable. Una recompensa mal especificada se explota con facilidad: los agentes aprenden comportamientos que puntúan bien pero no logran el objetivo previsto.",
+  "u": [
+   "Agentes que juegan y simuladores",
+   "Políticas de control y locomoción de robots",
+   "Fine-tuning de LLM con recompensas basadas en preferencias humanas"
+  ],
+  "x": "Un operador de centros de datos entrena en un simulador un controlador de aprendizaje por refuerzo para ajustar las consignas de refrigeración según las lecturas de temperatura y carga, con una recompensa ligada al consumo energético y a los límites de seguridad. Antes del despliegue, la política aprendida funciona en modo de recomendación, y unas restricciones estrictas anulan cualquier acción fuera de los rangos de operación aprobados."
+ },
+ "split": {
+  "n": "División en entrenamiento, validación y prueba",
+  "d": "La división en entrenamiento, validación y prueba reparte los datos en tres conjuntos disjuntos con funciones distintas: el modelo aprende sus parámetros con el conjunto de entrenamiento, los hiperparámetros y las decisiones de diseño se ajustan con el de validación, y el conjunto de prueba se usa una sola vez al final para estimar el rendimiento con datos no vistos.\n\nCada decisión que se toma mirando una puntuación adapta el modelo a esos datos. Tras muchas rondas de ajuste sobre un mismo conjunto, su puntuación queda sesgada de forma optimista, por lo que se necesita un último conjunto intacto para obtener una estimación honesta. Las proporciones típicas son 70/15/15 u 80/10/10, con conjuntos reservados más pequeños cuando hay muchos datos.\n\nLa división debe reflejar cómo se usará el modelo. En series temporales, se divide por tiempo para que validación y prueba vengan después del entrenamiento. Cuando varias filas comparten una entidad, como un paciente o un usuario, se divide por grupos para que la misma entidad nunca aparezca en ambos lados. Una división aleatoria en estos casos produce puntuaciones engañosamente altas.",
+  "u": [
+   "Ajustar hiperparámetros sin tocar los datos de prueba",
+   "Informar de una estimación final del rendimiento sin sesgo",
+   "Comparar modelos candidatos sobre un conjunto reservado fijo"
+  ],
+  "x": "Un equipo de riesgo de crédito entrena con préstamos concedidos en años anteriores, ajusta con el trimestre siguiente e informa de las métricas finales sobre el trimestre más reciente, imitando cómo puntuará el modelo a los futuros solicitantes. El trimestre de prueba se guarda bloqueado en otra ubicación de almacenamiento para que los analistas no puedan usarlo por accidente durante la selección de variables."
+ },
+ "cv": {
+  "n": "Validación cruzada",
+  "d": "La validación cruzada estima lo bien que generaliza un modelo entrenándolo y evaluándolo varias veces sobre particiones distintas de los datos. En la validación cruzada de k particiones (k-fold), los datos se dividen en k folds; cada fold actúa una vez como conjunto de validación mientras el modelo se entrena con los otros k − 1, y se promedian las k puntuaciones.\n\nA diferencia de una única división reservada, cada ejemplo se usa tanto para entrenar como para validar, lo que da una estimación menos ruidosa y además una desviación típica que muestra la estabilidad del modelo. Hay variantes para estructuras especiales: el k-fold estratificado conserva las proporciones de las clases, el k-fold por grupos mantiene todas las filas de una entidad en el mismo fold y la división para series temporales siempre valida con datos posteriores a la ventana de entrenamiento.\n\nLa validación cruzada multiplica por k el tiempo de entrenamiento. Cuando se usa para seleccionar hiperparámetros, la puntuación media de la configuración ganadora queda sesgada de forma optimista; para una estimación final sin sesgo se necesita validación cruzada anidada o un conjunto de prueba aparte.",
+  "u": [
+   "Comparar modelos con conjuntos de datos pequeños o medianos",
+   "Búsqueda de hiperparámetros con estimaciones de puntuación fiables",
+   "Estimar la varianza del rendimiento entre subconjuntos de datos"
+  ],
+  "x": "Un equipo de analítica farmacéutica con solo unos cientos de historiales de pacientes usa validación cruzada de 5 folds por grupos para que todas las visitas de un paciente queden en el mismo fold. Informan de la media y la desviación típica del AUC entre folds, lo que revela que uno de los modelos candidatos es mucho menos estable de lo que sugiere su puntuación media."
+ },
+ "stratified": {
+  "n": "Muestreo estratificado",
+  "d": "El muestreo estratificado divide o muestrea los datos de forma que cada subconjunto conserve la misma proporción de una variable elegida, normalmente la etiqueta de clase, que el conjunto completo. Los datos se dividen en estratos según esa variable y se extrae la misma fracción de cada estrato.\n\nSe usa sobre todo para las divisiones de entrenamiento y prueba y para los folds de validación cruzada. Con etiquetas desbalanceadas, una división aleatoria simple puede dejar por azar muy pocos ejemplos positivos en un fold de validación, lo que hace que las métricas sean ruidosas o incluso no estén definidas. La estratificación elimina esta fuente de varianza, de modo que las puntuaciones entre folds son más comparables. También puede aplicarse a otras variables clave, como la región o el tipo de dispositivo, y en regresión estratificando sobre valores agrupados en intervalos de la variable objetivo.\n\nLa estratificación solo controla la distribución de la variable elegida; no impide la fuga de información entre filas relacionadas. Tampoco corrige por sí misma el desbalance de clases. Una división estratificada de un conjunto con un 1 % de positivos sigue dando a cada subconjunto alrededor de un 1 % de positivos.",
+  "u": [
+   "Divisiones de entrenamiento y prueba para clasificación desbalanceada",
+   "Folds de validación cruzada estables para clases poco frecuentes",
+   "Muestreo de encuestas entre grupos demográficos"
+  ],
+  "x": "Un equipo de detección de fraude con una tasa de positivos del 0,3 % usa validación cruzada estratificada de 5 folds para que cada fold contenga un número comparable de casos de fraude. Sin ella, algunos folds tenían tan pocos positivos que el PR-AUC variaba enormemente entre ejecuciones, lo que hacía poco fiables las comparaciones entre modelos."
+ },
+ "leak": {
+  "n": "Fuga de datos (data leakage)",
+  "d": "La fuga de datos se produce cuando información que no estaría disponible en el momento de la predicción entra en el entrenamiento del modelo, lo que da puntuaciones de evaluación mucho mejores que el rendimiento real.\n\nLa fuga adopta varias formas. La fuga del objetivo ocurre cuando una variable se deriva de la etiqueta o se registra después del resultado, como una marca de reembolso usada para predecir fraude. La contaminación entre entrenamiento y prueba ocurre cuando el preprocesamiento, como el escalado, la imputación, el target encoding o la selección de variables, se ajusta sobre todo el conjunto de datos antes de dividirlo. La fuga temporal ocurre cuando una división aleatoria permite al modelo entrenar con el futuro y predecir el pasado, y la fuga por grupos ocurre cuando el mismo cliente o paciente aparece tanto en los datos de entrenamiento como en los de prueba.\n\nLos síntomas típicos son una puntuación sospechosamente alta o una variable con una importancia abrumadora. Prevenirla implica ajustar todo el preprocesamiento dentro de un pipeline usando solo el fold de entrenamiento, dividir por tiempo o por grupo cuando corresponda y comprobar, para cada variable, en qué momento exacto se conoce su valor.",
+  "u": [
+   "Auditar variables en busca de información posterior al resultado",
+   "Construir pipelines de preprocesamiento sin fugas",
+   "Diagnosticar modelos que fallan tras el despliegue"
+  ],
+  "x": "Un modelo de reingresos hospitalarios alcanzó un AUC de validación casi perfecto, y una auditoría mostró que una de las variables era un código de alta que solo se asignaba después de que el paciente reingresara. Tras eliminarla y reconstruir las variables con los datos disponibles en el momento del alta, la puntuación bajó a un nivel realista que coincidió con los resultados posteriores en producción."
+ },
+ "overfit": {
+  "n": "Sobreajuste (overfitting)",
+  "d": "El sobreajuste se produce cuando un modelo aprende patrones específicos de sus datos de entrenamiento, incluido el ruido, de modo que funciona bien con los ejemplos de entrenamiento pero mal con datos nuevos. La señal reveladora es una brecha grande y creciente entre el rendimiento de entrenamiento y el de validación.\n\nOcurre cuando la capacidad del modelo es alta en relación con la cantidad y la calidad de los datos: árboles profundos, polinomios de grado alto, muchas variables con pocas filas o redes neuronales entrenadas durante demasiado tiempo. El modelo memoriza los ejemplos en lugar de la relación subyacente. Entre los remedios están conseguir más datos, usar modelos más sencillos, la regularización (L1, L2, dropout, weight decay), la parada temprana, el aumento de datos y el bagging.\n\nEl sobreajuste también puede darse a nivel del experimento. Ajustar repetidamente hiperparámetros o seleccionar variables frente al mismo conjunto de validación adapta todo el pipeline a ese conjunto. Una pérdida de entrenamiento baja no es un problema en sí misma; redes muy grandes pueden ajustar perfectamente los datos de entrenamiento y aun así generalizar bien, así que la señal que hay que vigilar es la curva de validación.",
+  "u": [
+   "Diagnosticar brechas entre entrenamiento y validación durante el entrenamiento",
+   "Elegir la profundidad de los árboles o el grado del polinomio",
+   "Decidir cuándo detener el entrenamiento de una red neuronal"
+  ],
+  "x": "Un equipo de predicción de la demanda observó que un modelo profundo de gradient boosting puntuaba casi a la perfección en las semanas de entrenamiento pero fallaba mucho en las semanas recientes. Limitar la profundidad de los árboles, aumentar el mínimo de muestras por hoja y usar parada temprana con un conjunto de validación temporal cerró la mayor parte de la brecha."
+ },
+ "underfit": {
+  "n": "Subajuste (underfitting)",
+  "d": "El subajuste se produce cuando un modelo es demasiado simple o está demasiado restringido para captar la estructura real de los datos, por lo que rinde mal tanto en el conjunto de entrenamiento como en el de validación. A diferencia del sobreajuste, apenas hay diferencia entre ambos errores; los dos son simplemente altos.\n\nLas causas habituales son una familia de modelos que no puede expresar la relación (una recta para un patrón curvo), variables escasas o poco informativas, una regularización excesiva, detener el entrenamiento demasiado pronto o una tasa de aprendizaje tan baja que el optimizador apenas avanza. En términos de sesgo-varianza, un modelo subajustado tiene un sesgo alto.\n\nLas soluciones van en la dirección contraria a las del sobreajuste: usar un modelo más flexible, añadir o construir variables como interacciones y transformaciones no lineales, reducir la intensidad de la regularización o entrenar durante más tiempo. Una comprobación útil es ver si el modelo es capaz de sobreajustar un subconjunto diminuto de los datos; si ni siquiera eso funciona, el problema probablemente sea un bug, una mala tasa de aprendizaje o un pipeline de datos roto, más que un subajuste genuino.",
+  "u": [
+   "Diagnosticar modelos que se estancan con un error de entrenamiento alto",
+   "Decidir si añadir variables o capacidad al modelo",
+   "Ajustar una regularización demasiado fuerte"
+  ],
+  "x": "El modelo lineal de un equipo de precios para estimar los tiempos de entrega tenía un error similar, pero decepcionante, en los datos de entrenamiento y de validación. Añadir variables de interacción entre distancia y tráfico y pasar a un modelo de gradient boosting redujo ambos errores, lo que confirmó que al modelo original le faltaba capacidad, no datos."
+ },
+ "biasvar": {
+  "n": "Compromiso sesgo-varianza",
+  "d": "El compromiso sesgo-varianza describe cómo el error de predicción esperado de un modelo se divide en un error sistemático debido a supuestos demasiado simples (sesgo) y en la sensibilidad a la muestra de entrenamiento concreta (varianza). Con error cuadrático, el error esperado es igual al sesgo al cuadrado más la varianza más el ruido irreducible.\n\nEl sesgo mide cuánto se aleja de la función real la predicción media, tomada sobre muchos conjuntos de entrenamiento posibles. La varianza mide cuánto cambian las predicciones de un conjunto de entrenamiento a otro. Los modelos sencillos, como la regresión lineal, tienden a tener sesgo alto y varianza baja; los modelos flexibles, como los árboles de decisión profundos, tienen sesgo bajo y varianza alta. La regularización, los ensambles y disponer de más datos desplazan este equilibrio: el bagging reduce sobre todo la varianza, mientras que el boosting reduce sobre todo el sesgo.\n\nLa visión clásica dice que el error de prueba tiene forma de U respecto a la complejidad del modelo. Las redes modernas sobreparametrizadas pueden mostrar un doble descenso (double descent), en el que el error vuelve a bajar más allá del punto en que se interpolan los datos de entrenamiento, por lo que el compromiso es una guía más que una ley estricta.",
+  "u": [
+   "Elegir la complejidad del modelo y la regularización",
+   "Explicar por qué ayudan el bagging y el boosting",
+   "Distinguir entre subajuste y sobreajuste"
+  ],
+  "x": "Un equipo que predice la carga energética comparó un modelo lineal con un árbol de decisión sin podar y descubrió que el primero no captaba los picos, mientras que el segundo cambiaba bruscamente al reentrenarlo con meses distintos. Pasar a un random forest mantuvo un sesgo bajo y eliminó con el promedio buena parte de la varianza, lo que dio predicciones más estables."
+ },
+ "curse": {
+  "n": "Maldición de la dimensionalidad",
+  "d": "La maldición de la dimensionalidad se refiere al conjunto de problemas que aparecen cuando los datos tienen muchas variables: el volumen del espacio crece exponencialmente, de modo que los datos se vuelven dispersos y muchas intuiciones de dos o tres dimensiones dejan de funcionar.\n\nPara cubrir un hipercubo unidad con una densidad fija, el número de muestras necesario crece exponencialmente con el número de dimensiones. Las distancias también se concentran: en alta dimensión, el vecino más cercano y el más lejano de un punto acaban casi a la misma distancia, lo que debilita los métodos basados en distancias, como k vecinos más cercanos, k-means y los métodos de kernel con kernels isótropos. La mayor parte del volumen de una bola de alta dimensión está cerca de su superficie, y los vectores aleatorios son casi ortogonales.\n\nEsto motiva la selección de variables, la reducción de dimensionalidad y los modelos con sesgos inductivos fuertes. La maldición es menos grave de lo que sugiere la teoría del peor caso cuando los datos reales se encuentran cerca de una variedad de baja dimensión, y por eso las redes profundas y los embeddings funcionan bien con imágenes y texto pese a su enorme dimensión nominal.",
+  "u": [
+   "Explicar por qué k-NN empeora con muchas variables",
+   "Justificar la selección de variables y PCA",
+   "Elegir métricas de distancia para la búsqueda de embeddings"
+  ],
+  "x": "Un equipo que construía un recomendador de vecinos más cercanos sobre variables one-hot de producto sin procesar descubrió que las puntuaciones de similitud apenas se diferenciaban entre artículos relevantes e irrelevantes. Proyectar los artículos en un espacio de embeddings aprendido de 128 dimensiones devolvió el sentido a las distancias e hizo viable la búsqueda aproximada de vecinos más cercanos."
+ },
+ "learncurve": {
+  "n": "Curva de aprendizaje",
+  "d": "Una curva de aprendizaje representa el rendimiento de entrenamiento y de validación de un modelo frente a la cantidad de datos de entrenamiento (o, en deep learning, frente a los pasos de entrenamiento). Muestra si el siguiente paso más prometedor es conseguir más datos, más capacidad o más regularización.\n\nPara construirla, se entrena el modelo con subconjuntos crecientes del conjunto de entrenamiento, a menudo con validación cruzada en cada tamaño, y se registran ambas puntuaciones. Si los errores de entrenamiento y de validación convergen en un valor alto, el modelo tiene un sesgo alto y más datos no ayudarán mucho; se necesita un modelo más rico o mejores variables. Si queda una brecha grande entre un error de entrenamiento bajo y un error de validación más alto que sigue reduciéndose a medida que crecen los datos, el modelo tiene una varianza alta y es probable que recoger más datos merezca la pena.\n\nLos puntos con pocas muestras son ruidosos, así que promediar entre folds es importante. La curva debe calcularse con datos de validación que se correspondan con los de producción; de lo contrario, solo describe el rendimiento sobre una distribución distinta.",
+  "u": [
+   "Decidir si merece la pena recoger más datos",
+   "Diagnosticar sesgo alto frente a varianza alta",
+   "Estimar el presupuesto de etiquetado para una nueva tarea"
+  ],
+  "x": "Un equipo de clasificación de documentos se planteaba pagar por 50.000 ejemplos etiquetados más. Su curva de aprendizaje mostró que la precisión de validación ya se había estabilizado y coincidía con la de entrenamiento, así que invirtieron en un codificador preentrenado más potente en lugar de en más etiquetado."
+ },
+ "drift": {
+  "n": "Deriva de datos y cambio de distribución",
+  "d": "El cambio de distribución significa que los datos que ve un modelo en producción difieren de aquellos con los que se entrenó, lo que puede degradar la precisión de forma silenciosa. La deriva de datos (data drift) suele referirse a cambios en la distribución de las entradas P(X); la deriva de concepto (concept drift) se refiere a cambios en la relación P(y | X), en la que las mismas entradas pasan a corresponder a resultados distintos.\n\nEl cambio tiene muchas fuentes: nuevos segmentos de usuarios, estacionalidad, cambios de producto, bugs en pipelines previos, recalibración de sensores o la retroalimentación del propio modelo. La monitorización compara las distribuciones de las variables en producción con una ventana de referencia mediante estadísticos como el índice de estabilidad poblacional (PSI), los tests de Kolmogórov-Smirnov o la divergencia de Jensen-Shannon, y sigue las distribuciones de las predicciones y, cuando llegan las etiquetas, el rendimiento real.\n\nLas respuestas incluyen reentrenar con datos recientes, el entrenamiento ponderado por tiempo y las reglas de respaldo. Una trampa clave es suponer que una deriva detectada en las entradas siempre perjudica la precisión, o que la ausencia de deriva en las entradas significa que el modelo está bien. La deriva de concepto puede darse sin ningún cambio visible en P(X), así que la monitorización basada en etiquetas sigue siendo esencial.",
+  "u": [
+   "Monitorizar las distribuciones de las variables en producción",
+   "Lanzar reentrenamientos programados o basados en alertas",
+   "Detectar roturas en pipelines de datos previos"
+  ],
+  "x": "Una empresa de pagos calcula a diario el PSI de cada variable del modelo frente a la ventana de entrenamiento y lanza una alerta cuando un valor supera un umbral acordado. Una de esas alertas permitió atribuir un cambio repentino en la variable del importe de la transacción a una modificación previa en la conversión de divisas, que se corrigió antes de que el recall de fraude cayera de forma apreciable."
+ },
+ "minmax": {
+  "n": "Normalización min-max",
+  "d": "La normalización min-max reescala linealmente cada variable a un rango fijo, normalmente [0, 1], restando el mínimo de la variable y dividiendo por su rango. La forma de la distribución no cambia; solo se desplazan su posición y su escala.\n\nEs útil cuando un modelo o un paso posterior espera entradas acotadas, por ejemplo intensidades de píxeles que alimentan una red neuronal, variables para métodos basados en distancias como k vecinos más cercanos, o entradas de algoritmos que suponen valores dentro de un intervalo conocido. El mínimo y el máximo deben aprenderse solo con los datos de entrenamiento y aplicarse después sin cambios a los datos de validación, de prueba y de producción.\n\nSu principal debilidad es la sensibilidad a los atípicos: un único valor extremo fija el rango y comprime todos los demás valores en una franja estrecha. Los datos nuevos fuera del rango de entrenamiento quedan fuera de [0, 1], algo que algunos sistemas no esperan. Los modelos basados en árboles son invariantes al reescalado monótono, así que no ganan nada con ella.",
+  "u": [
+   "Escalar los valores de los píxeles para redes neuronales",
+   "Igualar los rangos de las variables para k-NN y k-means",
+   "Acotar las entradas de modelos basados en sigmoides"
+  ],
+  "x": "Un equipo de visión por computador divide los valores de píxel de 8 bits entre 255, un escalado min-max fijo, antes de entrenar una red de detección de defectos con imágenes de fábrica. Como el rango lo fija el formato del sensor y no se aprende de los datos, el mismo preprocesamiento funciona sin cambios en todas las cámaras de producción."
+ },
+ "standard": {
+  "n": "Estandarización (puntuación z)",
+  "d": "La estandarización transforma cada variable para que tenga media cero y desviación típica unitaria, restando la media y dividiendo por la desviación típica. El resultado, llamado puntuación z (z-score), expresa cada valor como un número de desviaciones típicas respecto a la media.\n\nMuchos algoritmos son sensibles a la escala de las variables. El descenso de gradiente converge más rápido cuando las variables tienen escalas similares, los modelos lineales regularizados solo penalizan los coeficientes de forma equitativa cuando las variables son comparables, y PCA, las SVM, k-means y k vecinos más cercanos dependen de distancias o varianzas que una variable de gran escala dominaría. La estandarización es la opción habitual por defecto para estos métodos.\n\nLa media y la desviación típica deben calcularse solo con los datos de entrenamiento y reutilizarse para todos los datos posteriores. La estandarización no hace que una distribución sea normal; una variable asimétrica sigue siéndolo. También le afectan los atípicos, ya que influyen tanto en la media como en la desviación típica, por lo que el escalado robusto puede ser mejor para datos de colas pesadas. Los modelos basados en árboles no la necesitan.",
+  "u": [
+   "Preprocesamiento para modelos lineales y SVM",
+   "Preparar las variables antes de PCA",
+   "Acelerar la convergencia del descenso de gradiente"
+  ],
+  "x": "Un equipo de analítica de marketing ajusta una regresión logística regularizada con variables que van desde la edad hasta el gasto anual en miles de dólares. Estandarizar dentro de un pipeline de scikit-learn garantiza que la penalización L2 trate por igual a todas las variables y que el servicio de puntuación en producción guarde y aplique los mismos parámetros de escalado."
+ },
+ "robust": {
+  "n": "Escalado robusto",
+  "d": "El escalado robusto centra cada variable en su mediana y la divide por su rango intercuartílico (IQR), la distancia entre los percentiles 25 y 75. Como la mediana y el IQR ignoran las colas extremas, unos pocos atípicos no distorsionan el escalado del resto de los valores.\n\nCon la estandarización o el escalado min-max, un solo valor enorme puede inflar tanto la desviación típica o el rango que los valores típicos se comprimen en un intervalo diminuto. El escalado robusto mantiene la mayor parte de los datos en una escala razonable, mientras que los atípicos siguen siendo grandes tras la transformación, lo que resulta útil cuando contienen información. Es adecuado para variables con picos, como importes de transacciones o tiempos de respuesta, en modelos lineales, SVM o redes neuronales.\n\nEl escalado robusto no elimina ni recorta los atípicos; solo impide que fijen la escala. Si el propio modelo es sensible a entradas extremas, puede seguir siendo necesario recortarlas o aplicar una transformación logarítmica. Como con cualquier escalador, los estadísticos deben ajustarse solo con los datos de entrenamiento.",
+  "u": [
+   "Escalar importes de transacciones con valores enormes poco frecuentes",
+   "Preprocesar datos de sensores con picos",
+   "Modelos lineales con variables de colas pesadas"
+  ],
+  "x": "Un equipo de observabilidad entrena un detector de anomalías con métricas de latencia de servicios, en las que los picos poco frecuentes son miles de veces el valor típico. El escalado robusto mantiene bien repartidas las latencias normales para que el modelo pueda aprender su estructura, mientras que los picos siguen siendo claramente extremos tras el escalado."
+ },
+ "logtf": {
+  "n": "Transformación logarítmica",
+  "d": "Una transformación logarítmica sustituye un valor positivo x por log(x), o por log(1 + x) cuando hay ceros. Comprime mucho más los valores grandes que los pequeños y convierte datos asimétricos a la derecha y de naturaleza multiplicativa en una forma más simétrica y aditiva.\n\nLos ingresos, los precios, los recuentos y los tamaños de archivo abarcan a menudo varios órdenes de magnitud. En escala logarítmica, pasar de 10 a 100 cuenta lo mismo que pasar de 100 a 1.000, de modo que los cocientes se convierten en diferencias. Esto suele linealizar relaciones, estabilizar la varianza y domar los valores muy grandes. Aplicada a la variable objetivo de una regresión, convierte un modelo entrenado con error cuadrático en uno que se centra en el error relativo en lugar del absoluto.\n\nEl logaritmo no está definido para cero ni para valores negativos, por lo que se necesita log1p o un desplazamiento, y el desplazamiento es una elección arbitraria. Cuando un modelo se entrena con un objetivo logarítmico, aplicar la exponencial a sus predicciones estima la mediana y no la media, lo que sesga los totales a la baja si no se corrige.",
+  "u": [
+   "Modelar precios o ingresos con colas derechas pesadas",
+   "Estabilizar la varianza de variables de recuento",
+   "Predecir el logaritmo de las ventas para centrarse en el error relativo"
+  ],
+  "x": "Una plataforma inmobiliaria predice precios de venta con un modelo de gradient boosting entrenado sobre log(precio), de modo que un error del 10 % en un piso barato y en una casa de lujo se penalicen de forma similar. Las predicciones se devuelven a la escala original con exp, y el equipo comprueba el sesgo agregado en un conjunto de validación porque la transformación inversa tiende a subestimar los precios medios."
+ },
+ "boxcox": {
+  "n": "Transformación de Box-Cox",
+  "d": "La transformación de Box-Cox es una familia de transformaciones de potencia, indexada por un parámetro λ, que acerca a una distribución normal los datos estrictamente positivos. El valor de λ se elige por máxima verosimilitud para que los datos transformados se ajusten lo mejor posible a una distribución normal.\n\nCuando λ = 1 los datos solo se desplazan, λ = 0,5 se aproxima a una transformación de raíz cuadrada y λ = 0 se define como el logaritmo natural. Al buscar sobre λ, Box-Cox elige la intensidad de compresión que mejor reduce la asimetría y estabiliza la varianza, en lugar de suponer una transformación logarítmica. Se aplica a variables y objetivos en modelos lineales y en predicción de series temporales.\n\nBox-Cox requiere entradas estrictamente positivas; para datos con ceros o valores negativos, la alternativa habitual es la transformación de Yeo-Johnson. El λ ajustado debe proceder solo de los datos de entrenamiento. Igual que con la transformación logarítmica, invertir las predicciones hechas en la escala transformada no da una estimación insesgada de la media original.",
+  "u": [
+   "Normalizar variables asimétricas para modelos lineales",
+   "Estabilizar la varianza en la predicción de series temporales",
+   "Cumplir los supuestos de normalidad en pruebas estadísticas"
+  ],
+  "x": "Una compañía eléctrica que predice el consumo diario aplica Box-Cox a la serie antes de ajustar un modelo ETS, porque la oscilación estacional crece con el nivel general. El λ ajustado se guarda con el modelo, y las predicciones se transforman de vuelta antes de enviarlas a los planificadores."
+ },
+ "impute": {
+  "n": "Imputación de valores faltantes",
+  "d": "La imputación de valores faltantes rellena las entradas ausentes de un conjunto de datos para los modelos que no pueden manejarlas. El valor de sustitución puede ser un estadístico sencillo, un valor predicho a partir de otras variables o un valor por defecto propio del modelo.\n\nLas estrategias sencillas usan la media o la mediana para las columnas numéricas y el valor más frecuente o una categoría específica de «faltante» para las categóricas. Los métodos avanzados usan filas similares (k vecinos más cercanos) o regresan iterativamente cada variable sobre las demás (MICE). Añadir un indicador binario que marque qué valores faltaban suele ser valioso, porque el hecho de que falte un valor puede ser predictivo por sí mismo.\n\nEl método adecuado depende de por qué faltan los datos: completamente al azar, al azar dadas las demás variables, o no al azar, cuando la ausencia depende del propio valor no observado. Los estadísticos de imputación deben ajustarse solo con los datos de entrenamiento. La imputación por la media reduce la varianza y debilita las correlaciones, y las bibliotecas de gradient boosting como LightGBM y XGBoost manejan los valores faltantes de forma nativa, por lo que la imputación no siempre es necesaria.",
+  "u": [
+   "Rellenar resultados de laboratorio faltantes en datos clínicos",
+   "Gestionar campos opcionales de formularios en solicitudes",
+   "Preparar datos de sensores incompletos para modelos lineales"
+  ],
+  "x": "Un equipo de préstamos que puntúa solicitudes descubre que muchos solicitantes dejan vacío el campo de antigüedad laboral. Imputan la mediana dentro de un pipeline ajustado solo con datos de entrenamiento y añaden una variable indicadora de valor faltante, que resulta ser predictiva porque los solicitantes que omiten el campo incurren en impago con una tasa distinta."
+ },
+ "outlier": {
+  "n": "Tratamiento de valores atípicos",
+  "d": "El tratamiento de valores atípicos es el proceso de detectar puntos de datos alejados de la mayor parte de la distribución y decidir si conservarlos, corregirlos, recortarlos, transformarlos o eliminarlos. La decisión depende de si se trata de un error o de un evento raro pero genuino.\n\nEntre las reglas de detección están las puntuaciones z (por ejemplo, |z| > 3), la regla del IQR, que señala los valores situados a más de 1,5 × IQR fuera de los cuartiles, y métodos multivariantes como Isolation Forest, el factor de anomalía local o la distancia de Mahalanobis, que detectan puntos que parecen normales en cada variable por separado pero inusuales en combinación. Los errores de introducción de datos pueden corregirse o eliminarse, mientras que los extremos legítimos pueden recortarse, transformarse con logaritmos o tratarse con pérdidas robustas como la de Huber.\n\nLos atípicos importan sobre todo en modelos basados en el error cuadrático, en medias y en distancias, y menos en los árboles. Un error frecuente es eliminarlos automáticamente: en detección de fraude, monitorización de fallos o diagnóstico de enfermedades raras, los atípicos pueden ser justo los casos que el modelo necesita aprender.",
+  "u": [
+   "Limpiar errores de introducción de datos en conjuntos tabulares",
+   "Proteger la regresión lineal frente a puntos extremos",
+   "Señalar lecturas de sensores inusuales para revisarlas"
+  ],
+  "x": "Un equipo de analítica de comercio electrónico encontró pedidos con un valor de exactamente 9.999.999 causados por una cuenta de prueba y un valor de relleno por defecto en uno de los sistemas. Eliminaron esas filas por ser errores, pero conservaron los pedidos empresariales grandes y genuinos y limitaron su influencia con una pérdida de Huber en el modelo de predicción de ingresos."
+ },
+ "clipwin": {
+  "n": "Recorte y winsorización",
+  "d": "El recorte (clipping) y la winsorización limitan los valores extremos sustituyendo todo lo que supere un umbral elegido por el propio umbral. El recorte usa límites fijos, como 0 y 1.000; la winsorización fija los límites en percentiles de los datos, como el 1 y el 99, de modo que el corte se adapta a cada variable.\n\nA diferencia de eliminar los atípicos, ambos métodos conservan todas las filas y su orden entre los valores no extremos, a la vez que limitan cuánto puede arrastrar un solo punto una media, un coeficiente de regresión o un gradiente. Son habituales para variables de colas pesadas en modelos lineales y redes neuronales, para estadísticos descriptivos robustos y para ratios financieros en los que unas pocas empresas tienen valores enormes.\n\nLos umbrales por percentiles deben calcularse con los datos de entrenamiento y reutilizarse sin cambios. Poner un tope borra la información sobre lo extremo que era un valor, lo que resulta perjudicial si los extremos son precisamente la señal de interés, como en el fraude. Los modelos de árboles apenas se ven afectados por las colas monótonas, por lo que este paso suele ser innecesario para ellos.",
+  "u": [
+   "Limitar variables de colas pesadas para la regresión lineal",
+   "Medias robustas de ratios financieros",
+   "Estabilizar entradas de redes neuronales con picos poco frecuentes"
+  ],
+  "x": "Un equipo de investigación cuantitativa winsoriza los ratios de valoración de empresas en los percentiles 1 y 99 dentro de cada mes antes de ajustar regresiones de sección cruzada. Así evita que unas pocas empresas con beneficios casi nulos y ratios enormes dominen las estimaciones de los coeficientes."
+ },
+ "onehot": {
+  "n": "Codificación one-hot",
+  "d": "La codificación one-hot convierte una variable categórica con k categorías en k columnas binarias, de las que exactamente una vale 1 en cada fila. Permite que los modelos que requieren entradas numéricas usen categorías sin implicar ningún orden ni distancia entre ellas.\n\nAsignar enteros como rojo = 1, verde = 2, azul = 3 indicaría a un modelo lineal o a una red neuronal que el azul es tres veces el rojo y que el verde está entre ambos. Los vectores one-hot evitan esto y dan a cada categoría su propio coeficiente. En los modelos lineales con intercepto, a menudo se elimina una columna para evitar la multicolinealidad perfecta, la llamada trampa de las variables ficticias (dummy variable trap). Los codificadores deben ajustarse con los datos de entrenamiento y gestionar las categorías no vistas.\n\nSu principal limitación es la dimensionalidad: una columna con decenas de miles de valores, como un ID de usuario o un código postal, genera una matriz dispersa enorme y muy pocos ejemplos por columna. Las alternativas para alta cardinalidad incluyen el target encoding, la codificación por frecuencia, el hashing o los embeddings aprendidos.",
+  "u": [
+   "Codificar categorías de baja cardinalidad para modelos lineales",
+   "Representar el tipo de producto o el día de la semana",
+   "Preparar variables nominales para redes neuronales"
+  ],
+  "x": "El equipo de precios de una aerolínea codifica como variables one-hot la clase de cabina, el canal de reserva y el día de la semana de salida en una regresión logística que predice las no presentaciones. El codificador se ejecuta dentro del pipeline desplegado ignorando las categorías desconocidas, de modo que un canal de reserva recién lanzado no rompe la puntuación."
+ },
+ "targetenc": {
+  "n": "Target encoding (codificación por objetivo)",
+  "d": "El target encoding sustituye cada categoría por un estadístico de la variable objetivo calculado sobre las filas de esa categoría, normalmente la media de la etiqueta, de modo que una variable de alta cardinalidad se convierte en una única columna numérica informativa.\n\nCon un objetivo binario, una ciudad pasa a ser la fracción de resultados positivos en esa ciudad. Las categorías poco frecuentes dan medias ruidosas, por lo que la estimación se suaviza hacia la media global con un peso que crece con el número de ejemplos de la categoría. Esto mantiene baja la dimensionalidad incluso para variables como el ID de comercio o el código postal, y sirve tanto para modelos lineales como de árboles.\n\nEl gran riesgo es la fuga del objetivo: si la propia etiqueta de una fila contribuye a su codificación, el modelo ve una versión distorsionada de la respuesta y sobreajusta. El enfoque seguro es la codificación fuera de fold (out-of-fold), en la que cada fila de entrenamiento se codifica solo con estadísticos de otros folds; después se ajusta el codificador con todos los datos de entrenamiento para transformar los de prueba. TargetEncoder de scikit-learn aplica automáticamente este ajuste cruzado en fit_transform.",
+  "u": [
+   "Codificar el comercio o el código postal en modelos de fraude",
+   "Comprimir IDs de alta cardinalidad para modelos lineales",
+   "Predicción de clics con muchas categorías de anunciantes"
+  ],
+  "x": "Un marketplace en línea predice si un anuncio se venderá en una semana usando el ID del vendedor, que tiene cientos de miles de valores. El target encoding suavizado fuera de fold convierte el ID en una columna que refleja la tasa histórica de venta de cada vendedor, y un suavizado fuerte mantiene a los vendedores nuevos cerca de la media global."
+ },
+ "freqenc": {
+  "n": "Codificación por frecuencia",
+  "d": "La codificación por frecuencia sustituye cada categoría por la frecuencia con que aparece en los datos de entrenamiento, ya sea como recuento bruto o como proporción. Convierte una columna categórica de cualquier cardinalidad en una variable numérica sin usar la variable objetivo.\n\nLa intuición es que la popularidad suele ser informativa por sí misma: los comercios frecuentes, los modelos de dispositivo habituales o los productos populares pueden comportarse de forma distinta a los poco comunes. Como ignora las etiquetas, no conlleva riesgo de fuga del objetivo, es barata y maneja cardinalidades muy altas. Combina bien con los modelos de árboles, que pueden dividir según umbrales de recuento, y a menudo se usa junto con otras codificaciones.\n\nSu principal limitación es que las categorías con la misma frecuencia se vuelven indistinguibles, aunque se comporten de forma muy diferente. Los recuentos deben proceder de los datos de entrenamiento y almacenarse; las categorías no vistas en producción suelen recibir un recuento de cero o un pequeño valor por defecto. Si el volumen de datos cambia con el tiempo, los recuentos brutos derivan, por lo que las frecuencias normalizadas suelen ser más seguras.",
+  "u": [
+   "Codificar el modelo de dispositivo o el navegador en registros de clics",
+   "Captar la popularidad de comercios o productos",
+   "Codificación barata y sin fugas para gradient boosting"
+  ],
+  "x": "Un equipo de tecnología publicitaria añade el dominio del editor y el ID de la app codificados por frecuencia a un modelo de LightGBM de predicción de clics. Los recuentos se calculan sobre una ventana de entrenamiento fija y se guardan como tabla de consulta en el servicio de variables, y los dominios no vistos se asignan a cero para que los editores nuevos se traten como poco frecuentes."
+ },
+ "binning": {
+  "n": "Discretización (binning)",
+  "d": "La discretización convierte una variable continua en categórica dividiendo su rango en intervalos y asignando cada valor al intervalo en el que cae. Los esquemas habituales son intervalos de igual anchura, intervalos de igual frecuencia (por cuantiles) e intervalos elegidos por conocimiento del dominio o mediante un árbol de decisión.\n\nLa discretización permite que un modelo lineal capte efectos no lineales, porque cada intervalo recibe su propio coeficiente, y limita la influencia de los atípicos, que simplemente caen en los intervalos extremos. Las variables discretizadas son fáciles de explicar, y por eso las tarjetas de puntuación de crédito (scorecards) asignan puntos por intervalo. La discretización por cuantiles es robusta a la asimetría, mientras que la de igual anchura puede dejar algunos intervalos casi vacíos.\n\nEl coste es la pérdida de información: los valores cercanos a una frontera se tratan como distintos, mientras que los valores de extremos opuestos de un mismo intervalo se tratan como idénticos. El número y la posición de los intervalos son hiperparámetros adicionales que pueden sobreajustarse. Los modelos flexibles, como los árboles con gradient boosting, aprenden sus propios puntos de corte, por lo que la discretización rara vez les ayuda.",
+  "u": [
+   "Construir scorecards de crédito basadas en puntos",
+   "Permitir que los modelos lineales capten efectos no lineales",
+   "Agrupar edades o ingresos en categorías para informes"
+  ],
+  "x": "El equipo de riesgo de crédito de un banco discretiza la edad, los ingresos y la utilización del crédito de los solicitantes en grupos basados en cuantiles y ajusta una scorecard de regresión logística. Los reguladores y los gestores de préstamos pueden leer directamente los puntos asignados a cada intervalo, algo que un modelo de caja negra no permitiría."
+ },
+ "featureeng": {
+  "n": "Ingeniería de variables (feature engineering)",
+  "d": "La ingeniería de variables consiste en crear nuevas variables de entrada a partir de los datos brutos para que un modelo aprenda con más facilidad el patrón relevante. Codifica un conocimiento del dominio que, de otro modo, el modelo necesitaría muchos más datos, o una forma mucho más flexible, para descubrir.\n\nLas técnicas típicas incluyen ratios (deuda dividida por ingresos), interacciones, partes de la fecha como la hora del día, agregados sobre el historial de un cliente (pedidos en los últimos 30 días), distancias entre ubicaciones y transformaciones logarítmicas. En datos tabulares, unas variables bien diseñadas suelen importar más que la elección entre algoritmos potentes, y además hacen que los modelos sean más fáciles de explicar.\n\nCada variable debe poder calcularse en el momento de la predicción usando solo la información disponible entonces; los agregados que miran al futuro son una fuente clásica de fuga. El mismo código debe generar las variables para el entrenamiento y para el servicio, a menudo mediante un feature store, para evitar el desajuste entre entrenamiento y servicio (training-serving skew). El deep learning reduce la ingeniería manual de variables para imágenes y texto, pero no para la mayoría de los problemas tabulares.",
+  "u": [
+   "Agregados del historial del cliente para predecir el abandono",
+   "Variables de ratio e interacción para scoring crediticio",
+   "Variables de tiempo y ubicación para estimar entregas"
+  ],
+  "x": "Una empresa de reparto de comida mejoró su modelo de tiempo de entrega añadiendo variables como el tiempo de preparación del restaurante en la última hora, la distancia del repartidor al restaurante y la acumulación actual de pedidos. Estas variables se calculan en un feature store compartido, de modo que el pipeline de entrenamiento y el servicio de predicción en tiempo real usan exactamente las mismas definiciones."
+ },
+ "lagfeat": {
+  "n": "Variables de retardo (lags)",
+  "d": "Las variables de retardo son valores pasados de una serie temporal que se usan como entradas para predecir su valor actual o futuro. Una variable de retardo k en el instante t es simplemente el valor observado en el instante t − k, de modo que el modelo puede aprender la autocorrelación y la estacionalidad a partir del historial.\n\nConvierten la predicción en aprendizaje supervisado corriente. Los retardos útiles reflejan el ritmo de los datos: retardo 1 para la inercia, retardo 7 para los ciclos semanales en datos diarios, retardo 24 o 168 para datos horarios y retardo 52 para datos semanales con estacionalidad anual. También son habituales los retardos de series relacionadas, como el precio.\n\nEl horizonte de predicción limita qué retardos son legítimos. Si las predicciones se hacen con siete días de antelación, ningún retardo inferior a siete días está disponible en el momento de la predicción, y usarlo filtra información del futuro e infla las puntuaciones de validación. Los retardos también generan valores faltantes al inicio de cada serie, y las divisiones deben respetar el orden temporal.",
+  "u": [
+   "Predicción de ventas diarias con árboles de gradient boosting",
+   "Predicción horaria de la carga eléctrica",
+   "Predecir la demanda del día siguiente por tienda y artículo"
+  ],
+  "x": "Una cadena de supermercados predice la demanda por artículo y tienda con 14 días de antelación mediante LightGBM, usando retardos de 14, 21, 28 y 364 días calculados para cada par tienda-artículo. Los retardos más cortos se excluyeron deliberadamente porque no existirían en el momento de lanzar el pedido de reposición."
+ },
+ "rollfeat": {
+  "n": "Variables de ventana móvil",
+  "d": "Las variables de ventana móvil resumen una serie temporal sobre una ventana deslizante de observaciones recientes, por ejemplo la media, la desviación típica, el mínimo, el máximo o la suma de los últimos siete días. Captan el nivel local, la tendencia y la volatilidad de una serie de forma más suave que los valores de retardo individuales.\n\nUna media móvil reduce el ruido y muestra el nivel reciente; una desviación típica móvil mide la volatilidad reciente; los recuentos o sumas móviles captan la actividad, como las transacciones de la última hora. Las medias ponderadas exponencialmente dan más peso a los puntos recientes sin un corte brusco. Lo habitual es combinar varias longitudes de ventana por entidad, como 7, 28 y 90 días.\n\nLa ventana debe terminar en la última información disponible en el momento de la predicción, o antes. Una media móvil que incluya el valor objetivo actual, o cualquier valor dentro del horizonte de predicción, filtra la respuesta. El patrón seguro estándar consiste en desplazar primero la serie según el horizonte y calcular después el estadístico móvil.",
+  "u": [
+   "Variables de velocidad de transacciones para detectar fraude",
+   "Demanda media reciente para predecir ventas",
+   "Variables de volatilidad para modelos de riesgo financiero"
+  ],
+  "x": "Un emisor de tarjetas calcula para cada tarjeta el número y el importe total de transacciones en la última hora, las últimas 24 horas y los últimos 7 días, y compara el importe actual con la media móvil de 30 días. Estas variables de velocidad se mantienen en un sistema de streaming para que estén actualizadas en cuestión de segundos para la puntuación de fraude en tiempo real."
+ },
+ "imbalance": {
+  "n": "Desbalance de clases",
+  "d": "El desbalance de clases se da cuando una clase es mucho menos frecuente que las demás, como el fraude, los defectos o una enfermedad, de modo que un modelo puede alcanzar una exactitud alta prediciendo siempre la clase mayoritaria y, aun así, ser inútil para los casos que importan.\n\nDurante el entrenamiento, la pérdida está dominada por los ejemplos mayoritarios y el modelo puede predecir rara vez la clase minoritaria. En la evaluación, la exactitud se vuelve engañosa; la precisión, el recall, el F1, el PR-AUC y las métricas basadas en costes son más informativas. El PR-AUC es especialmente útil porque su línea base aleatoria es igual a la tasa de positivos, lo que hace visibles las pequeñas mejoras. Los remedios habituales son los pesos de clase, el remuestreo (sobremuestreo, SMOTE, submuestreo), la elección del umbral según los costes y la recogida de más ejemplos minoritarios.\n\nEl desbalance por sí solo no siempre es el problema. Un modelo probabilístico bien especificado entrenado con datos desbalanceados puede seguir produciendo buenas ordenaciones y probabilidades calibradas; a menudo solo hay que cambiar el umbral. El remuestreo altera las probabilidades predichas, así que deben recalibrarse si las salidas se usan como probabilidades reales.",
+  "u": [
+   "Detección de fraude con transacciones positivas poco frecuentes",
+   "Detección de defectos de fabricación a partir de datos de sensores",
+   "Cribado de enfermedades raras a partir de historiales de pacientes"
+  ],
+  "x": "Un equipo de calidad de fabricación predice las piezas defectuosas, que suponen una fracción de un uno por ciento de la producción. Entrenan con pesos de clase, evalúan con PR-AUC y con el recall para un presupuesto de inspección fijo, y eligen un umbral para que el número de piezas señaladas coincida con lo que los inspectores pueden revisar en cada turno."
+ },
+ "smote": {
+  "n": "Sobremuestreo con SMOTE",
+  "d": "SMOTE (Synthetic Minority Over-sampling Technique) equilibra un conjunto de datos creando nuevos ejemplos sintéticos de la clase minoritaria en lugar de duplicar los existentes. Cada punto sintético se sitúa en una posición aleatoria del segmento que une un ejemplo minoritario con uno de sus k vecinos minoritarios más cercanos.\n\nA diferencia del sobremuestreo aleatorio, que copia filas y anima al modelo a memorizarlas, SMOTE rellena la región que rodea a los ejemplos minoritarios y da a los clasificadores una región de decisión más amplia para la clase rara. Entre sus variantes están Borderline-SMOTE, ADASYN y SMOTE-NC para variables mixtas numéricas y categóricas.\n\nSMOTE debe aplicarse solo al fold de entrenamiento, dentro del bucle de validación cruzada; remuestrear antes de dividir filtra copias sintéticas de los puntos de validación al entrenamiento. La interpolación supone que el espacio entre puntos minoritarios también es territorio minoritario, lo que puede fallar con clases solapadas, etiquetas ruidosas o variables categóricas. En la práctica, los pesos de clase o el ajuste del umbral con gradient boosting suelen funcionar igual de bien, y SMOTE distorsiona las probabilidades predichas.",
+  "u": [
+   "Equilibrar casos de fraude poco frecuentes para clasificadores clásicos",
+   "Aumentar las clases minoritarias en conjuntos tabulares pequeños",
+   "Predicción de averías poco frecuentes a partir de sensores de equipos"
+  ],
+  "x": "Un equipo de telecomunicaciones que predice averías poco frecuentes de equipos de red aplica SMOTE dentro de un pipeline de imbalanced-learn, de modo que cada fold de validación cruzada se remuestrea de forma independiente. Lo comparan con la ponderación por clases y se quedan con la opción que da mejor PR-AUC en un periodo de prueba temporal que no se ha tocado."
+ },
+ "undersample": {
+  "n": "Submuestreo (undersampling)",
+  "d": "El submuestreo equilibra un conjunto de datos desbalanceado eliminando ejemplos de la clase mayoritaria en lugar de añadir ejemplos minoritarios. La forma más sencilla conserva todas las filas minoritarias y un subconjunto aleatorio de las mayoritarias.\n\nReduce el tiempo de entrenamiento y la memoria, lo que importa en registros de clics con cientos de millones de filas, y hace que la clase minoritaria pese más en la pérdida. Variantes informadas como los enlaces de Tomek (Tomek links) y los vecinos más cercanos editados (edited nearest neighbors) eliminan puntos mayoritarios cercanos a la frontera o probablemente mal etiquetados. Ensambles como los random forests balanceados o EasyEnsemble entrenan muchos modelos sobre distintos subconjuntos submuestreados, de modo que en conjunto se pierde poca información.\n\nEl coste evidente es descartar datos, lo que puede aumentar la varianza y empeorar la visión que el modelo tiene de la clase mayoritaria. El submuestreo también desplaza al alza las probabilidades predichas; si las puntuaciones del modelo se usan como probabilidades, deben corregirse según la tasa de muestreo. Solo debe aplicarse a los datos de entrenamiento, nunca a los conjuntos de validación o de prueba.",
+  "u": [
+   "Reducir registros de clics masivos para modelos de CTR",
+   "Acelerar el entrenamiento con datos muy desbalanceados",
+   "Ensambles de bagging balanceados para eventos poco frecuentes"
+  ],
+  "x": "Una plataforma publicitaria conserva todos los clics pero solo una pequeña fracción aleatoria de las impresiones sin clic al entrenar su modelo de tasa de clics, lo que reduce considerablemente el coste de entrenamiento. Como las pujas dependen de probabilidades calibradas, las predicciones se corrigen según la tasa de muestreo de negativos antes de usarlas."
+ },
+ "classweight": {
+  "n": "Pesos de clase",
+  "d": "Los pesos de clase escalan la contribución de cada ejemplo a la pérdida de entrenamiento según su clase, de modo que los errores en las clases poco frecuentes cuesten más que los errores en las comunes.\n\nUna elección habitual, llamada ponderación balanceada, fija el peso de cada clase de forma inversamente proporcional a su frecuencia, para que todas las clases contribuyan por igual a la pérdida total. Los pesos también pueden reflejar costes de negocio, por ejemplo haciendo que un caso de fraude no detectado cueste diez veces más que una falsa alarma. La mayoría de las bibliotecas lo admiten directamente: class_weight en scikit-learn, scale_pos_weight en XGBoost y LightGBM, y argumentos de peso en las pérdidas de PyTorch.\n\nFrente al remuestreo, los pesos de clase usan todos los datos y no añaden puntos sintéticos, lo que los convierte en una primera opción limpia. Desplazan la frontera de decisión e inflan las probabilidades predichas para la clase minoritaria, de modo que las salidas dejan de estar calibradas y pueden necesitar recalibración. Los pesos extremos pueden hacer inestable el entrenamiento, sobre todo con gradientes estocásticos y muy pocos ejemplos minoritarios por lote.",
+  "u": [
+   "Clasificación desbalanceada con regresión logística o SVM",
+   "Modelos de fraude y abandono sensibles al coste",
+   "Entropía cruzada ponderada para clases poco frecuentes en deep learning"
+  ],
+  "x": "Un equipo de atención al cliente clasifica los tickets en muchas categorías, algunas de las cuales, como los incidentes de seguridad, son poco frecuentes pero urgentes. Entrenan un clasificador de texto con entropía cruzada ponderada que aumenta el coste de no detectar esas categorías, y monitorizan el recall por clase en lugar de la exactitud global."
+ },
+ "featsel": {
+  "n": "Selección de variables",
+  "d": "La selección de variables elige un subconjunto de las variables de entrada disponibles, con el objetivo de obtener un modelo más sencillo, más rápido y a menudo más robusto, con una precisión similar o mejor.\n\nLos métodos se dividen en tres grupos. Los métodos de filtro puntúan cada variable con independencia del modelo, usando la correlación, la información mutua o pruebas estadísticas; son rápidos, pero no ven las interacciones. Los métodos envolventes (wrapper), como la eliminación recursiva de variables o la selección hacia delante, entrenan repetidamente un modelo sobre subconjuntos candidatos, lo que capta las interacciones pero es costoso. Los métodos integrados (embedded) seleccionan durante el entrenamiento, ya que la regularización L1 lleva algunos coeficientes exactamente a cero y los modelos de árboles proporcionan puntuaciones de importancia.\n\nLa selección reduce el sobreajuste causado por variables ruidosas, abarata la recogida de datos y mejora la interpretabilidad. Debe hacerse dentro del bucle de validación cruzada; elegir las variables con todo el conjunto de datos y después hacer validación cruzada da puntuaciones optimistas. La selección basada en importancias es inestable cuando hay variables correlacionadas, porque el modelo puede usar cualquiera de dos variables redundantes, y las importancias basadas en impureza de los árboles están sesgadas hacia las variables de alta cardinalidad.",
+  "u": [
+   "Eliminar variables ruidosas de datos tabulares anchos",
+   "Reducir el coste de recoger variables en producción",
+   "Simplificar modelos por interpretabilidad o requisitos regulatorios"
+  ],
+  "x": "Un equipo de crédito partió de varios cientos de variables candidatas procedentes de burós de crédito y de los datos de la solicitud. Con una regresión logística regularizada con L1 y la importancia por permutación dentro de la validación cruzada, se quedaron con unas pocas decenas de variables, lo que redujo la dependencia de proveedores de datos costosos sin bajar el AUC de validación."
+ },
+ "vif": {
+  "n": "Multicolinealidad y VIF",
+  "d": "La multicolinealidad se produce cuando dos o más variables están fuertemente relacionadas de forma lineal, lo que hace que los coeficientes individuales de un modelo lineal sean inestables y difíciles de interpretar. El factor de inflación de la varianza (VIF) mide cuánto se infla la varianza de un coeficiente por esta redundancia.\n\nPara calcular el VIF de la variable j, se hace una regresión de esa variable sobre todas las demás y se toma el R²ⱼ de esa regresión; VIF = 1 / (1 − R²ⱼ). Un VIF de 1 indica que no hay relación lineal; los valores por encima de aproximadamente 5 a 10 suelen considerarse problemáticos. Con un VIF alto, pequeños cambios en los datos pueden invertir el signo de los coeficientes, y los errores estándar y los p-valores dejan de ser fiables.\n\nEntre los remedios están eliminar o fusionar variables redundantes, usar ratios motivados por el dominio, aplicar PCA o usar la regresión ridge, que estabiliza los coeficientes correlacionados. La multicolinealidad perjudica sobre todo a la interpretación y a la inferencia; normalmente no empeora la precisión predictiva mientras la estructura de correlación se mantenga igual en producción. Calcula el VIF incluyendo un intercepto.",
+  "u": [
+   "Revisar los regresores antes de interpretar los coeficientes",
+   "Depurar variables para modelos econométricos o de precios",
+   "Diagnosticar signos de coeficientes inestables"
+  ],
+  "x": "Un equipo de analítica de precios que construía una regresión explicativa para primas de seguros descubrió que el peso del vehículo, la cilindrada y la potencia tenían VIF muy por encima de 10, y que sus coeficientes cambiaban de signo entre trimestres. Se quedaron con la potencia y una relación peso-potencia, lo que hizo que los efectos del modelo fueran lo bastante estables como para presentarlos a los actuarios."
+ },
+ "dimred": {
+  "n": "Reducción de dimensionalidad",
+  "d": "La reducción de dimensionalidad proyecta datos con muchas variables en un número menor de dimensiones conservando la estructura que importa, como la varianza, los vecindarios o la separación entre clases.\n\nEntre los métodos lineales están el análisis de componentes principales (PCA), que encuentra direcciones ortogonales de máxima varianza, y la SVD truncada, que trabaja con matrices dispersas como las de texto. Los métodos no lineales, como t-SNE y UMAP, preservan los vecindarios locales y se usan sobre todo para visualización, mientras que los autoencoders aprenden representaciones comprimidas con redes neuronales. Las variantes supervisadas, como el análisis discriminante lineal, usan las etiquetas para conservar las direcciones que separan las clases.\n\nAyuda a combatir la maldición de la dimensionalidad, elimina la redundancia entre variables correlacionadas, acelera el entrenamiento y reduce el almacenamiento, y permite ver los datos en dos o tres dimensiones. Las variables reducidas son más difíciles de interpretar, y la reducción no supervisada puede descartar direcciones de baja varianza que son muy predictivas. Los gráficos de t-SNE y UMAP distorsionan las distancias globales y el tamaño de los clústeres, por lo que no deben leerse como mapas fieles de los datos.",
+  "u": [
+   "Visualizar embeddings o tipos celulares en 2D",
+   "Comprimir variables de sensores correlacionadas",
+   "Acelerar la búsqueda de vecinos más cercanos"
+  ],
+  "x": "Un grupo de genómica de célula única reduce los perfiles de expresión de miles de genes a 50 componentes principales y después ejecuta UMAP sobre esas componentes para visualizar y agrupar. El paso de PCA elimina ruido y hace que el cálculo del grafo de vecinos sea lo bastante rápido para conjuntos de datos con millones de células."
+ },
+ "l1": {
+  "n": "Regularización L1 (lasso)",
+  "d": "La regularización L1 añade a la pérdida la suma de los valores absolutos de los pesos del modelo, lo que lleva muchos pesos exactamente a cero y, por tanto, realiza una selección automática de variables. En regresión lineal se denomina lasso.\n\nLa penalización por valor absoluto tiene un vértice en cero: allí su subgradiente es todo el intervalo [−λ, λ], de modo que un peso permanece exactamente en cero salvo que su variable reduzca la pérdida en más de λ. Geométricamente, la región de restricción en forma de rombo toca los contornos de la pérdida en sus vértices, donde algunas coordenadas son cero. El lasso se resuelve con descenso por coordenadas o métodos proximales, ya que la penalización no es diferenciable en cero.\n\nL1 es útil cuando se espera que muchas variables sean irrelevantes o cuando se necesita un modelo compacto. Con variables muy correlacionadas, el lasso tiende a elegir una de forma algo arbitraria y descartar las demás, y la selección puede cambiar entre muestras de datos. Las variables deben estandarizarse antes, ya que la penalización depende de la escala de los coeficientes.",
+  "u": [
+   "Modelos lineales dispersos con muchas variables candidatas",
+   "Seleccionar genes o biomarcadores en datos anchos",
+   "Modelos de puntuación compactos e interpretables"
+  ],
+  "x": "Un equipo de analítica de marketing ajusta un modelo lasso con cientos de variables de campaña, canal y estacionalidad para explicar las altas semanales. La penalización elegida por validación cruzada deja un pequeño conjunto de coeficientes distintos de cero que los analistas pueden revisar, y el equipo comprueba la estabilidad de la selección en muestras bootstrap antes de fiarse de variables concretas."
+ },
+ "l2": {
+  "n": "Regularización L2 (ridge)",
+  "d": "La regularización L2 añade a la pérdida la suma de los pesos al cuadrado, lo que contrae suavemente todos los pesos hacia cero y reduce la varianza. En regresión lineal se denomina regresión ridge.\n\nEl gradiente de la penalización cuadrática es proporcional al propio peso, de modo que los pesos grandes se contraen con fuerza y los pequeños solo ligeramente; los pesos rara vez llegan exactamente a cero. Ridge tiene una solución cerrada, w = (XᵀX + λI)⁻¹Xᵀy, y añadir λI hace que la matriz sea invertible incluso cuando las variables son colineales o superan en número a las muestras. Con variables correlacionadas, L2 reparte el peso entre ellas y contrae los coeficientes correlacionados hacia valores iguales en lugar de elegir uno. Desde un punto de vista bayesiano, corresponde a una distribución a priori gaussiana sobre los pesos.\n\nL2 es el regularizador por defecto para modelos lineales y redes neuronales cuando se espera que la mayoría de las variables aporten un poco. No produce modelos dispersos, así que no sirve para seleccionar variables. Las variables deben estandarizarse antes, y normalmente el intercepto no se penaliza.",
+  "u": [
+   "Estabilizar regresiones con predictores correlacionados",
+   "Regularizar la regresión logística con muchas variables",
+   "Evitar pesos grandes en redes neuronales"
+  ],
+  "x": "Una mesa de trading de energía predice los precios del día siguiente a partir de decenas de previsiones meteorológicas y de carga fuertemente correlacionadas. La regresión ridge conserva todas las entradas pero estabiliza sus coeficientes, de modo que el reentrenamiento diario no provoca grandes vaivenes en el comportamiento del modelo."
+ },
+ "elasticnet": {
+  "n": "Elastic net",
+  "d": "La regularización elastic net combina las penalizaciones L1 (lasso) y L2 (ridge): da modelos dispersos como el lasso y, a la vez, maneja con más acierto los grupos de variables correlacionadas.\n\nLa controlan dos hiperparámetros: una intensidad global α y una proporción de mezcla entre L1 y L2 (l1_ratio en scikit-learn). Con l1_ratio = 1 es el lasso, y con l1_ratio = 0 es ridge. La parte L1 lleva exactamente a cero los pesos irrelevantes; la parte L2 hace que el problema sea estrictamente convexo y favorece que las variables correlacionadas entren o salgan del modelo juntas, frente a la tendencia del lasso a elegir una de forma arbitraria. También se comporta bien cuando las variables superan en número a las muestras, caso en el que el lasso selecciona como máximo n variables.\n\nEs una opción por defecto sólida para datos anchos y correlacionados, como los de genómica, los n-gramas de texto o las variables de marketing. Ambos hiperparámetros deben ajustarse por validación cruzada, y las variables deben estandarizarse. La penalización combinada introduce sesgo en los coeficientes distintos de cero, por lo que a veces se reajusta el modelo con las variables seleccionadas para interpretarlo.",
+  "u": [
+   "Modelos de expresión génica con genes correlacionados",
+   "Regresión sobre texto con muchos n-gramas correlacionados",
+   "Datos anchos de marketing mix o de encuestas"
+  ],
+  "x": "Un equipo de biotecnología predice la respuesta a un fármaco a partir de miles de mediciones de expresión génica en unos pocos cientos de pacientes. Elastic net mantiene juntos los grupos de genes coexpresados en lugar de elegir uno por grupo, lo que hace que las firmas seleccionadas sean más consistentes entre remuestreos y más fáciles de discutir con los biólogos."
+ },
+ "weightdecay": {
+  "n": "Weight decay (decaimiento de pesos)",
+  "d": "El weight decay reduce los pesos de una red neuronal en una pequeña fracción en cada paso de optimización, lo que los mantiene pequeños y actúa como regularizador. La actualización multiplica cada peso por (1 − ηλ) antes del paso de gradiente o junto con él.\n\nCon el descenso de gradiente estocástico simple, el weight decay es matemáticamente equivalente a añadir una penalización L2 (λ/2)‖w‖² a la pérdida. Con optimizadores adaptativos como Adam, ambos no son equivalentes: un término L2 añadido a la pérdida se divide por el escalado por parámetro de Adam, de modo que los pesos con un historial de gradientes grande apenas se regularizan. AdamW lo corrige aplicando el decaimiento directamente a los pesos, por separado del paso de gradiente adaptativo, y es el optimizador estándar para entrenar Transformers.\n\nLos valores típicos rondan entre 0,01 y 0,1 con AdamW. Los sesgos y los parámetros de normalización (escalas y desplazamientos de LayerNorm y BatchNorm) suelen excluirse del decaimiento. Como en las implementaciones habituales el decaimiento se multiplica por la tasa de aprendizaje, cambiar la programación también cambia la regularización efectiva.",
+  "u": [
+   "Regularizar el preentrenamiento de Transformers con AdamW",
+   "Mejorar la generalización de clasificadores de imágenes",
+   "Fine-tuning de modelos preentrenados sin alejarse demasiado"
+  ],
+  "x": "Un equipo que hace fine-tuning de un modelo de lenguaje para clasificar consultas de atención al cliente usa AdamW con weight decay de 0,01 y excluye del decaimiento los sesgos y los pesos de LayerNorm, siguiendo la práctica habitual con Transformers. Ajustan el decaimiento junto con la tasa de aprendizaje, ya que ambos controlan cuánto se alejan los pesos de los valores preentrenados."
+ },
+ "dropout": {
+  "n": "Dropout",
+  "d": "El dropout es una técnica de regularización que, en cada paso de entrenamiento, pone a cero aleatoriamente una fracción de las activaciones de una capa, lo que impide que las neuronas dependan demasiado de otras neuronas concretas.\n\nCon una probabilidad de descarte p, cada unidad se conserva con probabilidad 1 − p. Los frameworks modernos usan el dropout invertido: durante el entrenamiento, las activaciones conservadas se escalan por 1/(1 − p), de modo que la activación esperada no cambia y no hace falta reescalar en inferencia, cuando el dropout se desactiva. El dropout puede verse como el entrenamiento de un ensamble de subredes que comparten pesos, cuyo promedio aproxima la red completa en el momento de la prueba.\n\nLas tasas típicas son 0,1 en los Transformers y de 0,2 a 0,5 en las capas totalmente conectadas. Olvidar poner el modelo en modo de evaluación, de modo que el dropout siga activo en inferencia, es un bug frecuente que vuelve ruidosas las predicciones. El dropout también ralentiza la convergencia. Muchos grandes modelos de lenguaje entrenados con conjuntos de datos enormes usan poco o ningún dropout, porque el sobreajuste no es su principal problema.",
+  "u": [
+   "Regularizar capas totalmente conectadas en tareas con pocos datos",
+   "Dropout de atención y residual en Transformers",
+   "Dropout de Monte Carlo para estimar la incertidumbre"
+  ],
+  "x": "Un equipo que entrena una red neuronal tabular para riesgo de seguros con un conjunto de datos modesto añade un dropout de 0,3 tras cada capa oculta, lo que reduce la brecha entre la pérdida de entrenamiento y la de validación. Para estimar la incertidumbre, también aplican dropout de Monte Carlo en inferencia, manteniendo el dropout activo y promediando varias pasadas hacia delante."
+ },
+ "earlystop": {
+  "n": "Parada temprana (early stopping)",
+  "d": "La parada temprana detiene el entrenamiento cuando el rendimiento en un conjunto de validación deja de mejorar y conserva el modelo del mejor paso de validación. Evita que un algoritmo iterativo siga ajustando ruido después de haber aprendido la señal generalizable.\n\nLa pérdida de validación se comprueba periódicamente. Un parámetro de paciencia fija cuántas evaluaciones sin mejora se permiten antes de detenerse, y se restauran los pesos de la mejor evaluación. La parada temprana se usa en el entrenamiento de redes neuronales y viene integrada en las bibliotecas de gradient boosting, donde elige el número de árboles. Actúa como una regularización implícita, similar a una penalización L2 en modelos lineales entrenados con descenso de gradiente.\n\nEl conjunto de validación que se usa para detenerse pasa a formar parte de la selección del modelo, por lo que su puntuación es optimista y sigue haciendo falta un conjunto de prueba aparte. Las curvas de validación ruidosas pueden provocar una parada demasiado temprana, así que la paciencia y un umbral mínimo de mejora deben fijarse con criterio. Al reentrenar con todos los datos, a menudo se reutiliza el mejor número de iteraciones.",
+  "u": [
+   "Elegir el número de árboles en gradient boosting",
+   "Detener el entrenamiento de una red neuronal en la mejor época",
+   "Ahorrar cómputo en búsquedas de hiperparámetros"
+  ],
+  "x": "Un equipo de ranking entrena modelos de LightGBM con hasta varios miles de árboles y parada temprana sobre una semana de validación temporal. La mejor iteración se registra en cada ejecución, y el modelo de producción se reentrena con todos los datos usando ese número de iteraciones, ligeramente escalado para el conjunto de entrenamiento más grande."
+ },
+ "augment": {
+  "n": "Aumento de datos (data augmentation)",
+  "d": "El aumento de datos crea nuevos ejemplos de entrenamiento aplicando a los existentes transformaciones que conservan la etiqueta, lo que aumenta el tamaño efectivo y la diversidad del conjunto de datos y enseña al modelo invarianzas útiles.\n\nEn imágenes, las transformaciones estándar son recortes aleatorios, volteos horizontales, rotaciones, variaciones de color y cambios de escala, además de métodos de mezcla como Mixup y CutMix, que combinan dos imágenes y sus etiquetas. En audio, los aumentos incluyen desplazamientos temporales, ruido añadido y el enmascaramiento de SpecAugment. En texto, las opciones incluyen la retrotraducción y la paráfrasis. Los aumentos se aplican aleatoriamente sobre la marcha, de modo que en cada época se ven variantes nuevas.\n\nEl aumento de datos es uno de los regularizadores más eficaces en visión por computador y es central en el aprendizaje autosupervisado contrastivo. Las transformaciones deben conservar realmente la etiqueta: voltear verticalmente un 6 puede convertirlo en un 9, y los volteos horizontales son incorrectos para el texto en imágenes o para hallazgos médicos con lateralidad izquierda-derecha. El aumento se aplica solo a los datos de entrenamiento, no a los de validación ni de prueba, salvo en el aumento deliberado en tiempo de prueba (test-time augmentation).",
+  "u": [
+   "Entrenar clasificadores de imágenes con pocos datos etiquetados",
+   "Hacer los modelos de voz robustos al ruido de fondo",
+   "Preentrenamiento autosupervisado contrastivo de codificadores de imagen"
+  ],
+  "x": "Una empresa de retail construye un modelo de reconocimiento de productos en estantería a partir de fotos tomadas en tiendas con iluminación y ángulos variados. Los recortes aleatorios, las rotaciones, los cambios de brillo y el desenfoque durante el entrenamiento hacen que el modelo sea robusto ante tiendas nuevas, mientras que los volteos horizontales están desactivados porque reflejarían el texto de los envases."
+ },
+ "labelsmooth": {
+  "n": "Suavizado de etiquetas (label smoothing)",
+  "d": "El suavizado de etiquetas sustituye los objetivos de entrenamiento one-hot duros por objetivos suaves que asignan la mayor parte de la probabilidad a la clase correcta y reparten una pequeña cantidad, ε, entre todas las clases.\n\nCon objetivos duros, la entropía cruzada sigue recompensando al modelo por elevar cada vez más el logit correcto respecto a los demás, lo que puede llevar a predicciones demasiado confiadas y a logits grandes. Con suavizado, el objetivo de la clase correcta pasa a ser 1 − ε + ε/K y cada una de las demás clases recibe ε/K, de modo que los logits óptimos se mantienen finitos. El valor típico es ε = 0,1. Se usa mucho en clasificación de imágenes y traducción automática, y a menudo mejora la precisión y la calibración.\n\nEl suavizado de etiquetas también tiene costes. Borra la información sobre qué clases incorrectas se parecen a la correcta, lo que convierte a un profesor suavizado en una fuente más pobre para la destilación de conocimiento. Puede empeorar la calibración si se combina con otros métodos de calibración y, en los modelos de lenguaje, aumenta la perplejidad aunque mejore la calidad de la traducción.",
+  "u": [
+   "Regularizar grandes clasificadores de imágenes",
+   "Entrenar modelos de traducción automática neuronal",
+   "Reducir el exceso de confianza en conjuntos con etiquetas ruidosas"
+  ],
+  "x": "Un equipo que entrena un clasificador de imágenes de productos con algunos ejemplos mal etiquetados usa entropía cruzada con un suavizado de etiquetas de 0,1. El modelo se vuelve menos confiado en las imágenes ambiguas, lo que reduce el número de errores de alta confianza que se saltan la revisión humana."
+ },
+ "batchnorm": {
+  "n": "Normalización por lotes (batch normalization)",
+  "d": "La normalización por lotes normaliza cada variable o canal usando la media y la varianza calculadas sobre el mini-batch actual y después aplica una escala γ y un desplazamiento β aprendidos.\n\nDurante el entrenamiento, cada activación se estandariza con los estadísticos del lote y se actualizan medias móviles de la media y la varianza. En inferencia se usan en su lugar esos estadísticos móviles almacenados, de modo que la salida de un ejemplo no depende de los demás ejemplos. En las redes convolucionales, los estadísticos se comparten sobre el lote y las posiciones espaciales de cada canal. La normalización por lotes permite tasas de aprendizaje más altas, reduce la sensibilidad a la inicialización y añade un ligero ruido regularizador, sobre todo porque suaviza el paisaje de optimización.\n\nDepende del tamaño del lote: con lotes muy pequeños, los estadísticos son ruidosos y la precisión se resiente, y el entrenamiento distribuido puede requerir batch norm sincronizada. Olvidar pasar al modo de evaluación, o un desajuste entre las distribuciones de entrenamiento y de servicio, da salidas erróneas. Estas limitaciones explican que los Transformers y los modelos recurrentes usen en su lugar la normalización por capa.",
+  "u": [
+   "Entrenar redes convolucionales profundas de imagen",
+   "Estabilizar tasas de aprendizaje altas en CNN",
+   "Convergencia más rápida en redes residuales"
+  ],
+  "x": "Un equipo de imagen médica entrena una ResNet con escáneres 3D en los que la memoria de la GPU solo admite dos volúmenes por dispositivo. La normalización por lotes simple funcionaba mal con lotes tan diminutos, así que pasaron a batch norm sincronizada entre GPU y más tarde la compararon con la normalización por grupos (group normalization), que no depende del tamaño del lote."
+ },
+ "layernorm": {
+  "n": "Normalización por capa (layer normalization)",
+  "d": "La normalización por capa estandariza las activaciones de cada ejemplo individual a lo largo de su dimensión de variables y después aplica una escala y un desplazamiento aprendidos. A diferencia de la normalización por lotes, sus estadísticos no dependen de los demás ejemplos del lote.\n\nPara el vector de un token en un Transformer, la media y la varianza se calculan sobre su dimensión oculta, el vector se normaliza y los parámetros por variable γ y β restituyen la flexibilidad de representación. Como el cálculo es idéntico en entrenamiento y en inferencia y funciona con cualquier tamaño de lote o longitud de secuencia, la normalización por capa es la opción estándar en Transformers y redes recurrentes. Su posición importa: Post-LN (después de la suma residual) se usaba en el Transformer original, mientras que Pre-LN (antes de cada subcapa) entrena de forma más estable en modelos profundos sin un warmup largo de la tasa de aprendizaje, y hoy es más habitual.\n\nEn las redes convolucionales suele funcionar peor que la normalización por lotes. Muchos grandes modelos de lenguaje recientes la sustituyen por RMSNorm, que prescinde del centrado en la media y del sesgo con un coste algo menor.",
+  "u": [
+   "Normalización dentro de los bloques de un Transformer",
+   "Estabilizar el entrenamiento de redes neuronales recurrentes",
+   "Modelos con tamaños de lote variables o diminutos"
+  ],
+  "x": "Un equipo que entrena un Transformer específico de dominio para textos jurídicos pasó de bloques Post-LN a Pre-LN tras observar picos en la pérdida al principio del entrenamiento. El cambio les permitió entrenar modelos más profundos con un warmup más corto, y los parámetros de LayerNorm se excluyeron del weight decay."
+ },
+ "rmsnorm": {
+  "n": "RMSNorm",
+  "d": "RMSNorm (normalización por la raíz cuadrática media) reescala cada vector de activaciones por su raíz cuadrática media y una ganancia aprendida por variable, sin restar la media y normalmente sin sesgo. Es una variante más sencilla y barata de la normalización por capa.\n\nEl vector x se divide por √(mean(x²) + ε) y se multiplica por un peso aprendido g. Omitir el centrado en la media ahorra una reducción y el parámetro de sesgo, y aun así iguala la estabilidad de LayerNorm en los Transformers. El artículo original sostenía que lo que hace eficaz a la normalización por capa es la invarianza al reescalado, no el recentrado. RMSNorm se usa en muchos grandes modelos de lenguaje modernos, como LLaMA, Mistral y Gemma, normalmente en una disposición Pre-norm antes de las subcapas de atención y feed-forward.\n\nComo no centra las activaciones, RMSNorm no puede sustituir sin más a LayerNorm en un modelo preentrenado; los pesos entrenados con una no funcionarán con la otra. La precisión numérica también importa: las implementaciones suelen calcular la norma en float32 incluso en modelos en bfloat16.",
+  "u": [
+   "Capas de normalización en modelos de lenguaje de tipo LLaMA",
+   "Reducir el coste de normalización en grandes Transformers",
+   "Bloques pre-norm para un entrenamiento profundo estable"
+  ],
+  "x": "Un equipo de LLM que entrena un modelo de tipo LLaMA usa RMSNorm antes de cada subcapa de atención y de MLP, y un RMSNorm final antes de la cabeza de salida. Su kernel fusionado calcula la norma en float32 dentro de un modelo en bfloat16, lo que evita picos numéricos poco frecuentes en entrenamientos largos."
+ }
+}

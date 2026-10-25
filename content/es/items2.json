@@ -1,0 +1,482 @@
+{
+ "gradclip": {
+  "n": "Recorte de gradientes (gradient clipping)",
+  "d": "El recorte de gradientes limita la magnitud del gradiente antes de cada paso del optimizador, de modo que un solo lote defectuoso no pueda desplazar los parámetros demasiado lejos. La forma más habitual, el recorte por norma global, calcula la norma L2 de todos los gradientes concatenados; si supera un umbral c, cada gradiente se multiplica por c / ‖g‖. Así se mantiene la dirección de la actualización y solo se acorta su longitud. Una variante más tosca, el recorte por valor, limita cada elemento de forma independiente y, por tanto, puede cambiar la dirección.\n\nEl recorte es estándar en las redes recurrentes, donde la explosión de gradientes es frecuente, y en el preentrenamiento de Transformers, donde una norma máxima de 1,0 es un valor por defecto típico. También estabiliza el entrenamiento con tasas de aprendizaje altas o con precisión mixta. El recorte no resuelve el desvanecimiento de gradientes, y un umbral demasiado bajo convierte silenciosamente el optimizador en uno de pasos de longitud fija. Registrar la norma del gradiente antes del recorte es una forma barata de detectar picos en la pérdida y problemas en los datos.",
+  "u": [
+   "Estabilizar el entrenamiento de LSTM y GRU en secuencias largas",
+   "Evitar picos de pérdida en el preentrenamiento de grandes Transformers",
+   "Acotar los gradientes por ejemplo en el entrenamiento con privacidad diferencial"
+  ],
+  "x": "Un equipo que preentrena un modelo de lenguaje multilingüe recorta la norma global del gradiente a 1,0 en cada paso. Registra la norma previa al recorte en su panel, porque los saltos repentinos de ese valor suelen señalar fragmentos de datos corruptos o una tasa de aprendizaje demasiado alta. Cuando aparece un pico, vuelve al último checkpoint y omite los lotes problemáticos."
+ },
+ "linreg": {
+  "n": "Regresión lineal",
+  "d": "La regresión lineal modela un objetivo numérico como una suma ponderada de las variables de entrada más un término independiente. Los mínimos cuadrados ordinarios eligen los pesos que minimizan la suma de las diferencias verticales al cuadrado entre las predicciones y los valores observados, lo que tiene la solución cerrada w = (XᵀX)⁻¹Xᵀy cuando XᵀX es invertible. En la práctica, las bibliotecas la resuelven con descomposiciones QR o SVD por estabilidad numérica, o con descenso de gradiente cuando los datos son muy grandes.\n\nEs la línea base por defecto para cualquier tarea de regresión y sigue siendo valiosa cuando importa la interpretabilidad: cada coeficiente es el cambio esperado del objetivo por cada unidad de cambio en una variable, manteniendo fijas las demás. Bajo los supuestos de Gauss-Markov, MCO es el mejor estimador lineal insesgado. Sus puntos débiles son la sensibilidad a los valores atípicos, porque los errores al cuadrado amplifican los residuos grandes, y la inestabilidad de los coeficientes cuando las variables están muy correlacionadas. Un error de concepto frecuente es creer que «lineal» se refiere a las variables; se refiere a los parámetros, de modo que con variables logarítmicas o polinómicas el modelo sigue siendo lineal.",
+  "u": [
+   "Modelo base para cualquier tarea de predicción numérica",
+   "Estimar la elasticidad precio a partir de datos de ventas",
+   "Tamaños de efecto interpretables en análisis econométricos"
+  ],
+  "x": "Una plataforma inmobiliaria ajusta una regresión lineal del precio de los anuncios sobre la superficie, variables ficticias de ubicación y la antigüedad del edificio como línea base transparente. Los agentes pueden leer directamente los coeficientes, por ejemplo cuánto añade al precio cada metro cuadrado. El equipo vigila los residuos por barrio para detectar zonas donde el supuesto lineal deja de cumplirse."
+ },
+ "tls": {
+  "n": "Mínimos cuadrados totales",
+  "d": "Los mínimos cuadrados totales ajustan una recta o un hiperplano minimizando las distancias perpendiculares de los puntos a él, en lugar de solo las distancias verticales que usan los mínimos cuadrados ordinarios. Así se tratan de forma simétrica los errores en las entradas y en el objetivo, lo que resulta adecuado cuando todas las variables medidas tienen ruido.\n\nLa solución se obtiene a partir de la descomposición en valores singulares. Tras centrar los datos, el hiperplano ajustado es ortogonal al vector singular derecho con el menor valor singular; para una recta en dos dimensiones, esto equivale a tomar la primera componente principal como dirección de la recta. Por ello, TLS está estrechamente relacionado con PCA y con la regresión ortogonal. Es útil en la calibración de sensores, en la comparación de dos instrumentos de medida y en el ajuste geométrico en visión por computador. Una limitación clave es que supone la misma varianza de ruido en todas las variables, así que primero hay que escalar las variables a niveles de error comparables, y es aún más sensible a los valores atípicos que MCO.",
+  "u": [
+   "Comparar lecturas de dos instrumentos de medida con ruido",
+   "Ajustar rectas y planos a nubes de puntos 3D",
+   "Calibrar sensores cuando ambos ejes contienen error"
+  ],
+  "x": "Una empresa de dispositivos médicos compara un nuevo glucómetro con una referencia de laboratorio, y ambas lecturas contienen error de medida. Utiliza un ajuste ortogonal (mínimos cuadrados totales) en lugar de MCO, porque MCO subestimaría la pendiente cuando la propia referencia tiene ruido. La pendiente y el término independiente ajustados se incorporan directamente al informe de calibración."
+ },
+ "polyreg": {
+  "n": "Regresión polinómica",
+  "d": "La regresión polinómica captura relaciones curvas añadiendo potencias y productos de las variables originales y ajustando después un modelo lineal ordinario sobre el conjunto ampliado. Una expansión de grado 2 de las variables x₁ y x₂ añade x₁², x₂² y x₁x₂; el modelo sigue siendo lineal en sus parámetros, por lo que los mínimos cuadrados y la regularización funcionan sin cambios.\n\nEs una forma sencilla de modelar no linealidades suaves, como los rendimientos decrecientes o una respuesta a la dosis en forma de U, sin renunciar a un ajuste de forma cerrada. El grado controla el compromiso sesgo-varianza: los grados bajos subajustan y los altos producen oscilaciones bruscas, sobre todo cerca de los bordes de los datos, lo que constituye un ejemplo clásico de sobreajuste. Además, el número de términos crece combinatoriamente con el número de variables y el grado. La buena práctica es escalar las variables antes de la expansión, elegir el grado con validación cruzada y añadir regularización ridge. La extrapolación fuera del rango de entrenamiento es especialmente poco fiable, porque los términos de orden alto se disparan rápidamente.",
+  "u": [
+   "Modelar los rendimientos decrecientes de la inversión publicitaria",
+   "Ajustar curvas suaves de dosis-respuesta en experimentos",
+   "Añadir términos de interacción a una línea base lineal"
+  ],
+  "x": "Un equipo de analítica de marketing modela las conversiones semanales como un polinomio de grado 2 de la inversión publicitaria para capturar la saturación con presupuestos altos. Elige el grado con validación cruzada y añade regularización ridge para mantener estables los coeficientes. La curva ajustada solo se utiliza dentro del rango de inversión observado, porque las predicciones fuera de él no son fiables."
+ },
+ "logreg": {
+  "n": "Regresión logística",
+  "d": "La regresión logística es un clasificador lineal que predice la probabilidad de la clase positiva pasando una suma ponderada de las variables por la función sigmoide. De forma equivalente, modela el logaritmo de las odds del resultado como una función lineal de las entradas, de modo que cada coeficiente es el cambio en el log-odds por cada aumento de una unidad en esa variable.\n\nLos pesos se ajustan maximizando la verosimilitud, lo que equivale a minimizar la entropía cruzada binaria. La pérdida es convexa, así que optimizadores como L-BFGS encuentran de forma fiable el mínimo global. La extensión softmax permite manejar varias clases. La regresión logística es rápida, interpretable y suele producir probabilidades razonablemente calibradas, lo que la convierte en una línea base sólida para la calificación crediticia, el riesgo clínico y la predicción de clics. Su frontera de decisión es lineal, por lo que los efectos no lineales requieren ingeniería de variables. Con datos perfectamente separables, los pesos sin regularizar crecen sin límite, y esa es una de las razones por las que scikit-learn aplica regularización L2 por defecto. A pesar de su nombre, es un método de clasificación, no de regresión.",
+  "u": [
+   "Calificación del riesgo de impago con datos tabulares",
+   "Línea base para la predicción de la tasa de clics",
+   "Puntuaciones de riesgo clínico con odds ratios interpretables"
+  ],
+  "x": "Una entidad de préstamos al consumo utiliza regresión logística con regularización L2 para puntuar las solicitudes de crédito, porque los reguladores exigen explicar cada decisión. Los coeficientes se convierten en puntos de una scorecard, y la probabilidad de impago predicha determina el tramo de tipo de interés. El equipo revisa la calibración cada mes, ya que los cambios económicos pueden alejar la tasa real de impago de las predicciones."
+ },
+ "knn": {
+  "n": "k vecinos más cercanos (KNN)",
+  "d": "El método de los k vecinos más cercanos predice la etiqueta de un punto nuevo examinando los k puntos de entrenamiento más similares y tomando un voto mayoritario en clasificación o un promedio en regresión. El entrenamiento solo almacena los datos, por lo que se le llama aprendiz perezoso o basado en instancias.\n\nTodas las decisiones de modelado residen en la métrica de distancia y en k. Un k pequeño sigue de cerca los datos y tiene alta varianza; un k grande suaviza la frontera de decisión y aumenta el sesgo. Ponderar los vecinos por la inversa de la distancia suele ayudar. Como las distancias lo determinan todo, hay que escalar las variables; de lo contrario, una variable medida en miles domina a otra medida en fracciones. KNN funciona bien en problemas de baja dimensionalidad con una medida de similitud significativa, y la misma idea impulsa la búsqueda moderna por embeddings. Sus principales limitaciones son la lentitud de la predicción en conjuntos de datos grandes, que exige estructuras de índice como los KD-trees o bibliotecas de vecinos más cercanos aproximados, y la maldición de la dimensionalidad, que hace que las distancias sean menos informativas a medida que crece el número de variables.",
+  "u": [
+   "Recomendaciones artículo a artículo por similitud de embeddings",
+   "Imputar valores faltantes a partir de registros similares",
+   "Línea base sencilla para clasificación de baja dimensionalidad"
+  ],
+  "x": "Un servicio de streaming de música encuentra pistas similares mediante búsqueda de vecinos más cercanos sobre embeddings de audio. El KNN exacto es demasiado lento para decenas de millones de pistas, así que utiliza un índice aproximado y acepta una pequeña pérdida de recall a cambio de una latencia de milisegundos. Las listas de vecinos se actualizan cada noche cuando se añaden pistas nuevas."
+ },
+ "naivebayes": {
+  "n": "Naive Bayes",
+  "d": "Naive Bayes es un clasificador probabilístico que aplica el teorema de Bayes bajo el supuesto simplificador de que las variables son condicionalmente independientes dada la clase. Con ese supuesto, la verosimilitud de la clase se factoriza en un producto de distribuciones unidimensionales, que pueden estimarse mediante un simple conteo o ajustando una media y una varianza por variable.\n\nLas variantes difieren en la distribución de cada variable: multinomial para conteos de palabras, Bernoulli para indicadores binarios y gaussiana para valores continuos. El entrenamiento es una sola pasada sobre los datos, la predicción es muy rápida y el método funciona sorprendentemente bien con datos dispersos de alta dimensionalidad, como el texto, incluso con pocos ejemplos. El suavizado de Laplace (aditivo) evita que una palabra nunca vista con una clase anule la probabilidad de esa clase. El supuesto de independencia casi nunca se cumple, de modo que, aunque el orden de las clases suele ser correcto, las probabilidades predichas tienden a empujarse hacia 0 y 1 y están mal calibradas. Las variables correlacionadas o duplicadas se cuentan, en la práctica, varias veces.",
+  "u": [
+   "Filtrado de spam a partir del conteo de palabras de los correos",
+   "Línea base rápida para clasificar documentos por tema",
+   "Enrutamiento de texto en tiempo real con latencia muy baja"
+  ],
+  "x": "Una plataforma de atención al cliente enruta los tickets entrantes a los departamentos con un modelo Naive Bayes multinomial sobre variables TF-IDF. Se reentrena en segundos cada vez que los agentes reetiquetan tickets, y las predicciones tardan microsegundos. Como sus probabilidades pecan de exceso de confianza, el equipo solo usa la clase predicha más probable y envía los casos con poco margen a una cola humana."
+ },
+ "svm": {
+  "n": "Máquina de vectores de soporte (SVM)",
+  "d": "Una máquina de vectores de soporte encuentra la frontera de decisión que separa dos clases con el mayor margen posible, es decir, la mayor distancia a los puntos de entrenamiento más cercanos. Solo esos puntos más cercanos, los vectores de soporte, determinan la frontera, por lo que la solución es dispersa.\n\nLos datos reales rara vez son separables, así que la formulación de margen blando permite violaciones mediante variables de holgura, y el hiperparámetro C equilibra la anchura del margen frente a los errores de entrenamiento: un C grande se ajusta estrechamente a los datos de entrenamiento, mientras que un C pequeño da un margen más ancho y más regularizado. Esto equivale a minimizar la pérdida hinge más una penalización L2. Con el truco del kernel, una SVM puede aprender fronteras no lineales, por ejemplo con un kernel RBF cuyo gamma controla lo local que es la influencia de cada vector de soporte. Las SVM son adecuadas para conjuntos de datos pequeños o medianos con muchas variables, como el texto. El entrenamiento de una SVM con kernel escala aproximadamente de forma cuadrática o peor con el número de muestras, hay que escalar las variables y la salida bruta es una puntuación de margen, no una probabilidad calibrada.",
+  "u": [
+   "Clasificación de texto con variables dispersas de alta dimensionalidad",
+   "Tareas de clasificación en bioinformática con pocas muestras",
+   "Clasificación de imágenes con descriptores de variables diseñados a mano"
+  ],
+  "x": "Un grupo de investigación farmacéutica clasifica compuestos como activos o inactivos a partir de unos pocos miles de huellas moleculares con una SVM de kernel RBF. Ajusta C y gamma con validación cruzada, ya que el conjunto de datos es lo bastante pequeño para los métodos de kernel. Como necesita probabilidades para ordenar los candidatos, añade un paso de calibración independiente sobre datos reservados."
+ },
+ "kerneltrick": {
+  "n": "Truco del kernel",
+  "d": "El truco del kernel permite que un algoritmo lineal aprenda patrones no lineales sustituyendo cada producto interno entre puntos de datos por una función kernel que equivale a un producto interno en un espacio de variables de mayor dimensión. La transformación a ese espacio nunca se calcula: solo se calculan los valores del kernel entre pares de puntos.\n\nFunciona con cualquier método que pueda expresarse íntegramente en términos de productos escalares, como las máquinas de vectores de soporte, la regresión ridge con kernel, Kernel PCA y los procesos gaussianos. Los kernels más comunes son el polinómico y el RBF, cuyo espacio de variables tiene dimensión infinita. Un kernel válido debe producir una matriz de Gram semidefinida positiva para cualquier conjunto de puntos (condición de Mercer). El principal coste es que la matriz de kernel de n × n hace que el entrenamiento escale al menos cuadráticamente en memoria y tiempo, por lo que los métodos de kernel dejan de ser prácticos a partir de decenas de miles de muestras. Aproximaciones como las random Fourier features o el método de Nyström recuperan el escalado lineal a costa de algo de exactitud.",
+  "u": [
+   "Clasificación no lineal con SVM sin variables explícitas",
+   "Regresión con procesos gaussianos para modelos sustitutos",
+   "Kernel PCA para reducción de dimensionalidad no lineal"
+  ],
+  "x": "Un equipo de ingeniería construye un modelo sustituto basado en un proceso gaussiano para ajustar los parámetros de un proceso de fabricación, con un kernel RBF que codifica que parámetros similares producen rendimientos similares. Con solo unos cientos de experimentos, la matriz de kernel de n × n es barata de calcular. Para un conjunto de datos de sensores más grande, cambia a random Fourier features para que el tiempo de entrenamiento siga siendo lineal."
+ },
+ "lda": {
+  "n": "Análisis discriminante lineal (LDA)",
+  "d": "El análisis discriminante lineal es a la vez un clasificador y un método supervisado de reducción de dimensionalidad que busca las direcciones que mejor separan clases conocidas. Como clasificador, supone que cada clase es una gaussiana con su propia media pero con una matriz de covarianza compartida; bajo ese supuesto, las fronteras de decisión óptimas de Bayes son lineales.\n\nComo proyección, LDA maximiza el cociente entre la dispersión entre clases y la dispersión dentro de las clases, lo que da como máximo C − 1 direcciones discriminantes para C clases. Esto lo diferencia de PCA, que ignora las etiquetas y conserva las direcciones de mayor varianza total aunque no separen las clases. LDA es rápido, tiene solución cerrada y funciona bien con pocas muestras cuando sus supuestos se cumplen aproximadamente; aplicar shrinkage a la estimación de la covarianza ayuda cuando hay más variables que muestras. Tiene dificultades cuando las clases tienen covarianzas muy distintas, caso en que el análisis discriminante cuadrático se ajusta mejor, y cuando la estructura de clases es no lineal. En NLP, la misma sigla designa también la asignación latente de Dirichlet (Latent Dirichlet Allocation), un modelo de temas sin relación con este método.",
+  "u": [
+   "Proyección supervisada antes de visualizar o hacer clustering",
+   "Clasificación de señales EEG en interfaces cerebro-computador",
+   "Clasificación con pocas muestras y covarianza con shrinkage"
+  ],
+  "x": "Un equipo de interfaces cerebro-computador clasifica movimientos de la mano imaginados a partir de variables de EEG con LDA con shrinkage. El método se entrena en milisegundos con una breve sesión de calibración por usuario y da resultados estables con pocos ensayos. Su frontera lineal también mantiene la inferencia lo bastante rápida para el control en tiempo real."
+ },
+ "perceptron": {
+  "n": "Perceptrón",
+  "d": "El perceptrón es el clasificador lineal más sencillo: devuelve una clase si la suma ponderada de las entradas es positiva y la otra en caso contrario, y solo actualiza sus pesos después de un error. En cada ejemplo mal clasificado, suma al vector de pesos el vector de entrada, escalado por la etiqueta verdadera y una tasa de aprendizaje.\n\nEl teorema de convergencia del perceptrón garantiza que esta regla encuentra un hiperplano separador en un número finito de actualizaciones si los datos son linealmente separables. Si no lo son, los pesos nunca se estabilizan, y por eso existen variantes como el perceptrón promediado o el pocket perceptron. La activación escalón no tiene un gradiente útil, por lo que las redes neuronales modernas la sustituyeron por activaciones diferenciables y descenso de gradiente; un perceptrón multicapa no es, por tanto, una pila de perceptrones clásicos. Su incapacidad para aprender XOR mostró la necesidad de capas ocultas. Sigue sirviendo como aprendiz online rápido para problemas dispersos grandes y como ejemplo didáctico.",
+  "u": [
+   "Aprendizaje online sobre flujos de variables dispersas",
+   "Enseñar la separabilidad lineal y las reglas de aprendizaje",
+   "Línea base rápida para problemas linealmente separables"
+  ],
+  "x": "Un equipo de búsqueda crea un prototipo de clasificador de intención de consultas con un perceptrón promediado sobre millones de variables dispersas de n-gramas. El modelo se actualiza online a medida que llegan nuevas consultas etiquetadas y no requiere más ajuste que el número de pasadas. Una vez que el prototipo demuestra que las variables son útiles, lo sustituyen por una regresión logística para obtener puntuaciones de probabilidad."
+ },
+ "dtree": {
+  "n": "Árbol de decisión",
+  "d": "Un árbol de decisión predice formulando una secuencia de preguntas sencillas sobre las variables y siguiendo las respuestas hasta una hoja que almacena una clase o un valor. Cada nodo divide según una variable y un umbral, y las hojas particionan el espacio de variables en rectángulos alineados con los ejes.\n\nLos árboles se construyen de forma voraz desde arriba: en cada nodo, el algoritmo elige la división que más reduce la impureza, medida con la impureza de Gini o la entropía en clasificación y con la varianza (error cuadrático) en regresión. No necesitan escalar las variables, capturan interacciones automáticamente y son fáciles de explicar. Su principal debilidad es la alta varianza: un árbol completamente desarrollado memoriza el ruido, y un pequeño cambio en los datos puede producir un árbol muy diferente. Limitar la profundidad, exigir un número mínimo de muestras por hoja o podar reduce el sobreajuste. En la práctica, los árboles individuales se usan sobre todo por su interpretabilidad, mientras que los ensambles como random forest y gradient boosting los emplean como piezas básicas para ganar exactitud.",
+  "u": [
+   "Reglas explicables para decisiones de elegibilidad o triaje",
+   "Pieza básica de random forest y boosting",
+   "Análisis exploratorio rápido de interacciones entre variables"
+  ],
+  "x": "El equipo de triaje de un hospital entrena un árbol de decisión poco profundo, limitado a profundidad cuatro, para señalar a los pacientes de urgencias que necesitan revisión inmediata. Los clínicos lo aceptaron porque cada predicción puede rastrearse como una breve lista de condiciones. El equipo asume deliberadamente una exactitud algo menor que la de un modelo de boosting a cambio de esa transparencia."
+ },
+ "gini": {
+  "n": "Impureza de Gini",
+  "d": "La impureza de Gini mide lo mezcladas que están las etiquetas de clase en un nodo: equivale a la probabilidad de que dos etiquetas extraídas al azar del nodo, con reemplazo, sean distintas. Un nodo puro, en el que todas las muestras pertenecen a la misma clase, tiene una impureza de Gini de 0; con dos clases igual de frecuentes alcanza su máximo de 0,5.\n\nLos algoritmos de árboles de decisión como CART evalúan cada división candidata por la impureza de Gini media ponderada de los nodos hijos y eligen la división con la mayor disminución respecto al nodo padre. No necesita logaritmos y selecciona casi las mismas divisiones que la entropía. Sumar las disminuciones de impureza que produce una variable en todos los árboles da la importancia de variables por «disminución media de la impureza» que usan los random forests. Esa importancia se calcula sobre los datos de entrenamiento y está sesgada a favor de las variables continuas y de alta cardinalidad, que ofrecen muchos puntos de corte. La impureza de Gini no debe confundirse con el coeficiente de Gini que se usa en la calificación crediticia, que equivale a 2·AUC − 1.",
+  "u": [
+   "Elegir divisiones en árboles de clasificación CART",
+   "Importancia de variables basada en la impureza en random forests",
+   "Medir la pureza de etiquetas de clústeres o segmentos"
+  ],
+  "x": "Un equipo de analítica de fraude revisa las importancias basadas en la impureza de su random forest y observa que un ID de comercio de alta cardinalidad ocupa el primer puesto. Como la importancia basada en Gini favorece a las variables con muchos puntos de corte, confirma la clasificación con importancia por permutación sobre un conjunto de validación. El ID de comercio cae bruscamente en la clasificación por permutación, así que lo eliminan del modelo."
+ },
+ "entropy": {
+  "n": "Entropía y ganancia de información",
+  "d": "La entropía mide en bits la incertidumbre de una distribución de etiquetas, y la ganancia de información es la reducción de entropía que se logra al dividir los datos según una variable. Un nodo con una sola clase tiene entropía 0, mientras que un nodo con dos clases igual de probables tiene una entropía de 1 bit, el máximo para etiquetas binarias.\n\nLos algoritmos de árboles de decisión como ID3 y C4.5, y CART con criterion=\"entropy\", eligen la división que maximiza la ganancia de información: la entropía del padre menos la entropía de los hijos ponderada por su tamaño. La ganancia de información equivale a la información mutua entre la división y la etiqueta. En la práctica produce árboles muy parecidos a los obtenidos con la impureza de Gini, con un coste de cálculo algo mayor por el logaritmo. Un problema conocido es que la ganancia de información sin corregir favorece a las variables con muchos valores distintos, como los ID, ya que muchos grupos diminutos y puros dan una ganancia alta sin generalizar. C4.5 lo corrige con la razón de ganancia (gain ratio), que divide la ganancia por la entropía de la propia división.",
+  "u": [
+   "Seleccionar divisiones en árboles ID3, C4.5 y CART",
+   "Ordenar variables por su información mutua con la etiqueta",
+   "Elegir preguntas informativas en aprendizaje activo"
+  ],
+  "x": "Un equipo de abandono de clientes de una telecom ordena cientos de variables candidatas por su información mutua con la etiqueta de abandono antes de construir los modelos. Este filtrado por ganancia de información elimina rápidamente las variables casi sin relación con el abandono. Después revisa las que superan el filtro en busca de fugas de información, porque una ganancia sospechosamente alta suele venir de campos actualizados después de que el cliente se fuera."
+ },
+ "cart": {
+  "n": "CART y divisiones alineadas con los ejes",
+  "d": "CART (Classification and Regression Trees) construye árboles de decisión binarios dividiendo repetidamente los datos según una variable y un umbral. Cada división pregunta si x_j ≤ t, de modo que cada frontera de decisión es perpendicular al eje de una variable y el árbol particiona el espacio en cajas rectangulares.\n\nEn cada nodo, CART recorre todas las variables y todos los umbrales candidatos, normalmente los puntos medios entre valores únicos ordenados, y elige el par que más reduce la impureza de Gini en clasificación o el error cuadrático en regresión. La búsqueda es voraz, así que el árbol no es óptimo globalmente. CART también define la poda por coste-complejidad, que equilibra el tamaño del árbol frente al error de entrenamiento. Las divisiones alineadas con los ejes hacen que los árboles sean invariantes a transformaciones monótonas de las variables, por lo que no hace falta escalar, y mantienen las reglas legibles. La contrapartida es que una frontera diagonal, como x₁ > x₂, debe aproximarse con una escalera de muchas divisiones; añadir una variable de diferencia o usar árboles oblicuos puede ayudar. Los árboles de scikit-learn implementan una versión optimizada de CART.",
+  "u": [
+   "Construir árboles de clasificación binarios interpretables",
+   "Árboles de regresión para predicciones constantes a trozos",
+   "Aprendices base dentro de random forests y boosting"
+  ],
+  "x": "Un equipo de tarificación de seguros usa árboles de regresión CART para segmentar a los asegurados en grupos con costes de siniestros similares. Como cada división es un único umbral sobre una variable, los segmentos resultantes pueden escribirse como reglas sencillas para que los actuarios las revisen. Añade variables de cociente diseñadas a mano cuando observa que el árbol construye largas escaleras para aproximar fronteras diagonales."
+ },
+ "pruning": {
+  "n": "Poda de árboles",
+  "d": "La poda de árboles reduce el sobreajuste de los árboles de decisión eliminando ramas que añaden complejidad sin mejorar la generalización. La prepoda, o parada temprana, impide que el árbol crezca más allá de ciertos límites, como una profundidad máxima o un número mínimo de muestras por hoja. La pospoda primero hace crecer un árbol grande y después colapsa los subárboles cuya eliminación cuesta poca exactitud.\n\nEl método estándar de pospoda en CART es la poda de mínimo coste-complejidad. Minimiza el error de entrenamiento más α veces el número de hojas; al aumentar α se obtiene una secuencia anidada de árboles más pequeños, y la validación cruzada elige el mejor α. La pospoda suele ser mejor que la parada temprana porque una división que parece inútil por sí sola puede habilitar divisiones valiosas por debajo, situación que las reglas de parada voraces pasan por alto. La poda importa sobre todo para árboles individuales interpretables. Normalmente no es necesaria en random forests, donde promediar muchos árboles profundos controla la varianza, ni en gradient boosting, donde los árboles se mantienen poco profundos por diseño.",
+  "u": [
+   "Simplificar árboles de decisión para obtener reglas legibles",
+   "Reducir el sobreajuste de árboles individuales con datos ruidosos",
+   "Seleccionar la complejidad del árbol con alfa validado por validación cruzada"
+  ],
+  "x": "Un equipo de políticas de crédito necesita un árbol de decisión lo bastante pequeño para imprimirlo en una página para la revisión de cumplimiento normativo. Hace crecer un árbol completo, calcula la ruta de poda por coste-complejidad y elige el alfa más grande cuya exactitud en validación cruzada se mantiene a menos de un error estándar de la mejor. El árbol final tiene una docena de hojas en lugar de varios cientos."
+ },
+ "bootstrap": {
+  "n": "Muestreo bootstrap",
+  "d": "El muestreo bootstrap crea un nuevo conjunto de datos del mismo tamaño que el original extrayendo observaciones al azar con reemplazo. Algunos puntos aparecen varias veces y otros ninguna; en promedio, cerca del 63,2 % de los puntos únicos originales aparecen en cada muestra, porque la probabilidad de que un punto dado no se extraiga nunca es (1 − 1/n)ⁿ ≈ 1/e ≈ 36,8 %.\n\nRemuestrear repetidamente aproxima la extracción de nuevos conjuntos de datos de la población. Los estadísticos lo usan para estimar el error estándar o un intervalo de confianza de casi cualquier estadístico, como una mediana, un AUC o un coeficiente de un modelo, sin necesidad de una fórmula cerrada. En machine learning, las muestras bootstrap son la base del bagging y de los random forests, y los puntos que quedan fuera proporcionan una validación out-of-bag. El bootstrap supone que las observaciones son independientes e idénticamente distribuidas, de modo que el remuestreo ingenuo subestima la incertidumbre en series temporales o datos agrupados; en esos casos se necesitan variantes por bloques o por clústeres. Tampoco funciona con estadísticos de valores extremos, como el máximo.",
+  "u": [
+   "Intervalos de confianza para métricas de evaluación de modelos",
+   "Generar conjuntos de entrenamiento diversos para ensambles de bagging",
+   "Estimar la incertidumbre de los efectos en pruebas A/B"
+  ],
+  "x": "Un equipo de plataforma de ML reporta cada AUC offline con un intervalo de confianza bootstrap del 95 % calculado a partir de 1000 remuestreos del conjunto de prueba. Así evita que los equipos publiquen un modelo cuya aparente mejora está dentro del ruido. Para datos con usuarios repetidos, remuestrea usuarios completos en lugar de filas individuales para que los intervalos sean honestos."
+ },
+ "bagging": {
+  "n": "Bagging",
+  "d": "El bagging, abreviatura de bootstrap aggregating, entrena muchas copias del mismo modelo sobre distintas muestras bootstrap de los datos de entrenamiento y promedia sus predicciones o toma un voto mayoritario. Como cada modelo ve un conjunto de datos ligeramente distinto, sus errores son en parte independientes, y el promedio cancela buena parte de ese ruido.\n\nEl bagging reduce principalmente la varianza y deja el sesgo más o menos igual, por lo que ayuda sobre todo con aprendices inestables y de bajo sesgo, como los árboles de decisión completamente desarrollados, y aporta poco a modelos estables como la regresión lineal. La varianza del promedio de B modelos con correlación por pares ρ es ρσ² + (1 − ρ)σ²/B, así que añadir modelos tiene rendimientos decrecientes una vez que domina el término de correlación. Los random forests van más allá y decorrelacionan los árboles mediante el submuestreo de variables. Los modelos de bagging pueden entrenarse en paralelo, y los puntos que quedan fuera de cada muestra bootstrap dan una estimación out-of-bag gratuita del error de generalización. Un error de concepto habitual es pensar que el bagging corrige el subajuste; promediar muchos modelos poco profundos y sesgados sigue dando un resultado sesgado.",
+  "u": [
+   "Estabilizar árboles de decisión de alta varianza",
+   "Entrenamiento paralelo de ensambles en máquinas multinúcleo",
+   "Reducir la varianza de las predicciones de redes neuronales"
+  ],
+  "x": "Un equipo de previsión de la demanda aplica bagging a veinte árboles de regresión profundos entrenados con muestras bootstrap del historial por tienda. El ensamble es notablemente más estable de una semana a otra que un único árbol, algo de lo que se habían quejado los gerentes de tienda. El entrenamiento se ejecuta en paralelo en varios núcleos, de modo que el ensamble apenas añade tiempo real."
+ },
+ "oob": {
+  "n": "Puntuación out-of-bag (OOB)",
+  "d": "La puntuación out-of-bag es una estimación de validación para ensambles de bagging que utiliza, para cada punto de entrenamiento, solo los modelos cuya muestra bootstrap no incluyó ese punto. Como cada muestra bootstrap deja fuera cerca del 36,8 % de los datos, cada punto queda fuera de la bolsa en aproximadamente un tercio de los árboles, y su predicción agregada actúa como una predicción sobre datos reservados.\n\nComparar estas predicciones OOB con las etiquetas reales da una exactitud, un R² u otra métrica que aproxima la validación cruzada sin modelos adicionales ni una partición de validación. Resulta cómoda para ajustar random forests con conjuntos de datos pequeños y para comprobar si añadir más árboles sigue ayudando. Las predicciones OOB las hace solo un tercio del ensamble, así que con pocos árboles la estimación es ruidosa y algo pesimista. Como cualquier remuestreo por filas, es demasiado optimista cuando las filas no son independientes, por ejemplo con series temporales o mediciones repetidas del mismo cliente; en esos casos se necesita una partición agrupada o temporal.",
+  "u": [
+   "Ajustar random forests sin partición de validación",
+   "Estimación rápida de la generalización con conjuntos de datos pequeños",
+   "Elegir el número de árboles en bagging"
+  ],
+  "x": "Un pequeño laboratorio de genómica con solo unos cientos de muestras de pacientes usa la puntuación OOB del random forest en lugar de un conjunto de validación aparte, para no desperdiciar datos. Ajusta max_features comparando la exactitud OOB en una pequeña rejilla. Antes de publicar, confirma el resultado con validación cruzada agrupada, porque algunos pacientes aportaron varias muestras."
+ },
+ "rf": {
+  "n": "Random forest (bosque aleatorio)",
+  "d": "Un random forest es un ensamble de árboles de decisión, cada uno entrenado sobre una muestra bootstrap de los datos, cuyas predicciones se promedian o se combinan por votación. Su aportación clave respecto al bagging es el submuestreo de variables: en cada división, cada árbol considera solo un subconjunto aleatorio de variables y elige la mejor división entre ellas.\n\nMuestrear las variables de nuevo en cada división, y no una sola vez por árbol, impide que los predictores fuertes dominen todos los árboles y decorrelaciona el ensamble, lo que permite que el promedio reduzca mucho más la varianza. Los árboles suelen hacerse crecer profundos, ya que el promedio se encarga de su varianza. Los random forests funcionan bien sin ajustes sobre datos tabulares, no sobreajustan al añadir más árboles, ofrecen una estimación out-of-bag del error gratuita y se paralelizan fácilmente. Sin embargo, suelen ser menos precisos que un gradient boosting bien ajustado, producen modelos grandes con inferencia más lenta, no pueden extrapolar fuera del rango de los objetivos de entrenamiento y sus importancias por defecto, basadas en la impureza, están sesgadas a favor de las variables de alta cardinalidad.",
+  "u": [
+   "Modelo por defecto sólido para clasificación tabular",
+   "Filtrado de variables con importancia por permutación",
+   "Líneas base robustas con conjuntos de datos pequeños y ruidosos"
+  ],
+  "x": "Un equipo de calidad de fabricación predice piezas defectuosas a partir de lecturas de sensores con un random forest de 500 árboles. Casi no necesitó ajuste, maneja canales de sensores ausentes tras una imputación sencilla y su puntuación OOB se corresponde bien con la exactitud en producción. Cuando la latencia se convirtió en un problema en los dispositivos edge, redujeron la profundidad y el número de árboles tras medir el coste en exactitud."
+ },
+ "maxfeat": {
+  "n": "Submuestreo de variables (max_features)",
+  "d": "El submuestreo de variables restringe cada división de un árbol a un subconjunto aleatorio de las variables, controlado en scikit-learn por el parámetro max_features. El árbol sigue eligiendo la mejor división entre las variables muestreadas, y en cada nodo se extrae un subconjunto nuevo.\n\nEste es el ingrediente que convierte un conjunto de árboles con bagging en un random forest. Cuando una o dos variables son muy fuertes, el bagging simple produce árboles que dividen primero por ellas, de modo que los árboles están correlacionados y el promedio ayuda poco. Ocultar esas variables en algunas divisiones obliga a los árboles a explorar otra estructura y reduce la correlación entre ellos, lo que disminuye la varianza del ensamble. Los valores por defecto habituales son √p en clasificación y entre p/3 y p en regresión; RandomForestRegressor de scikit-learn usa todas las variables por defecto. Los valores más pequeños aumentan la diversidad pero elevan el sesgo de cada árbol, y con muchas variables irrelevantes un subconjunto pequeño puede a menudo no contener ninguna variable útil. XGBoost ofrece opciones similares, colsample_bytree y colsample_bynode.",
+  "u": [
+   "Decorrelacionar los árboles de un random forest",
+   "Regularizar el gradient boosting mediante muestreo de columnas",
+   "Acelerar el entrenamiento con conjuntos de datos muy anchos"
+  ],
+  "x": "El random forest de un equipo de marketing dividía una y otra vez por una única variable de gasto dominante, y añadir árboles había dejado de mejorar las puntuaciones de validación. Bajar max_features de todas las variables a la raíz cuadrada hizo los árboles más diversos y mejoró la exactitud out-of-bag. Eligieron el valor final comparando las puntuaciones OOB en una pequeña rejilla."
+ },
+ "extratrees": {
+  "n": "Extra Trees",
+  "d": "Extra Trees, abreviatura de extremely randomized trees (árboles extremadamente aleatorizados), es un ensamble de árboles que añade aleatoriedad tanto a los umbrales de división como a las variables. En cada nodo muestrea un subconjunto de variables, extrae para cada una un umbral aleatorio dentro del rango de esa variable en el nodo y se queda con la mejor de estas divisiones candidatas aleatorias.\n\nComo los umbrales no se optimizan, cada árbol tiene algo más de sesgo, pero los árboles están menos correlacionados y la varianza del ensamble baja todavía más que en un random forest. Omitir la búsqueda completa de umbrales también acelera el entrenamiento. Por defecto, Extra Trees de scikit-learn ajusta cada árbol sobre todo el conjunto de entrenamiento sin muestreo bootstrap, así que las puntuaciones out-of-bag no están disponibles a menos que se active bootstrap. Extra Trees suele igualar en exactitud a los random forests, puede superarlos con datos ruidosos de alta dimensionalidad y da superficies de regresión más suaves. Puede rendir peor cuando solo unas pocas variables aportan señal mediante umbrales precisos, ya que los puntos de corte aleatorios pueden no encontrarlos.",
+  "u": [
+   "Ensambles de árboles rápidos sobre grandes datos tabulares",
+   "Reducción de la varianza con variables ruidosas de alta dimensionalidad",
+   "Filtrado de variables por importancia con bajo coste de cómputo"
+  ],
+  "x": "Un equipo de teledetección clasifica la cobertura del suelo a partir de cientos de bandas espectrales por píxel. Cambió de random forest a Extra Trees porque el entrenamiento era más rápido con millones de píxeles y la exactitud era la misma en sus mapas de validación. El entrenamiento más rápido le permite reentrenar un modelo para cada nueva escena de satélite."
+ },
+ "boosting": {
+  "n": "Boosting",
+  "d": "El boosting construye un modelo fuerte añadiendo aprendices débiles de uno en uno, de modo que cada nuevo aprendiz se centra en los errores del ensamble construido hasta ese momento. La predicción es una suma ponderada de todos los aprendices, normalmente árboles poco profundos.\n\nEn AdaBoost, los ejemplos mal clasificados reciben pesos mayores para que el siguiente aprendiz se concentre en ellos. En gradient boosting, cada árbol nuevo se ajusta al gradiente negativo de la pérdida respecto a las predicciones del ensamble actual, que en el caso del error cuadrático es simplemente el residuo de todo el ensamble hasta ese momento. A diferencia del bagging, que entrena modelos independientes en paralelo para reducir la varianza, el boosting es secuencial y reduce principalmente el sesgo. Los árboles con boosting, como en XGBoost, LightGBM y CatBoost, encabezan la mayoría de los benchmarks tabulares. Como cada paso sigue ajustando los errores de entrenamiento, el boosting puede sobreajustar con demasiadas rondas o árboles profundos, por lo que una tasa de aprendizaje pequeña, la parada temprana sobre datos de validación y la regularización son esenciales. El ruido en las etiquetas es otra debilidad, sobre todo en AdaBoost.",
+  "u": [
+   "Modelos ganadores en tareas de predicción tabular",
+   "Learning to rank para búsqueda y recomendaciones",
+   "Puntuación de riesgo con muchas variables heterogéneas"
+  ],
+  "x": "Un marketplace online predice la probabilidad de que un anuncio se venda en una semana usando árboles con gradient boosting sobre variables de precio, historial del vendedor y categoría. Eligió el boosting porque superaba sistemáticamente a las redes neuronales en sus datos tabulares con mucho menos ajuste. Utiliza parada temprana sobre un conjunto de validación temporal para elegir el número de árboles."
+ },
+ "adaboost": {
+  "n": "AdaBoost",
+  "d": "AdaBoost (Adaptive Boosting) es el primer algoritmo de boosting práctico: entrena una secuencia de clasificadores débiles, normalmente tocones de decisión (decision stumps) con una sola división, y tras cada ronda aumenta los pesos de los ejemplos de entrenamiento que el clasificador actual ha fallado. Así, el siguiente clasificador se ve obligado a concentrarse en los casos difíciles.\n\nCada clasificador recibe además un peso de voto α = ½ ln((1 − ε)/ε), donde ε es su error ponderado, de modo que los aprendices más precisos tienen más peso en el voto mayoritario ponderado final. Puede demostrarse que AdaBoost realiza un modelado aditivo por etapas hacia delante con la pérdida exponencial, lo que lo vincula con el gradient boosting. Es sencillo, tiene pocos hiperparámetros y, históricamente, impulsó el detector de rostros en tiempo real de Viola-Jones. Su principal debilidad es la sensibilidad al ruido en las etiquetas y a los valores atípicos: los puntos mal etiquetados reciben pesos que crecen exponencialmente y pueden dominar las rondas posteriores. En los benchmarks tabulares modernos suele quedar por detrás de las bibliotecas de gradient boosting, que admiten otras pérdidas, regularización y un entrenamiento mucho más rápido.",
+  "u": [
+   "Boosting de tocones de decisión para clasificadores sencillos",
+   "Detección de objetos en tiempo real en cascada",
+   "Enseñar la idea central de reponderar los errores"
+  ],
+  "x": "El detector de rostros de Viola-Jones, usado en las primeras cámaras digitales, aplicaba AdaBoost para seleccionar un pequeño número de variables informativas de tipo Haar entre un conjunto muy grande. Los clasificadores obtenidos con boosting se organizaban en cascada, de modo que la mayoría de las ventanas de fondo se descartaban tras evaluar solo unas pocas variables. Esto hizo posible la detección en tiempo real con hardware modesto."
+ },
+ "gbm": {
+  "n": "Gradient boosting",
+  "d": "El gradient boosting construye un modelo aditivo de árboles de decisión en el que cada árbol nuevo se entrena para predecir el gradiente negativo de la función de pérdida respecto a las predicciones del ensamble actual. Visto así, el boosting es un descenso de gradiente en el espacio de funciones: cada árbol es un paso que desplaza las predicciones cuesta abajo en la pérdida.\n\nCon el error cuadrático, el gradiente negativo es simplemente el residuo y − F(x); con la log loss es y − p. Solo cambia el gradiente, así que un mismo algoritmo sirve para regresión, clasificación, ranking y objetivos personalizados. Los hiperparámetros clave son la tasa de aprendizaje, el número de árboles, el tamaño de los árboles y el mínimo de muestras por hoja. Una tasa de aprendizaje más baja con más árboles suele generalizar mejor, y la parada temprana sobre la pérdida de validación elige el número de árboles. Las implementaciones clásicas, como GradientBoostingClassifier de scikit-learn, usan todas las filas por defecto (subsample = 1.0). Sin ajustar, el gradient boosting sobreajusta con más facilidad que los random forests, y su entrenamiento secuencial solo se paraleliza dentro de cada árbol.",
+  "u": [
+   "Regresión y clasificación tabular en producción",
+   "Ranking con objetivos por pares o por listas",
+   "Modelado de la severidad y la frecuencia de siniestros en seguros"
+  ],
+  "x": "Una aseguradora predice la frecuencia de siniestros con árboles de gradient boosting usando una pérdida de Poisson y la exposición como offset. El boosting capturó interacciones entre la edad del conductor, el tipo de vehículo y la región que el modelo lineal generalizado anterior pasaba por alto. Aun así, el equipo de tarificación revisa los gráficos de dependencia parcial antes de cada versión para asegurarse de que los efectos son plausibles."
+ },
+ "xgboost": {
+  "n": "XGBoost",
+  "d": "XGBoost es una biblioteca de gradient boosting muy utilizada que añade regularización explícita y un paso de optimización de segundo orden a los árboles clásicos de gradient boosting. Para cada árbol candidato utiliza tanto el gradiente g como el hessiano h de la pérdida, calcula de forma cerrada los pesos óptimos de las hojas y puntúa las divisiones según cuánto reducen un objetivo regularizado.\n\nEl objetivo penaliza el número de hojas mediante γ y el tamaño de los pesos de las hojas mediante λ (L2) y α (L1), lo que hace los árboles más conservadores. XGBoost también aprende una dirección por defecto para los valores faltantes en cada división y admite búsqueda de divisiones exacta, aproximada y basada en histogramas, submuestreo de columnas y filas, entrenamiento en GPU y objetivos personalizados. Se convirtió en una herramienta estándar para datos tabulares. Los errores más comunes son ajustar solo n_estimators dejando max_depth demasiado grande, olvidar la parada temprana y suponer que el submuestreo de filas está activado por defecto; subsample vale 1 por defecto. Con datos muy grandes o con variables categóricas de alta cardinalidad, LightGBM o CatBoost pueden ser más rápidos o más cómodos.",
+  "u": [
+   "Predicción de clics y conversiones sobre logs tabulares",
+   "Detección de fraude con variables faltantes y dispersas",
+   "Línea base sólida en competiciones de ciencia de datos"
+  ],
+  "x": "Una empresa de pagos puntúa cada transacción con tarjeta mediante un modelo XGBoost con variables como el importe, la categoría del comercio y conteos de velocidad recientes. El método de árboles por histogramas mantiene el reentrenamiento nocturno sobre cientos de millones de filas dentro de un presupuesto de tiempo fijo. La inferencia tarda unos pocos milisegundos por transacción, y se registran los valores SHAP para que los analistas puedan explicar los rechazos."
+ },
+ "lightgbm": {
+  "n": "LightGBM",
+  "d": "LightGBM es una biblioteca de gradient boosting de Microsoft diseñada para ser rápida y eficiente en memoria con grandes conjuntos de datos. Agrupa las variables continuas en histogramas, hace crecer los árboles hoja a hoja (leaf-wise) en lugar de nivel a nivel, y ofrece técnicas como Gradient-based One-Side Sampling (GOSS) y Exclusive Feature Bundling para reducir aún más el trabajo.\n\nEl crecimiento hoja a hoja siempre divide la hoja con mayor reducción de la pérdida, de modo que, para el mismo número de hojas, suele alcanzar una pérdida de entrenamiento menor que el crecimiento por profundidad. La contrapartida es que los árboles pueden volverse muy profundos y sobreajustar conjuntos de datos pequeños; por eso num_leaves es el principal control de complejidad, junto con min_data_in_leaf y max_depth. LightGBM maneja de forma nativa las variables categóricas buscando una agrupación óptima de las categorías, y trata automáticamente los valores faltantes. Es una primera opción habitual para grandes problemas tabulares y para learning to rank. Un error frecuente es fijar num_leaves cerca de 2^max_depth con pocos datos, lo que produce modelos sobreajustados; otro es pasar variables categóricas de alta cardinalidad sin suficiente regularización, lo que también puede sobreajustar.",
+  "u": [
+   "Clasificación y regresión tabular a gran escala",
+   "Learning to rank con el objetivo LambdaRank",
+   "Previsión de la demanda con muchas variables de retardo"
+  ],
+  "x": "Una empresa de reparto de supermercado prevé la demanda por artículo para miles de tiendas con LightGBM sobre variables de retardo, calendario y promociones. Eligió LightGBM porque un único modelo global se entrena con cientos de millones de filas en minutos en una sola máquina. Los ID de tienda y de artículo se pasan como variables categóricas, con min_data_per_group aumentado para evitar el sobreajuste en artículos poco frecuentes."
+ },
+ "catboost": {
+  "n": "CatBoost",
+  "d": "CatBoost es una biblioteca de gradient boosting de Yandex diseñada para variables categóricas y para reducir un tipo sutil de sobreajuste llamado desplazamiento de la predicción (prediction shift). Convierte las categorías en números mediante estadísticos de objetivo ordenados: la codificación de cada fila se calcula solo a partir de los valores objetivo de las filas que la preceden en una permutación aleatoria, de modo que la propia etiqueta de una fila nunca se filtra a su variable.\n\nLa misma idea, el boosting ordenado, se aplica a los gradientes que se usan para construir los árboles. CatBoost también hace crecer árboles oblivious (simétricos), en los que todos los nodos de una misma profundidad usan la misma división; esto actúa como regularizador y hace la inferencia muy rápida. Como resultado, CatBoost suele dar buenos resultados con la configuración por defecto en datos con muchas variables categóricas de alta cardinalidad, como los ID de usuario o de producto. El entrenamiento puede ser más lento que con LightGBM en datos puramente numéricos, y las columnas categóricas deben declararse explícitamente; pasarlas como códigos enteros sin declararlas hace perder la ventaja de la codificación ordenada.",
+  "u": [
+   "Datos tabulares con muchas variables categóricas de alta cardinalidad",
+   "Buenos resultados con poco ajuste de hiperparámetros",
+   "Puntuación de baja latencia con árboles simétricos"
+  ],
+  "x": "Un sitio de reservas de viajes predice si un usuario reservará un hotel usando variables como la ciudad, el ID del hotel, el dispositivo y la fuente de tráfico, muchas de ellas con miles de niveles. Se eligió CatBoost porque sus estadísticos de objetivo ordenados evitaban la fuga de información que el equipo había observado con el target encoding manual. Los árboles simétricos también mantienen baja la latencia al ordenar cientos de hoteles por búsqueda."
+ },
+ "goss": {
+  "n": "GOSS (Gradient-based One-Side Sampling)",
+  "d": "GOSS es una técnica de muestreo de filas introducida en LightGBM que acelera el gradient boosting conservando todos los ejemplos de entrenamiento con gradientes grandes y solo una fracción aleatoria de los que tienen gradientes pequeños. Los ejemplos con gradiente pequeño ya están bien ajustados, así que aportan poca información a la siguiente división.\n\nEn concreto, GOSS ordena las filas por el valor absoluto de su gradiente, conserva la fracción a superior, muestrea al azar una fracción b del resto y multiplica las filas muestreadas de gradiente pequeño por (1 − a)/b al calcular la ganancia de las divisiones. Esa reponderación mantiene la estimación de la ganancia aproximadamente insesgada y reduce mucho el número de filas procesadas en cada iteración. Se diferencia del submuestreo aleatorio uniforme del gradient boosting estocástico, que ignora los gradientes. Una salvedad es que puede amplificar la influencia de los puntos ruidosos o mal etiquetados, que a menudo tienen gradientes grandes; en las versiones recientes de LightGBM se selecciona con data_sample_strategy=\"goss\" en lugar de como tipo de boosting.",
+  "u": [
+   "Boosting más rápido con conjuntos de datos tabulares muy grandes",
+   "Reducir el coste por iteración en el entrenamiento de LightGBM",
+   "Concentrar el cómputo en los ejemplos mal ajustados"
+  ],
+  "x": "Un equipo de ad tech reentrena varias veces al día un modelo de clics con LightGBM sobre miles de millones de logs de impresiones. Activar GOSS redujo sustancialmente el tiempo de entrenamiento con solo un pequeño cambio en la log loss de validación, algo que verificaron en una comparación offline antes de hacer el cambio. Vigilan el efecto por separado en las categorías de anuncios poco frecuentes, donde un muestreo agresivo podría perjudicar."
+ },
+ "histsplit": {
+  "n": "División basada en histogramas",
+  "d": "La división basada en histogramas acelera el entrenamiento de árboles de decisión discretizando primero cada variable continua en un número reducido de bins, normalmente 255, y buscando después divisiones solo en los límites entre bins. En lugar de ordenar todos los valores de cada variable en cada nodo, el algoritmo acumula la suma de gradientes y hessianos (o los conteos) por bin y recorre estos histogramas cortos.\n\nAsí, la búsqueda de divisiones pasa de aproximadamente O(n) por variable y nodo, tras ordenar, a O(bins), y las variables se almacenan como enteros pequeños, lo que ahorra memoria. Otro truco es la resta de histogramas: el histograma de un hijo puede obtenerse restando el de su hermano al del padre, por lo que solo hay que construir el del hijo más pequeño. LightGBM, el método hist de XGBoost, CatBoost y HistGradientBoosting de scikit-learn se basan en esta técnica. La pérdida de precisión por la discretización rara vez perjudica a la exactitud y puede actuar como una regularización suave. Puede importar cuando una variable tiene un umbral importante que cae dentro de un bin ancho, o en variables con distribuciones muy asimétricas.",
+  "u": [
+   "Gradient boosting rápido sobre millones de filas",
+   "Entrenamiento eficiente en memoria con variables cuantizadas",
+   "Construcción de árboles acelerada por GPU para grandes conjuntos de datos"
+  ],
+  "x": "Una empresa de logística reentrena cada día un modelo de hora de llegada con decenas de millones de entregas pasadas. Pasar de la búsqueda exacta de divisiones a HistGradientBoostingRegressor de scikit-learn redujo el tiempo de entrenamiento de horas a minutos sin un cambio relevante en el error. El ciclo más rápido les permitió añadir variables nuevas y reentrenar con más frecuencia."
+ },
+ "subsample": {
+  "n": "Submuestreo de filas (GB estocástico)",
+  "d": "El submuestreo de filas, introducido como gradient boosting estocástico, entrena cada árbol del boosting con una fracción aleatoria de las filas de entrenamiento extraída sin reemplazo. Los valores típicos del parámetro subsample están entre 0,5 y 0,9.\n\nLa aleatoriedad hace que los árboles sucesivos dependan menos de los mismos puntos, lo que regulariza el modelo y a menudo mejora el error de prueba. También abarata cada iteración. En las bibliotecas, el parámetro hay que activarlo explícitamente: GradientBoosting de scikit-learn, XGBoost y LightGBM usan todas las filas por defecto, es decir, subsample = 1.0, y LightGBM además requiere bagging_freq > 0 para que bagging_fraction tenga efecto. Si la fracción es demasiado pequeña, cada árbol ve muy pocos datos y el modelo necesita muchas más rondas, lo que puede aumentar el tiempo total de entrenamiento y el ruido. Con datos desbalanceados, el muestreo simple de filas puede dejar pocos positivos por árbol; en ese caso conviene mantener una fracción más alta o usar un muestreo estratificado o que tenga en cuenta el gradiente, como GOSS.",
+  "u": [
+   "Regularizar el gradient boosting contra el sobreajuste",
+   "Reducir el coste de entrenamiento por árbol con datos grandes",
+   "Añadir diversidad a los ensambles de árboles con boosting"
+  ],
+  "x": "Un equipo de predicción del abandono descubrió que su modelo XGBoost sobreajustaba a unos pocos usuarios muy activos. Fijar subsample en 0,7 y colsample_bytree en 0,8, junto con una tasa de aprendizaje más baja, mejoró el AUC de validación e hizo los resultados más estables entre reentrenamientos. En producción fijan la semilla aleatoria para que las diferencias entre reentrenamientos reflejen cambios en los datos y no ruido de muestreo."
+ },
+ "shrinkage": {
+  "n": "Shrinkage (tasa de aprendizaje en boosting)",
+  "d": "El shrinkage escala la contribución de cada árbol nuevo de un ensamble de boosting por una tasa de aprendizaje η entre 0 y 1, de modo que en cada paso el modelo solo avanza parte del camino hacia la corrección de sus errores actuales. En lugar de F_m = F_{m−1} + h_m, la actualización pasa a ser F_m = F_{m−1} + η·h_m.\n\nLos pasos más pequeños dejan margen para que los árboles posteriores corrijan errores y reducen la dependencia de cualquier árbol individual, lo que mejora la generalización. El coste es que una tasa de aprendizaje menor necesita proporcionalmente más árboles para alcanzar la misma pérdida de entrenamiento, por lo que η y el número de estimadores deben ajustarse conjuntamente. Una práctica habitual es fijar una tasa entre 0,01 y 0,1 y elegir el número de árboles con parada temprana. Un error frecuente es ajustar el número de árboles con una tasa de aprendizaje y luego cambiar la tasa sin volver a ajustarlo. El shrinkage del boosting no tiene relación con los estimadores de contracción (shrinkage estimators) como la regresión ridge, aunque ambos reducen la varianza.",
+  "u": [
+   "Mejorar la generalización de los árboles con gradient boosting",
+   "Intercambiar tiempo de entrenamiento por exactitud en boosting",
+   "Combinarlo con parada temprana para fijar el número de árboles"
+  ],
+  "x": "Un equipo de riesgo de crédito entrena los modelos LightGBM finales con una tasa de aprendizaje de 0,02 y parada temprana, tras hacer una búsqueda de hiperparámetros más rápida con 0,1. La tasa más baja da una ganancia pequeña pero constante en el AUC de validación, a costa de varias veces más árboles. Antes del despliegue, comprueban que los árboles adicionales siguen cumpliendo el presupuesto de latencia de puntuación."
+ },
+ "stacking": {
+  "n": "Stacking",
+  "d": "El stacking, o generalización apilada, combina varios modelos distintos entrenando un modelo de segundo nivel, el metaaprendiz, que hace la predicción final a partir de las salidas de los modelos base. En lugar de promediar con pesos fijos, el metaaprendiz aprende cuánto confiar en cada modelo base y, posiblemente, en qué casos.\n\nEl detalle crucial es que el metaaprendiz debe entrenarse con predicciones out-of-fold: cada modelo base se ajusta con validación cruzada de K particiones, y sus predicciones sobre las particiones reservadas forman las variables de entrenamiento del segundo nivel. Usar predicciones sobre la propia muestra de entrenamiento filtraría las etiquetas y haría que el metaaprendiz confiara en modelos sobreajustados. El stacking funciona mejor con aprendices base diversos, por ejemplo un modelo de gradient boosting, un modelo lineal y una red neuronal, y con un metaaprendiz sencillo, como una regresión logística o lineal regularizada. A menudo da ganancias pequeñas pero fiables y es popular en las competiciones. En producción multiplica el coste y la complejidad del entrenamiento y la inferencia, así que la ganancia debe justificar mantener varios modelos.",
+  "u": [
+   "Combinar modelos diversos para las clasificaciones de competiciones",
+   "Mezclar modelos de árboles y lineales sobre datos tabulares",
+   "Fusionar predicciones de modelos de texto y tabulares"
+  ],
+  "x": "Un equipo de fraude en seguros apila un modelo de gradient boosting sobre los datos tabulares de los siniestros con un clasificador de texto sobre las notas de los peritos, y usa una regresión logística como metaaprendiz. Las predicciones out-of-fold de una validación cruzada de cinco particiones entrenan al metaaprendiz, lo que evita la fuga de información. El modelo combinado supera a cada entrada por separado, y los coeficientes del metaaprendiz muestran cuánto aporta cada fuente."
+ },
+ "voting": {
+  "n": "Ensamble por votación",
+  "d": "Un ensamble por votación combina las predicciones de varios modelos entrenados de forma independiente con una regla fija en lugar de una aprendida. En la votación dura (hard voting), cada clasificador vota por una clase y gana la mayoría; en la votación suave (soft voting), se promedian las probabilidades de clase predichas, opcionalmente con pesos, y se elige la clase con el promedio más alto. En regresión, el equivalente es promediar las predicciones.\n\nLa votación ayuda cuando los modelos son razonables por separado y cometen distintos tipos de errores, porque los errores no correlacionados tienden a cancelarse. La votación suave suele superar a la dura porque aprovecha la confianza de cada modelo, pero requiere probabilidades razonablemente calibradas; un modelo mal calibrado o con exceso de confianza puede dominar el promedio. La votación es más sencilla y menos propensa al sobreajuste que el stacking, porque no hay ningún metaaprendiz que entrenar, pero no puede aprender que un modelo es mejor en ciertas situaciones. Añadir un modelo débil o muy correlacionado puede empeorar el ensamble, así que cada miembro debe ganarse su lugar en la validación.",
+  "u": [
+   "Combinar clasificadores diversos para obtener predicciones robustas",
+   "Promediar modelos entrenados con distintas semillas aleatorias",
+   "Ensambles sencillos donde el stacking sobreajustaría"
+  ],
+  "x": "Una startup de imagen médica promedia las probabilidades de tres redes convolucionales con arquitecturas distintas para señalar exploraciones sospechosas. La votación suave redujo el número de errores cometidos con mucha confianza en comparación con cualquier red individual. Calibran cada red con temperature scaling antes de promediar para que ningún modelo domine."
+ },
+ "confusion": {
+  "n": "Matriz de confusión",
+  "d": "Una matriz de confusión es una tabla que cuenta cómo se corresponden las predicciones de un clasificador con las etiquetas reales, con una fila por cada clase real y una columna por cada clase predicha. En un problema binario contiene cuatro celdas: verdaderos positivos, falsos positivos, falsos negativos y verdaderos negativos.\n\nCasi todas las métricas de clasificación se calculan a partir de estos conteos. La precisión usa la columna de positivos predichos, el recall usa la fila de positivos reales y la exactitud usa la diagonal. En problemas multiclase, las celdas fuera de la diagonal muestran exactamente qué clases se confunden entre sí, lo que ayuda más a depurar que una sola puntuación; por ejemplo, puede revelar que un modelo mezcla dos categorías de producto parecidas mientras maneja bien el resto. Normalizar cada fila por su total muestra el recall por clase. Una matriz de confusión binaria depende del umbral de decisión elegido, así que describe un punto de operación, no el modelo en su conjunto. Las convenciones también varían: scikit-learn pone las clases reales en las filas, mientras que algunos libros de texto usan la traspuesta.",
+  "u": [
+   "Diagnosticar qué clases confunde un modelo",
+   "Derivar la precisión, el recall y la especificidad",
+   "Comunicar los tipos de error a las partes interesadas del negocio"
+  ],
+  "x": "Una empresa de procesamiento de documentos clasifica formularios escaneados en veinte tipos y revisa una matriz de confusión normalizada por filas tras cada reentrenamiento. Esta mostró que dos formularios fiscales parecidos se intercambiaban con frecuencia, así que añadieron una variable extraída del encabezado del formulario. Vigilar esa celda en producción confirmó después que la corrección se mantenía."
+ },
+ "accuracy": {
+  "n": "Exactitud (accuracy)",
+  "d": "La exactitud es la fracción de predicciones correctas: el número de verdaderos positivos y verdaderos negativos dividido por el número total de ejemplos. Es la métrica de clasificación más intuitiva y funciona bien cuando las clases están más o menos equilibradas y todos los tipos de error tienen un coste similar.\n\nSu gran debilidad es el desbalance de clases. Si solo el 1 % de las transacciones son fraudulentas, un modelo que predice «no fraude» para todo alcanza un 99 % de exactitud sin detectar nada. En esos casos, la precisión, el recall, F1, PR-AUC o la exactitud balanceada (el promedio del recall por clase) dan una imagen más honesta. La exactitud también oculta qué errores se producen y depende del umbral de decisión, de modo que dos modelos con la misma exactitud pueden comportarse de forma muy distinta. Un buen hábito es compararla siempre con la línea base de la clase mayoritaria. La exactitud top-k, que cuenta una predicción como correcta si la clase verdadera está entre las k clases con mayor puntuación, es habitual en clasificación de imágenes y en recomendación.",
+  "u": [
+   "Evaluar clasificadores de imágenes multiclase equilibrados",
+   "Exactitud top-k para espacios de etiquetas grandes",
+   "Comprobación rápida frente a la línea base de la clase mayoritaria"
+  ],
+  "x": "Un equipo de e-commerce que clasifica fotos de productos en categorías equilibradas reporta la exactitud top-1 y top-5 como sus métricas principales. En cambio, para su modelo de fraude en devoluciones evita explícitamente la exactitud, porque el fraude es poco frecuente y un modelo trivial parecería excelente. Ese modelo se evalúa con la precisión a una capacidad de revisión fija."
+ },
+ "precision": {
+  "n": "Precisión (precision)",
+  "d": "La precisión es la fracción de predicciones positivas que son realmente positivas. Responde a la pregunta: cuando el modelo da la alarma, ¿con qué frecuencia acierta? No tiene en cuenta los negativos correctamente rechazados ni los positivos que se escapan.\n\nLa precisión importa sobre todo cuando los falsos positivos son costosos, por ejemplo cuando un pago marcado bloquea a un cliente legítimo o cuando cada alerta requiere revisión humana. Subir el umbral de decisión suele aumentar la precisión y reducir el recall, así que ambas deben reportarse juntas o combinarse en un único número como F1. La precisión depende de la probabilidad a priori de la clase: el mismo modelo mostrará menos precisión en una población donde los positivos son más raros, aunque su capacidad para separar las clases no haya cambiado. La precisión en k, es decir, la precisión entre los k elementos mejor clasificados, es la variante estándar para búsquedas y colas de revisión. La precisión no está definida cuando el modelo no hace ninguna predicción positiva, y en ese caso las bibliotecas devuelven 0 con una advertencia.",
+  "u": [
+   "Sistemas de alertas con capacidad limitada de revisión humana",
+   "Filtrado de spam donde los falsos positivos perjudican a los usuarios",
+   "Precisión en k para medir la calidad de los resultados de búsqueda"
+  ],
+  "x": "El equipo de prevención del blanqueo de capitales de un banco solo puede investigar un número fijo de alertas al día, así que ajusta el umbral del modelo para maximizar la precisión entre los casos mejor clasificados. Reporta la precisión a esa capacidad diaria en lugar de la exactitud global. Cuando la precisión cae, los investigadores pierden tiempo con falsas alarmas, por lo que se sigue semanalmente."
+ },
+ "recall": {
+  "n": "Recall (sensibilidad)",
+  "d": "El recall, también llamado sensibilidad o tasa de verdaderos positivos, es la fracción de positivos reales que el modelo identifica correctamente. Responde a la pregunta: de todos los casos que deberíamos haber detectado, ¿cuántos detectamos?\n\nEl recall es la métrica clave cuando no detectar un positivo es caro, como en el cribado del cáncer, la detección de fraude o la inspección de defectos críticos para la seguridad. Bajar el umbral de decisión aumenta el recall, pero también produce más falsos positivos y reduce la precisión, de modo que el recall por sí solo siempre puede hacerse perfecto prediciendo todo como positivo. Por eso debe reportarse junto con la precisión o con la especificidad, que es el recall de la clase negativa. A diferencia de la precisión, el recall no depende de la probabilidad a priori de la clase, porque solo considera los positivos reales. En recuperación de información y recomendación, el recall en k mide la fracción de todos los elementos relevantes que aparecen entre los k primeros resultados, y es la métrica habitual para evaluar la etapa de generación de candidatos de un recomendador o un índice de búsqueda vectorial.",
+  "u": [
+   "Cribado de enfermedades donde los casos no detectados son peligrosos",
+   "Recall en k para la generación de candidatos en recuperación",
+   "Detección de defectos en líneas de fabricación"
+  ],
+  "x": "Un fabricante de semiconductores fija el umbral de su detector de defectos en obleas para que el recall sobre un conjunto reservado de defectos conocidos se mantenga por encima de un objetivo acordado con los ingenieros de calidad. Las falsas alarmas resultantes se revisan en un segundo paso de inspección más lento. El recall se recalcula para cada nueva línea de producto, porque los tipos de defecto nuevos suelen pasar desapercibidos al principio."
+ },
+ "f1": {
+  "n": "Puntuación F1",
+  "d": "La puntuación F1 es la media armónica de la precisión y el recall, y da un único número que solo es alto cuando ambos lo son. Como la media armónica está dominada por el valor más pequeño, un modelo con precisión 1,0 y recall 0,1 obtiene un F1 de aproximadamente 0,18, no de 0,55 como daría un promedio simple.\n\nF1 es habitual en clasificación desbalanceada y en tareas como el reconocimiento de entidades nombradas, donde los verdaderos negativos son numerosos y poco informativos; F1 no utiliza los TN en absoluto. La puntuación F-beta, más general, pondera el recall β veces más que la precisión, de modo que F2 favorece el recall y F0.5 la precisión. En problemas multiclase, el macro-F1 promedia por igual el F1 de cada clase, lo que da visibilidad a las clases raras, mientras que el micro-F1 agrega todos los conteos y, en tareas multiclase de una sola etiqueta, equivale a la exactitud. F1 depende del umbral de decisión, así que comparar modelos con el valor por defecto de 0,5 puede ser engañoso. Además, supone que la precisión y el recall importan lo mismo, algo que rara vez ocurre en la práctica.",
+  "u": [
+   "Evaluar el reconocimiento de entidades nombradas y la extracción de información",
+   "Comparar modelos de clasificación desbalanceada",
+   "Macro-F1 para tareas multiclase con clases raras"
+  ],
+  "x": "Una empresa de legal tech evalúa su modelo de extracción de cláusulas con F1 a nivel de entidad, porque tanto las cláusulas omitidas como las extracciones espurias generan trabajo de revisión. Sigue el macro-F1 por tipo de cláusula para que las cláusulas raras pero importantes no queden ocultas por las comunes. Cuando un cliente prioriza la exhaustividad, reporta F2 en su lugar."
+ },
+ "roc": {
+  "n": "Curva ROC",
+  "d": "La curva ROC (receiver operating characteristic) muestra cómo un clasificador binario intercambia verdaderos positivos por falsos positivos a medida que se desplaza su umbral de decisión. Cada punto representa la tasa de verdaderos positivos (recall) frente a la tasa de falsos positivos para un umbral, trazando una curva de (0, 0) a (1, 1).\n\nUn clasificador perfecto alcanza la esquina superior izquierda, mientras que adivinar al azar queda sobre la diagonal. Como ambas tasas se calculan dentro de una sola clase, la curva no cambia si cambia la proporción entre clases, lo que la hace útil para comparar la capacidad de ordenación de un modelo entre conjuntos de datos. Esa misma propiedad es una debilidad con un desbalance fuerte: una tasa de falsos positivos del 1 % puede seguir significando miles de falsas alarmas cuando los negativos superan con creces a los positivos, algo que en el gráfico ROC parece pequeño. En ese caso, la curva de precisión-recall es más informativa. La curva ROC depende solo del orden de las puntuaciones, así que no dice nada sobre si las probabilidades predichas están calibradas.",
+  "u": [
+   "Elegir un punto de operación para un clasificador",
+   "Comparar la calidad de ordenación entre modelos",
+   "Evaluación de pruebas diagnósticas en medicina"
+  ],
+  "x": "Un proveedor de IA para radiología presenta a los hospitales las curvas ROC de su detector de fracturas, junto con la sensibilidad y la especificidad en el punto de operación que se usa en la práctica. Así, cada hospital puede elegir un umbral acorde con su propia tolerancia a las falsas alarmas. El proveedor reporta la curva por separado para cada fabricante de escáneres con el fin de revelar cambios en el rendimiento."
+ },
+ "rocauc": {
+  "n": "ROC-AUC",
+  "d": "El ROC-AUC es el área bajo la curva ROC y resume lo bien que un modelo ordena los positivos por encima de los negativos en todos los umbrales. Tiene un significado probabilístico directo: el AUC es igual a la probabilidad de que un ejemplo positivo elegido al azar reciba una puntuación mayor que un ejemplo negativo elegido al azar, contando los empates como la mitad.\n\nUn valor de 0,5 indica una ordenación aleatoria y 1,0 una separación perfecta. Como no depende del umbral y es insensible a la proporción entre clases, el ROC-AUC es una métrica estándar para comparar modelos en calificación crediticia, medicina y publicidad. Solo mide la ordenación, por lo que un modelo con buen AUC puede estar mal calibrado. Con un desbalance de clases fuerte, un AUC alto puede convivir con una precisión pobre, porque buena parte del área procede de tasas de falsos positivos tan altas que resultan inutilizables; en esos casos, PR-AUC o el AUC parcial suelen ser más relevantes. En calificación crediticia, el coeficiente de Gini equivale a 2·AUC − 1.",
+  "u": [
+   "Comparar modelos de calificación crediticia",
+   "Evaluación de pruebas diagnósticas sin depender del umbral",
+   "Seguir la calidad de ordenación de los modelos de clics"
+  ],
+  "x": "Un equipo de crédito al consumo sigue el ROC-AUC, reportado como Gini (2·AUC − 1), en cada cohorte mensual de préstamos para vigilar la degradación del modelo. Una caída desencadena una investigación sobre deriva de datos antes de que los problemas de calibración aparezcan en las tasas de pérdida. Como el AUC ignora la calibración, también vigilan por separado las tasas de impago predichas frente a las observadas."
+ },
+ "prcurve": {
+  "n": "Curva de precisión-recall",
+  "d": "La curva de precisión-recall representa la precisión frente al recall para cada posible umbral de decisión de un clasificador binario. Bajar el umbral aumenta el recall, normalmente a costa de la precisión, así que la curva muestra exactamente cuántas falsas alarmas hay que aceptar para detectar una determinada proporción de positivos.\n\nA diferencia de la curva ROC, la curva PR ignora los verdaderos negativos, lo que la hace mucho más informativa cuando los positivos son raros y los negativos abundantes, como en el fraude, las enfermedades raras o la recuperación de información. La referencia de un clasificador aleatorio es una línea horizontal a la altura de la tasa de positivos, no una diagonal, de modo que el significado de la curva depende de la proporción entre clases. Las curvas PR no son monótonas: la precisión puede subir y bajar al cambiar el umbral, y la práctica habitual es reportar la precisión interpolada, es decir, la máxima precisión en cualquier recall igual o mayor. Los equipos suelen usar la curva para elegir un umbral de operación que cumpla un requisito mínimo de precisión o de recall.",
+  "u": [
+   "Elegir umbrales para detectores de eventos raros",
+   "Evaluar sistemas de recuperación de información",
+   "Comparar modelos con datos muy desbalanceados"
+  ],
+  "x": "Una empresa de ciberseguridad que detecta inicios de sesión maliciosos traza curvas de precisión-recall porque los ataques son una fracción mínima del tráfico y la curva ROC parecía engañosamente buena. Elige el umbral en el que la precisión se mantiene por encima del nivel que sus analistas de seguridad pueden gestionar. Las curvas se recalculan cada semana, ya que la tasa de ataques cambia la referencia."
+ },
+ "prauc": {
+  "n": "PR-AUC",
+  "d": "El PR-AUC es el área bajo la curva de precisión-recall y resume lo bien que un clasificador encuentra positivos sin generar muchos falsos positivos en todos los umbrales. Lo más habitual es calcularlo como precisión media (average precision, AP), la media de los valores de precisión en cada umbral ponderada por el incremento del recall, lo que evita el sesgo optimista de la interpolación lineal entre los puntos de la curva.\n\nSu propiedad clave es que la referencia de un clasificador aleatorio es igual a la tasa de positivos. En un conjunto de datos con un 1 % de positivos, un PR-AUC de 0,3 puede ser un resultado excelente, mientras que un ROC-AUC de 0,9 sobre los mismos datos podría ocultar una precisión muy baja. Esto convierte al PR-AUC en la métrica resumen preferida para problemas de eventos raros como el fraude, la detección de defectos y la recuperación de información, donde la precisión media promedio (mAP) sobre consultas o clases es el estándar. Como la referencia depende de la prevalencia, los valores de PR-AUC no pueden compararse entre conjuntos de datos con tasas de positivos distintas. Además, da más peso a la región de puntuaciones altas, así que es sensible a los pocos errores mejor clasificados.",
+  "u": [
+   "Selección de modelos de detección de fraude y anomalías",
+   "Precisión media promedio (mAP) en detección de objetos",
+   "Evaluar la calidad de la recuperación y el ranking"
+  ],
+  "x": "Una empresa de pagos selecciona sus modelos de fraude por la precisión media sobre un conjunto reservado temporal, ya que el fraude está muy por debajo del uno por ciento de las transacciones. Reportar la tasa de positivos junto a la AP permite a las partes interesadas ver cuánto supera el modelo al azar. El ROC-AUC se sigue registrando, pero rara vez distinguía entre los modelos candidatos."
+ },
+ "threshold": {
+  "n": "Umbral de decisión",
+  "d": "El umbral de decisión es el punto de corte que convierte la puntuación o probabilidad continua de un modelo en una etiqueta de clase: se predice positivo si la puntuación es al menos t. El valor por defecto de 0,5 es solo una convención y rara vez es el óptimo.\n\nCambiar el umbral desplaza el modelo a lo largo de sus curvas ROC y de precisión-recall sin reentrenarlo, intercambiando falsos positivos por falsos negativos. El valor adecuado depende de los costes de los errores y de la capacidad disponible. Si las probabilidades están calibradas y un falso negativo cuesta C_FN mientras que un falso positivo cuesta C_FP, la regla que minimiza el coste es predecir positivo cuando p ≥ C_FP / (C_FP + C_FN). En caso contrario, los equipos eligen t sobre datos de validación para alcanzar un recall, una precisión o un volumen diario de alertas objetivo. El umbral debe revisarse cuando derivan el balance de clases o la distribución de puntuaciones. Remuestrear los datos de entrenamiento desplaza las puntuaciones y, por tanto, el umbral adecuado.",
+  "u": [
+   "Ajustar el volumen de alertas a la capacidad del equipo de revisión",
+   "Decisiones sensibles al coste en fraude y crédito",
+   "Cumplir un recall mínimo en cribados de seguridad"
+  ],
+  "x": "Un equipo de fraude de e-commerce fija el umbral de rechazo de modo que se minimice el coste esperado de las pérdidas por fraude más las ventas legítimas perdidas, usando probabilidades calibradas. Un segundo umbral, más bajo, envía los pedidos dudosos a revisión manual en lugar de rechazarlos. Ambos umbrales se recalculan cada vez que se reentrena el modelo, porque la distribución de puntuaciones cambia."
+ },
+ "calibration": {
+  "n": "Calibración de probabilidades",
+  "d": "Un clasificador está bien calibrado cuando sus probabilidades predichas coinciden con las frecuencias observadas: de todos los casos con una predicción de 0,8, alrededor del 80 % deberían ser realmente positivos. La calibración es independiente de la calidad de la ordenación; un modelo puede tener un AUC excelente y aun así producir probabilidades sistemáticamente demasiado altas o demasiado bajas.\n\nMuchos modelos están mal calibrados por defecto. Naive Bayes y los árboles con boosting suelen empujar las probabilidades hacia los extremos, los random forests tienden a evitarlos y las redes profundas modernas suelen tener exceso de confianza. La calibración se comprueba con un diagrama de fiabilidad, que compara la predicción media con la tasa observada en cada bin, y se resume con el error de calibración esperado (ECE) o la puntuación de Brier. Se corrige después del entrenamiento con un conjunto reservado: el escalado de Platt ajusta una función logística a las puntuaciones, la regresión isotónica ajusta una transformación monótona flexible pero necesita más datos, y el temperature scaling divide los logits de una red neuronal por una única constante aprendida. La calibración importa siempre que las probabilidades alimenten decisiones, como el coste esperado o la fijación de precios.",
+  "u": [
+   "Convertir puntuaciones de riesgo en probabilidades fiables",
+   "Decisiones por valor esperado en precios y pujas",
+   "Temperature scaling para redes neuronales con exceso de confianza"
+  ],
+  "x": "Una plataforma de publicidad online usa directamente las probabilidades de clic predichas en su cálculo de pujas, de modo que una sobrepredicción sistemática supondría pagar de más por cada impresión. Tras cada reentrenamiento, ajusta una calibración isotónica sobre un conjunto reservado reciente y comprueba que las tasas de clic predichas y observadas coinciden en cada tramo. La deriva de la calibración se vigila a diario y desencadena una recalibración."
+ },
+ "logloss": {
+  "n": "Log loss (entropía cruzada)",
+  "d": "La log loss, también llamada pérdida de entropía cruzada, mide lo bien que las probabilidades predichas se ajustan a las etiquetas reales mediante el promedio del logaritmo negativo de la probabilidad asignada a la clase correcta. Una predicción correcta y segura no cuesta casi nada, mientras que una predicción errónea y segura cuesta mucho: predecir 0,01 para un evento que ocurre cuesta unos 4,6 nats.\n\nEs la pérdida de entrenamiento estándar para la regresión logística y los clasificadores basados en redes neuronales, porque minimizarla equivale a maximizar la verosimilitud de los datos, y es una regla de puntuación estrictamente propia, es decir, la pérdida esperada solo se minimiza reportando las probabilidades verdaderas. Como métrica, recompensa tanto la ordenación como la calibración. En los modelos de lenguaje, la entropía cruzada media por token es la magnitud que hay detrás de la perplejidad, que es igual a la exponencial de la entropía cruzada. La penalización no acotada es un problema práctico: una sola predicción de exactamente 0 para un evento observado da una pérdida infinita, por lo que las implementaciones recortan las probabilidades, y unos pocos ejemplos mal etiquetados pueden dominar.",
+  "u": [
+   "Pérdida de entrenamiento para clasificadores y modelos de lenguaje",
+   "Evaluar predicciones probabilísticas de la tasa de clics",
+   "Comparar modelos cuando importa la calibración"
+  ],
+  "x": "Un equipo de ranking de anuncios usa la log loss normalizada como su métrica offline principal, porque las pujas dependen de probabilidades de clic precisas y no solo de la ordenación. Un cambio en el modelo que mejora el AUC pero empeora la log loss se investiga antes del lanzamiento. También desglosan la métrica por segmento de tráfico para detectar problemas de calibración ocultos en el promedio."
+ },
+ "mse": {
+  "n": "MSE / RMSE",
+  "d": "El error cuadrático medio (MSE) es el promedio de las diferencias al cuadrado entre las predicciones y los valores reales, y la raíz del error cuadrático medio (RMSE) es su raíz cuadrada, que devuelve la métrica a las unidades del objetivo. Elevar al cuadrado penaliza mucho más los errores grandes que los pequeños.\n\nEl MSE es la pérdida por defecto en regresión porque es suave y convexa para los modelos lineales, y la predicción que la minimiza es la media condicional del objetivo. Es adecuada cuando los errores grandes son especialmente perjudiciales o el ruido es aproximadamente gaussiano. Ese mismo cuadrado la hace sensible a los valores atípicos: unos pocos puntos extremos pueden dominar tanto el entrenamiento como la evaluación, y en ese caso el MAE o la pérdida de Huber son más robustos. El RMSE depende de la escala, así que sus valores no pueden compararse entre objetivos distintos; para ello ayudan el R² o el RMSE normalizado. Conviene recordar que el RMSE es siempre al menos tan grande como el MAE, y una diferencia grande entre ambos indica que hay unos pocos errores grandes.",
+  "u": [
+   "Pérdida de entrenamiento por defecto en regresión",
+   "Evaluar previsiones donde los errores grandes son costosos",
+   "Comparar modelos de regresión sobre el mismo objetivo"
+  ],
+  "x": "Una compañía eléctrica evalúa sus previsiones horarias de carga con el RMSE, porque los errores de previsión grandes obligan a costosas compras de energía de última hora. Reporta el RMSE junto al MAE para que los operadores vean si los errores proceden de muchos fallos pequeños o de unos pocos grandes. Las horas punta se evalúan por separado, ya que los errores en ellas son los más caros."
+ },
+ "mae": {
+  "n": "MAE",
+  "d": "El error absoluto medio (MAE) es el promedio de las diferencias absolutas entre las predicciones y los valores reales. Está en las unidades del objetivo y es fácil de explicar: un MAE de 3 significa que las predicciones se desvían 3 unidades en promedio.\n\nComo los errores crecen de forma lineal y no cuadrática, el MAE se ve mucho menos influido por los valores atípicos que el MSE, y la predicción que lo minimiza es la mediana condicional y no la media. Esto lo hace adecuado para objetivos asimétricos, como los tiempos de entrega, y para situaciones en las que cada unidad de error cuesta lo mismo. Como pérdida de entrenamiento es más difícil de optimizar, porque su gradiente tiene magnitud constante y no está definido en cero; la pérdida de Huber, cuadrática cerca de cero y lineal a partir de un umbral, es un compromiso habitual. El MAE depende de la escala, así que no puede compararse entre objetivos distintos; el MAPE y variantes escaladas como el MASE resuelven esto, aunque el MAPE falla cuando los valores reales están cerca de cero.",
+  "u": [
+   "Reportar la precisión de las previsiones a las partes interesadas del negocio",
+   "Evaluación robusta con valores atípicos en el objetivo",
+   "Predicción orientada a la mediana de magnitudes asimétricas"
+  ],
+  "x": "Una plataforma de reparto de comida reporta en minutos el MAE de sus tiempos de entrega estimados, porque los clientes y los equipos de operaciones lo entienden directamente. Entrena con una pérdida de Huber para que los retrasos extremos poco frecuentes, como los causados por un temporal, no distorsionen las predicciones habituales. El MAE se sigue por ciudad y franja horaria para detectar problemas locales."
+ }
+}

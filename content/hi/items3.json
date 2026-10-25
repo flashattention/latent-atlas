@@ -1,0 +1,482 @@
+{
+ "r2": {
+  "n": "R² (निर्धारण गुणांक / Coefficient of Determination)",
+  "d": "R² यह मापता है कि हमेशा mean का अनुमान लगाने की तुलना में एक regression मॉडल target के variance का कितना हिस्सा समझा पाता है। यह एक में से residual sum of squares और total sum of squares के अनुपात को घटाने के बराबर होता है। 1 का मान पूर्णतः सटीक prediction दर्शाता है, 0 का अर्थ है कि मॉडल mean से बेहतर कुछ नहीं करता, और held-out डेटा पर स्कोर नकारात्मक भी हो सकता है जब मॉडल उस constant baseline से भी खराब हो।\n\nR² एक ही dataset पर मॉडलों की तुलना के लिए उपयोगी है, क्योंकि यह unitless होता है। अलग-अलग target variance वाले datasets के बीच इसकी तुलना नहीं की जा सकती, और ऊँचा मान यह साबित नहीं करता कि मॉडल सही या unbiased है। Training डेटा पर features जोड़ने से R² कभी घटता नहीं, इसीलिए linear मॉडलों के लिए adjusted R² मौजूद है। एक आम ग़लतफ़हमी यह है कि हर मॉडल के लिए R² किसी correlation का वर्ग होता है; यह संबंध केवल intercept वाले least-squares linear regression पर, training डेटा पर मूल्यांकन करने पर ही लागू होता है।",
+  "u": [
+   "Regression मॉडलों की fit गुणवत्ता रिपोर्ट करना",
+   "एक ही validation set पर कई candidate regressors की तुलना",
+   "Mean baseline के सामने मॉडल की बुनियादी जाँच"
+  ],
+  "x": "एक real-estate analytics टीम घरों की बिक्री के time-held-out set पर R² को डॉलर में MAE के साथ रिपोर्ट करती है। R² stakeholders को बताता है कि मॉडल कीमतों के उतार-चढ़ाव का कितना हिस्सा पकड़ता है, जबकि MAE सामान्य error का आकार बताता है। वे दोनों को अपने monitoring dashboard पर ट्रैक करते हैं, क्योंकि किसी नए बाज़ार में कीमतों की रेंज सिमटने भर से R² गिर सकता है।"
+ },
+ "mdi": {
+  "n": "Mean Decrease in Impurity (MDI)",
+  "d": "Mean Decrease in Impurity किसी feature को इस आधार पर स्कोर देता है कि वह node impurity को कितना घटाता है—उस feature का उपयोग करने वाले हर split पर जोड़कर, उस node तक पहुँचने वाले samples के अनुपात से weight देकर, और ensemble के सभी trees पर औसत निकालकर। scikit-learn के tree मॉडलों में यही डिफ़ॉल्ट feature_importances_ attribute है और training के बाद मुफ़्त में मिल जाता है।\n\nचूँकि यह fitting के दौरान training डेटा से ही गणना होता है, MDI तेज़ है और इसके लिए अलग pass की ज़रूरत नहीं। लेकिन इस सुविधा की कीमत है। यह उन features के प्रति biased होता है जिनमें कई संभावित split points होते हैं, जैसे continuous variables या high-cardinality categories, और यह उन pure noise features को भी importance दे सकता है जिनका उपयोग trees ने overfit करने में किया। जब दो features correlated हों, तो श्रेय उनके बीच मनमाने ढंग से बँट जाता है। MDI प्रभाव की दिशा के बारे में भी कुछ नहीं बताता। इसे त्वरित पहली नज़र के लिए इस्तेमाल करें, और महत्वपूर्ण निष्कर्षों की पुष्टि held-out डेटा पर permutation importance या SHAP values से करें।",
+  "u": [
+   "Forest को train करने के बाद features की त्वरित ranking",
+   "दोबारा train करने से पहले स्पष्ट रूप से बेकार columns हटाना",
+   "यह debug करना कि tree मॉडल किन inputs पर निर्भर है"
+  ],
+  "x": "Transaction features पर random forest train करने वाली एक fraud टीम हर retrain के बाद MDI देखती है ताकि पता चले कि हावी inputs में अचानक कोई बदलाव तो नहीं आया। जब एक high-cardinality merchant ID अचानक शीर्ष पर पहुँच गया, तो उन्होंने validation set पर permutation importance जाँची और पाया कि यह ज़्यादातर overfitting था, इसलिए उन्होंने इसे target-encoded merchant risk से बदल दिया।"
+ },
+ "permimp": {
+  "n": "Permutation Importance",
+  "d": "Permutation importance यह मापता है कि किसी एक feature के मानों को randomly shuffle करने पर मॉडल का स्कोर कितना गिरता है—इससे उस feature का target से संबंध टूट जाता है, जबकि उसका distribution वैसा ही रहता है। बड़ी गिरावट का अर्थ है कि मॉडल अपने predictions के लिए उस feature पर निर्भर है।\n\nयह तरीका model-agnostic है: इसके लिए केवल एक fitted मॉडल, एक dataset और एक metric चाहिए। इसे held-out set पर गणना करने से पता चलता है कि वास्तव में generalization में क्या मदद करता है, और impurity-based स्कोर का training-set bias टल जाता है। Shuffle को कई बार दोहराने से mean और spread दोनों मिलते हैं। मुख्य ख़तरा correlated features हैं। जब दो columns एक ही जानकारी रखते हैं, तो एक को shuffle करने पर दूसरा बरकरार रहता है, इसलिए दोनों ही महत्वहीन दिख सकते हैं, भले ही साझा signal महत्वपूर्ण हो। Shuffling अवास्तविक rows भी बना देती है, जैसे 2 मीटर लंबा बच्चा, जिससे मॉडल को extrapolate करना पड़ता है। Correlated features को समूह में रखकर एक साथ permute करना, या पहले features को cluster करना, इन समस्याओं को कम करता है।",
+  "u": [
+   "Validation डेटा पर model-agnostic feature ranking",
+   "उन leakage features का पता लगाना जिन पर मॉडल ज़रूरत से ज़्यादा निर्भर है",
+   "अलग-अलग model families में feature निर्भरता की तुलना"
+  ],
+  "x": "एक credit-risk टीम approval से पहले हर candidate मॉडल के लिए out-of-time validation महीने पर permutation importance निकालती है। Held-out डेटा पर इसे चलाने से एक application-timestamp field उजागर हुआ जो केवल training डेटा पर मदद करता था, और correlated income fields को एक ही permutation block में रखने से regulators को यह स्पष्ट तस्वीर मिली कि फ़ैसलों को क्या प्रभावित कर रहा था।"
+ },
+ "shap": {
+  "n": "SHAP (Shapley Values)",
+  "d": "SHAP किसी एक prediction को समझाने के लिए cooperative game theory के Shapley values का उपयोग करता है और हर feature को उस prediction तथा मॉडल के औसत output के अंतर का एक हिस्सा देता है। ये हिस्से जोड़ने पर ठीक prediction में से baseline घटाने के बराबर होते हैं।\n\nकिसी feature का Shapley value उन सभी संभावित क्रमों पर उसका औसत marginal योगदान है जिनमें features को input में जोड़ा जा सकता है। जो features किसी coalition में शामिल नहीं होते, उन्हें background dataset से लिए गए मानों से बदल दिया जाता है। SHAP एकमात्र additive attribution है जो efficiency, symmetry, dummy और additivity—चारों गुणों को संतुष्ट करता है, इसलिए यह local explanations और global summaries (जैसे प्रति feature mean absolute SHAP) दोनों के लिए एक सैद्धांतिक रूप से ठोस विकल्प है। Exact गणना features की संख्या में exponential होती है, इसलिए व्यावहारिक tools model-specific algorithms या sampling approximations का उपयोग करते हैं। परिणाम background डेटा पर निर्भर करते हैं, और correlated features होने पर डिफ़ॉल्ट interventional तरीका मॉडल को अवास्तविक inputs पर evaluate कर सकता है। SHAP मॉडल को समझाता है, वास्तविक दुनिया के causal प्रभावों को नहीं।",
+  "u": [
+   "अलग-अलग loan या claim फ़ैसलों की व्याख्या",
+   "प्रभाव की दिशा के साथ global feature importance",
+   "Production मॉडलों के अप्रत्याशित predictions को debug करना"
+  ],
+  "x": "एक insurance कंपनी manual review के लिए flag किए गए हर claim के साथ शीर्ष तीन SHAP योगदान जोड़ती है, ताकि adjusters देख सकें कि मॉडल ने उसे जोखिम भरा क्यों माना। Latency न बढ़े, इसलिए वे batch scoring job में ही explanations पहले से गणना कर लेते हैं, और मॉडल व्यवहार में drift पकड़ने के लिए प्रति feature SHAP values के distribution की निगरानी करते हैं।"
+ },
+ "treeshap": {
+  "n": "TreeSHAP",
+  "d": "TreeSHAP एक algorithm है जो हर feature subset को गिनने के बजाय tree संरचना का लाभ उठाकर tree ensembles के लिए polynomial time में exact Shapley values निकालता है। सामान्य SHAP estimation features की संख्या में exponential होता है; TreeSHAP, L leaves और depth D वाले T trees के लिए O(T·L·D²) में चलता है।\n\nयह algorithm सभी feature subsets को एक साथ हर tree में नीचे भेजता है और ट्रैक करता है कि उनमें से कितना अनुपात हर path पर जाता है। इसके दो रूप हैं। Path-dependent संस्करण nodes में संग्रहीत training cover counts का उपयोग करता है और इसे background डेटा की ज़रूरत नहीं होती, जबकि interventional संस्करण background dataset पर औसत निकालता है और causal-शैली की interventional परिभाषा से बेहतर मेल खाता है। इस गति के कारण XGBoost, LightGBM, CatBoost या scikit-learn forests के लाखों predictions को समझाना और SHAP interaction values निकालना व्यावहारिक हो जाता है। एक ज्ञात सावधानी यह है कि features correlated होने पर path-dependent संस्करण उन features को भी शून्य से अधिक श्रेय दे सकता है जिनका मॉडल वास्तव में उपयोग नहीं करता।",
+  "u": [
+   "Gradient-boosted trees के हर prediction की व्याख्या",
+   "Feature जोड़ियों के बीच SHAP interaction values निकालना",
+   "बड़े tabular मॉडलों के लिए तेज़ global importance"
+  ],
+  "x": "LightGBM से हर रात करोड़ों ग्राहकों को score करने वाली एक marketing टीम TreeSHAP का उपयोग करके हर ग्राहक के reason codes feature store में सहेजती है। Exact tree-based गणना scoring वाले ही batch window में पूरी हो जाती है, जो इस पैमाने पर कोई sampling-based explainer नहीं कर पाता।"
+ },
+ "pdp": {
+  "n": "Partial Dependence Plot (PDP)",
+  "d": "Partial dependence plot दिखाता है कि जब एक या दो features को एक grid पर बदला जाता है और बाकी सभी features अपने observed मानों पर रहते हैं, तो मॉडल का औसत prediction कैसे बदलता है। हर grid point पूरे dataset पर औसत prediction है, जिसमें चुने गए feature को उस मान पर स्थिर कर दिया जाता है।\n\nPDP किसी प्रभाव के आकार का global, model-agnostic दृश्य देते हैं: monotonic, threshold जैसा, saturating या U-आकार का। दो-feature PDP interactions को non-parallel contours के रूप में दिखाते हैं। ये यह जाँचने में उपयोगी हैं कि मॉडल ने विश्वसनीय संबंध सीखे हैं, जैसे कर्ज़ बढ़ने के साथ जोखिम बढ़ना। यह तरीका मानता है कि बदला जा रहा feature बाकी features से लगभग स्वतंत्र है। जब features correlated होते हैं, तो grid ऐसे संयोजन बनाता है जो डेटा में कभी नहीं आते, और curve extrapolation को दर्शाता है। औसत निकालने से विविधता भी छिप सकती है: अगर आधे samples ऊपर जाएँ और आधे नीचे, तो PDP सपाट दिखता है। ICE curves या accumulated local effects (ALE) plots इन दोनों कमज़ोरियों को दूर करते हैं।",
+  "u": [
+   "Feature प्रभावों की दिशा की पुष्टि करना",
+   "दो-तरफ़ा feature interactions का visualization",
+   "गैर-तकनीकी reviewers को मॉडल का व्यवहार समझाना"
+  ],
+  "x": "एक बिजली कंपनी हर क्षेत्रीय मॉडल के लिए तापमान के सापेक्ष अनुमानित बिजली माँग के partial dependence plots बनाती है। Reviewers heating और cooling से बनने वाले अपेक्षित U-आकार की जाँच करते हैं, और एक क्षेत्र का curve ऊँचे तापमान पर सपाट हो जाने से पता चला कि training में air-conditioning load का डेटा गायब था।"
+ },
+ "ice": {
+  "n": "ICE Plot (Individual Conditional Expectation)",
+  "d": "Individual Conditional Expectation plot हर data point के लिए एक curve बनाता है, जो दिखाता है कि जब एक feature को बदला जाता है और उस point के बाकी features स्थिर रहते हैं, तो उसका prediction कैसे बदलता है। Partial dependence plot ठीक इन्हीं curves का औसत होता है।\n\nICE plots उस विविधता को उजागर करते हैं जिसे औसत छिपा देता है। अगर curves लगभग समानांतर हैं, तो feature additive रूप से काम करता है; अगर वे एक-दूसरे को काटते हैं या फैलते हैं, तो feature दूसरों के साथ interact करता है। Centered ICE (c-ICE) हर curve में से किसी reference point पर उसका मान घटा देता है, ताकि आकार के अंतर स्तर के अंतर से अलग दिखें। Curves को किसी अन्य feature के अनुसार रंगने से यह पहचानने में मदद मिलती है कि interaction किस variable से आ रहा है। बहुत सारे samples होने पर plot भीड़भाड़ वाला हो जाता है, इसलिए आम तौर पर कुछ सौ curves का random subset लिया जाता है। ICE में PDP की मुख्य कमज़ोरी भी है: जब बदला जा रहा feature दूसरों से correlated हो, तो कई grid points अवास्तविक inputs दर्शाते हैं, और curves आंशिक रूप से वास्तविक डेटा पर व्यवहार के बजाय extrapolation दिखाते हैं।",
+  "u": [
+   "Partial dependence में छिपे interactions का पता लगाना",
+   "यह देखना कि विशिष्ट ग्राहक किसी feature पर कैसे प्रतिक्रिया देते हैं",
+   "व्यक्तिगत स्तर पर monotonicity की जाँच"
+  ],
+  "x": "एक online retailer की pricing टीम discount स्तर के सापेक्ष अनुमानित conversion के centered ICE curves बनाती है। Curves से पता चला कि वफ़ादार ग्राहक discounts पर लगभग प्रतिक्रिया नहीं देते, जबकि नए visitors तीव्र प्रतिक्रिया देते हैं—यह interaction सपाट दिखने वाले PDP में छिपा था, और इससे segment-विशिष्ट promotion नियम बनाए गए।"
+ },
+ "lime": {
+  "n": "LIME (Local Interpretable Model-agnostic Explanations)",
+  "d": "LIME किसी एक prediction को समझाने के लिए उस input के आसपास के छोटे neighborhood में black-box मॉडल के व्यवहार पर एक सरल, interpretable मॉडल—आम तौर पर sparse linear मॉडल—fit करता है। इस surrogate के coefficients ही व्याख्या का काम करते हैं।\n\nप्रक्रिया में instance को कई बार perturb किया जाता है (tabular डेटा के लिए feature मानों को sample करके, text के लिए शब्द हटाकर, images के लिए superpixels छिपाकर), हर perturbation पर black-box मॉडल से prediction लिया जाता है, samples को मूल input से उनकी निकटता के अनुसार weight दिया जाता है, और एक weighted linear regression fit किया जाता है। यह prediction लौटाने वाले किसी भी मॉडल के साथ काम करता है और शब्दों या image क्षेत्रों जैसे मानवीय रूप में व्याख्या देता है। इसकी मुख्य कमज़ोरी अस्थिरता है: अलग random seeds, kernel widths या perturbation तरीके एक ही input के लिए स्पष्ट रूप से अलग व्याख्याएँ दे सकते हैं। Perturbed samples data manifold से बाहर भी जा सकते हैं। SHAP के विपरीत, LIME इसकी कोई गारंटी नहीं देता कि attributions का योग prediction के बराबर होगा, इसलिए इस पर भरोसा करने से पहले व्याख्या की स्थिरता जाँच लें।",
+  "u": [
+   "Text classifier के फ़ैसलों को शब्द-दर-शब्द समझाना",
+   "किसी prediction के पीछे के image क्षेत्रों को उजागर करना",
+   "किसी भी black-box मॉडल की तात्कालिक debugging"
+  ],
+  "x": "एक customer-support टीम अपने ticket-routing text classifier पर LIME का उपयोग करके agents को दिखाती है कि किन शब्दों के कारण ticket billing queue में भेजा गया। चूँकि व्याख्याएँ हर run में बदल रही थीं, उन्होंने random seed स्थिर किया, samples की संख्या बढ़ाई, और केवल वही शब्द दिखाए जो पाँच दोहराए गए runs में लगातार आए।"
+ },
+ "counterfactual": {
+  "n": "Counterfactual व्याख्याएँ (Counterfactual Explanations)",
+  "d": "Counterfactual explanation किसी input में वह सबसे छोटा वास्तविक बदलाव बताता है जिससे मॉडल का फ़ैसला पलट जाए, उदाहरण के लिए “अगर वार्षिक आय 4,000 अधिक होती और credit card balance 1,500 कम होता, तो loan स्वीकृत हो जाता।” यह इस प्रश्न का उत्तर देता है कि क्या अलग होना चाहिए, न कि यह कि वर्तमान output क्यों आया।\n\nइसे बनाना एक optimization समस्या है: मूल input के पास ऐसा point ढूँढना जिसे वांछित prediction मिले। अच्छे counterfactuals sparse (कम features बदलें), plausible (data distribution के पास हों), actionable (उम्र या जन्मस्थान जैसे अपरिवर्तनीय features से बचें) और कई विकल्प देने पर diverse होते हैं। DiCE जैसे तरीके इस पर constraints के साथ कई counterfactuals बनाते हैं कि कौन से features बदल सकते हैं। ये adverse-action notices और उपयोगकर्ताओं को recourse देने के लिए लोकप्रिय हैं। एक मुख्य ख़तरा यह है कि counterfactual मॉडल का वर्णन करता है, दुनिया का नहीं: सलाह मानने से वास्तविक परिणाम शायद न बदले, और मॉडल को दोबारा train करने पर वही बदलाव फ़ैसला शायद न पलटे।",
+  "u": [
+   "अस्वीकृत loan आवेदकों के लिए recourse सुझाव",
+   "Actionable levers के साथ churn predictions की व्याख्या",
+   "अपरिवर्तनीय attributes पर निर्भरता के लिए मॉडलों का audit"
+  ],
+  "x": "एक consumer lender अस्वीकृत आवेदनों के लिए counterfactuals बनाता है और बदलावों को केवल उन features तक सीमित रखता है जिन्हें आवेदक नियंत्रित कर सकता है, जैसे कर्ज़ का balance और माँगी गई राशि। टीम दो या तीन विविध विकल्प देती है और भेजने से पहले उन्हें नवीनतम मॉडल संस्करण पर दोबारा जाँचती है, क्योंकि retrain किया गया मॉडल पहले की सलाह पर शायद खरा न उतरे।"
+ },
+ "kmeans": {
+  "n": "k-Means Clustering",
+  "d": "k-Means डेटा को k clusters में बाँटता है—बार-बार हर point को उसके निकटतम centroid को सौंपकर और फिर हर centroid को उसे सौंपे गए points के mean पर ले जाकर। यह within-cluster squared distances के योग को न्यूनतम करता है, जिसे inertia भी कहते हैं।\n\nयह algorithm (Lloyd's algorithm) हमेशा converge करता है, लेकिन केवल एक local minimum तक, इसलिए शुरुआती centroids मायने रखते हैं। k-means++ initialization शुरुआती centroids को दूर-दूर फैलाता है, और कई restarts करके सबसे अच्छा परिणाम रखा जाता है। k-Means तेज़ है, mini-batch संस्करणों के साथ लाखों points तक scale करता है, और लगभग समान आकार के compact, गोलाकार clusters के लिए अच्छा काम करता है। यह customer segmentation, vector quantization और codebooks बनाने में आम है। इसकी मान्यताएँ ही इसकी सीमाएँ हैं: यह Euclidean distance का उपयोग करता है, इसलिए features को scale करना ज़रूरी है; यह लंबे या nested आकार नहीं ढूँढ सकता; और यह outliers समेत हर point को किसी cluster में डाल देता है। k चुनने के लिए बाहरी विवेक चाहिए, जिसमें elbow method या silhouette score मदद करते हैं, लेकिन ये निश्चित उत्तर नहीं, केवल संकेत देते हैं।",
+  "u": [
+   "व्यवहार संबंधी features से customer segmentation",
+   "Color quantization और image compression",
+   "Vector search indexes के लिए codebooks बनाना"
+  ],
+  "x": "एक subscription streaming सेवा standardized viewing-time features के आधार पर k-means से users को कुछ segments में cluster करती है, फिर हर segment को अलग home-page layout देती है। वे हर महीने retrain करते हैं, segment labels स्थिर रखने के लिए नए centroids को पुराने से मिलाते हैं, और MiniBatchKMeans का उपयोग करते हैं क्योंकि user base में करोड़ों rows हैं।"
+ },
+ "hierclust": {
+  "n": "Hierarchical Clustering (पदानुक्रमित clustering)",
+  "d": "Hierarchical clustering एक flat partition के बजाय nested clusters का एक tree बनाता है, जिसे dendrogram कहते हैं। आम agglomerative संस्करण हर point को अपना अलग cluster मानकर शुरू करता है और बार-बार दो निकटतम clusters को मिलाता है, जब तक एक ही cluster न बचे।\n\nLinkage criterion clusters के बीच की दूरी परिभाषित करता है। Single linkage सबसे नज़दीकी points की जोड़ी का उपयोग करता है और लंबी chains का अनुसरण कर सकता है; complete linkage सबसे दूर की जोड़ी का उपयोग करता है और compact समूहों को प्राथमिकता देता है; average linkage औसत pairwise दूरी का उपयोग करता है; Ward linkage उस जोड़ी को मिलाता है जिससे कुल within-cluster variance सबसे कम बढ़े, और यह hierarchical k-means जैसा व्यवहार करता है। Dendrogram को किसी चुनी हुई ऊँचाई या clusters की संख्या पर काटने से flat clustering मिलती है, और tree स्वयं कई स्तरों पर संरचना दिखाता है। यह छोटे से मध्यम datasets, taxonomy बनाने और exploratory analysis के लिए उपयुक्त है। मानक implementations को distance matrix के लिए O(n²) memory चाहिए, जो इन्हें दसियों हज़ार points तक सीमित करती है, और शुरुआती merges को कभी पलटा नहीं जा सकता।",
+  "u": [
+   "Product या document taxonomies बनाना",
+   "जीवविज्ञान में gene expression profiles को cluster करना",
+   "कई granularity स्तरों पर संरचना की खोज"
+  ],
+  "x": "एक e-commerce catalog टीम subcategory trees सुझाने के लिए हर category के भीतर product embeddings को Ward linkage से cluster करती है। Merchandisers dendrogram देखकर हर category के लिए cut की ऊँचाई चुनते हैं, जो k-means जैसा flat तरीका नहीं दे सकता, और O(n²) की लागत स्वीकार्य है क्योंकि हर category में केवल कुछ हज़ार items हैं।"
+ },
+ "dbscan": {
+  "n": "DBSCAN",
+  "d": "DBSCAN (Density-Based Spatial Clustering of Applications with Noise) घने क्षेत्रों में स्थित points को समूहित करता है और विरल क्षेत्रों के points को noise के रूप में label करता है। इसे clusters की संख्या पहले से तय करने की ज़रूरत नहीं होती और यह किसी भी आकार के clusters खोज सकता है।\n\nदो parameters density परिभाषित करते हैं: eps, यानी neighborhood की त्रिज्या, और min_samples, यानी किसी point को core point माने जाने के लिए eps के भीतर आवश्यक points की संख्या। Clusters उन core points को जोड़कर बढ़ते हैं जो एक-दूसरे से eps के भीतर हों; border points cluster में शामिल होते हैं पर उसे आगे नहीं बढ़ाते, और बाकी सब noise होता है, जिसे −1 label दिया जाता है। इससे DBSCAN spatial डेटा, anomaly-aware clustering और rings जैसे आकारों के लिए उपयोगी है जिन्हें k-means अलग नहीं कर सकता। इसकी मुख्य सीमा एक ही global density threshold है: जब clusters की density बहुत अलग हो, तो कोई एक eps सब पर काम नहीं करता। परिणाम eps के प्रति संवेदनशील होते हैं और high dimensions में बिगड़ जाते हैं जहाँ दूरियाँ एक जैसी होने लगती हैं। k-distance plot eps चुनने में मदद करता है, और HDBSCAN स्थिर eps की ज़रूरत ही ख़त्म कर देता है।",
+  "u": [
+   "GPS points को स्थानों या stops में cluster करना",
+   "Sensor डेटा में घने समूहों से noise अलग करना",
+   "Embeddings में अनियमित आकार के clusters ढूँढना"
+  ],
+  "x": "एक delivery कंपनी drivers के GPS drop-off points पर haversine distance के साथ DBSCAN चलाकर इमारतों के वास्तविक प्रवेश द्वार ढूँढती है, जो अक्सर geocoded पतों से अलग होते हैं। अलग-थलग points noise बन जाते हैं और अनदेखे कर दिए जाते हैं, और टीम हर शहर के लिए eps को मीटर में tune करती है क्योंकि शहरी और उपनगरीय density अलग होती है।"
+ },
+ "gmm": {
+  "n": "Gaussian Mixture Model (GMM)",
+  "d": "Gaussian Mixture Model डेटा के distribution को कई Gaussian components के weighted योग के रूप में दर्शाता है, जिनमें से हर एक का अपना mean और covariance होता है। हर point को हर component से संबंधित होने की एक probability मिलती है, जिसे soft clustering कहते हैं।\n\nParameters को Expectation-Maximization algorithm से fit किया जाता है, जो बारी-बारी से हर point की component responsibilities निकालता है और फिर उन responsibilities से weights, means और covariances का दोबारा अनुमान लगाता है। Full covariance matrices से clusters लंबे और झुके हुए ellipses बन सकते हैं, जिन्हें k-means नहीं दर्शा सकता; k-means मोटे तौर पर समान, गोलाकार, साझा variance और hard assignments वाला GMM ही है। चूँकि यह एक density मॉडल है, GMM anomaly detection के लिए log-likelihoods भी देता है और नए points sample करने की सुविधा देता है। Components की संख्या BIC या AIC से चुनी जा सकती है। इसके ख़तरों में initialization के प्रति संवेदनशीलता, local optima पर converge होना, और किसी component के कुछ ही points पर सिमट जाने से singular covariances शामिल हैं, जिन्हें regularization (reg_covar) रोकता है। High dimensions में full covariances के लिए बहुत सारे parameters भी चाहिए।",
+  "u": [
+   "Membership probabilities के साथ soft customer segmentation",
+   "Sensor readings की density-based anomaly scoring",
+   "पारंपरिक speech systems में speaker modeling"
+  ],
+  "x": "एक manufacturing टीम स्वस्थ मशीनों की बहुचरीय (multivariate) vibration और तापमान readings पर GMM fit करती है और उन readings को flag करती है जिनका log-likelihood training scores के एक निचले percentile से नीचे गिर जाता है। Full covariance vibration और तापमान के बीच correlation को पकड़ता है, और BIC ने operating modes की संख्या अपने-आप चुन ली।"
+ },
+ "em": {
+  "n": "EM Algorithm (Expectation-Maximization)",
+  "d": "Expectation-Maximization algorithm hidden variables वाले मॉडलों के लिए maximum-likelihood parameters ढूँढता है, और likelihood में सुधार रुकने तक दो चरणों को बारी-बारी से दोहराता है। यह Gaussian mixtures, hidden Markov models और कई missing-data समस्याओं के लिए मानक fitting तरीका है।\n\nE-step में algorithm मौजूदा parameters से hidden variables पर posterior distribution निकालता है, उदाहरण के लिए हर point के हर cluster से संबंधित होने की probability। M-step में वह उस posterior के तहत अपेक्षित complete-data log-likelihood को maximize करता है, जिसका अक्सर closed-form हल होता है, जैसे weighted mean। हर iteration में observed-data likelihood के न घटने की गारंटी होती है, क्योंकि EM एक lower bound (ELBO) को maximize करता है जो मौजूदा parameters पर वास्तविक likelihood को छूता है। यह गारंटी केवल monotone सुधार की है, global optimum की नहीं: EM किसी local maximum या saddle point पर converge करता है, इसलिए कई random restarts मानक प्रथा है। जब hidden variables बहुत अधिक जानकारी रखते हों, तो convergence धीमा हो सकता है।",
+  "u": [
+   "Gaussian mixture models को fit करना",
+   "Hidden Markov models की training (Baum-Welch)",
+   "Missing डेटा के साथ parameters का अनुमान"
+  ],
+  "x": "एक genomics lab low-coverage sequencing में जब individual genotypes आंशिक रूप से ही observed होते हैं, तब allele frequencies का अनुमान लगाने के लिए EM का उपयोग करती है। E-step हर sample के लिए genotype probabilities निकालता है और M-step population frequencies को update करता है, और कई random restarts किए जाते हैं क्योंकि likelihood surface पर कई शिखर होते हैं।"
+ },
+ "pca": {
+  "n": "PCA (Principal Component Analysis / मुख्य घटक विश्लेषण)",
+  "d": "Principal Component Analysis orthogonal axes का एक नया सेट—principal components—ढूँढता है, जिन्हें इस क्रम में रखा जाता है कि वे डेटा का कितना variance पकड़ते हैं। पहले कुछ components पर project करने से कम dimensions वाला ऐसा representation मिलता है जो जितना संभव हो उतना variance बनाए रखता है।\n\nडेटा को center करने के बाद, components covariance matrix के eigenvectors होते हैं, या समकक्ष रूप से data matrix के SVD के right singular vectors; eigenvalues बताते हैं कि हर component कितना variance समझाता है। PC1 points से रेखा तक की orthogonal दूरियों के वर्गों के योग को न्यूनतम करता है, इसीलिए यह vertical errors को न्यूनतम करने वाली regression रेखा से अलग होता है। PCA का उपयोग compression, denoising, visualization, inputs को decorrelate करने और downstream मॉडलों को तेज़ करने में होता है। अगर features की इकाइयाँ अलग हैं तो पहले उन्हें standardize करें, वरना बड़े scale वाले variables हावी हो जाएँगे। PCA linear और unsupervised है: यह केवल linear संरचना पकड़ता है, और सबसे अधिक variance वाली दिशाएँ किसी target की prediction के लिए सबसे उपयोगी हों, इसकी कोई गारंटी नहीं।",
+  "u": [
+   "Modeling से पहले high-dimensional features को compress करना",
+   "डेटा को दो या तीन dimensions में visualize करना",
+   "कम variance वाले components हटाकर signals का denoising"
+  ],
+  "x": "एक semiconductor fab हर wafer की सैकड़ों correlated sensor readings पर PCA लागू करता है और शीर्ष component scores के साथ reconstruction error की निगरानी करता है। Reconstruction error में बढ़ोतरी एक नए प्रकार के process विचलन का संकेत देती है, और components की कम संख्या engineers के लिए control charts को संभालने योग्य बनाती है।"
+ },
+ "kpca": {
+  "n": "Kernel PCA",
+  "d": "Kernel PCA एक kernel function से परिभाषित implicit high-dimensional feature space में principal component analysis करता है, जिससे यह वह nonlinear संरचना पकड़ पाता है जो linear PCA से छूट जाती है। यह feature mapping की सीधे गणना कभी नहीं करता, केवल kernel के ज़रिए inner products निकालता है।\n\nयह तरीका n×n kernel matrix बनाता है, उसे feature space में center करता है, और उसके शीर्ष eigenvectors लेता है। नए points के projections इन eigenvectors के kernel-weighted संयोजन होते हैं। RBF kernel के साथ concentric circles या घुमावदार manifolds पहले components में linearly separable हो सकते हैं। यह linear classifier से पहले nonlinear preprocessing चरण के रूप में, और approximate inverse map सीखने पर denoising के लिए उपयोगी है। चूँकि kernel matrix n×n होता है, samples की संख्या के साथ memory quadratically और समय cubically बढ़ता है, इसलिए Nyström जैसे approximations के बिना यह दसियों हज़ार points तक सीमित रहता है। परिणाम kernel और उसकी bandwidth पर बहुत निर्भर करते हैं, और components की input features के संदर्भ में कोई सीधी व्याख्या नहीं होती।",
+  "u": [
+   "Linear classifiers से पहले nonlinear feature extraction",
+   "Visualization के लिए घुमावदार manifolds को खोलना",
+   "Pre-image reconstruction के साथ image denoising"
+  ],
+  "x": "Material samples को classify करने वाली एक spectroscopy टीम कुछ हज़ार spectra पर RBF kernel के साथ kernel PCA लागू करती है, फिर शीर्ष components पर logistic regression train करती है। Nonlinear projection ने दो material grades को अलग कर दिया जो linear PCA में overlap करते थे, और छोटे dataset की वजह से quadratic kernel लागत स्वीकार्य रही।"
+ },
+ "svd": {
+  "n": "Singular Value Decomposition (SVD)",
+  "d": "Singular Value Decomposition किसी भी real matrix A को UΣVᵀ में factor करता है, जहाँ U और V के columns orthonormal होते हैं और Σ non-negative singular values का diagonal matrix है, जो बड़े से छोटे क्रम में होते हैं। हर matrix का SVD होता है, जिसमें rectangular और rank-deficient matrices भी शामिल हैं।\n\nज्यामितीय रूप से, A input को घुमाता है (Vᵀ), हर axis को scale करता है (Σ) और फिर से घुमाता है (U)। केवल शीर्ष k singular values रखने से Frobenius और spectral दोनों norms में सबसे अच्छा rank-k approximation मिलता है, जिसे Eckart–Young theorem कहते हैं। इसी कारण SVD, PCA, latent semantic analysis, low-rank compression, recommendations के लिए matrix completion, pseudo-inverses और least-squares solvers का आधार है। Randomized और truncated SVD इसे TF-IDF जैसे बड़े sparse matrices तक scale करते हैं। एक व्यावहारिक सावधानी यह है कि singular vectors केवल sign तक परिभाषित होते हैं, और singular values बराबर होने पर rotation तक, इसलिए अलग-अलग runs के components की तुलना के लिए alignment ज़रूरी है। बड़े dense matrix का full SVD महँगा होता है, इसलिए truncated तरीकों को प्राथमिकता दी जाती है।",
+  "u": [
+   "TF-IDF matrices पर latent semantic analysis",
+   "Weights या images का low-rank compression",
+   "Matrix factorization के ज़रिए collaborative filtering"
+  ],
+  "x": "एक document search टीम एक बड़े sparse TF-IDF matrix पर truncated SVD लागू करके हर document के लिए कुछ सौ dense topic dimensions प्राप्त करती है। Randomized solver sparse input को dense बनाए बिना संभाल लेता है, और परिणामी vectors संबंधित लेखों के सुझाव के लिए nearest-neighbor index में जाते हैं।"
+ },
+ "tsne": {
+  "n": "t-SNE",
+  "d": "t-SNE (t-distributed Stochastic Neighbor Embedding) एक nonlinear तरीका है जो visualization के लिए high-dimensional डेटा को दो या तीन dimensions में map करता है, और समान points को पास-पास रखने का प्रयास करता है। इसका ध्यान global दूरियों के बजाय local neighborhoods को बनाए रखने पर होता है।\n\nAlgorithm pairwise दूरियों को एक Gaussian kernel से neighbor probabilities में बदलता है, जिसकी चौड़ाई हर point के लिए perplexity parameter से तय होती है—जो मोटे तौर पर neighbors की प्रभावी संख्या है। Low-dimensional map में यह heavy-tailed Student-t distribution का उपयोग करता है, जिससे असमान points दूर फैल पाते हैं और भीड़भाड़ (crowding) कम होती है। फिर यह gradient descent से दोनों distributions के बीच KL divergence को न्यूनतम करता है। t-SNE embeddings, single-cell डेटा और image features की स्पष्ट cluster तस्वीरें बनाता है। इसके output को ग़लत पढ़ना आसान है: cluster के आकार और clusters के बीच की दूरियाँ अर्थपूर्ण नहीं होतीं, परिणाम perplexity और random seed के साथ बदलते हैं, और नए points के लिए इसमें कोई transform नहीं है। इसे exploration के लिए इस्तेमाल करें, downstream मॉडलों के features के रूप में नहीं।",
+  "u": [
+   "Neural networks से सीखे गए embeddings का visualization",
+   "Single-cell RNA डेटा में cell types की खोज",
+   "Feature spaces में class separation की जाँच"
+  ],
+  "x": "एक computer-vision टीम ग़लत label वाले उदाहरणों और आपस में उलझी classes को पहचानने के लिए अपने classifier की penultimate layer के image embeddings के t-SNE maps बनाती है। निष्कर्ष निकालने से पहले वे कई perplexity मान और seeds आज़माते हैं, और अपने review notes में clusters के बीच की दूरियों की व्याख्या करने से स्पष्ट रूप से बचते हैं।"
+ },
+ "umap": {
+  "n": "UMAP",
+  "d": "UMAP (Uniform Manifold Approximation and Projection) एक nonlinear dimensionality reduction तरीका है जो मूल space में एक neighbor graph बनाता है और फिर ऐसा low-dimensional layout ढूँढता है जिसका graph उससे जितना संभव हो उतना मिलता-जुलता हो। इसका उपयोग visualization और सामान्य-उद्देश्य reduction चरण, दोनों के रूप में होता है।\n\nUMAP पहले हर point को उसके k nearest neighbors से ऐसे edge weights के साथ जोड़ता है जो local scale के सापेक्ष दूरी के साथ घटते हैं, फिर इस fuzzy graph को symmetric बनाता है। यह stochastic gradient descent और negative sampling के साथ एक cross-entropy objective को optimize करता है, जुड़े हुए points को पास खींचता है और random जोड़ियों को दूर धकेलता है। t-SNE की तुलना में यह आम तौर पर तेज़ है, लाखों points तक scale करता है, अधिक global संरचना बनाए रखता है, और नए डेटा के लिए transform() को support करता है। n_neighbors local detail और global संरचना के बीच संतुलन तय करता है, और min_dist नियंत्रित करता है कि points कितने कसकर सिमटें। t-SNE की तरह, plot में cluster के आकार और clusters के बीच के अंतराल को वास्तविक density या दूरी नहीं समझना चाहिए, और परिणाम hyperparameters और seeds के साथ बदलते हैं।",
+  "u": [
+   "बड़े embedding collections को 2D में visualize करना",
+   "Density-based clustering से पहले dimensions घटाना",
+   "नए samples को मौजूदा map में project करना"
+  ],
+  "x": "एक research टीम लाखों single-cell profiles को UMAP से map करती है और फिर cell populations सुझाने के लिए 10-dimensional UMAP output पर HDBSCAN चलाती है। चूँकि UMAP transform को support करता है, नए experimental batches reference map में project किए जाते हैं, और जीवविज्ञानी केवल layout पर भरोसा करने के बजाय marker genes से populations की पुष्टि करते हैं।"
+ },
+ "autoencoder": {
+  "n": "Autoencoder",
+  "d": "Autoencoder एक neural network है जिसे अपने input को एक संकरे मध्यवर्ती representation—जिसे bottleneck या latent code कहते हैं—से गुज़ारने के बाद दोबारा बनाने (reconstruct करने) के लिए train किया जाता है। Encoder input को compress करता है और decoder उसे फिर से बनाने की कोशिश करता है, इसलिए latent code को सबसे सूचनात्मक संरचना बनाए रखनी पड़ती है।\n\nTraining में mean squared error या cross-entropy जैसे reconstruction loss को न्यूनतम किया जाता है, और labels की ज़रूरत नहीं होती। Linear layers और squared error के साथ autoencoder वही subspace सीखता है जो PCA सीखता है; nonlinear layers इसे घुमावदार manifolds पकड़ने देती हैं। अलग-अलग variants constraint बदलते हैं: denoising autoencoders दूषित inputs से साफ़ inputs reconstruct करते हैं, sparse autoencoders सक्रिय units पर penalty लगाते हैं, और variational autoencoders generation के लिए उपयुक्त probabilistic latent space लागू करते हैं। आम उपयोग compression, denoising और anomaly detection हैं, जहाँ ऊँचा reconstruction error असामान्य inputs को flag करता है। एक आम ख़तरा यह है कि शक्तिशाली autoencoder anomalies को भी अच्छी तरह reconstruct कर सकता है, इसलिए bottleneck का आकार और capacity ज्ञात anomalies वाले validation डेटा पर tune करनी चाहिए।",
+  "u": [
+   "Sensor डेटा पर reconstruction-based anomaly detection",
+   "Labels के बिना compact embeddings सीखना",
+   "Images या signals का denoising"
+  ],
+  "x": "एक payments कंपनी सामान्य merchant transaction patterns पर autoencoder train करती है और validated threshold से अधिक reconstruction error वाले transactions को review के लिए भेजती है। मॉडल CPU पर कुछ milliseconds में score करता है, और threshold को हर हफ़्ते दोबारा calibrate किया जाता है क्योंकि वैध खर्च के patterns मौसम के अनुसार बदलते हैं।"
+ },
+ "isoforest": {
+  "n": "Isolation Forest",
+  "d": "Isolation Forest यह मापकर anomalies का पता लगाता है कि random splits से किसी point को बाकी डेटा से कितनी आसानी से अलग किया जा सकता है। Anomalies संख्या में कम और अलग होती हैं, इसलिए वे कुछ ही splits के बाद अलग हो जाती हैं, जबकि सामान्य points trees में गहराई पर रहते हैं।\n\nहर tree एक छोटे random subsample (आम तौर पर 256 points) पर बनाया जाता है, जिसमें points के अलग होने तक बार-बार एक random feature और उसके minimum व maximum के बीच एक random threshold चुना जाता है। सभी trees पर औसत path length को 0 से 1 के बीच के anomaly score में normalize किया जाता है, जहाँ 1 के पास के मान संभावित anomalies दर्शाते हैं। इस तरीके को distance गणना की ज़रूरत नहीं, यह linear time में चलता है, high-dimensional tabular डेटा को अच्छी तरह संभालता है, और labels की ज़रूरत नहीं होती। इसकी मुख्य सीमा यह है कि axis-parallel random splits उन anomalies को पकड़ने में कठिनाई महसूस करते हैं जो केवल features के किसी संयोजन में असामान्य होती हैं, और contamination parameter केवल decision threshold तय करता है, इसलिए उसे अनुमान के बजाय वास्तविक anomaly दर को दर्शाना चाहिए।",
+  "u": [
+   "Transaction features पर unsupervised fraud screening",
+   "IoT sensor streams में दोषपूर्ण readings का पता लगाना",
+   "जाँच के लिए असामान्य server metrics को flag करना"
+  ],
+  "x": "एक cloud provider on-call engineers के सामने असामान्य मशीनें लाने के लिए CPU, memory, disk latency और network errors जैसे प्रति-host resource metrics पर Isolation Forest चलाता है। छोटे subsamples पर training से हर घंटे retraining सस्ती रहती है, और टीम contamination के डिफ़ॉल्ट पर निर्भर रहने के बजाय पिछली घटनाओं के सामने जाँचे गए score percentiles से alert threshold तय करती है।"
+ },
+ "lof": {
+  "n": "Local Outlier Factor (LOF)",
+  "d": "Local Outlier Factor हर point को उसकी local density की तुलना उसके nearest neighbors की local densities से करके score देता है। जो point अपने neighbors से विरल क्षेत्र में हो, उसे 1 से अधिक score मिलता है और उसे outlier माना जाता है।\n\nहर point के लिए LOF उसके k neighbors तक reachability distance निकालता है, औसत का व्युत्क्रम लेकर local reachability density प्राप्त करता है, और neighbors की औसत density को point की अपनी density से भाग देता है। चूँकि तुलना सापेक्ष है, LOF किसी घने cluster के पास के outliers भी ढूँढ सकता है, भले ही कहीं और किसी विरल cluster में इससे भी दूर के points हों—जो एक global distance threshold से छूट जाते। यह अलग-अलग density वाले clusters वाले कम से मध्यम dimensions के डेटा पर अच्छा काम करता है। कमियों में index के बिना quadratic लागत, k के चुनाव के प्रति संवेदनशीलता, और high dimensions में कमज़ोर प्रदर्शन शामिल है जहाँ दूरियाँ कम सूचनात्मक हो जाती हैं। scikit-learn में unseen डेटा को score करने के लिए novelty=True चाहिए, और तब training set पर fit_predict उपलब्ध नहीं रहता।",
+  "u": [
+   "अलग-अलग density वाले clusters में local anomalies ढूँढना",
+   "Security logs में असामान्य network flows का पता लगाना",
+   "Training datasets से outliers साफ़ करना"
+  ],
+  "x": "एक network security टीम हर office network के flow-level features पर LOF लागू करती है, जहाँ सामान्य traffic density अलग-अलग sites पर बहुत भिन्न होती है। सापेक्ष density score उन hosts को पकड़ता है जो अपनी ही site के लिहाज़ से असामान्य व्यवहार करते हैं, और टीम novelty mode का उपयोग करके नए flows को रोज़ refresh होने वाली reference window के सामने score करती है।"
+ },
+ "spectral": {
+  "n": "Spectral Clustering",
+  "d": "Spectral clustering एक similarity graph बनाकर, उसके graph Laplacian के eigenvectors निकालकर, और उस eigenvector space में points को cluster करके समूह बनाता है। यह किसी केंद्र से दूरी के बजाय connectivity से परिभाषित clusters ढूँढता है।\n\nPipeline एक affinity matrix से शुरू होती है, जैसे RBF kernel या k-nearest-neighbor graph। Normalized Laplacian के शीर्ष eigenvectors हर point को इस तरह embed करते हैं कि अच्छी तरह जुड़े समूह compact क्षेत्रों में आ जाते हैं, और फिर k-means उन्हें अलग करता है। यह प्रक्रिया लगभग normalized cut समस्या को हल करती है, जो clusters के आकार के सापेक्ष उनके बीच के connections को न्यूनतम करती है। यह आपस में गुँथे चाँद (interlocking moons) जैसे non-convex आकारों को संभालती है और social networks जैसे graph डेटा के लिए उपयुक्त है। लागत मुख्य सीमा है: sparse graphs और approximate solvers के बिना affinity matrix और eigendecomposition दसियों हज़ार points से आगे ठीक से scale नहीं करते। परिणाम affinity bandwidth या neighbor संख्या के प्रति संवेदनशील होते हैं, और clusters की संख्या फिर भी चुननी पड़ती है, अक्सर eigengap heuristic से।",
+  "u": [
+   "कम dimensions में non-convex आकारों को cluster करना",
+   "Social या citation graphs में community detection",
+   "Pixel similarity graphs से image segmentation"
+  ],
+  "x": "एक telecom analytics टीम business accounts के बीच के call graph पर spectral clustering लागू करके उन कंपनियों के समूह ढूँढती है जो ज़्यादातर आपस में ही संवाद करती हैं। पहले से गणना किया गया sparse affinity matrix memory को संभालने योग्य रखता है, और Laplacian के eigengap ने cluster संख्या चुनने में मार्गदर्शन किया।"
+ },
+ "stationarity": {
+  "n": "Stationarity (स्थिरता)",
+  "d": "कोई time series तब stationary होती है जब उसके statistical गुण—जैसे mean, variance और autocorrelation—समय के साथ नहीं बदलते। ARMA सहित अधिकांश पारंपरिक forecasting मॉडल stationarity मानते हैं, क्योंकि तभी अतीत से सीखे गए patterns भविष्य के लिए मान्य रहते हैं।\n\nWeak (covariance) stationarity के लिए स्थिर mean, स्थिर variance, और ऐसा autocovariance चाहिए जो केवल lag पर निर्भर हो। Trends, seasonality और बदलती volatility, सभी इसे तोड़ते हैं। सामान्य उपाय हैं trends या unit roots हटाने के लिए differencing, seasonal differencing, और variance को स्थिर करने के लिए log या Box-Cox transforms। Augmented Dickey-Fuller test की null hypothesis unit root है, जबकि KPSS test की null hypothesis stationarity है, इसलिए दोनों चलाने से अधिक भरोसेमंद निष्कर्ष मिलता है। एक आम ग़लती over-differencing है, जो कृत्रिम negative autocorrelation जोड़ती है और forecast variance बढ़ा देती है। साथ ही, ADF null को reject न कर पाना unit root साबित नहीं करता, ख़ासकर छोटी series में जहाँ test की power कम होती है।",
+  "u": [
+   "ARIMA-family मॉडलों के लिए series तैयार करना",
+   "आर्थिक डेटा में unit roots का परीक्षण",
+   "Feature engineering से पहले transformations चुनना"
+  ],
+  "x": "एक retail demand-planning टीम automatic ARIMA fitting से पहले हर store-product series पर ADF और KPSS tests चलाती है। Trend वाली series पर एक regular difference और प्रबल seasonality वाली series पर seasonal difference लगाया जाता है, और वे पहले sales का log-transform करते हैं क्योंकि variance मात्रा के साथ बढ़ता है।"
+ },
+ "acf": {
+  "n": "Autocorrelation (ACF / PACF)",
+  "d": "Autocorrelation function (ACF) हर lag पर किसी time series और उसकी lagged प्रतियों के बीच correlation मापता है। Partial autocorrelation function (PACF) सभी छोटे lags के प्रभाव हटाने के बाद lag k पर correlation मापता है।\n\nये दोनों मिलकर ARIMA orders पहचानने के पारंपरिक tools हैं। शुद्ध AR(p) process में PACF lag p के बाद कट जाता है जबकि ACF धीरे-धीरे घटता है; शुद्ध MA(q) process में ACF lag q के बाद कट जाता है जबकि PACF घटता है। Seasonal period के गुणकों पर spikes seasonality को उजागर करते हैं। मॉडल के residuals का ACF भी एक मुख्य diagnostic है, क्योंकि अच्छा मॉडल ऐसे residuals छोड़ता है जिनमें कोई significant autocorrelation न हो, और Ljung-Box test इसकी औपचारिक जाँच करता है। Plots आम तौर पर लगभग 95% confidence bands दिखाते हैं। कई lags होने पर कुछ bars संयोगवश bands से बाहर निकल जाएँगी, और non-stationary series पर ACF बहुत धीरे घटता है जिससे संरचना छिप जाती है, इसलिए plots से orders पढ़ने से पहले series को stationary बना लें।",
+  "u": [
+   "ARIMA के लिए AR और MA orders चुनना",
+   "किसी series में seasonality periods का पता लगाना",
+   "बची हुई संरचना के लिए model residuals की जाँच"
+  ],
+  "x": "एक call-center workforce टीम आधे-आधे घंटे के call volumes का ACF देखती है और दैनिक व साप्ताहिक lags पर प्रबल spikes पाती है, जिससे पता चलता है कि मॉडल में दोनों seasonal periods शामिल करने चाहिए। Fitting के बाद वे forecasting pipeline में automated quality gate के रूप में residuals पर Ljung-Box test चलाते हैं।"
+ },
+ "decomp": {
+  "n": "Seasonal Decomposition (मौसमी विघटन)",
+  "d": "Seasonal decomposition किसी time series को एक trend component, एक दोहराए जाने वाले seasonal component और एक remainder में बाँटता है। इससे अंतर्निहित patterns दिखाई देने लगते हैं, और यह अक्सर modeling या anomaly detection से पहले का preprocessing चरण होता है।\n\nAdditive decomposition, y = trend + seasonal + remainder, उन series के लिए उपयुक्त है जिनके seasonal उतार-चढ़ाव का आकार स्थिर रहता है; multiplicative decomposition, y = trend × seasonal × remainder, उन उतार-चढ़ावों के लिए उपयुक्त है जो स्तर के साथ बढ़ते हैं, और यह log transform के बाद additive decomposition के समकक्ष है। Classical decomposition centered moving average से trend का अनुमान लगाता है और हर season के लिए detrended मानों का औसत लेता है। STL (Seasonal-Trend decomposition using Loess) अधिक लचीला है: यह seasonal pattern को समय के साथ बदलने देता है, किसी भी period को संभालता है, और इसमें एक robust विकल्प है जो outliers का weight घटाता है। Decomposition वर्णनात्मक है। यह अपने-आप में forecast नहीं है, classical तरीका series के सिरों पर मान खो देता है, और ग़लत period या ग़लत additive/multiplicative रूप चुनने से seasonality remainder में रह जाती है।",
+  "u": [
+   "Trend analysis से पहले डेटा से seasonality हटाना",
+   "Remainder component पर anomaly detection",
+   "Business टीमों को seasonal patterns समझाना"
+  ],
+  "x": "एक web analytics टीम घंटेवार traffic पर साप्ताहिक period के साथ robust STL चलाती है और जब remainder कई robust standard deviations से अधिक हो जाता है तो alert भेजती है। अपेक्षित दैनिक और साप्ताहिक चक्रों को हटाने से सोमवार सुबह के false alarms घटे, और robust fit किसी पुराने outage को seasonal profile बिगाड़ने से रोकता है।"
+ },
+ "arima": {
+  "n": "ARIMA",
+  "d": "ARIMA (AutoRegressive Integrated Moving Average) किसी time series को stationary बनाने के लिए differencing करने के बाद हर मान को उसके अपने पिछले मानों और पिछली forecast errors के linear संयोजन के रूप में model करके forecast करता है। मॉडल को ARIMA(p, d, q) लिखा जाता है।\n\nAR भाग p lagged मानों का उपयोग करता है, I भाग d बार differencing लागू करता है, और MA भाग q lagged errors का उपयोग करता है। Orders ACF और PACF plots से, या AIC जैसे information criterion को न्यूनतम करके चुने जाते हैं, अक्सर automatic search के ज़रिए। Parameters का अनुमान maximum likelihood से लगाया जाता है, और मॉडल point forecasts के साथ forecast intervals भी देता है। ARIMA स्थिर autocorrelation वाली अकेली, अपेक्षाकृत छोटी univariate series के लिए अच्छा काम करता है और एक मज़बूत baseline है। इसकी सीमाओं में linearity, केवल SARIMA extension के ज़रिए एक ही seasonal pattern, और प्रति-series fitting शामिल है जो हज़ारों series पर महँगी हो जाती है। Forecast intervals normal, homoscedastic errors मानते हैं और integrated series के लिए horizon बढ़ने के साथ तेज़ी से चौड़े होते जाते हैं।",
+  "u": [
+   "किसी एक business metric का अल्पकालिक forecasting",
+   "Forecasting benchmarks के लिए baseline मॉडल",
+   "Intervals के साथ macroeconomic संकेतकों का forecasting"
+  ],
+  "x": "एक hospital operations टीम AIC से चुने गए ARIMA मॉडलों से दैनिक emergency department admissions का forecast करती है, जिन्हें हर रात सबसे हाल के दो वर्षों के डेटा पर दोबारा fit किया जाता है। Forecast intervals न्यूनतम staffing स्तर तय करने में मदद करते हैं, और policy बदलावों के बाद मॉडल के drift को पकड़ने के लिए residual diagnostics log किए जाते हैं।"
+ },
+ "sarima": {
+  "n": "SARIMA",
+  "d": "SARIMA, ARIMA में seasonal autoregressive, differencing और moving-average terms जोड़ता है जो एक निश्चित seasonal lag पर काम करते हैं, जैसे वार्षिक चक्र वाले मासिक डेटा के लिए 12। इसे ARIMA(p, d, q)(P, D, Q)ₛ लिखा जाता है।\n\nSeasonal भाग non-seasonal polynomials से गुणा होता है, इसलिए मॉडल अल्प-दूरी की निर्भरता और किसी मान तथा पिछले चक्रों के उसी season के बीच के संबंध, दोनों को पकड़ सकता है। Seasonal differencing (D = 1) एक period पहले के मान को घटाता है, जिससे स्थिर seasonal pattern हट जाता है। Exogenous regressors के साथ मॉडल को SARIMAX कहते हैं, और इसमें holidays या कीमतें शामिल की जा सकती हैं। एक स्पष्ट seasonality वाले मासिक या त्रैमासिक business डेटा के लिए SARIMA एक भली-भाँति समझा गया विकल्प है। लंबे seasonal periods—जैसे दैनिक डेटा के लिए 365 या घंटेवार डेटा के लिए 168—पर इसे कठिनाई होती है, क्योंकि estimation धीमा और अस्थिर हो जाता है; exogenous regressors के रूप में Fourier terms या TBATS-शैली के मॉडल इन्हें बेहतर संभालते हैं। यह सीधे केवल एक seasonal period को ही support करता है।",
+  "u": [
+   "वार्षिक seasonality के साथ मासिक sales forecasting",
+   "Seasonal patterns वाली त्रैमासिक आर्थिक series",
+   "Holiday regressors के साथ seasonal demand forecasting"
+  ],
+  "x": "एक beverage distributor SARIMAX(1,1,1)(1,1,1)₁₂ और हर महीने की सार्वजनिक छुट्टियों की संख्या के regressor के साथ प्रति क्षेत्र मासिक shipments का forecast करता है। Seasonal संरचना गर्मियों के peak को पकड़ती है, और planners केवल point forecast पर निर्भर रहने के बजाय safety stock तय करने के लिए 80% interval का उपयोग करते हैं।"
+ },
+ "prophet": {
+  "n": "Prophet",
+  "d": "Prophet, Meta की एक open-source forecasting library है जो piecewise trend, Fourier-आधारित seasonalities और holiday प्रभावों वाला एक additive मॉडल fit करती है। इसे प्रबल seasonal patterns वाली business time series और उन analysts के लिए बनाया गया है जो कम tuning के साथ उचित forecasts चाहते हैं।\n\nTrend piecewise linear या logistic होता है, जिसमें changepoints अपने-आप रखे जाते हैं और उनकी लचीलापन एक prior scale से नियंत्रित होती है। वार्षिक, साप्ताहिक और दैनिक seasonalities को Fourier series से model किया जाता है, और holidays या custom events अतिरिक्त regressors के रूप में जुड़ते हैं। Fitting, Stan से होती है, और output में uncertainty intervals शामिल होते हैं। Prophet missing डेटा और अनियमित timestamps को सहन कर लेता है और interpretable component plots बनाता है। यह curve-fitting तरीका है, autoregressive नहीं, इसलिए यह हाल की residual dynamics को अनदेखा करता है और उन series पर अक्सर सरल baselines या gradient boosting से हार जाता है जहाँ अल्पकालिक autocorrelation मायने रखता है। लंबे horizons पर trend extrapolation भी अवास्तविक रूप से भटक सकता है, इसलिए changepoint settings को time-based cross-validation से validate करना ज़रूरी है।",
+  "u": [
+   "Holidays के साथ दैनिक business metric forecasting",
+   "Seasonal web traffic के लिए capacity planning",
+   "Analysts द्वारा कई series के त्वरित forecasts"
+  ],
+  "x": "एक food delivery कंपनी Prophet से प्रति शहर दैनिक orders का forecast करती है, जिसमें क्षेत्रीय छुट्टियाँ और बड़े खेल आयोजनों का regressor जोड़ा जाता है। Analysts operations managers को बदलाव समझाने के लिए component plots देखते हैं, और हर त्रैमासिक planning चक्र से पहले rolling cross-validation में Prophet की तुलना seasonal naive baseline से करते हैं।"
+ },
+ "holtwinters": {
+  "n": "Exponential Smoothing (Holt-Winters)",
+  "d": "Exponential smoothing पिछले observations के weighted औसत से series का forecast करता है, जिसमें पुराने डेटा के weights exponentially घटते जाते हैं। Holt-Winters सरल smoothing में एक trend component और एक seasonal component जोड़ता है, जिनमें से हर एक अपने smoothing parameter से update होता है।\n\nतीन समीकरण हर चरण पर level (α), trend (β) और seasonal index (γ) को update करते हैं, और forecasts नवीनतम level, trend और मेल खाते seasonal index को मिलाकर बनते हैं। Seasonal भाग additive हो सकता है, स्थिर आकार के उतार-चढ़ाव के लिए, या multiplicative, स्तर के अनुपात में उतार-चढ़ाव के लिए। Damped trend लंबे horizon के forecasts को सपाट करता है और अक्सर undamped linear trend से अधिक सटीक होता है। State-space ETS मॉडलों के रूप में तैयार करने पर ये तरीके likelihoods, AIC-आधारित चयन और prediction intervals देते हैं। Holt-Winters तेज़, robust और कई demand व operations series के लिए मज़बूत baseline है। यह केवल एक seasonal period संभालता है, मानक रूप में external regressors का उपयोग नहीं कर सकता, और series में शून्य या ऋणात्मक मान होने पर multiplicative संस्करण विफल हो जाते हैं।",
+  "u": [
+   "कई products के लिए inventory demand forecasting",
+   "Seasonal utility loads का अल्पकालिक forecasting",
+   "Forecasting competitions के लिए तेज़ baseline"
+  ],
+  "x": "एक grocery chain अपने-आप चुने गए ETS मॉडलों से हज़ारों products की साप्ताहिक माँग का forecast करती है, और हर item के लिए AIC से additive या multiplicative seasonality चुनती है। मॉडल प्रति series कुछ सेकंड में fit हो जाते हैं, जिससे हर रात पूरा refresh संभव है, और damped trend promoted items के forecasts को बेकाबू होने से रोकता है।"
+ },
+ "tssplit": {
+  "n": "समय-आधारित Validation (Time-Based Validation)",
+  "d": "Time-based validation किसी forecasting या temporal मॉडल का मूल्यांकन हमेशा पहले के डेटा पर train करके और बाद के डेटा पर test करके करता है, ठीक वैसे ही जैसे मॉडल production में इस्तेमाल होगा। Random K-fold splits भविष्य की जानकारी training में leak कर देते हैं और ज़रूरत से ज़्यादा आशावादी स्कोर देते हैं।\n\nसामान्य योजना rolling-origin या expanding-window मूल्यांकन है: कई folds, जिनमें हर एक का training period किसी cutoff पर ख़त्म होता है और उसके बाद test period आता है। Sliding window training की लंबाई स्थिर रखता है, जो तब उपयोगी है जब पुराना डेटा अब प्रतिनिधि न रहा हो। Training और test periods के बीच का gap डेटा उपलब्ध होने और prediction के बीच की वास्तविक देरी से मेल खाना चाहिए, और rolling means जैसे features केवल हर cutoff पर उपलब्ध डेटा से ही निकाले जाने चाहिए। Folds पर errors का औसत एक split की तुलना में अधिक स्थिर अनुमान देता है। एक आम ग़लती split करने से पहले पूरे dataset पर scalers, encoders या feature selection को fit करना है, जिससे भविष्य के आँकड़े हर fold में leak हो जाते हैं।",
+  "u": [
+   "Demand forecasting मॉडलों का ईमानदार मूल्यांकन",
+   "Churn या fraud मॉडलों के hyperparameters tune करना",
+   "Trading या pricing रणनीतियों का backtesting"
+  ],
+  "x": "एक fraud detection टीम हर candidate मॉडल का मूल्यांकन सबसे हाल के चार महीनों को अलग-अलग folds मानकर करती है, और देर से आने वाले chargeback labels को ध्यान में रखते हुए दो हफ़्ते के gap के साथ केवल पहले के transactions पर train करती है। Random splits ने प्रदर्शन को बढ़ा-चढ़ाकर दिखाया था, क्योंकि वही fraud rings training और test दोनों डेटा में दिखाई दे रहे थे।"
+ },
+ "multistep": {
+  "n": "Multi-Step Forecasting (बहु-चरणीय पूर्वानुमान)",
+  "d": "Multi-step forecasting केवल अगले मान के बजाय एक साथ कई भविष्य के time steps का अनुमान लगाता है, जैसे अगले 24 घंटे या अगले 12 हफ़्ते। रणनीति का चुनाव सटीकता, लागत और horizon पर errors के जमा होने के तरीके को प्रभावित करता है।\n\nRecursive रणनीति एक one-step मॉडल train करती है और उसके अपने predictions को वापस inputs के रूप में देती है, जो सरल है लेकिन errors को बढ़ने देती है। Direct रणनीति हर horizon step के लिए अलग मॉडल train करती है, जिससे feedback errors से बचाव होता है लेकिन training लागत कई गुना हो जाती है और steps के बीच की निर्भरता अनदेखी रह जाती है। Multi-output (MIMO) रणनीति एक ही मॉडल से पूरे horizon vector का अनुमान लगाती है, जैसा कई neural forecasters करते हैं। Hybrid रणनीतियाँ इन्हें मिलाती हैं, उदाहरण के लिए ऐसे direct मॉडल जो पहले के steps के predictions का भी उपयोग करते हैं। मूल्यांकन में प्रति horizon error रिपोर्ट करना चाहिए, क्योंकि दूरी के साथ सटीकता आम तौर पर घटती है। Recursive रणनीति में एक आम ग़लती ऐसे features का उपयोग है—जैसे भविष्य के lag मान या rolling means—जो बाद के steps के लिए prediction के समय वास्तव में ज्ञात नहीं होंगे।",
+  "u": [
+   "Day-ahead घंटेवार बिजली load forecasting",
+   "Planning horizon पर साप्ताहिक demand forecasts",
+   "कई घंटों के traffic या ride demand का अनुमान"
+  ],
+  "x": "एक power grid operator अगले 24 घंटों में से हर घंटे के लिए day-ahead forecasts बनाता है, जिसमें direct रणनीति के तहत horizon के हर घंटे के लिए एक gradient-boosted मॉडल होता है। Direct तरीके ने शाम के घंटों में recursive मॉडल के errors के जमा होने से बचाया, और monitoring में errors को प्रति horizon step ट्रैक किया जाता है।"
+ },
+ "gbmts": {
+  "n": "Time Series के लिए Gradient Boosting",
+  "d": "Time series के लिए gradient boosting, forecasting को एक tabular regression समस्या में बदल देता है: हर row किसी समय-बिंदु पर एक series को lag features, rolling statistics, calendar fields और external variables से दर्शाती है, और LightGBM जैसा मॉडल भविष्य के मान का अनुमान लगाता है। बड़े retail forecasting competitions में यह सबसे सफल तरीकों में से एक है।\n\nमुख्य लाभ यह है कि हज़ारों संबंधित series पर एक global मॉडल train किया जाता है, जो patterns साझा करता है और categorical identifiers, कीमतें, promotions और holidays संभालता है। Tweedie या Poisson जैसे losses intermittent sales के लिए उपयुक्त हैं, और quantile loss prediction intervals देता है। ज़्यादातर काम feature engineering करती है, और उसे समय का सम्मान करना चाहिए: हर lag और rolling window prediction के क्षण पर गणना योग्य होनी चाहिए, जिसका multi-step horizons के लिए अर्थ है कम से कम horizon लंबाई के lags। Tree मॉडल training में देखी गई target रेंज से आगे extrapolate नहीं कर सकते, इसलिए प्रबल trends को differencing से या किसी हालिया स्तर के अनुपात का अनुमान लगाकर संभाला जाता है।",
+  "u": [
+   "हज़ारों series पर store-item sales forecasting",
+   "मौसम और events के साथ ride demand forecasting",
+   "Calendar features के साथ energy load forecasting"
+  ],
+  "x": "एक बड़ा grocery retailer हर store और product के लिए दैनिक unit sales का forecast एक ही global LightGBM मॉडल से करता है, जिसमें शून्य-बिक्री वाले कई दिनों के लिए Tweedie loss का उपयोग होता है। Lags 28 दिनों से शुरू होते हैं ताकि मॉडल recursive feedback के बिना पूरे चार हफ़्ते का horizon बना सके, और कीमत व promotion features planning system से आते हैं।"
+ },
+ "nbeats": {
+  "n": "N-BEATS",
+  "d": "N-BEATS (Neural Basis Expansion Analysis for Time Series) एक deep forecasting architecture है जो केवल fully connected layers से बना है, और residual links से जुड़े blocks के stacks में व्यवस्थित है। इसने दिखाया कि एक शुद्ध deep learning मॉडल M4 benchmark पर statistical ensembles से बेहतर प्रदर्शन कर सकता है।\n\nहर block एक lookback window लेता है, उसे MLP से गुज़ारता है, और basis expansion coefficients के दो vectors देता है: एक backcast जो input के एक हिस्से को reconstruct करता है, और horizon के लिए एक forecast। अगले block से पहले backcast को block के input से घटा दिया जाता है, ताकि बाद के blocks वह model करें जो पहले वाले चूक गए, और अंतिम forecast सभी block forecasts का योग होता है। Interpretable संस्करण में blocks को polynomial trend और Fourier seasonal bases तक सीमित रखा जाता है, जिससे trend और seasonality में decomposition मिलता है। Generic संस्करण सीखे गए bases का उपयोग करता है और आम तौर पर अधिक सटीक होता है। मूल मॉडल univariate है; N-BEATSx और N-HiTS extensions exogenous inputs और बेहतर long-horizon दक्षता जोड़ते हैं।",
+  "u": [
+   "कई संबंधित series पर univariate forecasting",
+   "Interpretable trend और seasonality decomposition",
+   "Forecasting benchmarks के लिए मज़बूत neural baseline"
+  ],
+  "x": "एक logistics कंपनी हज़ारों routes के साप्ताहिक shipment volumes पर एक global N-BEATS मॉडल train करती है, और interpretable संस्करण का उपयोग करती है ताकि planners trend और seasonal forecasts अलग-अलग देख सकें। एक साथ कई series पर training से मॉडल को पर्याप्त डेटा मिलता है, और GPU पर inference साप्ताहिक batch refreshes के लिए पर्याप्त तेज़ है।"
+ },
+ "tft": {
+  "n": "Temporal Fusion Transformer (TFT)",
+  "d": "Temporal Fusion Transformer, multi-horizon forecasting के लिए एक deep learning architecture है जो recurrent layers, attention और gating को मिलाकर static attributes, पिछले observed inputs और भविष्य के ज्ञात inputs को एक साथ संभालता है। यह quantile forecasts देता है और interpretable weights उजागर करता है।\n\nVariable selection networks सीखते हैं कि हर time step पर हर input feature कितना मायने रखता है। Store type जैसे static covariates context vectors के ज़रिए network को condition करते हैं। LSTM encoder-decoder स्थानीय sequence patterns को process करता है, और समय पर interpretable multi-head attention लंबी दूरी की निर्भरताओं को पकड़ता है; gated residual networks मॉडल को उन components को छोड़ने देते हैं जिनकी उसे ज़रूरत नहीं। Training में quantile loss का उपयोग होता है, इसलिए मॉडल सीधे, उदाहरण के लिए, 10वें, 50वें और 90वें percentiles का अनुमान लगाता है। TFT promotions, कीमतों, holidays और मौसम जैसे समृद्ध covariates वाली समस्याओं के लिए उपयुक्त है। इसे train और tune करना gradient boosting से भारी है, इसे काफ़ी डेटा चाहिए, और इसके attention व selection weights मॉडल की निर्भरता दर्शाते हैं, causal प्रभाव नहीं।",
+  "u": [
+   "Promotion calendars के साथ retail demand forecasting",
+   "मौसम covariates के साथ बिजली की कीमत का forecasting",
+   "Inventory फ़ैसलों के लिए probabilistic forecasts"
+  ],
+  "x": "एक energy trading desk quantile outputs के साथ day-ahead कीमतों का forecast करने के लिए TFT का उपयोग करता है, जिसमें मौसम के पूर्वानुमान और निर्धारित plant outages ज्ञात भविष्य के inputs के रूप में दिए जाते हैं। अनुमानित quantiles bidding की risk limits तय करते हैं, और variable selection weights analysts को यह जाँचने में मदद करते हैं कि मॉडल अपेक्षित कारकों पर प्रतिक्रिया दे रहा है।"
+ },
+ "patchtst": {
+  "n": "PatchTST",
+  "d": "PatchTST लंबे horizon के time-series forecasting के लिए एक Transformer है जो हर series को छोटे, संभवतः overlapping patches में बाँटता है और हर patch को एक token मानता है। यह multivariate series के हर channel को भी साझा weights के साथ स्वतंत्र रूप से process करता है।\n\nPatching tokens की संख्या को लगभग stride के अनुपात में घटा देती है, इसलिए attention की लागत तेज़ी से गिरती है और मॉडल बहुत पीछे तक देख सकता है। हर token में वह स्थानीय आकार की जानकारी भी होती है जो एक अकेले time step में नहीं होती, जिससे attention को अर्थपूर्ण patterns ढूँढने में मदद मिलती है। Channel independence का अर्थ है कि कई variables वाले multivariate dataset को एक मॉडल साझा करने वाली कई univariate series माना जाता है, जो regularization का काम करता है और इसी ने PatchTST को उन पुराने Transformer forecasters से आगे निकलने में मदद की जो हर चरण पर channels मिलाते थे। Instance normalization (RevIN) training और test windows के बीच स्तर के बदलावों को संभालता है। मॉडल patches को mask करके self-supervised pretraining को भी support करता है। इस design विकल्प की कीमत है: शुद्ध channel independence सीधे cross-variable संबंधों का लाभ नहीं उठा सकती, जो संबंधित sensors जैसे कुछ applications में मायने रखते हैं।",
+  "u": [
+   "बिजली load का लंबे horizon का forecasting",
+   "साझा weights के साथ कई sensor channels का forecasting",
+   "Unlabeled time series पर self-supervised pretraining"
+  ],
+  "x": "एक data center operations टीम PatchTST से सैकड़ों racks के तापमान और power draw के अगले 96 intervals का forecast करती है, जिसमें एक लंबी lookback window का उपयोग होता है जो point-wise Transformer के लिए बहुत महँगी होती। Channel independence से एक ही मॉडल सभी racks की सेवा करता है, और जब किसी rack का baseline load बदलता है तो RevIN forecasts को स्थिर रखता है।"
+ },
+ "tsfm": {
+  "n": "Time-Series Foundation Models",
+  "d": "Time-series foundation models बड़े neural networks हैं जिन्हें time series के बहुत बड़े और विविध संग्रहों पर pretrain किया जाता है, ताकि वे target डेटा पर training के बिना, zero-shot तरीके से नई series का forecast कर सकें। उदाहरणों में Amazon का Chronos, Google का TimesFM, Salesforce का Moirai और Lag-Llama शामिल हैं।\n\nइनके design अलग-अलग हैं। Chronos मानों को scale और quantize करके tokens बनाता है और उन पर T5-शैली का language मॉडल train करता है, जो sampling से probabilistic forecasts देता है। TimesFM, series के patches पर एक decoder-only Transformer है। Moirai कई patch sizes के साथ patching का उपयोग करता है और multivariate inputs व covariates को support करता है। Pretraining में वास्तविक और synthetic series मिलाई जाती हैं। ये मज़बूत baselines के रूप में, कई छोटी series वाली cold-start समस्याओं में, और तब उपयोगी हैं जब कोई टीम प्रति-dataset मॉडल बनाए नहीं रख सकती। सीमाओं में कुछ मॉडलों में covariates का सीमित या कोई उपयोग न होना, पारंपरिक तरीकों की तुलना में ऊँची inference लागत, और यह जोखिम शामिल है कि benchmark स्कोर pretraining डेटा से overlap करें। Domain-specific डेटा पर fine-tuning या अच्छी तरह tune किया गया gradient boosting मॉडल अब भी जीत सकता है।",
+  "u": [
+   "बिना इतिहास वाले नए products के लिए zero-shot forecasts",
+   "कई विषम (heterogeneous) series पर त्वरित baselines",
+   "प्रति-series training के बिना probabilistic forecasts"
+  ],
+  "x": "एक cloud infrastructure टीम हज़ारों नई लॉन्च की गई सेवाओं के लिए, जिनका इतिहास केवल कुछ हफ़्तों का है, zero-shot capacity forecasts बनाने हेतु pretrained Chronos मॉडल का उपयोग करती है। वे हर महीने इसकी तुलना seasonal naive और LightGBM baselines से करते हैं और foundation model को केवल उन्हीं series के लिए रखते हैं जहाँ यह जीतता है, क्योंकि GPU पर inference पारंपरिक मॉडलों से महँगा है।"
+ },
+ "gd": {
+  "n": "Gradient Descent (प्रवणता अवतरण)",
+  "d": "Gradient descent किसी function को न्यूनतम करने के लिए parameters को बार-बार negative gradient की दिशा में एक छोटा कदम आगे बढ़ाता है, जो सबसे तीव्र स्थानीय गिरावट की दिशा है। यह लगभग सभी neural network training की नींव है।\n\nहर iteration में हर parameter के सापेक्ष loss का gradient निकाला जाता है और learning rate से scale करके घटाया जाता है। Full-batch gradient descent में gradient पूरे training set पर निकाला जाता है, इसलिए हर कदम सटीक लेकिन महँगा होता है। उपयुक्त learning rate के साथ convex, smooth functions के लिए यह global minimum तक converge करता है; deep networks जैसे non-convex losses के लिए यह एक stationary point तक पहुँचता है जो initialization पर निर्भर करता है। Learning rate निर्णायक है: बहुत छोटा होने पर computation बर्बाद होता है, और बहुत बड़ा होने पर oscillation या divergence होता है, जिसकी सुरक्षित सीमा loss की curvature से तय होती है। ख़राब तरीके से scale किए गए features लंबी घाटियाँ बनाते हैं जिनमें सामान्य gradient descent धीरे-धीरे zigzag करता है, इसीलिए feature scaling, momentum और adaptive तरीके मदद करते हैं।",
+  "u": [
+   "Linear और logistic regression मॉडलों को fit करना",
+   "Backpropagation के ज़रिए neural networks की training",
+   "Scientific computing में smooth optimization समस्याएँ हल करना"
+  ],
+  "x": "एक risk modeling टीम कुछ मिलियन rows पर full-batch gradient-based optimization से logistic regression fit करती है, क्योंकि convex loss एक अद्वितीय हल की गारंटी देता है जिसे auditors हूबहू दोहरा सकते हैं। वे पहले features को standardize करते हैं, जिससे converge होने के लिए आवश्यक iterations की संख्या स्पष्ट रूप से घट जाती है।"
+ },
+ "sgd": {
+  "n": "Stochastic Gradient Descent (SGD)",
+  "d": "Stochastic gradient descent पूरे dataset के बजाय एक अकेले उदाहरण या एक छोटे random subset पर निकाले गए gradient से मॉडल parameters को update करता है। हर कदम सस्ता और noisy होता है, लेकिन औसतन सही दिशा में इशारा करता है, क्योंकि sample किया गया gradient पूरे gradient का unbiased अनुमान है।\n\nइससे memory से कहीं बड़े datasets पर training व्यावहारिक हो जाती है, क्योंकि प्रति update लागत dataset के आकार के साथ नहीं बढ़ती। Noise के भी लाभ हैं: यह optimizer को sharp minima और saddle points से बाहर निकलने में मदद करता है, और माना जाता है कि यह अच्छी तरह generalize करने वाले हलों को प्राथमिकता देता है। Deep learning में “SGD” का अर्थ लगभग हमेशा mini-batch SGD होता है, अक्सर momentum के साथ। स्थिर learning rate वाला सामान्य SGD ठीक-ठीक converge नहीं करता; यह minimum के आसपास एक क्षेत्र में उछलता रहता है जिसका आकार learning rate के अनुपात में होता है, इसलिए convergence के लिए घटता हुआ schedule चाहिए। SGD, adaptive तरीकों की तुलना में learning rate और feature scaling के प्रति अधिक संवेदनशील भी है।",
+  "u": [
+   "Streaming डेटा पर बड़े linear मॉडलों की training",
+   "Image classification के लिए convolutional networks की training",
+   "लगातार आते डेटा के साथ online learning"
+  ],
+  "x": "एक ad-tech कंपनी एक निरंतर event stream पर SGD से click-prediction logistic मॉडल train करती है, और नए impressions आते ही weights update करती है। प्रति-उदाहरण updates traffic की मात्रा चाहे जितनी हो, memory को स्थिर रखते हैं, और घटता हुआ learning rate मॉडल को स्थिर रखते हुए नए campaigns के अनुसार ढलने देता है।"
+ },
+ "minibatch": {
+  "n": "Mini-Batch",
+  "d": "Mini-batch, training उदाहरणों का एक छोटा random subset है, आम तौर पर 16 से लेकर कुछ हज़ार तक, जिसका उपयोग एक gradient अनुमान और एक parameter update के लिए होता है। Mini-batch training, full-batch gradient descent और single-example SGD के बीच की स्थिति है, और deep learning में यही डिफ़ॉल्ट है।\n\nB उदाहरणों पर gradient का औसत लेने से उसका variance लगभग B के गुणक से घटता है, और batching से GPUs कई उदाहरणों को समानांतर रूप से process कर पाते हैं, इसलिए hardware के saturate होने तक throughput तेज़ी से बढ़ता है। बड़े batches प्रति epoch smoother लेकिन कम updates देते हैं; linear scaling rule सुझाता है कि learning rate को batch size के अनुपात में बढ़ाया जाए, आम तौर पर warmup के साथ। एक निश्चित critical batch size के बाद, और उदाहरण जोड़ने से आवश्यक steps की संख्या नहीं घटती और computation केवल बर्बाद होता है। जब memory batch को सीमित करती है, तो gradient accumulation एक update से पहले कई छोटे batches के gradients जोड़ता है। Batch size, batch normalization के साथ भी interact करता है, जिसके statistics बहुत छोटे batches के लिए अविश्वसनीय हो जाते हैं।",
+  "u": [
+   "Deep neural networks की कुशल GPU training",
+   "Memory-सीमित LLM fine-tuning के लिए gradient accumulation",
+   "कई devices पर training को scale करना"
+  ],
+  "x": "एक GPU पर language मॉडल fine-tune करने वाली एक टीम प्रति-device 4 का batch और 16 gradient accumulation steps इस्तेमाल करके 64 का effective batch प्राप्त करती है। इससे memory में समाते हुए उनके multi-GPU runs की स्थिर settings से मेल बैठा, और उन्होंने effective batch size के आधार पर learning rate को scale किया।"
+ },
+ "momentum": {
+  "n": "Momentum",
+  "d": "Momentum पिछले gradients का exponentially घटता औसत जमा करके और parameters को कच्चे gradient के बजाय इस velocity के साथ आगे बढ़ाकर gradient descent को तेज़ करता है। जिन दिशाओं में gradients सहमत होते हैं वहाँ गति बढ़ती जाती है, जबकि जिन दिशाओं में वे दोलन करते हैं वे एक-दूसरे को रद्द कर देती हैं।\n\nCoefficient β (आम तौर पर 0.9) के साथ velocity लगभग 1/(1 − β) हालिया gradients को समाहित करती है, इसलिए किसी सुसंगत दिशा में प्रभावी कदम दस गुना तक बड़ा हो जाता है। संकरी, घुमावदार घाटियों में, जहाँ सामान्य gradient descent दीवारों के आर-पार zigzag करता है, momentum oscillation को कम करता है और घाटी के तल पर तेज़ी से आगे बढ़ता है। यह stochastic gradients के noise को भी smooth करता है। Momentum के साथ SGD convolutional networks के लिए अब भी एक मज़बूत optimizer है और Adam के first-moment अनुमान का आधार है। दो परंपराएँ मौजूद हैं: कुछ libraries gradient को (1 − β) से scale करती हैं और कुछ नहीं, जिससे effective learning rate बदल जाता है, इसलिए hyperparameters एक implementation से दूसरे में सीधे लागू नहीं होते। ऊँचे learning rate के साथ ऊँचा momentum overshoot करके अस्थिरता पैदा कर सकता है।",
+  "u": [
+   "SGD से ResNet-शैली के image classifiers की training",
+   "Ill-conditioned समस्याओं में convergence तेज़ करना",
+   "छोटे batch की training में noisy gradients को smooth करना"
+  ],
+  "x": "एक medical imaging टीम momentum 0.9 और cosine schedule वाले SGD से एक convolutional segmentation मॉडल train करती है, क्योंकि उन्होंने पाया कि यह उनके held-out अस्पताल डेटा पर Adam से थोड़ा बेहतर generalize करता है। वे momentum को स्थिर रखते हैं और केवल learning rate tune करते हैं, जिससे उनकी hyperparameter search सरल हो गई।"
+ },
+ "nesterov": {
+  "n": "Nesterov Accelerated Gradient",
+  "d": "Nesterov Accelerated Gradient, momentum का एक रूप है जो gradient को वर्तमान स्थिति के बजाय उस स्थिति पर evaluate करता है जहाँ parameters पहुँचने वाले हैं। यह आगे देखने की क्षमता optimizer को overshoot करने से पहले अपनी velocity सुधारने देती है।\n\nClassical momentum वर्तमान gradient को जमा velocity में जोड़ता है; Nesterov पहले velocity के साथ आगे बढ़ता है और फिर वहाँ gradient मापता है। अगर velocity parameters को किसी minimum से आगे ले जा रही हो, तो look-ahead gradient पहले से ही वापस की ओर इशारा करता है, इसलिए update जल्दी धीमा होता है और कम दोलन करता है। Smooth convex समस्याओं के लिए Nesterov का तरीका first-order तरीकों की optimal convergence दर O(1/t²) हासिल करता है, जबकि सामान्य gradient descent की दर O(1/t) है। Deep learning में classical momentum की तुलना में व्यावहारिक लाभ आम तौर पर मामूली लेकिन सुसंगत होता है, और अधिकांश frameworks में यह एक ही flag से चालू हो जाता है। Implementations एक समकक्ष पुनर्रचना का उपयोग करते हैं जो वर्तमान parameters पर gradient निकालती है, इसलिए किसी अतिरिक्त forward pass की ज़रूरत नहीं होती। Nadam यही विचार Adam के साथ जोड़ता है।",
+  "u": [
+   "SGD से convolutional networks की training",
+   "Classical ML में accelerated convex optimization",
+   "Classical momentum की तुलना में oscillation कम करना"
+  ],
+  "x": "एक image classifier के लिए optimizers का benchmark करने वाली एक computer-vision टीम ने उसी learning rate schedule के साथ classical momentum से Nesterov momentum पर स्विच किया। इस बदलाव में compute की कोई अतिरिक्त लागत नहीं आई और loss curves थोड़े smooth हुए, इसलिए उन्होंने इसे अपने training template में डिफ़ॉल्ट बना लिया।"
+ },
+ "rmsprop": {
+  "n": "RMSProp",
+  "d": "RMSProp एक adaptive optimizer है जो हर parameter के gradient को उसके हालिया gradients के running root mean square से भाग देता है। जिन parameters के gradients लगातार बड़े होते हैं उन्हें छोटे कदम मिलते हैं, और छोटे gradients वाले parameters को बड़े।\n\nयह तरीका squared gradients का exponential moving average रखता है, आम तौर पर decay ρ = 0.9 या 0.99 के साथ, और update को उस औसत और एक छोटे ε के योग के inverse square root से scale करता है। यह AdaGrad की मुख्य कमज़ोरी दूर करता है, जिसका squared gradients का संचित योग केवल बढ़ता है और अंततः learning rate को लगभग शून्य तक घटा देता है; moving average की वजह से RMSProp लंबी training के दौरान भी adapt करता रहता है। यह non-stationary objectives पर अच्छा काम करता है और recurrent networks व reinforcement learning के लिए एक आम विकल्प था। Adam इसे momentum और bias correction के साथ आगे बढ़ाता है। RMSProp में bias correction नहीं है, इसलिए औसत के स्थिर होने तक शुरुआती updates बड़े हो सकते हैं, और ε का मान—जो कभी-कभी square root के अंदर रखा जाता है—व्यवहार को स्पष्ट रूप से बदल सकता है।",
+  "u": [
+   "Sequential डेटा पर recurrent networks की training",
+   "DQN agents जैसी deep reinforcement learning",
+   "Training के दौरान बदलने वाले objectives का optimization"
+  ],
+  "x": "Automated playtesting के लिए reinforcement learning agents train करने वाला एक game studio स्थापित DQN implementations की settings का पालन करते हुए RMSProp का उपयोग करता है। प्रति-parameter scaling agent की policy बदलने के साथ बदलते reward signal को संभालती है, और टीम gradients को clip करती है ताकि दुर्लभ बड़े updates value network को अस्थिर न करें।"
+ },
+ "adam": {
+  "n": "Adam",
+  "d": "Adam (Adaptive Moment Estimation) एक optimizer है जो momentum को प्रति-parameter adaptive step sizes के साथ जोड़ता है। यह gradient और squared gradient के exponential moving averages रखता है, शून्य पर initialization के लिए दोनों को सुधारता है, और उनके अनुपात को update के रूप में इस्तेमाल करता है।\n\nFirst moment m, momentum की तरह काम करता है और update की दिशा को smooth करता है; second moment v हर parameter के कदम को उसके सामान्य gradient परिमाण के व्युत्क्रम से scale करता है। Bias correction हर औसत को 1 − βᵗ से भाग देता है, जिससे शुरुआती iterations में बहुत छोटे या बहुत बड़े कदम नहीं होते। इसके डिफ़ॉल्ट मान कई समस्याओं पर काम करते हैं, जिससे Adam, Transformers और deep learning के बड़े हिस्से के लिए मानक optimizer बन गया। इसके update का परिमाण मोटे तौर पर learning rate से सीमित रहता है, जिससे यह gradient scale के प्रति robust है। सीमाओं में अधिक memory उपयोग शामिल है, क्योंकि प्रति parameter दो अतिरिक्त मान संग्रहीत होते हैं, और vision tasks पर tune किए गए SGD की तुलना में कभी-कभी ख़राब generalization। Weight decay के साथ L2 penalty को v से rescale किया जाता है, इसलिए AdamW को प्राथमिकता दी जाती है।",
+  "u": [
+   "Transformers और language मॉडलों की training",
+   "Neural networks के prototyping के लिए डिफ़ॉल्ट optimizer",
+   "Sparse या noisy gradients वाले मॉडलों की training"
+  ],
+  "x": "बड़ी sparse embedding tables वाला two-tower retrieval मॉडल train करने वाली एक recommendation टीम Adam का उपयोग करती है, क्योंकि कम दिखने वाले item embeddings को कभी-कभार ही gradients मिलते हैं, और adaptive scaling उन्हें बड़े प्रभावी कदम देती है। Optimizer state embeddings की memory को तिगुना कर देता है, इसलिए वे एक sparse Adam variant का उपयोग करते हैं जो केवल हर batch में मौजूद rows को update करता है।"
+ },
+ "adamw": {
+  "n": "AdamW",
+  "d": "AdamW, decoupled weight decay वाला Adam है: loss में L2 penalty जोड़ने के बजाय यह adaptive gradient update से अलग, हर कदम पर weights को सीधे एक निश्चित अंश से घटाता है। यह Transformers की training और fine-tuning के लिए मानक optimizer है।\n\nसामान्य Adam में L2 term को gradient में जोड़ा जाता है और फिर adaptive denominator √v̂ से भाग दिया जाता है, इसलिए बड़े gradient इतिहास वाले parameters मुश्किल से regularize होते हैं, जबकि कम update होने वाले parameters पर भारी penalty लगती है। इससे adaptive तरीकों के लिए L2 regularization और weight decay समकक्ष नहीं रहते। AdamW, θ ← θ − ηλθ को adaptive scaling के बाहर लागू करता है, इसलिए हर weight समान सापेक्ष दर से घटता है, जिससे generalization सुधरता है और learning rate व decay strength को स्वतंत्र रूप से tune करना आसान हो जाता है। आम प्रथा में biases और normalization weights को decay से बाहर रखा जाता है। ध्यान दें कि PyTorch में decay को learning rate से गुणा किया जाता है, इसलिए schedule बदलने से प्रभावी regularization भी बदल जाता है।",
+  "u": [
+   "बड़े language मॉडलों की pretraining और fine-tuning",
+   "Vision Transformers और BERT-शैली के encoders की training",
+   "किसी भी Adam-आधारित मॉडल की regularized training"
+  ],
+  "x": "एक NLP टीम document classification के लिए BERT-शैली के encoder को AdamW, weight decay 0.01, और linear warmup के बाद linear decay के साथ fine-tune करती है, जो Hugging Face Trainer के डिफ़ॉल्ट से मेल खाता है। वे bias और LayerNorm parameters को decay से बाहर रखते हैं, जो मूल BERT recipe का पालन करता है और normalization scales को शून्य की ओर सिकुड़ने से बचाता है।"
+ },
+ "lr": {
+  "n": "Learning Rate",
+  "d": "Learning rate वह scalar है जो तय करता है कि optimizer हर iteration पर अपनी update दिशा में कितना बड़ा कदम उठाए। Neural network की training में यह आम तौर पर सबसे महत्वपूर्ण अकेला hyperparameter होता है।\n\nअगर यह बहुत छोटा हो, तो training धीमी होती है और plateaus पर अटक सकती है; अगर बहुत बड़ा हो, तो loss दोलन करता है या diverge होता है, जो अक्सर NaN मानों के रूप में दिखता है। Quadratic loss के लिए gradient descent तभी स्थिर है जब learning rate, 2 को सबसे बड़ी curvature से भाग देने पर मिले मान से कम हो। सबसे अच्छा मान optimizer, batch size, मॉडल के आकार और architecture पर निर्भर करता है: Adam-शैली के optimizers आम तौर पर 1e-4 से 1e-3 का उपयोग करते हैं, जबकि vision मॉडलों पर SGD अक्सर 0.1 के आसपास से शुरू होता है। Learning rate range test, जो एक छोटे run के दौरान rate को exponentially बढ़ाता है और loss पर नज़र रखता है, एक अच्छा शुरुआती मान ढूँढने में मदद करता है। Pretrained मॉडल को fine-tune करने के लिए आम तौर पर scratch से training की तुलना में बहुत छोटा rate चाहिए, ताकि सीखे गए features नष्ट न हों।",
+  "u": [
+   "किसी भी training run का पहला hyperparameter tune करना",
+   "Pretrained मॉडलों की fine-tuning के लिए छोटे rates चुनना",
+   "Divergence और loss spikes का निदान"
+  ],
+  "x": "एक ML platform टीम हर नई model family से पहले एक छोटा learning rate range test चलाती है, जिसमें कई orders of magnitude पर exponentially sweep करके उस बिंदु से थोड़ा नीचे का मान चुना जाता है जहाँ loss बढ़ना शुरू होता है। इसने लंबी grid searches की जगह ली और कई ऐसे configurations पकड़े जहाँ batch size बदलने के बाद डिफ़ॉल्ट rate diverge हो गया था।"
+ },
+ "lrsched": {
+  "n": "Learning Rate Schedules (learning rate अनुसूचियाँ)",
+  "d": "Learning rate schedule training के दौरान एक पूर्वनिर्धारित नियम के अनुसार learning rate बदलता है—आम तौर पर तेज़ प्रगति के लिए ऊँचे मान से शुरू करके और एक अच्छे minimum में स्थिर होने के लिए नीचे के मान पर ख़त्म करके। लगभग सभी आधुनिक training recipes में इसका उपयोग होता है।\n\nआम schedules में step decay शामिल है, जो निश्चित epochs पर rate को किसी गुणक से भाग देता है; exponential decay; cosine annealing, जो peak से एक छोटे minimum तक आधे cosine का अनुसरण करता है; शून्य तक linear decay, जो Transformer fine-tuning के लिए मानक है; और one-cycle, जो एक ही run में बढ़ता और फिर घटता है। Reduce-on-plateau schedules किसी निश्चित योजना का पालन करने के बजाय validation metric पर प्रतिक्रिया देते हैं। शुरुआती बड़े कदम व्यापक खोज करते हैं और उपयोगी noise जोड़ते हैं, जबकि बाद के छोटे कदम stochastic gradients के noise floor को घटाते हैं ताकि loss और नीचे जा सके। एक व्यावहारिक ख़तरा यह है कि cosine और linear schedules कुल steps की संख्या पर निर्भर करते हैं, इसलिए बाद में training बढ़ाने के लिए restart करना पड़ता है या warmup-stable-decay जैसे schedule का उपयोग करना पड़ता है।",
+  "u": [
+   "Language मॉडलों की pretraining के लिए cosine decay",
+   "Transformer fine-tuning के लिए linear decay",
+   "Image classifiers की training के लिए step decay"
+  ],
+  "x": "मध्यम आकार के language मॉडल को pretrain करने वाली एक टीम warmup-stable-decay schedule का उपयोग करती है, जिसमें training के अधिकांश भाग में learning rate स्थिर रखा जाता है और केवल अंतिम चरण में घटाया जाता है। जब उन्होंने अधिक tokens पर train करने का फ़ैसला किया, तो इससे वे intermediate checkpoints से अतिरिक्त decay runs निकाल सके, जो एक निश्चित cosine schedule में संभव नहीं होता।"
+ },
+ "warmup": {
+  "n": "Warmup",
+  "d": "Learning rate warmup, training को एक छोटे learning rate से शुरू करता है और पहले कुछ सौ या हज़ार steps में उसे, आम तौर पर linearly, target मान तक बढ़ाता है। यह training की शुरुआत में अस्थिर updates को रोकता है, जब मॉडल और optimizer के statistics अभी ठीक से calibrate नहीं हुए होते।\n\nTraining की शुरुआत में gradients बड़े और अनियमित हो सकते हैं, और Adam जैसे adaptive optimizers के second-moment अनुमान केवल कुछ samples पर आधारित होते हैं, जो bias correction के बावजूद ज़रूरत से बड़े कदम पैदा कर सकते हैं। Transformers में शुरुआती बड़े updates network को ऐसे क्षेत्र में धकेल सकते हैं जहाँ से वह कभी उबर नहीं पाता। Warmup इन statistics को स्थिर होने देता है और पूरे आकार के कदम शुरू होने से पहले मॉडल को एक smoother क्षेत्र तक पहुँचने देता है। Scaled-up learning rate के साथ बड़े batches का उपयोग करते समय भी यह महत्वपूर्ण है। सामान्य warmup लंबाई fine-tuning के लिए training steps का 1 से 10 प्रतिशत, या pretraining के लिए कुछ हज़ार steps होती है। Warmup, decay schedule की जगह नहीं लेता, और ज़रूरत से ज़्यादा लंबा warmup training budget बर्बाद करता है।",
+  "u": [
+   "Transformer और LLM की शुरुआती training को स्थिर करना",
+   "Scaled learning rates के साथ large-batch training",
+   "AdamW के साथ pretrained मॉडलों की fine-tuning"
+  ],
+  "x": "कई GPUs पर batch size बढ़ाने वाली एक research टीम ने पाया कि scaled learning rate पहले कुछ सौ steps में diverge हो रहा था। प्रकाशित large-batch ImageNet recipes की तरह पहले कुछ epochs पर linear warmup जोड़ने से schedule के बाकी हिस्से को बदले बिना divergence ख़त्म हो गया।"
+ }
+}
