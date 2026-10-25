@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#EEECE6}#c{width:900px;height:600px;display:block}</style></head><body>
+<canvas id="c"></canvas>
+<script src="node_modules/three/build/three.min.js"></script>
+<script src="node_modules/three/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="node_modules/three/examples/js/lines/LineGeometry.js"></script>
+<script src="node_modules/three/examples/js/lines/LineMaterial.js"></script>
+<script src="node_modules/three/examples/js/lines/LineSegments2.js"></script>
+<script src="node_modules/three/examples/js/lines/Line2.js"></script>
+<script src="node_modules/three/examples/js/controls/OrbitControls.js"></script>
+<script src="../src/core.js"></script>
+<script src="../src/registry.js"></script>
+<script src="../src/viz-a.js"></script>
+<script src="../src/viz-b.js"></script>
+<script src="../src/viz-c.js"></script>
+<script src="../src/viz-d.js"></script>
+<script src="../src/viz-e.js"></script>
+<script src="../src/stage.js"></script>
+<script>
+window.ERR=[];
+const oe=console.error;console.error=(...a)=>{ERR.push(a.map(String).join(' '));oe(...a)};
+window.addEventListener('error',e=>ERR.push(String(e.message)));
+const st=AtlasStage(document.getElementById('c'),{still:true,preserve:true});
+let ctlCache=null,setter=null;
+window.showItem=(id)=>{const it=ATLAS_REG.items.find(x=>x[0]===id);
+ window.__lastBuilt=st.show({id,type:it[3],params:it[4]},(ctl,vals,set)=>{ctlCache=ctl;setter=set});
+ const lg=(window.__lastBuilt&&window.__lastBuilt.legend)||[];st.renderOnce();return {legend:lg,type:it[3],ctl:(ctlCache||[]).map(c=>({key:c.key,min:c.min,max:c.max,options:c.options,value:c.value}))};};
+window.setCtl=(k,v)=>{setter&&setter(k,v);st.renderOnce();};
+window.tick=(t)=>{st.renderOnce();};
+</script></body></html>
