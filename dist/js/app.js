@@ -111,15 +111,15 @@
 
   /* ---------- rail ---------- */
   let openCat = null;
-  function renderRail(activeId) {
+  function renderRail(activeId, keepOpen) {
     const rail = $('#rail');
     const cur = activeId || (curId && curId !== 'home' ? curId : null);
-    if (cur) openCat = BYID[cur].cat;
+    if (cur && !keepOpen) openCat = BYID[cur].cat;
     rail.innerHTML = `<h2>${esc(t('chapters'))}</h2><ol>${CATS.map((c) => `
       <li><button class="chap" type="button" data-cat="${c.id}" aria-expanded="${openCat === c.id}"><span class="no">${c.no}</span><span>${esc(catName(c.id))}</span><span class="ct">${c.items.length}</span></button>
       ${openCat === c.id ? `<div class="sub">${c.items.map((x) => `<a href="#${x.id}" ${x.id === cur ? 'aria-current="page"' : ''}>${esc(nm(x.id))}</a>`).join('')}</div>` : ''}</li>`).join('')}</ol>`;
     rail.querySelectorAll('.chap').forEach((b) => b.addEventListener('click', () => {
-      openCat = openCat === b.dataset.cat ? null : b.dataset.cat; renderRail(cur);
+      openCat = openCat === b.dataset.cat ? null : b.dataset.cat; renderRail(cur, true);
     }));
     const a = rail.querySelector('[aria-current="page"]');
     if (a) { const r = a.getBoundingClientRect(), rr = rail.getBoundingClientRect(); if (r.top < rr.top || r.bottom > rr.bottom) a.scrollIntoView({ block: 'center' }); }
