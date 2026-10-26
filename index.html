@@ -89,12 +89,17 @@ html[dir="rtl"] .langmenu { right: auto; left: 0; }
 
 /* shell */
 .shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: 0 56px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); max-width: 1480px; margin: 0 auto; }
-:root[data-rail="off"] .shell { grid-template-columns: minmax(0, 1fr); }
-:root[data-rail="off"] .rail { display: none; }
-.railbtn { width: 36px; padding: 0; justify-content: center; margin-inline-start: -8px; }
-:root[data-rail="off"] .railbtn .bar-l { opacity: 0; }
+@media (min-width: 901px) {
+  :root[data-rail="off"] .shell { grid-template-columns: 30px minmax(0, 1fr); gap: 0 26px; }
+  :root[data-rail="off"] .rail h2, :root[data-rail="off"] .rail ol { display: none; }
+}
+.railhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
+.railhead h2 { margin: 0; }
+.railtog { width: 30px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 17px; line-height: 1; color: var(--ink-3); }
+.railtog:hover { background: var(--paper-2); color: var(--ink); }
+html[dir="rtl"] .railtog { transform: scaleX(-1); }
 .rail { position: sticky; top: calc(60px + env(safe-area-inset-top, 0px)); align-self: start; height: calc(100vh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; padding-block: 28px 40px; scrollbar-width: thin; }
-.rail h2 { font: 500 13px var(--sans); color: var(--ink-3); margin: 0 0 10px; }
+.rail h2 { font: 500 13px var(--sans); color: var(--ink-3); }
 .rail ol { list-style: none; margin: 0; padding: 0; }
 .rail > ol > li { border-top: 1px solid var(--rule); }
 .chap { display: grid; grid-template-columns: 26px 1fr auto; align-items: baseline; gap: 6px; width: 100%; padding: 9px 2px; text-align: start; font-size: 14.5px; color: var(--ink-2); }
@@ -282,7 +287,6 @@ footer { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <header class="bar" id="bar">
   <div class="bar-in">
-    <button class="tbtn railbtn hide-sm" id="railBtn" type="button" aria-controls="rail" aria-expanded="true"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1.5" y="2.5" width="15" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 2.5v13" stroke="currentColor" stroke-width="1.4"/><path class="bar-l" d="M3.6 5.5h1.2M3.6 8h1.2M3.6 10.5h1.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
     <a class="mark" href="#" id="homeLink" aria-label="Latent Atlas">
       <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.5 21 7.5v9L12 21.5 3 16.5v-9z"/><path d="M3 7.5 12 12.5 21 7.5M12 12.5v9" opacity=".45"/></g><circle cx="12" cy="12.5" r="1.9" fill="#C96442"/></svg>
       <span id="brand">Latent Atlas</span>

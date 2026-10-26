@@ -99,8 +99,6 @@
     $('#langBtn').setAttribute('aria-label', t('language'));
     $('#themeBtn').setAttribute('aria-label', t('darkMode'));
     $('#themeBtn').title = t('darkMode');
-    $('#railBtn').setAttribute('aria-label', t('chapters'));
-    $('#railBtn').title = t('chapters');
     renderRail();
   }
 
@@ -116,15 +114,6 @@
   $('#themeBtn').addEventListener('click', () => {
     const th = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     store.set('atlas.theme', th); applyTheme(th);
-  });
-  /* ---------- chapter rail show/hide (initial value set by the inline script in index.html) ---------- */
-  const railOn = () => document.documentElement.dataset.rail !== 'off';
-  $('#railBtn').setAttribute('aria-expanded', String(railOn()));
-  $('#railBtn').addEventListener('click', () => {
-    const on = !railOn();
-    if (on) delete document.documentElement.dataset.rail; else document.documentElement.dataset.rail = 'off';
-    $('#railBtn').setAttribute('aria-expanded', String(on));
-    store.set('atlas.rail', on ? 'on' : 'off');
   });
   if (darkQuery) darkQuery.addEventListener('change', (e) => {
     const saved = store.get('atlas.theme');
@@ -142,13 +131,22 @@
 
   /* ---------- rail ---------- */
   let openCat = null;
+  /* collapsed state: set before first paint by the inline script in index.html */
+  const railOn = () => document.documentElement.dataset.rail !== 'off';
   function renderRail(activeId, keepOpen) {
     const rail = $('#rail');
     const cur = activeId || (curId && curId !== 'home' ? curId : null);
     if (cur && !keepOpen) openCat = BYID[cur].cat;
-    rail.innerHTML = `<h2>${esc(t('chapters'))}</h2><ol>${CATS.map((c) => `
+    const on = railOn();
+    rail.innerHTML = `<div class="railhead"><h2>${esc(t('chapters'))}</h2><button class="railtog" type="button" aria-expanded="${on}" aria-label="${esc(t('chapters'))}" title="${esc(t('chapters'))}"><span aria-hidden="true">${on ? '«' : '»'}</span></button></div><ol>${CATS.map((c) => `
       <li><button class="chap" type="button" data-cat="${c.id}" aria-expanded="${openCat === c.id}"><span class="no">${c.no}</span><span>${esc(catName(c.id))}</span><span class="ct">${c.items.length}</span></button>
       ${openCat === c.id ? `<div class="sub">${c.items.map((x) => `<a href="#${x.id}" ${x.id === cur ? 'aria-current="page"' : ''}>${esc(nm(x.id))}</a>`).join('')}</div>` : ''}</li>`).join('')}</ol>`;
+    rail.querySelector('.railtog').addEventListener('click', () => {
+      if (railOn()) document.documentElement.dataset.rail = 'off'; else delete document.documentElement.dataset.rail;
+      store.set('atlas.rail', railOn() ? 'on' : 'off');
+      renderRail(cur, true);
+      rail.querySelector('.railtog').focus();
+    });
     rail.querySelectorAll('.chap').forEach((b) => b.addEventListener('click', () => {
       openCat = openCat === b.dataset.cat ? null : b.dataset.cat; renderRail(cur, true);
     }));
