@@ -138,7 +138,7 @@
     const cur = activeId || (curId && curId !== 'home' ? curId : null);
     if (cur && !keepOpen) openCat = BYID[cur].cat;
     const on = railOn();
-    rail.innerHTML = `<div class="railhead"><h2>${esc(t('chapters'))}</h2><button class="railtog" type="button" aria-expanded="${on}" aria-label="${esc(t('chapters'))}" title="${esc(t('chapters'))}"><span aria-hidden="true">${on ? '«' : '»'}</span></button></div><ol>${CATS.map((c) => `
+    rail.innerHTML = `<div class="railhead"><h2>${esc(t('chapters'))}</h2><button class="railtog" type="button" aria-expanded="${on}" aria-label="${esc(t('chapters'))}" title="${esc(t('chapters'))}"><span aria-hidden="true">${on ? '‹' : '›'}</span></button></div><ol>${CATS.map((c) => `
       <li><button class="chap" type="button" data-cat="${c.id}" aria-expanded="${openCat === c.id}"><span class="no">${c.no}</span><span>${esc(catName(c.id))}</span><span class="ct">${c.items.length}</span></button>
       ${openCat === c.id ? `<div class="sub">${c.items.map((x) => `<a href="#${x.id}" ${x.id === cur ? 'aria-current="page"' : ''}>${esc(nm(x.id))}</a>`).join('')}</div>` : ''}</li>`).join('')}</ol>`;
     rail.querySelector('.railtog').addEventListener('click', () => {
