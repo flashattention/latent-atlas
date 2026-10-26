@@ -90,12 +90,12 @@ html[dir="rtl"] .langmenu { right: auto; left: 0; }
 /* shell */
 .shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: 0 56px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); max-width: 1480px; margin: 0 auto; }
 @media (min-width: 901px) {
-  :root[data-rail="off"] .shell { grid-template-columns: 30px minmax(0, 1fr); gap: 0 26px; }
+  :root[data-rail="off"] .shell { grid-template-columns: 40px minmax(0, 1fr); gap: 0 24px; }
   :root[data-rail="off"] .rail h2, :root[data-rail="off"] .rail ol { display: none; }
 }
 .railhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
 .railhead h2 { margin: 0; }
-.railtog { width: 30px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 17px; line-height: 1; color: var(--ink-3); }
+.railtog { width: 40px; height: 36px; margin-block: -6px; border-radius: 8px; display: grid; place-items: center; font-size: 34px; line-height: 1; color: var(--ink-3); }
 .railtog:hover { background: var(--paper-2); color: var(--ink); }
 html[dir="rtl"] .railtog { transform: scaleX(-1); }
 .rail { position: sticky; top: calc(60px + env(safe-area-inset-top, 0px)); align-self: start; height: calc(100vh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; padding-block: 28px 40px; scrollbar-width: thin; }
