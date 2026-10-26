@@ -1,4 +1,4 @@
-"""Assemble dist/: index.html, js/ (code), i18n/<lang>.js (text), js/base.js (formulas + code).
+"""Assemble dist/: index.html, static/* (favicons), js/ (code), i18n/<lang>.js (text), js/base.js (formulas + code).
 Inputs:
   content/en/part*.json        {id: {n,d,f,u,x,c}}
   content/en/ui.json           UI strings (English)
@@ -68,6 +68,8 @@ def main():
         else:
             open(os.path.join(DIST, 'js', name + '.js'), 'w').write('/* pending */\n')
     shutil.copy(os.path.join(ROOT, 'index.html'), os.path.join(DIST, 'index.html'))
+    for p in glob.glob(os.path.join(ROOT, 'static', '*')):
+        shutil.copy(p, os.path.join(DIST, os.path.basename(p)))
     print('items per language:', report)
 
 if __name__ == '__main__':

@@ -31,7 +31,8 @@ src/flags.js          flag icons and language list
 content/en/part*.json English text, formulas and code
 content/<lang>/       translations (items*.json) and interface strings (ui.json)
 content/legend.json   translated figure legends
-build.py              assembles dist/ from src/ and content/
+static/               favicons, copied to the root of dist/
+build.py              assembles dist/ from src/, content/ and static/
 dist/                 the built site
 ```
 
