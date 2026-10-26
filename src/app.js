@@ -97,8 +97,28 @@
     $('#searchLbl').textContent = t('searchShort');
     $('#closeIx').textContent = t('close');
     $('#langBtn').setAttribute('aria-label', t('language'));
+    $('#themeBtn').setAttribute('aria-label', t('darkMode'));
+    $('#themeBtn').title = t('darkMode');
     renderRail();
   }
+
+  /* ---------- theme (initial value set by the inline script in index.html) ---------- */
+  const darkQuery = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function applyTheme(th) {
+    document.documentElement.dataset.theme = th;
+    $('#themeBtn').setAttribute('aria-pressed', String(th === 'dark'));
+    window.ATLAS_K.setTheme(th);
+    if (stage) stage.rebuild();
+  }
+  $('#themeBtn').setAttribute('aria-pressed', String(document.documentElement.dataset.theme === 'dark'));
+  $('#themeBtn').addEventListener('click', () => {
+    const th = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    store.set('atlas.theme', th); applyTheme(th);
+  });
+  if (darkQuery) darkQuery.addEventListener('change', (e) => {
+    const saved = store.get('atlas.theme');
+    if (saved !== 'light' && saved !== 'dark') applyTheme(e.matches ? 'dark' : 'light');
+  });
 
   /* ---------- stage (one canvas, moved between views) ---------- */
   const canvas = document.createElement('canvas');

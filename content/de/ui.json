@@ -33,7 +33,8 @@
     "keys": "Mit ← und → zwischen Konzepten wechseln",
     "footer": "Die Figuren sind schematisch. Sie zeigen, wie eine Idee funktioniert, und geben keine exakten Zahlen wieder.",
     "searchHero": "Algorithmen, Modelle und Ideen suchen",
-    "resultsCount": "{n} Konzepte gefunden"
+    "resultsCount": "{n} Konzepte gefunden",
+    "darkMode": "Dunkelmodus"
   },
   "cats": {
     "found": "Grundlagen",

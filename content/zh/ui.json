@@ -33,7 +33,8 @@
     "keys": "使用 ← 和 → 在概念之间切换",
     "footer": "图形均为示意图，旨在展示概念的工作原理，而非再现精确的数值。",
     "searchHero": "搜索算法、模型和概念",
-    "resultsCount": "找到 {n} 个概念"
+    "resultsCount": "找到 {n} 个概念",
+    "darkMode": "深色模式"
   },
   "cats": {
     "found": "基础",

@@ -33,7 +33,8 @@
     "keys": "Utilisez ← et → pour passer d'un concept à l'autre",
     "footer": "Les figures sont schématiques. Elles illustrent le fonctionnement d'une idée, sans prétendre reproduire des valeurs exactes.",
     "searchHero": "Rechercher des algorithmes, modèles et idées",
-    "resultsCount": "{n} concepts trouvés"
+    "resultsCount": "{n} concepts trouvés",
+    "darkMode": "Mode sombre"
   },
   "cats": {
     "found": "Fondamentaux",

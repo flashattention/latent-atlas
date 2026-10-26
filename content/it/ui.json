@@ -33,7 +33,8 @@
     "keys": "Usa ← e → per spostarti tra i concetti",
     "footer": "Le figure sono schematiche. Sono disegnate per mostrare come funziona un'idea, non per riprodurre valori esatti.",
     "searchHero": "Cerca algoritmi, modelli e idee",
-    "resultsCount": "{n} concetti trovati"
+    "resultsCount": "{n} concetti trovati",
+    "darkMode": "Modalità scura"
   },
   "cats": {
     "found": "Fondamenti",

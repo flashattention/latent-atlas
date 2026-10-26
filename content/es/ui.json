@@ -33,7 +33,8 @@
     "keys": "Usa ← y → para pasar de un concepto a otro",
     "footer": "Las figuras son esquemáticas. Están dibujadas para mostrar cómo funciona una idea, no para reproducir cifras exactas.",
     "searchHero": "Busca algoritmos, modelos e ideas",
-    "resultsCount": "{n} conceptos encontrados"
+    "resultsCount": "{n} conceptos encontrados",
+    "darkMode": "Modo oscuro"
   },
   "cats": {
     "found": "Fundamentos",

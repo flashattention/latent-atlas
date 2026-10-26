@@ -116,6 +116,7 @@
 
     return {
       show, resetView, renderer, camera, controls,
+      rebuild() { if (curItem) build(true); },
       pause() { running = false; }, resume() { running = true; last = performance.now(); },
       renderOnce() { size(); controls.update(); renderer.render(scene, camera); },
       values: () => Object.assign({}, values),

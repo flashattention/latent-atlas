@@ -29,8 +29,12 @@
      'g'   green = result / chosen / correct / "after" / the good outcome
      'y'   gold  = secondary highlight / warning / threshold / boundary
      'mute' warm grey = context, faded, discarded */
-  const PAL = { acc: ACC, a: ACC, b: 0x2e5e8c, g: 0x5e7d32, y: 0xb8892b, mute: MUTE, ink: INK };
-  function colorOf(c) { return c == null ? INK : (typeof c === 'string' ? (PAL[c] != null ? PAL[c] : c) : c); }
+  const LIGHT = { acc: ACC, a: ACC, b: 0x2e5e8c, g: 0x5e7d32, y: 0xb8892b, mute: MUTE, ink: INK };
+  const DARK = { acc: 0xd9785a, a: 0xd9785a, b: 0x7aa5d1, g: 0x93ae5f, y: 0xd6aa4c, mute: 0x8b877d, ink: 0xece9e1 };
+  const PAL = Object.assign({}, document.documentElement.dataset.theme === 'dark' ? DARK : LIGHT);
+  function colorOf(c) { return c == null ? PAL.ink : (typeof c === 'string' ? (PAL[c] != null ? PAL[c] : c) : c); }
+  /* Swap the palette in place; figures pick it up on their next build. */
+  function setTheme(t) { Object.assign(PAL, t === 'dark' ? DARK : LIGHT); }
 
   /* Thick polyline (screen-space width in px). opts: {c, o, w, dash} */
   function line(pts, o = {}) {
@@ -235,7 +239,7 @@
 
   function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  window.ATLAS_K = { THREE, INK, ACC, MUTE, PAL, colorOf, rng, V, line, segs, dots, box, rect, surface, label, arrow, curve, arc, frame, plot2d, ease,
+  window.ATLAS_K = { THREE, INK, ACC, MUTE, PAL, colorOf, setTheme, rng, V, line, segs, dots, box, rect, surface, label, arrow, curve, arc, frame, plot2d, ease,
     setRes(w, h) { RES.set(w, h); fatMats.forEach((m) => m.resolution.set(w, h)); },
     forget() { fatMats.clear(); } };
   window.VIZ = window.VIZ || {};
