@@ -14,7 +14,7 @@
     "search": "Buscar entre {n} conceitos",
     "searchShort": "Buscar",
     "noResults": "Nenhum conceito corresponde a “{q}”. Tente um termo em inglês ou uma palavra mais curta.",
-    "dragHint": "Arraste para girar, role para dar zoom",
+    "dragHint": "Arraste para girar",
     "resetView": "Redefinir visualização",
     "keyIdea": "A cor destaca a ideia principal",
     "formula": "Fórmula principal",
@@ -34,7 +34,10 @@
     "footer": "As figuras são esquemáticas. Elas foram desenhadas para mostrar como uma ideia funciona, não para reproduzir números exatos.",
     "searchHero": "Busque algoritmos, modelos e ideias",
     "resultsCount": "{n} conceitos encontrados",
-    "darkMode": "Modo escuro"
+    "darkMode": "Modo escuro",
+    "zoom": "Zoom",
+    "zoomIn": "Aproximar",
+    "zoomOut": "Afastar"
   },
   "cats": {
     "found": "Fundamentos",

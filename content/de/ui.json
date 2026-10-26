@@ -14,7 +14,7 @@
     "search": "{n} Konzepte durchsuchen",
     "searchShort": "Suchen",
     "noResults": "Kein Konzept passt zu „{q}“. Versuchen Sie einen englischen Begriff oder ein kürzeres Wort.",
-    "dragHint": "Ziehen zum Drehen, scrollen zum Zoomen",
+    "dragHint": "Ziehen zum Drehen",
     "resetView": "Ansicht zurücksetzen",
     "keyIdea": "Farbe markiert die Kernidee",
     "formula": "Zentrale Formel",
@@ -34,7 +34,10 @@
     "footer": "Die Figuren sind schematisch. Sie zeigen, wie eine Idee funktioniert, und geben keine exakten Zahlen wieder.",
     "searchHero": "Algorithmen, Modelle und Ideen suchen",
     "resultsCount": "{n} Konzepte gefunden",
-    "darkMode": "Dunkelmodus"
+    "darkMode": "Dunkelmodus",
+    "zoom": "Zoom",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern"
   },
   "cats": {
     "found": "Grundlagen",

@@ -13,7 +13,7 @@
   "search": "Search {n} concepts",
   "searchShort": "Search",
   "noResults": "No concept matches “{q}”. Try an English term or a shorter word.",
-  "dragHint": "Drag to rotate, scroll to zoom",
+  "dragHint": "Drag to rotate",
   "resetView": "Reset view",
   "keyIdea": "Colour marks the key idea",
   "formula": "Key formula",
@@ -33,5 +33,8 @@
   "footer": "Figures are schematic. They are drawn to show how an idea works, not to reproduce exact numbers.",
   "searchHero": "Search algorithms, models and ideas",
   "resultsCount": "{n} concepts found",
-  "darkMode": "Dark mode"
+  "darkMode": "Dark mode",
+  "zoom": "Zoom",
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out"
 }

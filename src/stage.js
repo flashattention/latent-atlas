@@ -10,7 +10,8 @@
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 400);
     const controls = new THREE.OrbitControls(camera, canvas);
     controls.enableDamping = true; controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.7; controls.zoomSpeed = 0.8; controls.enablePan = false;
+    controls.rotateSpeed = 0.7; controls.enablePan = false;
+    controls.enableZoom = false; // the wheel scrolls the page; zoom goes through setZoom (the zoom bar)
     controls.autoRotate = !opts.still; controls.autoRotateSpeed = 0.55;
     let idleTimer = null;
     controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(idleTimer); });
@@ -19,7 +20,7 @@
     if (reduce()) controls.autoRotate = false;
 
     let cur = null, curItem = null, values = {}, built = null, t0 = performance.now(), last = t0, framedOnce = false;
-    let intro = 0, fitK = 0.86;
+    let intro = 0, fitK = 0.86, baseDist = 1, zoomK = 1;
 
     function size() {
       const w = canvas.clientWidth || 600, h = canvas.clientHeight || 400;
@@ -51,6 +52,7 @@
       const dist = R / Math.sin(Math.min(vfov, hfov) / 2) * fitK + 0.3;
       const dir = new THREE.Vector3(1.0, 0.62, 1.25).normalize();
       camera.position.copy(dir.multiplyScalar(dist));
+      baseDist = dist; zoomK = 1;
       controls.target.set(0, 0, 0);
       controls.minDistance = dist * 0.35; controls.maxDistance = dist * 2.6;
       controls.update();
@@ -98,6 +100,15 @@
       });
     }
 
+    /* z > 1 moves the camera closer than the auto-framed distance, z < 1 further away. */
+    function setZoom(z) {
+      zoomK = Math.min(2.5, Math.max(0.5, z));
+      const off = camera.position.clone().sub(controls.target);
+      off.setLength(baseDist / zoomK);
+      camera.position.copy(controls.target).add(off);
+      controls.update();
+    }
+
     function resetView() { if (cur) { const keep = values; frame(cur, false); values = keep; } }
 
     let raf = 0, running = true;
@@ -115,7 +126,7 @@
     raf = requestAnimationFrame(loop);
 
     return {
-      show, resetView, renderer, camera, controls,
+      show, resetView, setZoom, getZoom: () => zoomK, renderer, camera, controls,
       rebuild() { if (curItem) build(true); },
       pause() { running = false; }, resume() { running = true; last = performance.now(); },
       renderOnce() { size(); controls.update(); renderer.render(scene, camera); },

@@ -14,7 +14,7 @@
     "search": "搜索 {n} 个概念",
     "searchShort": "搜索",
     "noResults": "没有与“{q}”匹配的概念。请尝试英文术语或更短的关键词。",
-    "dragHint": "拖动以旋转，滚动以缩放",
+    "dragHint": "拖动以旋转",
     "resetView": "重置视图",
     "keyIdea": "彩色部分标示核心思想",
     "formula": "核心公式",
@@ -34,7 +34,10 @@
     "footer": "图形均为示意图，旨在展示概念的工作原理，而非再现精确的数值。",
     "searchHero": "搜索算法、模型和概念",
     "resultsCount": "找到 {n} 个概念",
-    "darkMode": "深色模式"
+    "darkMode": "深色模式",
+    "zoom": "缩放",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
   },
   "cats": {
     "found": "基础",

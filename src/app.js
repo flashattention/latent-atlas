@@ -278,7 +278,14 @@
     const plus = '<span class="pm" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.3"/></svg></span>';
     main.innerHTML = `<article class="fade" aria-labelledby="cname">
       <div class="stagewrap">
-        <div class="stage" id="stageHost" role="img" aria-label="${esc(name)}"></div>
+        <div class="stagebox">
+          <div class="stage" id="stageHost" role="img" aria-label="${esc(name)}"></div>
+          <div class="zoombar" role="group" aria-label="${esc(t('zoom'))}">
+            <button type="button" id="zoomIn" aria-label="${esc(t('zoomIn'))}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <input type="range" id="zoom" min="0.5" max="2.5" step="0.01" value="1" aria-label="${esc(t('zoom'))}">
+            <button type="button" id="zoomOut" aria-label="${esc(t('zoomOut'))}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1.4"/></svg></button>
+          </div>
+        </div>
         <div class="stagemeta"><span class="legendslot"></span><span class="sp"></span><span class="hint">${esc(t('dragHint'))}</span><button class="linkbtn" type="button" id="resetV">${esc(t('resetView'))}</button></div>
         <div class="ctlslot"></div>
       </div>
@@ -303,7 +310,12 @@
       <p class="keys hide-sm">${esc(t('keys'))}</p>
     </article>`;
     mountStage($('#stageHost'), it, main.querySelector('.stagewrap'));
-    $('#resetV').addEventListener('click', () => stage.resetView());
+    const zoom = $('#zoom');
+    const setZoom = (z) => { stage.setZoom(z); zoom.value = stage.getZoom(); };
+    zoom.addEventListener('input', () => stage.setZoom(+zoom.value));
+    $('#zoomIn').addEventListener('click', () => setZoom(stage.getZoom() + 0.25));
+    $('#zoomOut').addEventListener('click', () => setZoom(stage.getZoom() - 0.25));
+    $('#resetV').addEventListener('click', () => { stage.resetView(); zoom.value = 1; });
     $('#crumbCat').addEventListener('click', () => { openCat = it.cat; openIndex(catName(it.cat), true); });
     const cp = main.querySelector('.cp');
     if (cp) cp.addEventListener('click', () => {
