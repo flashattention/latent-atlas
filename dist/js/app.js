@@ -99,6 +99,8 @@
     $('#langBtn').setAttribute('aria-label', t('language'));
     $('#themeBtn').setAttribute('aria-label', t('darkMode'));
     $('#themeBtn').title = t('darkMode');
+    $('#railBtn').setAttribute('aria-label', t('chapters'));
+    $('#railBtn').title = t('chapters');
     renderRail();
   }
 
@@ -114,6 +116,15 @@
   $('#themeBtn').addEventListener('click', () => {
     const th = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     store.set('atlas.theme', th); applyTheme(th);
+  });
+  /* ---------- chapter rail show/hide (initial value set by the inline script in index.html) ---------- */
+  const railOn = () => document.documentElement.dataset.rail !== 'off';
+  $('#railBtn').setAttribute('aria-expanded', String(railOn()));
+  $('#railBtn').addEventListener('click', () => {
+    const on = !railOn();
+    if (on) delete document.documentElement.dataset.rail; else document.documentElement.dataset.rail = 'off';
+    $('#railBtn').setAttribute('aria-expanded', String(on));
+    store.set('atlas.rail', on ? 'on' : 'off');
   });
   if (darkQuery) darkQuery.addEventListener('change', (e) => {
     const saved = store.get('atlas.theme');
