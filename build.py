@@ -68,8 +68,8 @@ def main():
         else:
             open(os.path.join(DIST, 'js', name + '.js'), 'w').write('/* pending */\n')
     shutil.copy(os.path.join(ROOT, 'index.html'), os.path.join(DIST, 'index.html'))
-    for p in glob.glob(os.path.join(ROOT, 'static', '*')):
-        shutil.copy(p, os.path.join(DIST, os.path.basename(p)))
+    for name in ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png']:
+        shutil.copy(os.path.join(ROOT, 'static', name), os.path.join(DIST, name))
     print('items per language:', report)
 
 if __name__ == '__main__':

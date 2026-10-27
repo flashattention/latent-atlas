@@ -1,5 +1,7 @@
 # Latent Atlas
 
+![Latent Atlas home page](static/main-screenshot.png)
+
 An illustrated atlas of machine learning: 286 concepts from linear regression to Mamba, each drawn as a rotatable 3D figure, with an explanation, typical use cases, an industry example and a Python code example. The interface and all text are available in 12 languages (ko, en, es, zh, ja, fr, de, pt, ru, ar, hi, it). The default language follows the browser; the flag in the top-right corner switches it.
 
 ## Run locally
@@ -31,7 +33,7 @@ src/flags.js          flag icons and language list
 content/en/part*.json English text, formulas and code
 content/<lang>/       translations (items*.json) and interface strings (ui.json)
 content/legend.json   translated figure legends
-static/               favicons, copied to the root of dist/
+static/               favicons (copied to the root of dist/) and the README screenshot
 build.py              assembles dist/ from src/, content/ and static/
 dist/                 the built site
 ```
