@@ -1,5 +1,7 @@
 # Latent Atlas
 
+**Live site: https://latent-atlas-pied.vercel.app/**
+
 ![Latent Atlas home page](static/main-screenshot.png)
 
 An illustrated atlas of machine learning: 286 concepts from linear regression to Mamba, each drawn as a rotatable 3D figure, with an explanation, typical use cases, an industry example and a Python code example. The interface and all text are available in 12 languages (ko, en, es, zh, ja, fr, de, pt, ru, ar, hi, it). The default language follows the browser; the flag in the top-right corner switches it.
@@ -18,7 +20,9 @@ Opening `dist/index.html` directly from the file system also works in most brows
 
 ## Deploy
 
-Any static host works. For GitHub Pages: push this repository, then in Settings → Pages choose "Deploy from a branch" and point it at the `dist/` folder (or copy `dist/` to the branch root). Netlify, Vercel and Cloudflare Pages work the same way with `dist` as the publish directory and no build command.
+The site is hosted on Vercel at https://latent-atlas-pied.vercel.app/, connected to this repository. Every push to `main` redeploys it. `vercel.json` tells Vercel to serve `dist/` with no build command, so run `python3 build.py` and commit `dist/` before pushing.
+
+Any other static host works the same way with `dist` as the publish directory.
 
 ## Project layout
 
