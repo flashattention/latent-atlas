@@ -8,8 +8,16 @@
 
   const ITEMS = REG.items.map((x, i) => ({ id: x[0], cat: x[1], en: x[2], type: x[3], params: x[4], i }));
   const BYID = Object.fromEntries(ITEMS.map((x) => [x.id, x]));
-  const CATS = REG.cats.map(([id, en], i) => ({ id, en, no: i + 1, items: ITEMS.filter((x) => x.cat === id) }));
+  // appendix chapters (ids starting with 'z') hold supporting terms; they are numbered A, B, C… after the main chapters
+  const isAppxCat = (c) => c[0] === 'z';
+  const isAppx = (id) => !!BYID[id] && isAppxCat(BYID[id].cat);
+  let nMain = 0, nAppx = 0;
+  const CATS = REG.cats.map(([id, en]) => ({ id, en, appx: isAppxCat(id), no: isAppxCat(id) ? String.fromCharCode(65 + nAppx++) : ++nMain, items: ITEMS.filter((x) => x.cat === id) }));
   const CATBY = Object.fromEntries(CATS.map((c) => [c.id, c]));
+  const MAINCATS = CATS.filter((c) => !c.appx), APPXCATS = CATS.filter((c) => c.appx);
+  const MAIN = ITEMS.filter((x) => !isAppxCat(x.cat)), APPX = ITEMS.filter((x) => isAppxCat(x.cat));
+  const groupOf = (it) => (isAppxCat(it.cat) ? APPX : MAIN);
+  const step = (it, d) => { const g = groupOf(it); return g[(g.indexOf(it) + d + g.length) % g.length]; };
   const FEATURED = 'moe';
 
   /* ---------- language ---------- */
@@ -133,14 +141,18 @@
   let openCat = null;
   /* collapsed state: set before first paint by the inline script in index.html */
   const railOn = () => document.documentElement.dataset.rail !== 'off';
+  function chapList(cats) {
+    const cur = curId && curId !== 'home' ? curId : null;
+    return `<ol>${cats.map((c) => `
+      <li><button class="chap" type="button" data-cat="${c.id}" aria-expanded="${openCat === c.id}"><span class="no">${c.no}</span><span>${esc(catName(c.id))}</span><span class="ct">${c.items.length}</span></button>
+      ${openCat === c.id ? `<div class="sub">${c.items.map((x) => `<a href="#${x.id}" ${x.id === cur ? 'aria-current="page"' : ''}>${esc(nm(x.id))}</a>`).join('')}</div>` : ''}</li>`).join('')}</ol>`;
+  }
   function renderRail(activeId, keepOpen) {
     const rail = $('#rail');
     const cur = activeId || (curId && curId !== 'home' ? curId : null);
     if (cur && !keepOpen) openCat = BYID[cur].cat;
     const on = railOn();
-    rail.innerHTML = `<div class="railhead"><h2>${esc(t('chapters'))}</h2><button class="railtog" type="button" aria-expanded="${on}" aria-label="${esc(t('chapters'))}" title="${esc(t('chapters'))}"><span aria-hidden="true">${on ? '‹' : '›'}</span></button></div><ol>${CATS.map((c) => `
-      <li><button class="chap" type="button" data-cat="${c.id}" aria-expanded="${openCat === c.id}"><span class="no">${c.no}</span><span>${esc(catName(c.id))}</span><span class="ct">${c.items.length}</span></button>
-      ${openCat === c.id ? `<div class="sub">${c.items.map((x) => `<a href="#${x.id}" ${x.id === cur ? 'aria-current="page"' : ''}>${esc(nm(x.id))}</a>`).join('')}</div>` : ''}</li>`).join('')}</ol>`;
+    rail.innerHTML = `<div class="railhead"><h2>${esc(t('chapters'))}</h2><button class="railtog" type="button" aria-expanded="${on}" aria-label="${esc(t('chapters'))}" title="${esc(t('chapters'))}"><span aria-hidden="true">${on ? '‹' : '›'}</span></button></div>${chapList(MAINCATS)}<h2 class="apxh">${esc(t('appendix'))}</h2>${chapList(APPXCATS)}`;
     rail.querySelector('.railtog').addEventListener('click', () => {
       if (railOn()) document.documentElement.dataset.rail = 'off'; else delete document.documentElement.dataset.rail;
       store.set('atlas.rail', railOn() ? 'on' : 'off');
@@ -152,6 +164,64 @@
     }));
     const a = rail.querySelector('[aria-current="page"]');
     if (a) { const r = a.getBoundingClientRect(), rr = rail.getBoundingClientRect(); if (r.top < rr.top || r.bottom > rr.bottom) a.scrollIntoView({ block: 'center' }); }
+  }
+
+  /* ---------- term links in the prose ----------
+     D.terms (from content/terms/<lang>.json) maps every page id to the surface forms that link to it.
+     Matching rules are described in docs/APPENDIX_SPEC.md, section 3. */
+  let TM = null, TMKEY = null;
+  function termMatcher() {
+    const terms = (D && D.terms) || {};
+    const key = lang + ':' + Object.keys(terms).length;
+    if (TM && TMKEY === key) return TM;
+    TMKEY = key;
+    const cjk = lang === 'ko' || lang === 'ja' || lang === 'zh';
+    const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const W = '[\\p{L}\\p{N}\\p{M}]', LAT = /[A-Za-z0-9]/, WORDCH = /[\p{L}\p{N}]/u;
+    const byForm = new Map(); // lower-cased form → [{ form, id, cs }]
+    for (const id in terms) {
+      if (!BYID[id]) continue;
+      for (const form of terms[id] || []) {
+        if (!form || form.length < 2) continue;
+        // acronyms and mixed-case forms (PCA, ReLU, KL) must match their exact case
+        const cs = /[A-Z]/.test(form.slice(1)) || (/[A-Z]/.test(form) && form === form.toUpperCase());
+        const lo = form.toLowerCase();
+        if (!byForm.has(lo)) byForm.set(lo, []);
+        byForm.get(lo).push({ form, id, cs });
+      }
+    }
+    const piece = (f) => {
+      const a = f[0], z = f[f.length - 1];
+      let pre = '', post = '';
+      if (cjk) {
+        if (LAT.test(a)) pre = '(?<![A-Za-z0-9])';
+        else if (lang === 'ko' && /[가-힣]/.test(a)) pre = '(?<![가-힣])';
+        if (LAT.test(z)) post = '(?![A-Za-z0-9])';
+      } else {
+        if (WORDCH.test(a)) pre = lang === 'ar' ? `(?:(?<!${W})|(?<=(?<!${W})[وفبلك]))` : `(?<!${W})`;
+        if (WORDCH.test(z)) post = `(?!${W})`;
+      }
+      return pre + reEsc(f) + post;
+    };
+    const forms = [...byForm.keys()].sort((a, b) => b.length - a.length);
+    TM = { re: forms.length ? new RegExp(forms.map(piece).join('|'), 'giu') : null, byForm };
+    return TM;
+  }
+  function linkify(text, selfId) {
+    if (!text) return '';
+    const m = termMatcher();
+    if (!m.re) return esc(text);
+    let out = '', last = 0, r;
+    m.re.lastIndex = 0;
+    while ((r = m.re.exec(text))) {
+      const s = r[0];
+      const hit = (m.byForm.get(s.toLowerCase()) || []).find((c) => !c.cs || c.form === s);
+      if (!hit) { m.re.lastIndex = r.index + 1; continue; }
+      if (hit.id === selfId) continue; // the page's own term stays plain text
+      out += esc(text.slice(last, r.index)) + `<a class="tlink" href="#${hit.id}">${esc(s)}</a>`;
+      last = r.index + s.length;
+    }
+    return out + esc(text.slice(last));
   }
 
   /* ---------- python highlighter ---------- */
@@ -230,6 +300,9 @@
     stage.resume();
   }
 
+  const tocRow = (c) => `<div class="tocrow"><span class="no">${c.no}</span><h3>${esc(catName(c.id))}<small>${c.items.length}${c.appx ? '' : ' ' + esc(t('statConcepts'))}</small></h3>
+          <div class="list">${c.items.map((x) => `<a href="#${x.id}">${esc(nm(x.id))}</a>`).join('')}</div></div>`;
+
   function renderHome() {
     curId = 'home';
     document.title = 'Latent Atlas';
@@ -239,7 +312,7 @@
         <div>
           <h1>${esc(t('brand'))}</h1>
           <p class="lead">${esc(t('lead'))}</p>
-          <div class="stats"><div><b>${ITEMS.length}</b>${esc(t('statConcepts'))}</div><div><b>${CATS.length}</b>${esc(t('statChapters'))}</div><div><b>${LANGS.length}</b>${esc(t('statLanguages'))}</div></div>
+          <div class="stats"><div><b>${MAIN.length}</b>${esc(t('statConcepts'))}</div><div><b>${MAINCATS.length}</b>${esc(t('statChapters'))}</div><div><b>${LANGS.length}</b>${esc(t('statLanguages'))}</div></div>
           <a class="cta" href="#${CATS[0].items[0].id}">${esc(t('start'))}</a>
         </div>
         <figure class="feat" style="margin:0">
@@ -251,8 +324,9 @@
       <section class="herosearch" aria-label="${esc(t('searchShort'))}"><div id="heroField"></div><div id="heroRes" class="sx-res" aria-live="polite"></div></section>
       <section class="toc" aria-labelledby="tocH">
         <h2 id="tocH">${esc(t('chapters'))}</h2>
-        ${CATS.map((c) => `<div class="tocrow"><span class="no">${c.no}</span><h3>${esc(catName(c.id))}<small>${c.items.length} ${esc(t('statConcepts'))}</small></h3>
-          <div class="list">${c.items.map((x) => `<a href="#${x.id}">${esc(nm(x.id))}</a>`).join('')}</div></div>`).join('')}
+        ${MAINCATS.map(tocRow).join('')}
+        <h2 class="apxh">${esc(t('appendix'))}</h2>
+        ${APPXCATS.map(tocRow).join('')}
       </section>
       <footer>${esc(t('footer'))}</footer>
     </section>`;
@@ -273,7 +347,7 @@
     curId = id;
     const c = CATBY[it.cat];
     const pos = c.items.indexOf(it) + 1;
-    const prev = ITEMS[(it.i - 1 + ITEMS.length) % ITEMS.length], next = ITEMS[(it.i + 1) % ITEMS.length];
+    const prev = step(it, -1), next = step(it, 1);
     const full = nm(id), en = enName(id);
     // big title: drop a trailing Latin-script gloss like "(Random Forest)"; the English term is shown underneath anyway
     let name = full;
@@ -282,10 +356,12 @@
     const d = field(id, 'd'), u = field(id, 'u') || [], x = field(id, 'x');
     const f = BASE.f[id], code = BASE.c[id];
     document.title = name + ' — Latent Atlas';
-    const paras = d ? d.split(/\n\s*\n/).map((p) => `<p>${esc(p)}</p>`).join('') : `<p class="skel">${esc(t('loading'))}</p>`;
-    const usesList = u.length ? `<ul class="uses">${u.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : '';
+    const paras = d ? d.split(/\n\s*\n/).map((p) => `<p>${linkify(p, id)}</p>`).join('') : `<p class="skel">${esc(t('loading'))}</p>`;
+    const usesList = u.length ? `<ul class="uses">${u.map((s) => `<li>${linkify(s, id)}</li>`).join('')}</ul>` : '';
+    const appx = isAppxCat(it.cat);
     const plus = '<span class="pm" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.3"/></svg></span>';
     main.innerHTML = `<article class="fade" aria-labelledby="cname">
+      ${appx ? `<div class="apxbar"><button type="button" class="apxclose" id="apxClose" aria-label="${esc(t('close'))}" title="${esc(t('close'))}"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div>` : ''}
       <div class="stagewrap">
         <div class="stagebox">
           <div class="stage" id="stageHost" role="img" aria-label="${esc(name)}"></div>
@@ -298,7 +374,7 @@
         <div class="stagemeta"><span class="legendslot"></span><span class="sp"></span><span class="hint">${esc(t('dragHint'))}</span><button class="linkbtn" type="button" id="resetV">${esc(t('resetView'))}</button></div>
         <div class="ctlslot"></div>
       </div>
-      <div class="crumb"><button type="button" id="crumbCat">${esc(t('chapter', { n: c.no }))}, ${esc(catName(c.id))}</button><span class="pos">${esc(t('conceptOf', { i: pos, n: c.items.length }))}</span></div>
+      <div class="crumb"><button type="button" id="crumbCat">${esc(appx ? t('appendix') + ' ' + c.no : t('chapter', { n: c.no }))}, ${esc(catName(c.id))}</button><span class="pos">${esc(t('conceptOf', { i: pos, n: c.items.length }))}</span></div>
       <h1 class="name" id="cname">${esc(name)}</h1>
       ${lang !== 'en' && en !== name ? `<p class="term" lang="en">${esc(en)}</p>` : ''}
       <div class="body">
@@ -309,7 +385,7 @@
       </div>
       <div class="accs">
         ${usesList ? `<details class="acc"><summary>${esc(t('useCases'))}<span class="sm">${u.length}</span>${plus}</summary><div class="in">${usesList}</div></details>` : ''}
-        ${x ? `<details class="acc"><summary>${esc(t('industry'))}${plus}</summary><div class="in"><p>${esc(x)}</p></div></details>` : ''}
+        ${x ? `<details class="acc"><summary>${esc(t('industry'))}${plus}</summary><div class="in"><p>${linkify(x, id)}</p></div></details>` : ''}
         ${code ? `<details class="acc"><summary>${esc(t('code'))}<span class="sm">Python</span>${plus}</summary><div class="in"><div class="code"><button class="cp" type="button">${esc(t('copy'))}</button><pre><code>${hl(code)}</code></pre></div></div></details>` : ''}
       </div>
       <nav class="pn" aria-label="${esc(t('prev'))} / ${esc(t('next'))}">
@@ -326,6 +402,7 @@
     $('#zoomOut').addEventListener('click', () => setZoom(stage.getZoom() - 0.25));
     $('#resetV').addEventListener('click', () => { stage.resetView(); zoom.value = 1; });
     $('#crumbCat').addEventListener('click', () => { openCat = it.cat; openIndex(catName(it.cat), true); });
+    if (appx) $('#apxClose').addEventListener('click', closeAppendix);
     const cp = main.querySelector('.cp');
     if (cp) cp.addEventListener('click', () => {
       const done = () => { cp.textContent = t('copied'); setTimeout(() => { cp.textContent = t('copy'); }, 1600); };
@@ -335,13 +412,27 @@
     renderRail(id);
   }
 
+  /* An appendix visit remembers the page (and scroll position) it started from; X returns there. */
+  let origin = null, restoreY = null;
+  function closeAppendix() {
+    const o = origin || { id: 'home', y: 0 };
+    origin = null; restoreY = o.y;
+    location.hash = o.id === 'home' ? '' : o.id;
+  }
+
   function route(keepScroll) {
     const h = decodeURIComponent((location.hash || '').slice(1));
+    const from = curId, y = window.scrollY;
+    if (h && BYID[h] && h !== from) {
+      if (!isAppx(h)) origin = null;
+      else if (from && !isAppx(from)) origin = { id: from, y };
+    }
     if (h && BYID[h]) {
       const same = curId === h;
       renderConcept(h);
       if (!keepScroll || !same) window.scrollTo(0, 0);
     } else renderHome();
+    if (restoreY != null) { window.scrollTo(0, restoreY); restoreY = null; }
   }
   window.addEventListener('hashchange', () => { closeIndex(); route(false); });
 
@@ -515,8 +606,7 @@
     const rtl = document.documentElement.dir === 'rtl';
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
       const fwd = (e.key === 'ArrowRight') !== rtl;
-      const nx = ITEMS[(it.i + (fwd ? 1 : -1) + ITEMS.length) % ITEMS.length];
-      location.hash = nx.id;
+      location.hash = step(it, fwd ? 1 : -1).id;
     }
   });
 

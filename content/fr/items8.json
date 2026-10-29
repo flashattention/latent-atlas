@@ -1,0 +1,462 @@
+{
+ "histogram": {
+  "n": "Histogramme",
+  "d": "Un histogramme montre la distribution d'une variable numérique en découpant son étendue en intervalles (bins) et en traçant pour chacun une barre dont la hauteur correspond au nombre (ou à la proportion) de valeurs qu'il contient. Sa forme indique où les valeurs se concentrent, si la distribution est symétrique ou asymétrique, si elle a un seul pic ou plusieurs, et si quelques valeurs extrêmes se trouvent loin des autres.\n\nEn analyse exploratoire des données, l'histogramme est le premier contrôle de chaque variable numérique : il révèle une asymétrie qui appelle une transformation logarithmique avant une régression linéaire, des pics sur des valeurs par défaut comme 0 ou 999, et des plages écrêtées. Comparer les histogrammes d'entraînement et de production est un moyen simple de repérer une dérive des données. Le principal piège est la largeur des intervalles : trop peu d'intervalles masquent une structure comme la bimodalité, trop en transforment le graphique en bruit ; essayez donc plusieurs largeurs ou une règle comme celle de Freedman–Diaconis.",
+  "u": [
+   "Vérifier l'asymétrie d'une variable avant de choisir une transformation",
+   "Comparer les distributions des variables entre entraînement et production",
+   "Repérer les valeurs par défaut et les pics de saisie"
+  ],
+  "x": "Une équipe paiements trace chaque semaine des histogrammes des montants de transaction, à la fois pour le jeu d'entraînement et pour le trafic réel. Lorsqu'une nouvelle catégorie de commerçants apparaît, l'histogramme du trafic réel développe un second pic, ce qui déclenche un examen pour savoir si le modèle de détection de fraude doit être réentraîné."
+ },
+ "boxplot": {
+  "n": "Boîte à moustaches",
+  "d": "Une boîte à moustaches résume une variable numérique par cinq nombres : la médiane, le premier et le troisième quartile qui forment la boîte, et des moustaches qui s'étendent jusqu'aux valeurs les plus extrêmes situées à moins de 1,5 fois l'écart interquartile (IQR) de la boîte. Les points au-delà des moustaches sont tracés individuellement comme valeurs aberrantes potentielles.\n\nComme elle prend peu de place, la boîte à moustaches est la façon standard de comparer une variable entre de nombreux groupes, par exemple l'erreur du modèle par région ou la latence par serveur. En machine learning, elle sert au repérage des valeurs aberrantes, à vérifier si une variable sépare les classes et à comparer les scores de validation croisée de plusieurs modèles. Une idée reçue courante veut que chaque point hors des moustaches soit une erreur à supprimer. La règle des 1,5×IQR signale de nombreuses valeurs légitimes dans des données asymétriques ou à queues lourdes, et la boîte à moustaches masque aussi la bimodalité : associez-la donc à un histogramme.",
+  "u": [
+   "Comparer les scores de validation croisée de modèles candidats",
+   "Repérer les valeurs extrêmes des variables numériques",
+   "Comparer une métrique entre groupes ou segments"
+  ],
+  "x": "Une équipe MLOps trace des boîtes à moustaches de l'erreur de prédiction par magasin pour un modèle de prévision de la demande. Quelques magasins aux boîtes nettement plus larges sont examinés ; ils s'avèrent avoir des remontées de données irrégulières et reçoivent donc un modèle distinct."
+ },
+ "scatterplot": {
+  "n": "Nuage de points",
+  "d": "Un nuage de points place un point par observation aux coordonnées données par deux variables numériques, de sorte que la forme du nuage montre comment les variables sont liées. Un nuage incliné et étroit signale une forte relation linéaire ; une bande courbe, une relation non linéaire ; des amas séparés suggèrent des clusters ; des points isolés sont des valeurs aberrantes.\n\nLes praticiens utilisent les nuages de points pour confronter une variable à la cible avant une régression linéaire, pour tracer les valeurs prédites en fonction des valeurs réelles, pour chercher des motifs dans les résidus et pour visualiser des embeddings 2D issus de l'ACP, de t-SNE ou d'UMAP colorés par classe. Un piège courant est la surcharge (overplotting) : avec des centaines de milliers de points, le nuage devient une tache pleine qui masque la densité. Utilisez la transparence, de petits marqueurs, l'échantillonnage ou un histogramme 2D. Rappelez-vous aussi qu'un motif net dans un nuage de points montre une association, pas une causalité.",
+  "u": [
+   "Tracer les valeurs prédites en fonction des valeurs réelles après une régression",
+   "Vérifier si les résidus présentent une courbure ou une dispersion variable",
+   "Visualiser des embeddings 2D colorés par classe"
+  ],
+  "x": "Une équipe de tarification immobilière trace les prix de vente prédits en fonction des prix réels pour chaque pli de validation. Les points qui s'évasent pour les prix élevés révèlent que l'erreur croît avec le prix, ce qui conduit l'équipe à modéliser plutôt le logarithme du prix."
+ },
+ "heatmap": {
+  "n": "Heatmap (carte de chaleur)",
+  "d": "Une heatmap affiche une matrice de nombres sous forme de grille de cellules colorées, la couleur de chaque cellule encodant sa valeur. Elle transforme un grand tableau en une image où les blocs, les dégradés et les valeurs aberrantes ressortent immédiatement.\n\nEn machine learning, les heatmaps les plus courantes sont les matrices de corrélation des variables, les matrices de confusion des classifieurs, les poids d'attention d'une couche de Transformer, les scores d'une recherche par grille d'hyperparamètres et les cartes de valeurs manquantes où chaque cellule indique si une valeur est absente. Réordonner les lignes et les colonnes par clustering avant le tracé regroupe les variables similaires et rend la structure en blocs visible. Le principal piège est l'échelle de couleurs. Une palette divergente doit avoir son point milieu fixé à une valeur significative, comme zéro pour des corrélations, et une plage ajustée automatiquement peut rendre spectaculaires des différences minimes. Affichez les valeurs dans les cellules lorsque les nombres exacts comptent.",
+  "u": [
+   "Visualiser les matrices de corrélation des variables pendant l'EDA",
+   "Lire la matrice de confusion d'un classifieur",
+   "Examiner des poids d'attention ou des scores de recherche par grille"
+  ],
+  "x": "Une équipe de risque de crédit trace une heatmap réordonnée par clustering des corrélations entre variables avant d'entraîner une régression logistique. Plusieurs blocs vifs révèlent des groupes de variables de solde presque identiques, et l'équipe ne garde qu'une variable par bloc pour réduire la multicolinéarité."
+ },
+ "qqplot": {
+  "n": "Diagramme Q-Q (quantile-quantile)",
+  "d": "Un diagramme Q-Q compare les quantiles d'un échantillon à ceux d'une distribution de référence, généralement la loi normale, en traçant les uns en fonction des autres. Si les données suivent la distribution de référence, les points s'alignent sur une droite ; des courbures systématiques montrent en quoi elles diffèrent.\n\nLa forme se lit facilement une fois apprise. Une forme en S dont les deux extrémités s'écartent de la droite indique des queues lourdes ; une courbe qui s'infléchit d'un seul côté indique une asymétrie ; quelques points écartés aux extrémités sont des valeurs aberrantes. Les praticiens utilisent les diagrammes Q-Q pour vérifier l'hypothèse de normalité des résidus d'une régression linéaire, pour décider si une transformation logarithmique ou de Box-Cox est nécessaire et pour comparer directement deux échantillons. Un piège courant consiste à s'en remettre plutôt à un test de normalité formel : sur de grands échantillons, ces tests rejettent des écarts minimes et sans conséquence, alors que le diagramme Q-Q montre l'ampleur réelle de l'écart.",
+  "u": [
+   "Vérifier la normalité des résidus d'une régression linéaire",
+   "Décider si une variable nécessite une transformation",
+   "Comparer le comportement des queues de deux échantillons"
+  ],
+  "x": "Une équipe d'analyse quantitative ajuste un modèle linéaire sur des rendements journaliers et examine le diagramme Q-Q des résidus. Les extrémités s'écartent fortement de la droite, signe de queues lourdes, et l'équipe passe à un modèle d'erreur de Student pour ses estimations de risque."
+ },
+ "feature": {
+  "n": "Variable (feature)",
+  "d": "Une variable (feature) est une variable d'entrée mesurable qu'un modèle utilise pour faire une prédiction, comme l'âge d'un client, le nombre de mots d'un e-mail ou l'intensité d'un pixel. Un jeu de données est généralement organisé en matrice avec une ligne par exemple et une colonne par variable, et le modèle apprend comment la cible dépend de ces colonnes.\n\nLes variables peuvent être numériques, catégorielles, textuelles ou des représentations apprises comme les embeddings. Une grande partie du machine learning classique relève du feature engineering : construire des variables informatives, encoder les catégories, mettre à l'échelle et traiter les valeurs manquantes. L'importance des variables et les valeurs SHAP décrivent quelles variables pilotent les prédictions. Un piège majeur consiste à utiliser une variable qui ne sera pas disponible au moment de la prédiction, ou qui est calculée à partir de la cible : c'est une fuite de données, qui produit des modèles excellents en validation et défaillants en production.",
+  "u": [
+   "Construire les entrées de modèles de gradient boosting sur arbres",
+   "Sélectionner des colonnes informatives dans des logs bruts",
+   "Expliquer les prédictions par l'importance des variables"
+  ],
+  "x": "Une entreprise d'abonnement construit pour son modèle d'attrition des variables comme le nombre de jours depuis la dernière connexion, le nombre de tickets de support du mois écoulé et le type de forfait. Chaque variable est calculée uniquement à partir des données disponibles à la date de prédiction, de sorte que le modèle voit exactement ce qui sera disponible en production."
+ },
+ "label": {
+  "n": "Étiquette (cible)",
+  "d": "Une étiquette, aussi appelée cible, est la réponse connue qu'un modèle supervisé apprend à prédire pour chaque exemple : une classe comme spam ou non-spam, ou un nombre comme un prix de vente. Le modèle est entraîné à faire correspondre ses sorties aux étiquettes ; c'est donc l'étiquette qui définit ce que le modèle optimise réellement.\n\nLes étiquettes proviennent d'annotateurs humains, d'événements métier comme un achat ultérieur ou un défaut de paiement, ou de règles automatiques. En classification, elles sont souvent encodées en entiers ou en vecteurs one-hot ; en régression, ce sont des valeurs continues. Le choix de l'étiquette conditionne tout ce qui suit, y compris la fonction de perte, la métrique d'évaluation et le déséquilibre des classes. Un piège courant est une étiquette qui ne correspond pas au véritable objectif, par exemple prédire des clics alors que l'entreprise s'intéresse aux achats. Un autre est la fuite de l'étiquette, lorsqu'une variable est dérivée de l'étiquette ou d'informations enregistrées après elle.",
+  "u": [
+   "Définir la cible de prédiction en apprentissage supervisé",
+   "Collecter des annotations humaines pour des tâches de classification",
+   "Dériver des étiquettes de résultat à partir de logs d'événements métier"
+  ],
+  "x": "Une plateforme de prêt définit son étiquette comme le fait qu'un prêt présente plus de 90 jours de retard dans les 12 mois suivant son émission. Comme ce résultat met un an à être observé, l'équipe n'entraîne le modèle que sur des prêts assez anciens pour avoir une étiquette définitive."
+ },
+ "tabular": {
+  "n": "Données tabulaires",
+  "d": "Les données tabulaires sont des données organisées en tableau, avec une ligne par exemple et une colonne par variable, les colonnes pouvant mêler types numériques, catégoriels, dates et texte. Les feuilles de calcul, les tables de bases de données relationnelles et les exports CSV en sont la forme quotidienne, et la plupart des problèmes de prédiction métier commencent ici.\n\nContrairement aux images ou au texte, les colonnes d'un tableau n'ont pas d'ordre spatial ou séquentiel, et chacune a sa propre échelle et sa propre signification. Cela favorise les modèles qui gèrent bien des colonnes hétérogènes : les arbres en gradient boosting comme XGBoost, LightGBM et CatBoost restent le choix par défaut le plus performant sur la plupart des benchmarks tabulaires, avec la régression logistique et les forêts aléatoires comme solides modèles de référence. La préparation des données tabulaires implique des jointures, des agrégations, l'encodage des variables catégorielles, le traitement des valeurs manquantes et un découpage temporel soigneux. Une idée reçue courante veut qu'un réseau de neurones profond batte par défaut les arbres boostés sur des tableaux ; il demande généralement beaucoup plus de réglages et perd encore souvent.",
+  "u": [
+   "Scoring de crédit à partir de tables de comptes clients",
+   "Prédiction de l'attrition à partir de données CRM et d'usage",
+   "Prévision de la demande à partir d'historiques de transactions de vente"
+  ],
+  "x": "Un assureur joint les tables de polices, de sinistres et de clients en une ligne par police et entraîne un modèle LightGBM pour prédire la probabilité de sinistre. L'équipe préfère les arbres boostés parce qu'ils gèrent les types de colonnes mixtes et les valeurs manquantes avec peu de prétraitement."
+ },
+ "numcat": {
+  "n": "Variables numériques et catégorielles",
+  "d": "Les variables numériques sont des quantités sur lesquelles l'arithmétique a un sens, comme le revenu ou la température, tandis que les variables catégorielles prennent leurs valeurs dans un ensemble de libellés, comme le pays ou le type de produit, sans signification numérique. Cette distinction détermine comment une variable doit être encodée avant qu'un modèle puisse l'utiliser.\n\nLes variables numériques peuvent nécessiter une mise à l'échelle pour les modèles linéaires, les SVM, les k-NN et les réseaux de neurones, et parfois une transformation logarithmique en cas d'asymétrie. Les variables catégorielles doivent être converties en nombres : encodage one-hot pour peu de catégories, target encoding ou embeddings pour beaucoup, ou prise en charge native des catégories dans CatBoost et LightGBM. Des nombres peuvent être des catégories déguisées. Codes postaux, identifiants d'utilisateurs et codes produits sont stockés en entiers, mais les traiter comme des quantités invente un ordre et des distances qui n'existent pas. À l'inverse, une variable numérique ne prenant que quelques valeurs peut mieux fonctionner comme catégorie.",
+  "u": [
+   "Choisir les encodeurs d'un pipeline de prétraitement",
+   "Détecter les colonnes d'identifiants stockées en entiers",
+   "Décider quelles colonnes doivent être mises à l'échelle"
+  ],
+  "x": "Un site de réservation de voyages construit un ColumnTransformer scikit-learn qui met à l'échelle le prix et la durée du voyage, mais encode en one-hot la région de destination et le type d'appareil. Une première version traitait comme numériques des codes d'aéroport stockés en entiers ; les repasser en catégoriel a amélioré le modèle."
+ },
+ "ordinal": {
+  "n": "Variables ordinales et nominales",
+  "d": "Les variables nominales sont des catégories sans ordre naturel, comme la couleur ou le pays, tandis que les variables ordinales sont des catégories dotées d'un ordre significatif mais sans espacement fixe, comme le niveau d'études ou une note faible, moyenne, élevée. Les deux sont catégorielles, mais l'ordre change la manière de les encoder.\n\nPour une variable ordinale, associer les catégories à des entiers croissants (faible=0, moyen=1, élevé=2) conserve l'ordre et permet à un arbre d'y faire une coupure ou à un modèle linéaire d'ajuster un effet monotone. Pour une variable nominale, des codes entiers inventeraient un ordre et un espacement absents des données ; on utilise donc plutôt l'encodage one-hot, le target encoding ou des embeddings. Un piège courant consiste à appliquer l'OrdinalEncoder de scikit-learn avec son ordre alphabétique par défaut à une variable réellement ordinale : « high » se retrouve alors trié avant « low », il faut donc passer explicitement l'ordre des catégories.",
+  "u": [
+   "Encoder des réponses d'enquête et des notes de satisfaction",
+   "Encoder des tailles de produits ou des niveaux de clientèle",
+   "Choisir entre encodage one-hot et encodage entier"
+  ],
+  "x": "Une équipe d'analytique RH qui prédit les départs de salariés encode le niveau de poste comme un entier ordonné, car un niveau plus élevé correspond à plus d'ancienneté. Le département, qui n'a pas d'ordre, est encodé en one-hot."
+ },
+ "cardinality": {
+  "n": "Cardinalité",
+  "d": "La cardinalité d'une variable catégorielle est le nombre de valeurs distinctes qu'elle prend. Une variable comme le genre ou le type d'appareil a une faible cardinalité, tandis qu'un identifiant utilisateur, un code postal ou une référence produit (SKU) peut avoir des milliers ou des millions de valeurs ; on parle alors de forte cardinalité.\n\nLa cardinalité détermine comment une variable peut être encodée. L'encodage one-hot fonctionne pour une poignée de valeurs, mais crée d'énormes matrices creuses pour les variables à forte cardinalité. Les alternatives incluent le regroupement des valeurs rares dans une catégorie « autre », le target encoding avec lissage et ajustement hors pli (out-of-fold), l'encodage par fréquence, le hashing trick et les embeddings appris dans les réseaux de neurones. CatBoost utilise des statistiques de cible ordonnées précisément pour ce cas. Un piège : les variables à forte cardinalité permettent aux modèles d'arbres de mémoriser. Une catégorie vue seulement quelques fois peut être parfaitement associée à ses étiquettes, ce qui gonfle les scores d'entraînement, et un target encoding naïf calculé sur les mêmes lignes fait fuir l'étiquette.",
+  "u": [
+   "Choisir un encodeur pour chaque colonne catégorielle",
+   "Détecter les colonnes de type identifiant lors du profilage des données",
+   "Regrouper les catégories rares avant l'encodage one-hot"
+  ],
+  "x": "Une équipe ad tech dispose d'une variable de domaine de l'éditeur comptant des centaines de milliers de valeurs. Elle hache le domaine dans un nombre fixe de compartiments pour son modèle de régression logistique et lui apprend un embedding dans son modèle de classement neuronal."
+ },
+ "missingval": {
+  "n": "Valeurs manquantes (MCAR, MAR, MNAR)",
+  "d": "Les valeurs manquantes sont des entrées sans valeur enregistrée, et la raison de leur absence détermine comment les traiter. Les données sont manquantes de façon complètement aléatoire (MCAR) lorsque l'absence n'est liée à aucune donnée, manquantes de façon aléatoire (MAR) lorsqu'elle ne dépend que d'autres variables observées, et manquantes de façon non aléatoire (MNAR) lorsqu'elle dépend de la valeur non observée elle-même, comme lorsque les personnes à hauts revenus ne répondent pas à la question sur le revenu.\n\nSous MCAR, supprimer des lignes fait perdre des données mais ne biaise pas les estimations. Sous MAR, une imputation s'appuyant sur les autres colonnes, comme l'imputation itérative ou par k-NN, peut retrouver des estimations sans biais. Sous MNAR, aucune méthode ne corrige entièrement le biais sans hypothèses supplémentaires. En modélisation prédictive, ajouter un indicateur binaire « était manquant » aide souvent, car l'absence elle-même porte un signal. Un piège courant consiste à ajuster l'imputeur sur l'ensemble du jeu de données avant le découpage, ce qui fait fuir des statistiques du test vers l'entraînement.",
+  "u": [
+   "Imputer les trous dans des relevés de capteurs et des dossiers médicaux",
+   "Ajouter des indicateurs d'absence aux modèles tabulaires",
+   "Auditer des données d'enquête pour le biais de non-réponse"
+  ],
+  "x": "Un modèle de réadmission hospitalière constate que les valeurs d'analyses de laboratoire manquent souvent pour les patients jugés pas assez malades pour être testés. L'équipe ajoute un indicateur d'absence pour chaque analyse, car l'absence de test est elle-même prédictive."
+ },
+ "duplicates": {
+  "n": "Doublons",
+  "d": "Les doublons sont des lignes qui décrivent plusieurs fois la même entité ou le même événement réel, soit sous forme de copies exactes, soit sous forme de quasi-doublons qui diffèrent par le formatage, les horodatages ou de petites modifications. Ils proviennent de chargements de données répétés, de jointures qui multiplient les lignes, de nouvelles tentatives dans la journalisation d'événements et de texte web collecté.\n\nLes doublons biaisent les statistiques en faveur des éléments répétés et, plus grave, faussent l'évaluation : si le même exemple se retrouve à la fois dans le jeu d'entraînement et dans le jeu de test, le modèle est noté sur des données qu'il a mémorisées, et les métriques de validation sont trop optimistes. Les doublons exacts se trouvent en hachant les lignes ou les colonnes clés ; les quasi-doublons nécessitent une correspondance approximative, MinHash ou une similarité d'embeddings. Le préentraînement des grands modèles de langage repose fortement sur la déduplication. Un piège consiste à dédupliquer sans penser aux groupes : plusieurs enregistrements d'un même client ne sont pas des doublons, mais ils exigent tout de même un découpage par groupe comme GroupKFold.",
+  "u": [
+   "Supprimer les lignes répétées après les jointures d'un pipeline de données",
+   "Dédupliquer du texte web pour le préentraînement de modèles de langage",
+   "Éviter le chevauchement entre jeux d'entraînement et de test"
+  ],
+  "x": "Une équipe qui développe un modèle de complétion de code découvre que de nombreux fichiers de son jeu d'évaluation figurent aussi, à de minuscules modifications près, dans le corpus d'entraînement. Elle lance une détection de quasi-doublons par MinHash sur les deux ensembles et retire les fichiers en commun avant de publier ses résultats."
+ },
+ "labelnoise": {
+  "n": "Bruit d'étiquetage",
+  "d": "Le bruit d'étiquetage signifie que certaines étiquettes d'entraînement sont fausses : une image de chat étiquetée comme chien, une transaction légitime marquée comme frauduleuse, ou un avis annoté avec le mauvais sentiment. Il provient d'erreurs d'annotateurs, d'exemples ambigus, de règles d'étiquetage automatique et d'étiquettes enregistrées avant que le résultat soit définitif.\n\nLe bruit peut être aléatoire, inversant les étiquettes uniformément, ou systématique, lorsque certaines classes ou certains annotateurs sont confondus de manière constante ; le bruit systématique est bien plus nuisible, car le modèle apprend le biais. Les grands modèles flexibles comme les réseaux de neurones profonds peuvent mémoriser des étiquettes bruitées, ce qui nuit à la généralisation. Les remèdes incluent plusieurs annotateurs avec contrôle d'accord, le confident learning pour trouver les exemples probablement mal étiquetés, le lissage des étiquettes, des pertes robustes et l'arrêt précoce. Un piège fréquent est d'ignorer le bruit du jeu de test : si les étiquettes d'évaluation sont fausses, les comparaisons de modèles et les estimations d'exactitude deviennent peu fiables, aussi propres que soient les données d'entraînement.",
+  "u": [
+   "Auditer des annotations crowdsourcées avant l'entraînement",
+   "Trouver les exemples mal étiquetés grâce aux prédictions hors pli",
+   "Entraîner des classifieurs robustes sur des données faiblement étiquetées"
+  ],
+  "x": "Une équipe de modération de contenu signale les exemples d'entraînement pour lesquels un classifieur en validation croisée contredit avec assurance l'étiquette humaine. Des relecteurs réannotent ces éléments, et beaucoup s'avèrent être de véritables erreurs d'étiquetage dues à une consigne de politique obsolète."
+ },
+ "sparsedata": {
+  "n": "Données creuses",
+  "d": "Les données creuses sont des données dont la plupart des entrées sont nulles ou absentes, comme une matrice sac de mots où chaque document n'utilise qu'une infime fraction du vocabulaire, une matrice de notes utilisateur-article ou des catégories encodées en one-hot. Ne stocker que les valeurs non nulles et leurs positions, comme dans les formats CSR ou COO, économise mémoire et calcul de plusieurs ordres de grandeur.\n\nDe nombreuses méthodes exploitent directement cette parcimonie : modèles linéaires, régression logistique et SVM linéaires sur des variables TF-IDF, machines de factorisation et factorisation matricielle pour la recommandation, et arbres en gradient boosting qui ignorent les zéros. Un piège courant consiste à convertir accidentellement une matrice creuse en matrice dense, par exemple en la centrant avec StandardScaler, qui soustrait la moyenne et remplace chaque zéro par une valeur non nulle ; utilisez plutôt une mise à l'échelle sans centrage ou MaxAbsScaler. Les données creuses demandent aussi de la régularisation, car de nombreuses variables n'apparaissent que quelques fois.",
+  "u": [
+   "Classification de texte avec des variables TF-IDF",
+   "Recommandation à partir de matrices d'interactions utilisateur-article",
+   "Variables catégorielles à forte cardinalité encodées en one-hot"
+  ],
+  "x": "Un routeur de tickets de support représente chaque ticket par un vecteur TF-IDF sur un vocabulaire de centaines de milliers de termes. Conservée au format creux, la matrice complète tient en mémoire et un classifieur linéaire s'entraîne en quelques minutes."
+ },
+ "interaction": {
+  "n": "Interaction entre variables",
+  "d": "Une interaction entre variables existe lorsque l'effet d'une variable sur la cible dépend de la valeur d'une autre variable. Par exemple, une remise peut fortement augmenter les achats des nouveaux clients mais à peine ceux des clients fidèles ; aucune des deux variables seule ne capture ce schéma.\n\nUne régression linéaire simple additionne des effets séparés et ne peut pas représenter d'interactions, sauf si on les ajoute explicitement sous forme de termes produits comme x₁·x₂, ou via des variables polynomiales. Les arbres de décision, les arbres en gradient boosting et les réseaux de neurones apprennent les interactions automatiquement, car une coupure sur une variable modifie le comportement de la coupure suivante. Les machines de factorisation modélisent efficacement les interactions par paires sur des données creuses. Les valeurs d'interaction SHAP et les graphiques de dépendance partielle aident à les détecter. Un piège consiste à ajouter à la main tous les produits par paires : le nombre de variables croît de façon quadratique, ce qui favorise le surapprentissage et la multicolinéarité ; n'ajoutez donc que des interactions justifiées par le métier, ou utilisez un modèle qui les trouve.",
+  "u": [
+   "Ajouter des termes produits aux modèles de tarification linéaires",
+   "Détecter des interactions avec les valeurs d'interaction SHAP",
+   "Prédiction de clics avec des machines de factorisation"
+  ],
+  "x": "Une équipe d'analytique marketing constate qu'un modèle d'uplift linéaire passe à côté du fait que les campagnes e-mail ne fonctionnent que pour les clients sur mobile. L'ajout d'un terme produit entre l'indicateur de campagne et le type d'appareil capture ce schéma et rend le coefficient directement interprétable."
+ },
+ "baseline": {
+  "n": "Modèle de référence (baseline)",
+  "d": "Un modèle de référence (baseline) est un modèle volontairement simple dont tout modèle proposé doit battre le score pour justifier sa complexité. Les références typiques consistent à prédire la classe majoritaire, la moyenne d'entraînement, la dernière valeur observée d'une série temporelle, ou à utiliser une simple régression logistique ou régression linéaire.\n\nLes modèles de référence donnent un sens aux valeurs des métriques. Une exactitude de 95 % semble excellente jusqu'à ce que la référence par classe majoritaire obtienne aussi 95 % sur un jeu de données déséquilibré ; une erreur de prévision n'est utile que comparée à la prévision naïve saisonnière. Construire d'abord un modèle de référence teste aussi tout le pipeline, du chargement des données à l'évaluation, avant de consacrer du temps au réglage. Une erreur courante est de choisir une référence faible qui fait paraître bon n'importe quel modèle. Rapportez une référence triviale et une référence simple mais solide, comme un modèle linéaire réglé ou des arbres en gradient boosting aux paramètres par défaut, et évaluez les deux sur le même découpage.",
+  "u": [
+   "Vérifier la cohérence des métriques sur des classifications déséquilibrées",
+   "Prévisions naïves et naïves saisonnières pour les séries temporelles",
+   "Comparer des modèles profonds à des modèles linéaires"
+  ],
+  "x": "Une équipe qui propose un modèle Transformer pour la classification de tickets entraîne d'abord un modèle de référence TF-IDF plus régression logistique. Le Transformer n'est adopté qu'après avoir nettement battu cette référence sur le même jeu de test mis de côté, ce qui justifie son coût de service supplémentaire."
+ },
+ "timeseries": {
+  "n": "Séries temporelles",
+  "d": "Une série temporelle est une suite d'observations enregistrées dans l'ordre chronologique, généralement à intervalles réguliers, comme la charge électrique horaire, les ventes journalières ou des relevés de capteurs à la seconde. Sa propriété déterminante est que les observations voisines dépendent les unes des autres : l'ordre des lignes porte donc de l'information.\n\nUne série temporelle est souvent décrite comme une combinaison de tendance, de saisonnalité et de bruit, et de nombreuses méthodes modélisent explicitement ces composantes : ARIMA, le lissage exponentiel, Prophet et les arbres en gradient boosting sur des variables décalées, ainsi que des modèles de prévision récurrents et Transformer. Parmi les outils utiles figurent les graphiques d'autocorrélation, la différenciation et les tests de stationnarité. Le piège le plus important concerne l'évaluation : une validation croisée K-fold aléatoire mélange des lignes futures dans le jeu d'entraînement et fait fuir de l'information ; la validation doit donc toujours entraîner sur le passé et tester sur le futur, par exemple avec une fenêtre croissante ou une origine glissante.",
+  "u": [
+   "Prévoir la demande de produits et les besoins en stock",
+   "Détecter des anomalies dans les métriques de serveurs et de capteurs",
+   "Prédire la charge énergétique pour la planification du réseau"
+  ],
+  "x": "Une chaîne d'épiceries prévoit la demande journalière par produit et par magasin à l'aide de variables décalées et d'un modèle de gradient boosting. La validation utilise des découpages à origine glissante qui entraînent toujours sur les semaines antérieures et testent sur les semaines suivantes, comme les prévisions sont réellement produites en production."
+ },
+ "trend": {
+  "n": "Tendance",
+  "d": "Une tendance est la direction à long terme d'une série temporelle : une hausse, une baisse ou un changement de niveau durable qui persiste au-delà des cycles saisonniers et du bruit à court terme. La croissance du nombre d'abonnés sur plusieurs années ou la baisse progressive de la sensibilité d'un capteur sont des tendances.\n\nOn estime une tendance par lissage, comme une moyenne mobile ou LOESS, en ajustant une droite ou une courbe dans le temps, ou comme l'une des composantes d'une décomposition telle que STL. Les méthodes de prévision traitent explicitement la tendance : le lissage exponentiel de Holt ajoute un terme de tendance, ARIMA la supprime par différenciation, et Prophet ajuste une tendance linéaire par morceaux avec des points de rupture. Une tendance rend une série non stationnaire, si bien que de nombreux modèles exigent de la retirer d'abord. Un piège notable concerne les modèles à base d'arbres comme les forêts aléatoires et les arbres en gradient boosting : ils ne savent pas extrapoler et, sur une série en tendance, ne prédisent jamais de valeurs supérieures à celles vues à l'entraînement. Retirez d'abord la tendance ou modélisez-la séparément.",
+  "u": [
+   "Retirer la croissance de long terme avant une analyse saisonnière",
+   "Projeter la croissance des utilisateurs pour planifier la capacité",
+   "Détecter une dégradation lente dans des relevés de capteurs"
+  ],
+  "x": "Un fournisseur cloud ajuste une tendance sur l'utilisation mensuelle du stockage pour planifier ses achats de matériel. Comme son modèle de prévision en gradient boosting ne peut pas extrapoler au-delà des niveaux passés, l'équipe modélise la tendance par un terme linéaire et ne laisse aux arbres que la variation restante."
+ },
+ "seasonality": {
+  "n": "Saisonnalité",
+  "d": "La saisonnalité est un motif d'une série temporelle qui se répète avec une période fixe et connue, comme des ventes au détail plus élevées chaque décembre, des pics de trafic aux mêmes heures chaque jour ou une activité réduite le week-end. La période est fixée par le calendrier ou par le processus, et non par les fluctuations aléatoires des données.\n\nLa saisonnalité se manifeste par des pics réguliers dans un graphique d'autocorrélation à la période et à ses multiples. On la traite par décomposition saisonnière (STL), différenciation saisonnière, modèles SARIMA et Holt-Winters, termes de Fourier comme dans Prophet, ou variables calendaires comme l'heure, le jour de la semaine et le mois pour les arbres en gradient boosting. De nombreuses séries présentent plusieurs saisonnalités à la fois, comme des cycles journaliers et hebdomadaires dans des données horaires. Un piège consiste à confondre saisonnalité et cycles : les cycles économiques montent et descendent aussi, mais avec une durée irrégulière, si bien qu'un modèle à période fixe les prédira mal. Les jours fériés à date mobile exigent aussi des variables explicites.",
+  "u": [
+   "Ajouter des variables calendaires aux modèles de prévision de la demande",
+   "Retirer les cycles hebdomadaires avant la détection d'anomalies",
+   "Planifier les effectifs autour des pics journaliers et hebdomadaires"
+  ],
+  "x": "Un centre d'appels prévoit le volume d'appels horaire avec des termes saisonniers journaliers et hebdomadaires ainsi que des indicateurs de jours fériés. Retirer le motif saisonnier permet aussi à l'équipe de signaler des pics inhabituels qui trahissent une panne ailleurs dans l'entreprise."
+ },
+ "whitenoise": {
+  "n": "Bruit blanc",
+  "d": "Un bruit blanc est une suite de valeurs aléatoires de moyenne nulle, de variance constante et sans corrélation entre deux instants quelconques. Connaître les valeurs passées ne renseigne en rien sur la suivante : le bruit blanc est la définition même d'une série imprévisible.\n\nEn modélisation de séries temporelles, c'est l'état visé pour les résidus : si un modèle de prévision comme ARIMA a capturé toute la structure, ses résidus doivent ressembler à un bruit blanc, sans pic significatif dans le graphique d'autocorrélation. Le test de Ljung-Box le vérifie formellement. Le bruit blanc est aussi la brique de base d'autres processus : une marche aléatoire est la somme cumulée d'un bruit blanc, et les modèles ARMA sont du bruit blanc filtré. Une idée reçue courante veut que le bruit blanc soit forcément distribué normalement ; le bruit blanc gaussien n'est qu'un cas particulier, et la définition n'exige qu'une autocorrélation nulle, ni l'indépendance ni la normalité.",
+  "u": [
+   "Vérifier qu'il ne reste pas de structure dans les résidus de prévision",
+   "Tester l'autocorrélation avec le test de Ljung-Box",
+   "Simuler du bruit pour des séries temporelles synthétiques"
+  ],
+  "x": "Une entreprise de services publics valide chaque mois son modèle de prévision de charge en appliquant un test de Ljung-Box aux résidus. Lorsque le test commence à rejeter l'hypothèse de bruit blanc à un décalage de 24 heures, l'équipe découvre qu'un changement de fuseau horaire des compteurs a décalé le motif journalier."
+ },
+ "randomwalk": {
+  "n": "Marche aléatoire",
+  "d": "Une marche aléatoire est une série temporelle dans laquelle chaque valeur est égale à la précédente plus un pas aléatoire, si bien que la série erre sans revenir à un niveau fixe. C'est la somme cumulée d'un bruit blanc, et la meilleure prévision de la valeur de demain est simplement celle d'aujourd'hui.\n\nComme les chocs ne s'estompent jamais, la variance d'une marche aléatoire croît avec le temps et la série est non stationnaire ; son autocorrélation décroît très lentement. Les prix des actifs sont souvent approchés par des marches aléatoires, ce qui explique pourquoi la prévision naïve par la dernière valeur est un modèle de référence difficile à battre en finance. Différencier une fois une marche aléatoire redonne les pas de bruit blanc : c'est l'idée derrière la partie intégrée (I) d'ARIMA. Un piège majeur est la régression fallacieuse : deux marches aléatoires indépendantes régressées l'une sur l'autre affichent souvent un R² élevé et des coefficients significatifs ; testez donc la stationnarité avec un test de Dickey-Fuller augmenté avant de régresser des séries en tendance.",
+  "u": [
+   "Référence naïve par la dernière valeur pour la prévision de prix",
+   "Tester la présence de racines unitaires avant une régression",
+   "Simuler des trajectoires de prix et la dérive de capteurs"
+  ],
+  "x": "Une équipe de recherche en trading confronte chaque signal candidat à une prévision par marche aléatoire du prix du lendemain. Les signaux incapables de battre la prévision par la dernière valeur hors échantillon sont écartés, même lorsqu'ils semblent solides sur la période d'entraînement."
+ },
+ "differencing": {
+  "n": "Différenciation",
+  "d": "La différenciation transforme une série temporelle en variations entre observations consécutives, en remplaçant chaque valeur par cette valeur moins la précédente. Elle supprime une tendance stochastique ou des changements de niveau et rend souvent stationnaire une série qui ne l'était pas.\n\nUne différenciation d'ordre un supprime une tendance linéaire ou une marche aléatoire ; différencier deux fois supprime une tendance quadratique. La différenciation saisonnière soustrait la valeur d'une saison plus tôt, y_t − y_{t−m}, pour supprimer un motif répétitif. La différenciation est le « I » d'ARIMA, où d compte le nombre de fois qu'elle est appliquée, et elle est courante avant d'ajuster une régression ou des arbres en gradient boosting sur des séries en tendance. Les prévisions faites à l'échelle différenciée doivent être recumulées pour revenir au niveau d'origine. Un piège est la surdifférenciation : l'appliquer à une série déjà stationnaire ajoute une autocorrélation négative et gonfle la variance ; vérifiez donc avec un test de Dickey-Fuller augmenté ou KPSS et ne différenciez que ce qui est nécessaire.",
+  "u": [
+   "Rendre une série stationnaire avant ARIMA",
+   "Retirer la saisonnalité annuelle par des différences de décalage 12",
+   "Modéliser des variations plutôt que des niveaux pour les arbres"
+  ],
+  "x": "Le modèle de prévision en gradient boosting d'un distributeur prédit la variation des ventes d'une semaine sur l'autre plutôt que leur niveau, ce qui supprime la croissance de long terme que les arbres ne savent pas extrapoler. Les variations prédites sont ajoutées à la dernière semaine observée pour produire la prévision finale."
+ },
+ "horizon": {
+  "n": "Horizon de prévision",
+  "d": "L'horizon de prévision est la distance dans le futur à laquelle porte une prévision, mesurée en pas de temps depuis le dernier point observé, par exemple un jour ou 13 semaines à l'avance. Il est fixé par la décision que la prévision soutient : la charge de l'heure suivante pour le pilotage du réseau, la demande du trimestre suivant pour les achats.\n\nL'erreur croît presque toujours avec l'horizon, car l'incertitude s'accumule et moins d'entrées récentes restent informatives ; l'exactitude doit donc être rapportée par pas d'horizon plutôt que sous forme d'une moyenne unique. Les prévisions multi-pas peuvent être produites de manière récursive, en réinjectant chaque prédiction comme entrée, ce qui cumule les erreurs ; de manière directe, en entraînant un modèle distinct par horizon ; ou avec des modèles à sorties multiples comme les réseaux sequence-to-sequence. Un piège courant consiste à valider à un horizon différent de celui utilisé en production, par exemple en évaluant des prévisions à un pas avec des variables de décalage 1 alors que les décisions réelles exigent des prévisions à quatre semaines, horizon auquel ces décalages récents ne sont pas encore connus.",
+  "u": [
+   "Fixer les délais d'approvisionnement dans la planification des stocks",
+   "Rapporter l'erreur de prévision par pas d'horizon",
+   "Choisir entre stratégies multi-pas récursive et directe"
+  ],
+  "x": "Un distributeur de mode doit commander son stock huit semaines avant sa livraison ; son modèle de demande n'est donc évalué qu'à un horizon de huit semaines. Les variables sont limitées aux informations disponibles huit semaines avant chaque semaine cible."
+ },
+ "vector": {
+  "n": "Vecteur",
+  "d": "Un vecteur est une liste ordonnée de nombres, comme (3,2 ; −1,0 ; 0,5), que l'on peut voir comme un point ou une flèche dans un espace comptant un axe par composante. Le nombre de composantes est sa dimension ; les vecteurs s'additionnent composante par composante et se multiplient par un scalaire.\n\nPresque tout ce qu'un modèle traite est un vecteur : une ligne de variables, les poids d'une régression linéaire, l'embedding d'un mot ou d'une phrase, un gradient, les probabilités de sortie d'un classifieur. La géométrie des vecteurs fournit les opérations centrales du machine learning, dont le produit scalaire, les normes vectorielles, la distance euclidienne et la similarité cosinus, qui font fonctionner les k plus proches voisins, k-means et la recherche vectorielle. Une source fréquente de bugs est la confusion des formes : dans NumPy, un tableau 1D de forme (d,) n'est ni un vecteur ligne ni un vecteur colonne, et le combiner avec des tableaux de forme (d, 1) produit silencieusement, par broadcasting, une matrice d×d.",
+  "u": [
+   "Représenter un exemple par un vecteur de variables",
+   "Stocker des embeddings de texte et d'image pour la recherche",
+   "Contenir les poids et les gradients d'un modèle"
+  ],
+  "x": "Un service de streaming musical représente chaque morceau par un vecteur d'embedding de dimension 128 appris à partir des sessions d'écoute. Les recommandations sont produites en cherchant les vecteurs de morceaux les plus proches du vecteur de l'historique d'écoute récent de l'utilisateur."
+ },
+ "matrix": {
+  "n": "Matrice",
+  "d": "Une matrice est un tableau rectangulaire de nombres disposés en lignes et en colonnes ; une matrice m×n a m lignes et n colonnes. On peut la lire soit comme un tableau de données, soit comme une application linéaire qui transforme des vecteurs de dimension n en vecteurs de dimension m par multiplication matrice-vecteur.\n\nLes deux lectures sont omniprésentes en machine learning. Un jeu de données est une matrice de conception X avec une ligne par exemple et une colonne par variable. Les poids d'une couche linéaire forment une matrice W, si bien qu'une couche dense calcule Wx + b. Les matrices de covariance, les matrices de confusion, les matrices de scores d'attention et les matrices de notes utilisateur-article en sont d'autres exemples. Les opérations clés incluent la transposition, la multiplication matricielle, l'inversion et les décompositions comme la décomposition en éléments propres et la SVD, sur lesquelles reposent l'ACP et les méthodes de faible rang comme LoRA. Un piège consiste à inverser explicitement des matrices pour résoudre des systèmes linéaires ; des solveurs comme np.linalg.solve ou les moindres carrés sont plus rapides et numériquement plus stables.",
+  "u": [
+   "Stocker un jeu de données sous forme de matrice de conception",
+   "Poids des couches entièrement connectées d'un réseau de neurones",
+   "Matrices de notes utilisateur-article pour la recommandation"
+  ],
+  "x": "Une entreprise d'e-commerce stocke ses retours implicites dans une matrice creuse utilisateurs × produits et la factorise en deux matrices étroites de facteurs utilisateurs et produits. Leur produit approche la matrice d'origine et fournit des scores pour les produits qu'un utilisateur n'a pas encore vus."
+ },
+ "tensor": {
+  "n": "Tenseur",
+  "d": "En machine learning, un tenseur est un tableau multidimensionnel de nombres : un scalaire a 0 axe, un vecteur 1, une matrice 2, et les tenseurs d'ordre supérieur en ont 3 ou plus. La forme (shape) indique la taille de chaque axe, par exemple (batch, canaux, hauteur, largeur) pour un batch d'images.\n\nLes frameworks de deep learning comme PyTorch, TensorFlow et JAX sont construits autour des tenseurs. Un tenseur porte une forme, un type de données comme float32 ou bfloat16 et un appareil comme le CPU ou le GPU, et les opérations qui le concernent peuvent être différenciées automatiquement. Les formes typiques sont (batch, séquence, cachée) pour les activations d'un Transformer et (batch, têtes, seq, seq) pour les scores d'attention. Le broadcasting permet de combiner sans copie des tenseurs de formes compatibles. Un piège courant consiste à supposer un ordre d'axes précis : frameworks et bibliothèques diffèrent, par exemple images channels-first ou channels-last, et une confusion silencieuse peut s'entraîner sans erreur tout en apprenant n'importe quoi.",
+  "u": [
+   "Batches d'images dans les réseaux convolutifs",
+   "Activations circulant dans les couches d'un Transformer",
+   "Calcul sur GPU avec différentiation automatique"
+  ],
+  "x": "Une équipe de vision par ordinateur porte un modèle d'un pipeline d'images channels-last vers PyTorch, qui attend des tenseurs channels-first. Une assertion sur la forme ajoutée à l'entrée du modèle intercepte un batch transposé qui, sinon, s'entraînait sans la moindre erreur."
+ },
+ "dotproduct": {
+  "n": "Produit scalaire",
+  "d": "Le produit scalaire de deux vecteurs de même longueur est la somme des produits de leurs composantes correspondantes, ce qui donne un seul nombre. Géométriquement, il est égal au produit des deux longueurs par le cosinus de l'angle qu'ils forment : il est grand et positif lorsque les vecteurs pointent dans la même direction, nul lorsqu'ils sont orthogonaux et négatif lorsqu'ils pointent dans des directions opposées.\n\nLe produit scalaire est l'opération de base du machine learning. Le score d'un modèle linéaire est le produit scalaire w·x plus un biais ; chaque neurone en calcule un ; la multiplication matricielle est une grille de produits scalaires ; les scores d'attention d'un Transformer sont des produits scalaires entre requêtes et clés. Un piège consiste à utiliser le produit scalaire brut comme similarité lorsque les longueurs des vecteurs varient : les vecteurs plus longs obtiennent un score plus élevé quelle que soit leur direction. Normalisez donc d'abord si seule la direction compte, ce qui donne la similarité cosinus.",
+  "u": [
+   "Calculer le score des exemples dans les modèles linéaires et logistiques",
+   "Calculer les scores d'attention requête-clé dans les Transformers",
+   "Classer des éléments par similarité d'embeddings"
+  ],
+  "x": "Une équipe de recommandation évalue les articles candidats par le produit scalaire entre l'embedding de l'utilisateur et celui de chaque article, qu'un index vectoriel calcule rapidement pour des millions d'articles. L'équipe conserve le produit scalaire brut plutôt que la similarité cosinus, car la longueur des vecteurs d'articles a été entraînée pour refléter leur popularité."
+ },
+ "matmul": {
+  "n": "Multiplication matricielle",
+  "d": "La multiplication matricielle combine une matrice A de taille m×k et une matrice B de taille k×n en une matrice C de taille m×n, dont chaque coefficient Cᵢⱼ est le produit scalaire de la ligne i de A par la colonne j de B. Les dimensions intérieures doivent concorder, et le résultat représente l'application de l'application linéaire B suivie de A.\n\nC'est le cœur calculatoire du deep learning. Une couche dense appliquée à un batch est une seule multiplication matricielle du batch d'entrée par la matrice de poids ; l'attention calcule QKᵀ puis multiplie par V. Les GPU et les TPU sont conçus autour d'elle, et son coût d'environ 2·m·k·n opérations en virgule flottante domine le calcul d'entraînement. Une idée reçue courante la croit commutative : AB diffère en général de BA, et BA peut même ne pas être défini. Un autre piège consiste à la confondre avec le produit élément par élément, noté * dans NumPy et PyTorch, alors que la multiplication matricielle s'écrit @.",
+  "u": [
+   "Passe avant des couches denses d'un réseau de neurones",
+   "Calcul de l'attention dans les modèles Transformer",
+   "Estimer le calcul d'entraînement en FLOPs"
+  ],
+  "x": "Une équipe d'inférence profile un modèle de langage et constate que l'essentiel du temps GPU part dans quelques grandes multiplications matricielles des blocs d'attention et MLP. Passer celles-ci en bfloat16 et fusionner de petites multiplications en multiplications batchées plus grandes augmente le débit sans modifier le modèle."
+ },
+ "vecnorm": {
+  "n": "Norme vectorielle (L1, L2)",
+  "d": "Une norme vectorielle associe à un vecteur une longueur positive ou nulle. La norme L2 est la longueur en ligne droite habituelle, la racine carrée de la somme des carrés des composantes ; la norme L1 est la somme des valeurs absolues ; la norme L∞ est la plus grande valeur absolue. Toutes sont des cas particuliers de la norme Lp.\n\nLes normes apparaissent partout en machine learning. Des pénalités L2 et L1 sur les poids donnent la régression ridge et le lasso ; la pénalité L1 pousse certains poids exactement à zéro, ce qui réalise une sélection de variables, tandis que L2 réduit tous les poids en douceur. L'écrêtage du gradient remet à l'échelle les gradients dont la norme L2 dépasse un seuil. Les embeddings sont normalisés en L2 avant une recherche par similarité cosinus, et les normes de différences définissent les distances euclidienne et de Manhattan. Une confusion courante oppose la norme L2 et son carré : la régression ridge pénalise la norme au carré ‖w‖₂², dont le gradient est plus simple, alors que l'écrêtage et la normalisation utilisent la norme elle-même.",
+  "u": [
+   "Régularisation L1 et L2 des poids d'un modèle",
+   "Écrêtage de la norme du gradient pendant l'entraînement d'un réseau",
+   "Normaliser des embeddings avant une recherche par similarité"
+  ],
+  "x": "Une équipe qui entraîne un grand Transformer écrête à chaque pas la norme L2 globale des gradients à 1,0. Journaliser la norme du gradient avant écrêtage lui fournit aussi un signal d'alerte précoce, car des pics soudains précèdent souvent une divergence de la perte."
+ },
+ "euclidean": {
+  "n": "Distance euclidienne",
+  "d": "La distance euclidienne est la distance en ligne droite entre deux points, calculée comme la racine carrée de la somme des carrés des différences sur toutes les coordonnées. C'est la norme L2 du vecteur différence, et elle correspond à la distance géométrique ordinaire en deux ou trois dimensions.\n\nDe nombreux algorithmes s'appuient directement sur elle : les k plus proches voisins trouvent les points d'entraînement les plus proches, k-means affecte chaque point au centroïde le plus proche et minimise la distance euclidienne au carré, les noyaux RBF des SVM décroissent avec elle, et les bases de données vectorielles la proposent souvent comme métrique de recherche. Comme chaque coordonnée contribue à sa propre échelle, les variables doivent d'abord être standardisées ; sinon, une variable mesurée en dollars domine une variable mesurée en années. En grande dimension, les distances se concentrent, si bien que le plus proche et le plus lointain voisin deviennent presque aussi éloignés l'un que l'autre. Pour des vecteurs normalisés en L2, la distance euclidienne au carré vaut 2 − 2·cos θ : elle classe donc les voisins exactement comme la similarité cosinus.",
+  "u": [
+   "Recherche des plus proches voisins dans les modèles k-NN",
+   "Affecter les points aux clusters dans k-means",
+   "Recherche vectorielle sur des embeddings normalisés"
+  ],
+  "x": "Une plateforme immobilière recommande des biens comparables par k plus proches voisins sur la surface, l'âge, la localisation et le prix. Comme les variables brutes avaient des échelles très différentes, l'équipe les standardise avant de calculer les distances euclidiennes, afin que le prix ne domine plus le résultat."
+ },
+ "cosine": {
+  "n": "Similarité cosinus",
+  "d": "La similarité cosinus mesure à quel point deux vecteurs pointent dans la même direction ; elle se calcule comme leur produit scalaire divisé par le produit de leurs longueurs. Elle va de −1 pour des directions opposées à 1 pour des directions identiques, en passant par 0 pour des vecteurs orthogonaux, et ignore entièrement la longueur des vecteurs.\n\nC'est la similarité standard pour le texte et les embeddings, car la direction d'un embedding encode le sens tandis que sa longueur reflète souvent la fréquence ou la taille du document. La recherche sémantique, la récupération pour le RAG, la détection de doublons et la recommandation comparent des embeddings de phrases ou d'articles par similarité cosinus ; les index vectoriels l'implémentent généralement comme un produit scalaire sur des vecteurs normalisés en L2. La distance cosinus est définie comme 1 − similarité cosinus. Un piège consiste à lire le score comme une probabilité calibrée ou à comparer des seuils entre modèles : chaque modèle d'embedding a sa propre plage typique, et certains produisent des scores tous élevés ; les seuils doivent donc être réglés pour chaque modèle.",
+  "u": [
+   "Recherche sémantique sur des embeddings de phrases",
+   "Récupérer des passages de contexte pour les systèmes RAG",
+   "Détecter des documents et des questions quasi dupliqués"
+  ],
+  "x": "Une plateforme de support client calcule l'embedding de chaque question entrante et la compare par similarité cosinus aux questions déjà traitées. Les correspondances au-dessus d'un seuil réglé sur des paires étiquetées sont suggérées aux agents, et le seuil est réajusté à chaque changement de modèle d'embedding."
+ },
+ "distmetric": {
+  "n": "Métrique de distance",
+  "d": "Une métrique de distance est une fonction qui mesure l'éloignement entre deux objets et respecte quatre règles : les distances sont positives ou nulles, nulles uniquement pour des objets identiques, symétriques, et obéissent à l'inégalité triangulaire, d(x, z) ≤ d(x, y) + d(y, z). Les distances euclidienne, de Manhattan, de Tchebychev, de Hamming et de Jaccard sont des métriques courantes.\n\nLe choix de la métrique définit ce que « similaire » signifie pour les k plus proches voisins, k-means, le clustering hiérarchique, DBSCAN et la recherche vectorielle. La distance de Manhattan est moins dominée qu'Euclide par une seule grande différence ; Hamming convient aux codes binaires ; Jaccard compare des ensembles ; la distance de Mahalanobis tient compte des variables corrélées. Certaines mesures populaires ne sont pas de vraies métriques : la distance cosinus et la distance euclidienne au carré violent l'inégalité triangulaire, et la divergence KL n'est même pas symétrique. C'est important, car des structures d'index comme les ball trees et certaines garanties de clustering supposent une vraie métrique, et un mauvais choix peut renvoyer silencieusement de mauvais voisins.",
+  "u": [
+   "Choisir la métrique pour les k-NN et le clustering",
+   "Comparer des empreintes binaires avec la distance de Hamming",
+   "Mesurer le recouvrement d'ensembles avec la distance de Jaccard"
+  ],
+  "x": "Un groupe de recherche en chimie interroge une bibliothèque de composés en encodant chaque molécule sous forme d'empreinte binaire et en comparant les empreintes avec la distance de Jaccard (Tanimoto). Cette métrique reflète les sous-structures communes bien mieux que la distance euclidienne sur les mêmes bits."
+ },
+ "projection": {
+  "n": "Projection",
+  "d": "Une projection envoie un vecteur sur une droite, un plan ou un autre sous-espace en trouvant le point le plus proche dans ce sous-espace. La projection de x sur une direction u est la composante de x selon u ; ce qui reste, x moins sa projection, est orthogonal au sous-espace.\n\nLa projection est la géométrie qui sous-tend plusieurs méthodes centrales. La régression linéaire par moindres carrés projette le vecteur cible sur l'espace engendré par les colonnes de variables, et le résidu est orthogonal à chaque variable. L'ACP projette les données sur les quelques directions de plus grande variance pour réduire la dimension. Les projections aléatoires, justifiées par le lemme de Johnson-Lindenstrauss, préservent approximativement les distances tout en réduisant la dimension. Dans les réseaux de neurones, les projections de requête, de clé et de valeur sont simplement des couches linéaires apprises. Un piège consiste à projeter sur une direction qui n'est pas de longueur unitaire sans diviser par sa norme au carré, ce qui fausse l'échelle du résultat.",
+  "u": [
+   "Réduire la dimension avec l'ACP avant la modélisation",
+   "Ajustement par moindres carrés en régression linéaire",
+   "Projection aléatoire pour réduire des variables de grande dimension"
+  ],
+  "x": "Une équipe de recherche stocke des embeddings de documents de dimension 768, mais les projette en dimension 128 avec une ACP ajustée sur un échantillon du corpus. Ces vecteurs plus petits réduisent fortement la mémoire de l'index, et le rappel est vérifié sur un jeu de requêtes étiquetées avant le déploiement."
+ },
+ "orthogonal": {
+  "n": "Orthogonalité",
+  "d": "Deux vecteurs sont orthogonaux lorsque leur produit scalaire est nul, c'est-à-dire qu'ils forment un angle droit et n'ont aucune composante l'un selon l'autre. Un ensemble de vecteurs unitaires deux à deux orthogonaux est orthonormé, et une matrice carrée dont les colonnes sont orthonormées est une matrice orthogonale : elle fait tourner ou réfléchit les vecteurs sans changer leur longueur, et son inverse est simplement sa transposée.\n\nL'orthogonalité apparaît partout en machine learning. Les composantes principales de l'ACP sont des directions orthogonales, si bien que les variables transformées sont décorrélées. Les résidus des moindres carrés sont orthogonaux à chaque colonne de variables. L'initialisation orthogonale maintient stables les normes du signal dans les réseaux profonds et récurrents, et la décomposition QR construit des bases orthonormées pour des solveurs numériques stables. En grande dimension, des vecteurs aléatoires sont presque orthogonaux, ce qui explique pourquoi des embeddings sans rapport ont une similarité cosinus proche de zéro. Une confusion courante assimile orthogonalité et indépendance : pour des données centrées, l'orthogonalité signifie une corrélation nulle, ce qui n'exclut pas une dépendance non linéaire.",
+  "u": [
+   "Composantes décorrélées produites par l'ACP",
+   "Initialisation orthogonale des poids d'un réseau récurrent",
+   "Résolution stable des moindres carrés par décomposition QR"
+  ],
+  "x": "Une équipe qui entraîne un modèle récurrent profond sur des séquences de capteurs initialise sa matrice de poids récurrente comme une matrice orthogonale. Comme celle-ci préserve la longueur des vecteurs, les activations et les gradients n'explosent ni ne s'évanouissent aussi vite sur de longues séquences."
+ },
+ "eigen": {
+  "n": "Valeurs propres et vecteurs propres",
+  "d": "Un vecteur propre d'une matrice carrée A est un vecteur non nul dont la direction ne change pas quand on lui applique A ; il est seulement mis à l'échelle, et le facteur d'échelle est sa valeur propre λ. Autrement dit, Av = λv : le long d'un vecteur propre, la matrice agit comme une simple multiplication par un nombre.\n\nPour une matrice symétrique comme une matrice de covariance, les vecteurs propres sont orthogonaux et les valeurs propres réelles, de sorte que la matrice s'écrit QΛQᵀ. C'est exactement ce qu'utilise l'ACP : les vecteurs propres de la matrice de covariance sont les composantes principales et les valeurs propres sont les variances le long de celles-ci. Les valeurs propres décrivent aussi la dynamique d'entraînement : la plus grande valeur propre de la hessienne limite le taux d'apprentissage stable en descente de gradient, et des valeurs propres supérieures à 1 dans les matrices de poids récurrentes provoquent l'explosion des signaux. Une idée reçue veut que toute matrice ait des valeurs propres réelles ; les matrices non symétriques, comme les rotations, peuvent en avoir des complexes.",
+  "u": [
+   "Composantes principales issues de la matrice de covariance",
+   "Clustering spectral sur des laplaciens de graphe",
+   "Analyser la courbure et la stabilité pendant l'entraînement"
+  ],
+  "x": "Une équipe d'analyse de la fraude applique un clustering spectral à un graphe de comptes partageant des appareils. Les vecteurs propres du laplacien du graphe associés aux plus petites valeurs propres séparent des groupes de comptes étroitement connectés, qui sont transmis aux enquêteurs comme réseaux de fraude potentiels."
+ },
+ "matrank": {
+  "n": "Rang d'une matrice",
+  "d": "Le rang d'une matrice est le nombre de lignes linéairement indépendantes, qui est toujours égal au nombre de colonnes linéairement indépendantes. Il compte combien de directions réellement différentes la matrice contient ; une matrice m×n a un rang au plus égal à min(m, n), et elle est de rang plein lorsqu'elle atteint cette borne.\n\nLe rang compte dès que des variables ou des paramètres sont redondants. Si une matrice de conception est de rang déficient, par exemple lorsqu'un encodage one-hot complet côtoie une constante (intercept), la régression linéaire n'a pas de solution unique ; une régularisation comme la régression ridge ou la suppression d'une colonne règle le problème. La structure de faible rang est aussi exploitée délibérément : SVD tronquée, factorisation matricielle et LoRA, qui fine-tune un grand modèle en apprenant une mise à jour des poids de petit rang r. Un piège consiste à calculer le rang exact sur des données en virgule flottante : le bruit rend presque toute matrice techniquement de rang plein, et le rang numérique se juge donc au nombre de valeurs singulières qui dépassent une tolérance.",
+  "u": [
+   "Détecter des variables redondantes en régression linéaire",
+   "Factorisation matricielle de faible rang pour la recommandation",
+   "Adaptateurs de faible rang comme LoRA pour le fine-tuning"
+  ],
+  "x": "Un analyste qui construit une régression de tarification obtient des coefficients énormes et instables, et découvre que la matrice de conception est de rang déficient parce que les colonnes de région encodées en one-hot ont pour somme la colonne de constante. Supprimer une catégorie par variable rétablit le rang plein et des estimations stables."
+ },
+ "covmatrix": {
+  "n": "Matrice de covariance",
+  "d": "Une matrice de covariance rassemble les covariances entre chaque paire de variables d'un jeu de données : le coefficient (i, j) est la covariance de la variable i avec la variable j, et la diagonale contient la variance de chaque variable. Pour d variables, c'est une matrice symétrique d×d, toujours semi-définie positive.\n\nElle résume la dispersion linéaire et les co-mouvements de l'ensemble des données. L'ACP prend ses vecteurs propres comme composantes principales ; la loi normale multivariée, les modèles de mélange gaussien et la LDA sont paramétrés par elle ; la distance de Mahalanobis utilise son inverse pour mesurer des distances dans des unités qui tiennent compte des variables corrélées ; le blanchiment transforme les données pour que leur covariance devienne l'identité. Diviser par les écarts-types la transforme en matrice de corrélation. Un piège majeur est l'estimation avec peu d'échantillons par rapport au nombre de variables : la covariance empirique devient bruitée ou singulière et ne peut pas être inversée, d'où le recours à des estimateurs à rétrécissement (shrinkage) comme Ledoit-Wolf.",
+  "u": [
+   "Calculer les composantes principales pour l'ACP",
+   "Distance de Mahalanobis pour la détection d'anomalies multivariée",
+   "Estimation du risque d'un portefeuille à partir des rendements d'actifs"
+  ],
+  "x": "Une équipe qualité industrielle ajuste une matrice de covariance aux relevés de nombreux capteurs corrélés en fonctionnement normal. Les nouveaux relevés sont signalés lorsque leur distance de Mahalanobis est anormalement grande, et un estimateur de Ledoit-Wolf maintient l'inverse stable malgré le peu de données normales disponibles."
+ },
+ "derivative": {
+  "n": "Dérivée",
+  "d": "La dérivée d'une fonction en un point est son taux de variation instantané : de combien la sortie change par unité de variation de l'entrée, pour une variation infinitésimale. Géométriquement, c'est la pente de la tangente à la courbe en ce point.\n\nLes dérivées sont le moyen par lequel les modèles apprennent. L'entraînement minimise une perte, et la dérivée de la perte par rapport à un paramètre indique dans quelle direction, et avec quelle pente, la perte change si l'on modifie légèrement ce paramètre. La descente de gradient avance dans le sens opposé à cette pente. La rétropropagation applique la règle de dérivation en chaîne, qui multiplie les dérivées de fonctions imbriquées, pour obtenir les dérivées à travers chaque couche d'un réseau de neurones, et les frameworks les calculent par différentiation automatique plutôt que par formules symboliques ou différences finies. Un piège consiste à supposer que toute fonction utilisée à l'entraînement est dérivable partout : ReLU et la valeur absolue présentent un point anguleux en zéro, où les frameworks choisissent simplement un sous-gradient par convention.",
+  "u": [
+   "Calculer les pentes de la perte pour l'entraînement par gradient",
+   "Règle de dérivation en chaîne à travers les couches en rétropropagation",
+   "Vérifier des gradients analytiques par différences finies"
+  ],
+  "x": "Un ingénieur qui écrit une perte personnalisée pour un modèle de classement vérifie son implémentation en comparant la dérivée calculée par l'autograd de PyTorch à une estimation par différences finies sur des entrées aléatoires. Un écart révèle un facteur manquant dans une fonction backward écrite à la main."
+ },
+ "partialderiv": {
+  "n": "Dérivée partielle",
+  "d": "Une dérivée partielle mesure comment une fonction de plusieurs variables change lorsqu'une entrée varie et que toutes les autres restent fixes. Pour f(x, y), ∂f/∂x est la pente selon la direction x en un point, calculée en traitant y comme une constante.\n\nLa perte d'un modèle dépend de nombreux paramètres à la fois, souvent des millions ou des milliards, et la dérivée partielle par rapport à chaque paramètre indique comment la perte réagit lorsqu'on modifie ce seul paramètre. L'ensemble des dérivées partielles forme le gradient, que suivent la descente de gradient et Adam ; la rétropropagation les calcule toutes efficacement en une seule passe arrière. Un piège consiste à lire une dérivée partielle comme l'effet total d'une entrée : lorsque les entrées sont corrélées, en modifier une en fait généralement bouger d'autres, si bien que cette pente « une variable à la fois » peut induire en erreur pour l'interprétation.",
+  "u": [
+   "Pentes de la perte par paramètre pendant l'entraînement d'un réseau",
+   "Dériver les règles de mise à jour des modèles linéaires",
+   "Analyse de sensibilité des sorties d'un modèle à ses entrées"
+  ],
+  "x": "Une équipe de tarification calcule la dérivée partielle de la sortie d'un modèle de demande par rapport au prix, les autres entrées restant fixes, pour estimer la sensibilité locale au prix de chaque produit. Elle interprète le résultat avec prudence, car le prix est corrélé aux promotions dans les données d'entraînement."
+ },
+ "gradient": {
+  "n": "Gradient",
+  "d": "Le gradient d'une fonction de plusieurs variables est le vecteur de toutes ses dérivées partielles. En tout point, il pointe dans la direction où la fonction croît le plus vite, et sa longueur est le taux de cette croissance ; se déplacer perpendiculairement à lui laisse la fonction inchangée au premier ordre.\n\nEntraîner un modèle consiste à suivre l'opposé du gradient de la perte par rapport aux paramètres : la descente de gradient, la SGD, le momentum et Adam l'utilisent tous, et la rétropropagation le calcule efficacement pour les réseaux de neurones. Les gradients par rapport aux entrées sont aussi utiles, pour les cartes de saillance, les exemples adverses et les gradients intégrés. Les problèmes pratiques tournent autour de la taille du gradient : l'évanouissement des gradients bloque l'apprentissage dans les réseaux profonds, leur explosion le fait diverger, et l'écrêtage du gradient, les couches de normalisation et les connexions résiduelles traitent les deux. Un piège consiste à oublier de remettre à zéro les gradients accumulés entre deux pas dans PyTorch, ce qui additionne silencieusement les gradients d'un batch à l'autre.",
+  "u": [
+   "Mises à jour des paramètres en descente de gradient et avec Adam",
+   "Cartes de saillance à partir des gradients par rapport aux entrées",
+   "Surveiller la norme des gradients pour la stabilité de l'entraînement"
+  ],
+  "x": "Une équipe qui fine-tune un grand modèle journalise la norme du gradient de chaque couche. Lorsque le warmup du taux d'apprentissage a été supprimé par erreur, les journaux ont montré des pics de norme du gradient dans les premiers pas, ce qui expliquait la divergence de la perte."
+ },
+ "jacobian": {
+  "n": "Jacobienne",
+  "d": "La jacobienne d'une fonction qui associe m sorties à n entrées est la matrice m×n de toutes les dérivées partielles du premier ordre : la ligne i contient le gradient de la sortie i. C'est la meilleure approximation linéaire de la fonction au voisinage d'un point ; elle décrit comment une petite variation de chaque entrée fait bouger chaque sortie.\n\nLa rétropropagation est une chaîne de produits de jacobiennes : la jacobienne de chaque couche relie les variations de son entrée à celles de sa sortie, et la différentiation automatique en mode inverse multiplie un vecteur ligne par ces jacobiennes en remontant depuis la perte, ce qui explique qu'elle n'ait jamais besoin de construire explicitement des jacobiennes complètes. Son déterminant mesure comment la fonction dilate les volumes, ce que les normalizing flows exploitent pour des vraisemblances exactes. Sa norme par rapport aux entrées mesure la sensibilité. Un piège consiste à matérialiser la jacobienne complète d'un grand réseau : sa taille est le nombre de sorties multiplié par le nombre d'entrées ; utilisez plutôt des produits vecteur-jacobienne ou jacobienne-vecteur.",
+  "u": [
+   "Différentiation automatique en mode inverse en deep learning",
+   "Vraisemblances par changement de variables dans les normalizing flows",
+   "Mesurer la sensibilité aux entrées pour l'analyse de robustesse"
+  ],
+  "x": "Une équipe de recherche qui construit un normalizing flow pour l'estimation de densité conçoit chaque couche pour que sa jacobienne soit triangulaire. Le log-déterminant se réduit alors à une somme sur la diagonale, ce qui garde le calcul exact de la vraisemblance peu coûteux pour des entrées de grande dimension."
+ },
+ "hessian": {
+  "n": "Hessienne",
+  "d": "La hessienne d'une fonction scalaire de plusieurs variables est la matrice carrée de ses dérivées partielles du second ordre. Le coefficient (i, j) vaut ∂²f/∂xᵢ∂xⱼ, et la matrice décrit la courbure de la fonction : comment le gradient lui-même change lorsqu'on se déplace dans chaque direction.\n\nEn un point où le gradient est nul, la hessienne permet de le classer : des valeurs propres toutes positives signifient un minimum local, toutes négatives un maximum, et des signes mélangés un point selle, fréquent dans les surfaces de perte des réseaux de neurones. La méthode de Newton utilise l'inverse de la hessienne pour faire des pas tenant compte de la courbure, et les méthodes quasi-Newton comme L-BFGS l'approchent ; les solveurs de régression logistique et le boosting du second ordre de XGBoost l'utilisent directement. La plus grande valeur propre limite le taux d'apprentissage stable de la descente de gradient. Le piège est la taille : pour d paramètres, elle compte d² coefficients ; pour les réseaux profonds, on utilise donc des produits hessienne-vecteur plutôt que la matrice complète.",
+  "u": [
+   "Optimisation de modèles convexes par Newton et L-BFGS",
+   "Gradient boosting du second ordre dans XGBoost",
+   "Analyser la courbure et le caractère pointu de la surface de perte"
+  ],
+  "x": "Une équipe qui entraîne une régression logistique sur quelques centaines de variables utilise un solveur de type Newton qui construit la hessienne à chaque pas. Il converge en quelques itérations, ce qui compte, car le modèle est réentraîné toutes les heures sur des données fraîches."
+ },
+ "logsumexp": {
+  "n": "Log-sum-exp et stabilité numérique",
+  "d": "Log-sum-exp calcule log(Σ exp(xᵢ)) en évitant dépassements et soupassements de capacité grâce à la soustraction préalable de la valeur maximale, selon l'identité log Σ exp(xᵢ) = m + log Σ exp(xᵢ − m). Plus généralement, la stabilité numérique consiste à organiser un calcul pour que la plage et la précision limitées des nombres en virgule flottante ne corrompent pas le résultat.\n\nCette astuce est omniprésente en machine learning. Le softmax soustrait le logit maximal avant l'exponentiation ; la perte d'entropie croisée est calculée à partir des logits via log-softmax plutôt qu'en prenant le logarithme des probabilités softmax ; les modèles de mélange gaussien et les HMM combinent les probabilités dans l'espace logarithmique. Parmi les habitudes voisines figurent l'addition de log-vraisemblances au lieu de la multiplication de petites probabilités, et le loss scaling en entraînement en précision mixte. Un bug courant consiste à appliquer softmax puis log, ou une sigmoïde suivie d'une entropie croisée binaire, au lieu des fonctions fusionnées : avec de grands logits, on obtient log(0) et des pertes NaN.",
+  "u": [
+   "Softmax et entropie croisée stables à partir des logits",
+   "Additionner des probabilités dans l'espace log pour les mélanges",
+   "Éviter les pertes NaN en entraînement en précision mixte"
+  ],
+  "x": "Une équipe constate des pertes NaN occasionnelles en entraînant un classifieur en float16. La cause est un logarithme manuel des sorties du softmax, qui tombent à zéro par soupassement ; passer à l'entropie croisée fusionnée du framework sur les logits bruts élimine les NaN."
+ },
+ "nonlinearity": {
+  "n": "Linéarité et non-linéarité",
+  "d": "Une fonction est linéaire lorsque multiplier son entrée par un facteur multiplie sa sortie par le même facteur et que la sortie d'une somme d'entrées est égale à la somme des sorties ; en pratique, les sorties sont des sommes pondérées des entrées, éventuellement plus une constante. Une fonction non linéaire enfreint ces règles, comme les carrés, les seuils, les produits de variables ou une ReLU.\n\nCette distinction détermine ce qu'un modèle peut représenter. La régression linéaire et la régression logistique produisent des fonctions de décision linéaires : elles ne peuvent pas capturer des motifs de type XOR ni des interactions, sauf si l'on ajoute des variables non linéaires. Empiler des couches linéaires dans un réseau de neurones donne encore une seule application linéaire, d'où les fonctions d'activation comme ReLU, GELU ou la sigmoïde placées entre les couches ; avec elles, un réseau peut approcher toute fonction continue. Une idée reçue veut que la régression logistique soit non linéaire à cause de sa sigmoïde : sa frontière de décision reste un hyperplan dans l'espace des variables.",
+  "u": [
+   "Fonctions d'activation entre les couches d'un réseau de neurones",
+   "Variables polynomiales et splines pour les modèles linéaires",
+   "Méthodes à noyau pour des frontières de décision courbes"
+  ],
+  "x": "Une équipe d'analytique constate que sa régression logistique d'octroi de prêts manque un schéma où le risque n'augmente que lorsque l'endettement et le taux d'utilisation sont tous deux élevés. Un modèle d'arbres en gradient boosting capture cette interaction non linéaire sans feature engineering manuel."
+ },
+ "highdim": {
+  "n": "Espace de grande dimension",
+  "d": "Un espace de grande dimension est un espace vectoriel comptant de nombreuses coordonnées, de quelques dizaines à plusieurs milliers, comme un embedding de phrase de dimension 768 ou un vecteur TF-IDF sur un vaste vocabulaire. La géométrie y obéit à des règles très différentes de celles des deux ou trois dimensions que l'on peut se représenter.\n\nLe volume se concentre près de la surface d'une boule, des vecteurs aléatoires sont presque orthogonaux et les distances entre points aléatoires deviennent presque égales, si bien que le rapport entre le plus proche et le plus lointain voisin tend vers un. C'est le fléau de la dimension : les méthodes fondées sur les distances, comme les k plus proches voisins et k-means, perdent leur contraste, et la quantité de données nécessaire pour couvrir l'espace croît exponentiellement. Les données réelles se situent généralement près d'une variété de dimension bien plus faible, ce qui explique le succès de l'ACP, d'UMAP et des embeddings appris, et l'utilité persistante de la recherche approximative des plus proches voisins sur des embeddings. Une idée reçue veut que davantage de variables aide toujours ; les dimensions non pertinentes ajoutent du bruit aux distances et favorisent le surapprentissage.",
+  "u": [
+   "Recherche vectorielle dans des espaces d'embeddings denses",
+   "Réduction de dimension avant un clustering ou des k-NN",
+   "Régulariser des modèles avec beaucoup de variables et peu d'échantillons"
+  ],
+  "x": "Une équipe de génomique disposant de dizaines de milliers de variables d'expression génique par patient, pour seulement quelques centaines de patients, applique une ACP avant le clustering. Sans réduction, les distances de k-means étaient dominées par des gènes bruités et produisaient des clusters instables."
+ }
+}

@@ -1,0 +1,446 @@
+{
+  "mean": {
+    "n": "Mean (Average)",
+    "d": "The mean is the sum of a set of values divided by how many values there are. It is the balance point of a distribution: the positive and negative deviations from the mean cancel exactly, and it is the single constant that minimizes the sum of squared errors.\n\nMeans appear everywhere in machine learning. Standardization subtracts the feature mean, mean imputation fills missing values with it, MSE and log loss are means of per-example losses, and mini-batch gradient descent averages gradients over a batch. Batch normalization and layer normalization both compute running or per-sample means.\n\nThe main pitfall is sensitivity to outliers. One extreme value can pull the mean far from where most data lies, so for skewed quantities such as income, latency or transaction size the median often describes a typical case better.",
+    "f": "μ = (1/n) Σᵢ xᵢ",
+    "u": [
+      "Centering features before standardization or PCA",
+      "Averaging per-example losses into a training objective",
+      "Imputing missing numeric values with the column mean"
+    ],
+    "x": "A payments team tracks the mean transaction amount per merchant as a baseline feature for a fraud model. Because a few very large corporate purchases distort it, they also log a trimmed mean and the median, and the model uses all three.",
+    "c": "import numpy as np\nimport pandas as pd\n\nx = np.array([12.0, 15.0, 14.0, 13.0, 200.0])\nprint(x.mean())                      # pulled up by the outlier 200\nprint(np.median(x))                  # robust alternative\n\n# Trimmed mean drops the top and bottom 20%\nfrom scipy.stats import trim_mean\nprint(trim_mean(x, 0.2))\n\n# Column means in a DataFrame, used for centering\ndf = pd.DataFrame({\"a\": [1, 2, 3], \"b\": [10, 20, 60]})\ncentered = df - df.mean()\nprint(centered.mean())               # ~0 for every column"
+  },
+  "median": {
+    "n": "Median",
+    "d": "The median is the middle value of a sorted dataset: half of the observations are below it and half are above. With an even number of values it is conventionally the average of the two middle ones.\n\nBecause it depends only on order, not on magnitudes, the median is robust: moving the largest value to infinity does not change it. It is the constant that minimizes the sum of absolute errors, which is why models trained with MAE predict a conditional median rather than a mean. Practitioners use it for median imputation, robust scaling (which subtracts the median and divides by the IQR), and summarizing skewed metrics such as latency or house prices.\n\nA common misconception is that the median is always the better summary. For symmetric data without outliers the mean is statistically more efficient, and the median of a small sample can jump noticeably between samples.",
+    "f": "median = x₍₍ₙ₊₁₎/₂₎ for odd n (sorted values)",
+    "u": [
+      "Robust imputation of skewed numeric features",
+      "Reporting typical latency or price levels",
+      "Centering features in robust scaling"
+    ],
+    "x": "A real-estate platform reports the median sale price per neighborhood instead of the mean, because a handful of luxury sales would otherwise dominate the summary. The same median is used to impute missing prices in the training data for its valuation model.",
+    "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.impute import SimpleImputer\n\nprices = np.array([310, 295, 330, 305, 2400])  # one luxury sale\nprint(np.mean(prices), np.median(prices))    # mean distorted, median stable\n\n# Median imputation of missing values\nX = np.array([[1.0], [np.nan], [3.0], [100.0]])\nimp = SimpleImputer(strategy=\"median\")\nprint(imp.fit_transform(X).ravel())          # NaN -> 3.0\n\n# Per-group medians in pandas\ndf = pd.DataFrame({\"area\": list(\"AABB\"), \"price\": [300, 320, 500, 5000]})\nprint(df.groupby(\"area\")[\"price\"].median())"
+  },
+  "variance": {
+    "n": "Variance",
+    "d": "Variance measures how spread out values are around their mean: it is the average squared deviation from the mean. Squaring makes every deviation positive and weights large deviations heavily, so a few far-away points can dominate it.\n\nThe population variance divides by n; the sample variance divides by n − 1 (Bessel's correction) to give an unbiased estimate when the mean itself was estimated from the same data. Variance underlies standardization, PCA (which finds directions of maximum variance), the bias–variance tradeoff, weight initialization schemes that keep activation variance constant across layers, and the second-moment estimate in Adam.\n\nA frequent source of confusion is that numpy's var uses n by default (ddof=0) while pandas uses n − 1 (ddof=1), so the two libraries return different numbers for the same small sample. Variance is also in squared units, which is why standard deviation is usually reported instead.",
+    "f": "σ² = (1/n) Σᵢ (xᵢ − μ)²",
+    "u": [
+      "Selecting principal components by explained variance",
+      "Dropping near-constant features with a variance threshold",
+      "Monitoring stability of model predictions over time"
+    ],
+    "x": "A manufacturing analytics team removes sensor channels whose variance on the training window is close to zero, since constant signals carry no information for the failure classifier. They recompute the variances weekly to catch sensors that have frozen in the field.",
+    "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.feature_selection import VarianceThreshold\n\nx = np.array([2.0, 4.0, 4.0, 5.0, 7.0])\nprint(np.var(x))            # population variance, ddof=0\nprint(np.var(x, ddof=1))    # sample variance, n - 1\nprint(pd.Series(x).var())   # pandas defaults to ddof=1\n\n# Remove near-constant features\nX = np.array([[0, 1.0, 3], [0, 1.0, 9], [0, 1.1, 4]])\nsel = VarianceThreshold(threshold=0.01)\nprint(sel.fit_transform(X).shape)   # keeps only the varying column"
+  },
+  "stddev": {
+    "n": "Standard Deviation",
+    "d": "The standard deviation is the square root of the variance, giving a measure of spread in the same units as the data. It describes how far a typical value lies from the mean.\n\nFor roughly normal data about 68% of values fall within one standard deviation of the mean and about 95% within two, which makes it a convenient yardstick for spotting unusual values. Standardization (z-scores) divides centered features by their standard deviation so that features on different scales contribute comparably to gradient descent, k-nearest neighbors, SVMs and regularized models. Weight initialization schemes such as Xavier and He set the standard deviation of initial weights from the layer width.\n\nThe standard deviation should not be confused with the standard error, which describes uncertainty in an estimate such as the mean and shrinks with sample size. The 68–95 rule also fails for heavy-tailed or skewed data.",
+    "f": "σ = √[(1/n) Σᵢ (xᵢ − μ)²]",
+    "u": [
+      "Computing z-scores for feature standardization",
+      "Flagging anomalies beyond three standard deviations",
+      "Setting the scale of weight initialization"
+    ],
+    "x": "An operations team monitors the daily order volume of each warehouse and raises an alert when a day falls more than three rolling standard deviations from the rolling mean. Because volume is higher on weekends, the statistics are computed separately per weekday.",
+    "c": "import numpy as np\nfrom sklearn.preprocessing import StandardScaler\n\nrng = np.random.default_rng(0)\nx = rng.normal(loc=50, scale=8, size=10_000)\nmu, sd = x.mean(), x.std(ddof=1)\nprint(round(sd, 2))                          # close to 8\n\n# Share of values within 1 and 2 standard deviations\nprint(np.mean(np.abs(x - mu) < sd), np.mean(np.abs(x - mu) < 2 * sd))\n\n# Standardize features to mean 0, std 1\nX = rng.normal([5, 500], [1, 100], size=(100, 2))\nZ = StandardScaler().fit_transform(X)\nprint(Z.std(axis=0))                         # [1. 1.]"
+  },
+  "covariance": {
+    "n": "Covariance",
+    "d": "Covariance measures how two variables vary together: it is the average product of their deviations from their own means. A positive value means they tend to be above their means at the same time, a negative value means one tends to be high when the other is low.\n\nFor many features the pairwise covariances form the covariance matrix, which is symmetric and positive semi-definite, with the variances on its diagonal. PCA is the eigendecomposition of this matrix, Gaussian mixture models and the multivariate normal distribution are parameterized by it, and the Mahalanobis distance uses its inverse.\n\nThe key limitation is that covariance depends on the units of both variables, so its magnitude is hard to interpret: measuring height in centimeters instead of meters multiplies it by 100. Dividing by both standard deviations gives the correlation coefficient, which is unit-free. Covariance also captures only linear co-movement.",
+    "f": "Cov(X, Y) = E[(X − μ_X)(Y − μ_Y)]",
+    "u": [
+      "Building covariance matrices for PCA",
+      "Parameterizing multivariate Gaussian models",
+      "Estimating portfolio risk from asset co-movements"
+    ],
+    "x": "A quantitative finance team estimates the covariance matrix of daily asset returns to size positions in a portfolio. Because the sample covariance is noisy with hundreds of assets and limited history, they use a shrinkage estimator such as Ledoit-Wolf.",
+    "c": "import numpy as np\nfrom sklearn.covariance import LedoitWolf\n\nrng = np.random.default_rng(0)\nx = rng.normal(size=500)\ny = 2 * x + rng.normal(scale=0.5, size=500)\n\nC = np.cov(x, y)           # 2x2 matrix, ddof=1 by default\nprint(C[0, 1])             # positive: x and y move together\nprint(np.cov(x * 100, y)[0, 1])  # rescaling x scales covariance\n\n# Shrinkage estimate for many features\nX = rng.normal(size=(60, 40))\nprint(LedoitWolf().fit(X).covariance_.shape)"
+  },
+  "correlation": {
+    "n": "Correlation Coefficient",
+    "d": "The correlation coefficient measures the strength and direction of a linear relationship between two variables on a fixed scale from −1 to +1. The Pearson coefficient is the covariance divided by the product of both standard deviations, so it is unit-free.\n\nA value near +1 means points lie close to an upward-sloping line, near −1 a downward line, and near 0 no linear trend. Spearman's rank correlation applies the same formula to ranks and captures any monotonic relationship. Practitioners use correlation in EDA, for screening features against the target, for detecting multicollinearity, and for comparing model scores with human ratings.\n\nThe classic misconception is that zero correlation means independence: y = x² over a symmetric range has Pearson correlation near zero despite a perfect dependence. Correlation is also sensitive to outliers and says nothing about causation.",
+    "f": "r = Cov(X, Y) / (σ_X · σ_Y)",
+    "u": [
+      "Screening candidate features against the target",
+      "Detecting redundant, highly correlated feature pairs",
+      "Comparing automatic metrics with human judgments"
+    ],
+    "x": "An LLM evaluation team computes the Spearman correlation between an automatic judge model's scores and human preference ratings on a shared set of answers. A judge is adopted only when its rank correlation with humans is consistently high across task categories.",
+    "c": "import numpy as np\nfrom scipy.stats import pearsonr, spearmanr\n\nrng = np.random.default_rng(0)\nx = rng.uniform(-3, 3, 1000)\n\ny_lin = 2 * x + rng.normal(size=1000)\nprint(pearsonr(x, y_lin).statistic)     # close to +1\n\ny_sq = x ** 2                           # perfect but non-linear\nprint(pearsonr(x, y_sq).statistic)      # near 0\n\ny_mono = np.exp(x)                      # monotonic, curved\nprint(pearsonr(x, y_mono).statistic, spearmanr(x, y_mono).statistic)  # Spearman = 1"
+  },
+  "corrmatrix": {
+    "n": "Correlation Matrix",
+    "d": "A correlation matrix is a square table holding the correlation coefficient between every pair of variables in a dataset. The diagonal is always 1, the matrix is symmetric, and it is the covariance matrix of the standardized variables.\n\nIt is usually shown as a heatmap during exploratory data analysis to spot clusters of related features, features that track the target, and near-duplicate columns. Large off-diagonal values signal multicollinearity, which inflates coefficient variance in linear regression and splits importance across features in tree models. PCA on standardized data is the eigendecomposition of the correlation matrix.\n\nA pitfall is reading it as a complete map of dependencies. Pairwise correlations miss non-linear relationships and interactions among three or more variables, and multicollinearity can exist even when no single pair is strongly correlated, which is why the variance inflation factor (VIF) is also checked.",
+    "f": "R = D⁻¹ Σ D⁻¹, D = diag(σ₁, …, σ_p)",
+    "u": [
+      "Heatmaps of feature relationships during EDA",
+      "Finding redundant features before linear modeling",
+      "Running PCA on features with different units"
+    ],
+    "x": "A credit-risk team plots the correlation matrix of about a hundred bureau features before fitting a scorecard model. Groups of features with correlations above a chosen threshold are reduced to one representative each so that the logistic regression coefficients stay stable and explainable to regulators.",
+    "c": "import numpy as np\nimport pandas as pd\n\nrng = np.random.default_rng(0)\nn = 500\ndf = pd.DataFrame({\"income\": rng.normal(50, 10, n)})\ndf[\"spend\"] = 0.6 * df[\"income\"] + rng.normal(0, 5, n)\ndf[\"age\"] = rng.normal(40, 12, n)\n\nR = df.corr()                       # Pearson by default\nprint(R.round(2))\n\n# List highly correlated pairs (upper triangle only)\nmask = np.triu(np.ones(R.shape, dtype=bool), k=1)\npairs = R.where(mask).stack()\nprint(pairs[pairs.abs() > 0.5])"
+  },
+  "quantile": {
+    "n": "Quantiles & Percentiles",
+    "d": "A quantile is a cut point below which a given fraction of the data lies; a percentile is the same idea expressed in hundredths. The 0.9 quantile, or 90th percentile, is the value that 90% of observations do not exceed. The median is the 0.5 quantile and the quartiles are the 0.25, 0.5 and 0.75 quantiles.\n\nQuantiles describe a distribution without assuming its shape and are robust to outliers. They define the IQR and box plots, quantile binning, quantile transforms that map features to a uniform or normal distribution, and service metrics such as p95 and p99 latency. Quantile regression and the pinball loss train models to predict a chosen quantile, which gives prediction intervals.\n\nA practical pitfall is that sample quantiles have several interpolation definitions, so libraries can return slightly different values for small samples, and extreme percentiles such as p99.9 need many observations to be estimated reliably.",
+    "f": "Q(p) = inf { x : F(x) ≥ p }",
+    "u": [
+      "Reporting p95 and p99 serving latency",
+      "Quantile binning and quantile transforms of features",
+      "Prediction intervals with quantile regression"
+    ],
+    "x": "An inference platform team sets its service-level objective on p99 latency rather than mean latency, because a small share of very slow requests is what users notice. Percentiles are computed over sliding windows from latency histograms collected on each server.",
+    "c": "import numpy as np\nfrom sklearn.preprocessing import QuantileTransformer\n\nrng = np.random.default_rng(0)\nlatency_ms = rng.lognormal(mean=3, sigma=0.5, size=10_000)\n\np50, p95, p99 = np.percentile(latency_ms, [50, 95, 99])\nprint(round(p50, 1), round(p95, 1), round(p99, 1))\nprint(np.quantile(latency_ms, 0.99))   # same as the 99th percentile\n\n# Map a skewed feature to a uniform distribution by its quantiles\nqt = QuantileTransformer(n_quantiles=100, output_distribution=\"uniform\")\nu = qt.fit_transform(latency_ms.reshape(-1, 1))\nprint(u.min(), u.max())"
+  },
+  "iqr": {
+    "n": "Interquartile Range (IQR)",
+    "d": "The interquartile range is the distance between the first quartile (25th percentile) and the third quartile (75th percentile), so it spans the middle half of the data. Because it ignores the lowest and highest quarters, extreme values do not affect it.\n\nThe IQR is the robust counterpart of the standard deviation. It sets the box in a box plot, and Tukey's rule flags points below Q1 − 1.5·IQR or above Q3 + 1.5·IQR as potential outliers. Robust scaling subtracts the median and divides by the IQR, which keeps a few extreme values from compressing all other values, unlike standardization.\n\nA common mistake is treating everything outside the 1.5·IQR fences as an error to delete. For skewed variables such as income or session length, many legitimate values fall outside the fences, so the rule is a prompt for inspection, not an automatic filter.",
+    "f": "IQR = Q₃ − Q₁",
+    "u": [
+      "Flagging outliers with Tukey's fences",
+      "Robust scaling of features with extreme values",
+      "Summarizing spread of skewed metrics"
+    ],
+    "x": "A logistics company uses IQR fences on delivery times per route to flag shipments for manual review. Analysts found that routes with long-tailed but valid delays produced many flags, so they switched those routes to fences computed on log-transformed times.",
+    "c": "import numpy as np\nfrom scipy.stats import iqr\nfrom sklearn.preprocessing import RobustScaler\n\nx = np.array([4, 5, 5, 6, 6, 7, 7, 8, 9, 40.0])\nq1, q3 = np.percentile(x, [25, 75])\nspread = q3 - q1                       # same as scipy.stats.iqr(x)\nprint(spread, iqr(x))\n\nlow, high = q1 - 1.5 * spread, q3 + 1.5 * spread\nprint(x[(x < low) | (x > high)])       # [40.]\n\n# Robust scaling: (x - median) / IQR\nprint(RobustScaler().fit_transform(x.reshape(-1, 1)).ravel().round(2))"
+  },
+  "skewness": {
+    "n": "Skewness",
+    "d": "Skewness measures the asymmetry of a distribution around its mean. A right-skewed (positively skewed) distribution has a long tail toward large values, a left-skewed one a long tail toward small values, and a symmetric distribution such as the normal has skewness zero.\n\nIt is computed as the average cubed standardized deviation, so values far out in the tail dominate. In right-skewed data the mean is usually pulled above the median. Many real features are strongly right-skewed: prices, counts, durations, income. Practitioners check skewness during exploratory data analysis and often apply a log transform or Box-Cox transform before linear regression, k-means or neural networks, which behave better with roughly symmetric inputs. Tree-based models are largely insensitive to it.\n\nA misconception is that skewed features must always be transformed. What matters for linear regression is the residuals, not the raw feature distributions.",
+    "f": "skew = E[(X − μ)³] / σ³",
+    "u": [
+      "Deciding when to log-transform a feature",
+      "Choosing median over mean for summaries",
+      "Diagnosing asymmetric residuals in regression"
+    ],
+    "x": "A marketplace analytics team finds that order value is strongly right-skewed and that a linear demand model fits poorly on it. Modeling the log of order value gives roughly symmetric residuals, and predictions are transformed back to the original scale with a bias correction.",
+    "c": "import numpy as np\nfrom scipy.stats import skew\n\nrng = np.random.default_rng(0)\nsym = rng.normal(size=10_000)\nright = rng.lognormal(sigma=0.8, size=10_000)   # long right tail\n\nprint(round(skew(sym), 2))          # about 0\nprint(round(skew(right), 2))        # clearly positive\nprint(right.mean() > np.median(right))  # mean pulled above median\n\n# A log transform removes most of the skew here\nprint(round(skew(np.log(right)), 2))"
+  },
+  "kurtosis": {
+    "n": "Kurtosis & Heavy Tails",
+    "d": "Kurtosis measures how much of a distribution's variance comes from rare, extreme values, which is to say how heavy its tails are. The normal distribution has kurtosis 3; excess kurtosis subtracts 3, so positive excess kurtosis means heavier tails than the normal.\n\nIt is the average fourth power of standardized deviations, so a few very large deviations dominate it. Heavy-tailed data appear in financial returns, network latency, insurance claims and the activations of large language models, where outlier channels complicate quantization. For such data, squared-error losses and standard-deviation-based outlier rules are fragile, and robust losses such as Huber or MAE, robust scaling and quantile-based metrics are preferred.\n\nA common misconception is that kurtosis measures how peaked the center of a distribution is. It is driven mainly by the tails, and two distributions with the same peak shape can have very different kurtosis.",
+    "f": "Kurt = E[(X − μ)⁴] / σ⁴ (excess = Kurt − 3)",
+    "u": [
+      "Detecting heavy-tailed features and residuals",
+      "Assessing outlier risk before choosing a loss",
+      "Analyzing outlier activations before LLM quantization"
+    ],
+    "x": "A team quantizing an LLM to 8-bit inspects the kurtosis of activations per channel and finds a few channels with extremely heavy tails. Those channels are handled separately, which is the motivation behind outlier-aware methods such as LLM.int8() and SmoothQuant.",
+    "c": "import numpy as np\nfrom scipy.stats import kurtosis\n\nrng = np.random.default_rng(0)\nnormal = rng.normal(size=100_000)\nheavy = rng.standard_t(df=4, size=100_000)   # Student-t, heavy tails\n\n# scipy returns EXCESS kurtosis by default (normal -> 0)\nprint(round(kurtosis(normal), 2))\nprint(round(kurtosis(heavy), 2))             # clearly positive\nprint(round(kurtosis(normal, fisher=False), 2))  # about 3\n\n# Heavy tails mean far more extreme values\nprint(np.mean(np.abs(normal) > 4), np.mean(np.abs(heavy) > 4))"
+  },
+  "probdist": {
+    "n": "Probability Distribution",
+    "d": "A probability distribution describes how likely each possible value of a random variable is. For discrete variables it is a probability mass function that assigns a probability to each value; for continuous variables it is a probability density function whose integral over an interval gives the probability of that interval.\n\nEvery distribution has a cumulative distribution function F(x) = P(X ≤ x), and probabilities or densities must sum or integrate to 1. Machine learning is largely about distributions: a classifier with a softmax output predicts a categorical distribution over classes, a language model predicts a distribution over the next token, generative models such as VAEs and diffusion models learn a data distribution, and losses such as cross-entropy and KL divergence compare distributions.\n\nA frequent confusion is reading a density value as a probability. A density can exceed 1; only its area over an interval is a probability.",
+    "f": "Σₓ p(x) = 1 (discrete), ∫ p(x) dx = 1 (continuous)",
+    "u": [
+      "Modeling predictive uncertainty of classifiers",
+      "Sampling tokens from a language model's output",
+      "Fitting parametric models to observed data"
+    ],
+    "x": "A demand forecasting team predicts a full distribution of next-week sales for each product instead of a single number. Stock levels are then set from a chosen quantile of that distribution, trading off the cost of stockouts against the cost of excess inventory.",
+    "c": "import numpy as np\nfrom scipy import stats\n\n# Discrete: probability mass function\ndie = np.full(6, 1 / 6)\nprint(die.sum())                       # 1.0\n\n# Continuous: density can exceed 1, area is probability\nnarrow = stats.norm(loc=0, scale=0.1)\nprint(narrow.pdf(0))                   # about 3.99\nprint(narrow.cdf(0.1) - narrow.cdf(-0.1))  # P(-0.1 < X < 0.1)\n\n# A classifier's softmax output is a categorical distribution\nlogits = np.array([2.0, 0.5, -1.0])\np = np.exp(logits) / np.exp(logits).sum()\nprint(p, p.sum())"
+  },
+  "normaldist": {
+    "n": "Normal (Gaussian) Distribution",
+    "d": "The normal or Gaussian distribution is the symmetric, bell-shaped continuous distribution fully described by its mean μ and standard deviation σ. About 68% of its mass lies within one σ of the mean, 95% within two and 99.7% within three.\n\nIt appears so often because of the central limit theorem: sums and averages of many small independent effects are approximately normal. Linear regression with squared error is maximum likelihood estimation under Gaussian noise, weights are commonly initialized from a normal distribution, Gaussian mixture models and Gaussian processes build on it, VAEs use a Gaussian latent prior, and diffusion models add Gaussian noise step by step.\n\nThe main pitfall is assuming normality where it does not hold. Many real quantities are skewed or heavy-tailed, and three-sigma rules or confidence statements based on the normal can badly underestimate how often extreme values occur.",
+    "f": "p(x) = (1/(σ√(2π))) · exp(−(x − μ)² / (2σ²))",
+    "u": [
+      "Gaussian noise models behind least-squares regression",
+      "Random weight initialization in neural networks",
+      "Noise schedules in diffusion models"
+    ],
+    "x": "A diffusion-model team trains an image generator by corrupting images with Gaussian noise of increasing variance and teaching a network to predict that noise. At sampling time the model starts from pure standard normal noise and removes it step by step.",
+    "c": "import numpy as np\nfrom scipy.stats import norm\nimport torch\n\nrng = np.random.default_rng(0)\nx = rng.normal(loc=10, scale=2, size=100_000)\nprint(x.mean().round(2), x.std().round(2))\n\n# Mass within k standard deviations\nfor k in (1, 2, 3):\n    print(k, round(norm.cdf(k) - norm.cdf(-k), 4))\n\n# Gaussian noise as used in diffusion forward steps\nimg = torch.rand(1, 3, 32, 32)\nalpha_bar = 0.5\nnoisy = alpha_bar ** 0.5 * img + (1 - alpha_bar) ** 0.5 * torch.randn_like(img)"
+  },
+  "binomial": {
+    "n": "Bernoulli & Binomial Distributions",
+    "d": "A Bernoulli distribution models a single yes-or-no trial that succeeds with probability p. The binomial distribution counts the number of successes in n independent Bernoulli trials that share the same p.\n\nThe Bernoulli mean is p and its variance p(1 − p); the binomial has mean np and variance np(1 − p). Binary classification is built on the Bernoulli: logistic regression outputs p, and binary cross-entropy (log loss) is its negative log-likelihood. The binomial describes conversion counts in A/B testing, the number of correct answers on a benchmark, and the number of units dropped by dropout in a layer.\n\nA common mistake is applying the binomial when trials are not independent or do not share one p. Clicks grouped by user, or benchmark questions drawn from a few templates, are correlated, so the true variance is larger than np(1 − p) and naive confidence intervals are too narrow.",
+    "f": "P(K = k) = C(n, k) · pᵏ · (1 − p)ⁿ⁻ᵏ",
+    "u": [
+      "Modeling binary labels with logistic regression",
+      "Counting conversions in A/B experiments",
+      "Error bars for accuracy on benchmarks"
+    ],
+    "x": "An LLM evaluation team reports benchmark accuracy with a binomial confidence interval, treating each of several hundred questions as a Bernoulli trial. When comparing two models on the same questions they use a paired test instead, because the per-question outcomes of the two models are correlated.",
+    "c": "import numpy as np\nfrom scipy.stats import bernoulli, binom\n\np = 0.3\nprint(bernoulli(p).mean(), bernoulli(p).var())   # 0.3, 0.21\n\n# Number of correct answers out of 500 questions at 70% accuracy\nn = 500\ndist = binom(n, 0.7)\nprint(dist.mean(), dist.std())                    # 350, about 10.2\nprint(dist.pmf(350), dist.cdf(330))\n\n# Binary cross-entropy is the Bernoulli negative log-likelihood\ny = np.array([1, 0, 1]); p_hat = np.array([0.9, 0.2, 0.6])\nprint(-np.mean(y * np.log(p_hat) + (1 - y) * np.log(1 - p_hat)))"
+  },
+  "poisson": {
+    "n": "Poisson Distribution",
+    "d": "The Poisson distribution models the number of events that occur in a fixed interval of time or space when events happen independently at a constant average rate λ. Its mean and its variance are both equal to λ.\n\nIt arises as the limit of a binomial with many trials and a small success probability, which is why it fits counts of rare events: requests per second, claims per policy, defects per batch, purchases per customer. Poisson regression, a generalized linear model with a log link, predicts such counts from features, and gradient boosting libraries offer a Poisson objective for count targets.\n\nThe usual pitfall is overdispersion. Real counts often have variance much larger than their mean because the rate varies between units or events cluster, and a Poisson model then understates uncertainty. A negative binomial model is the common alternative, and excess zeros suggest a zero-inflated model.",
+    "f": "P(K = k) = λᵏ e^(−λ) / k!",
+    "u": [
+      "Forecasting request or call arrival counts",
+      "Poisson regression for insurance claim frequency",
+      "Count objectives in gradient-boosted models"
+    ],
+    "x": "An insurer models the yearly number of claims per policy with Poisson regression, using policy duration as an exposure offset. When the variance of claim counts turns out much larger than the mean, the team compares a negative binomial model before choosing the final pricing model.",
+    "c": "import numpy as np\nfrom scipy.stats import poisson\nfrom sklearn.linear_model import PoissonRegressor\n\nlam = 4.0\nprint(poisson(lam).mean(), poisson(lam).var())   # both 4.0\nprint(poisson(lam).pmf(0), poisson(lam).sf(9))   # P(K=0), P(K>9)\n\n# Poisson regression: log(rate) is linear in the features\nrng = np.random.default_rng(0)\nX = rng.normal(size=(1000, 2))\nrate = np.exp(0.5 + 0.8 * X[:, 0])\ny = rng.poisson(rate)\nmodel = PoissonRegressor(alpha=0).fit(X, y)\nprint(model.intercept_.round(2), model.coef_.round(2))   # about 0.5, [0.8, 0]"
+  },
+  "uniformdist": {
+    "n": "Uniform Distribution",
+    "d": "The uniform distribution gives every value in a range the same probability. The continuous uniform on [a, b] has constant density 1/(b − a); the discrete uniform assigns equal probability to each of a finite set of outcomes, such as the faces of a fair die.\n\nIts mean is (a + b)/2 and its variance (b − a)²/12. Random number generators produce uniform values first and transform them into other distributions, for example by inverse transform sampling. In machine learning it appears in Xavier and He uniform weight initialization, random search over hyperparameter ranges, random shuffling and train/test splits, dropout masks, and as the maximum-entropy prior when only a range is known.\n\nA pitfall is sampling scale-type hyperparameters such as the learning rate uniformly on a linear range. Most samples then land near the upper end; a log-uniform distribution spreads them evenly across orders of magnitude.",
+    "f": "p(x) = 1/(b − a) for a ≤ x ≤ b",
+    "u": [
+      "Uniform weight initialization schemes",
+      "Random search over hyperparameter ranges",
+      "Inverse transform sampling of other distributions"
+    ],
+    "x": "A model tuning team samples dropout rates uniformly between 0 and 0.5 but learning rates log-uniformly between 1e-5 and 1e-2. With a plain uniform range, almost no trials would have tested learning rates below 1e-3.",
+    "c": "import numpy as np\nfrom scipy.stats import uniform, loguniform, norm\n\nrng = np.random.default_rng(0)\nu = rng.uniform(0, 1, 100_000)\nprint(u.mean().round(3), u.var().round(4))   # about 0.5, 1/12\n\n# Inverse transform sampling: uniform -> normal\nz = norm.ppf(u)\nprint(z.mean().round(2), z.std().round(2))\n\n# Linear vs log-uniform learning-rate sampling\nlin = uniform(1e-5, 1e-2 - 1e-5).rvs(1000, random_state=0)\nlog = loguniform(1e-5, 1e-2).rvs(1000, random_state=0)\nprint(np.mean(lin < 1e-3), np.mean(log < 1e-3))"
+  },
+  "expectation": {
+    "n": "Expected Value",
+    "d": "The expected value of a random variable is its probability-weighted average: the long-run mean you would observe if you could repeat the random experiment indefinitely. For a discrete variable it is the sum of each value times its probability; for a continuous variable the corresponding integral against the density.\n\nExpectation is linear, so E[aX + bY] = aE[X] + bE[Y] even when X and Y are dependent. Machine learning objectives are expectations: training minimizes the expected loss over the data distribution, approximated by the average loss on a mini-batch, which is why stochastic gradient descent works. Reinforcement learning maximizes expected return, the EM algorithm takes an expectation over latent variables, and Monte Carlo estimation approximates expectations by sample averages.\n\nA common error is assuming E[f(X)] = f(E[X]). For non-linear f this fails; by Jensen's inequality, for convex f the expectation of f is at least f of the expectation.",
+    "f": "E[X] = Σₓ x·p(x) or ∫ x·p(x) dx",
+    "u": [
+      "Defining expected loss as the training objective",
+      "Expected return in reinforcement learning",
+      "Expected cost when choosing decision thresholds"
+    ],
+    "x": "A fraud team sets the decision threshold by minimizing expected cost, weighting each predicted probability by the cost of a missed fraud and the cost of a false alarm. The threshold is recomputed whenever the cost estimates from the operations team change.",
+    "c": "import numpy as np\n\n# Discrete expectation: a fair die\nvalues = np.arange(1, 7)\nprobs = np.full(6, 1 / 6)\nprint((values * probs).sum())                 # 3.5\n\n# Monte Carlo estimate converges to the same value\nrng = np.random.default_rng(0)\nprint(rng.integers(1, 7, 100_000).mean())\n\n# Jensen: E[X^2] differs from (E[X])^2\nx = rng.normal(1.0, 2.0, 100_000)\nprint(np.mean(x ** 2).round(2), (np.mean(x) ** 2).round(2))   # about 5 vs 1\n\n# Expected cost of flagging a transaction with fraud prob p\np, cost_miss, cost_alarm = 0.08, 500.0, 20.0\nprint(\"flag\" if p * cost_miss > (1 - p) * cost_alarm else \"pass\")"
+  },
+  "condprob": {
+    "n": "Conditional Probability",
+    "d": "Conditional probability is the probability of an event A given that another event B is known to have occurred, written P(A|B). It restricts attention to the cases where B is true and asks what fraction of them also have A.\n\nFormally it is the joint probability of A and B divided by the probability of B. Two events are independent exactly when P(A|B) = P(A). Most supervised models estimate a conditional probability: a classifier outputs P(y | x), a language model outputs P(next token | previous tokens), and naive Bayes multiplies conditional probabilities of features given the class. Precision and recall are both conditional probabilities, conditioned on different events.\n\nThe classic error is confusing P(A|B) with P(B|A). A test that detects a disease 99% of the time, P(positive | disease), can still yield mostly false positives, P(disease | positive) low, when the disease is rare.",
+    "f": "P(A|B) = P(A ∩ B) / P(B)",
+    "u": [
+      "Interpreting classifier outputs as P(y given x)",
+      "Next-token probabilities in language models",
+      "Computing precision and recall from counts"
+    ],
+    "x": "A medical screening team reports both sensitivity, P(positive test | disease), and positive predictive value, P(disease | positive test), for a new imaging model. Because prevalence differs between the hospital and the general population, the predictive value is computed separately for each setting.",
+    "c": "import numpy as np\nimport pandas as pd\n\ndf = pd.DataFrame({\n    \"clicked\": [1, 0, 1, 1, 0, 0, 1, 0],\n    \"mobile\":  [1, 1, 1, 0, 0, 1, 1, 0],\n})\n\n# P(clicked | mobile) = P(clicked and mobile) / P(mobile)\np_joint = ((df.clicked == 1) & (df.mobile == 1)).mean()\np_mobile = (df.mobile == 1).mean()\nprint(p_joint / p_mobile)\nprint(df.groupby(\"mobile\")[\"clicked\"].mean())   # same, per group\n\n# Recall = P(pred=1 | y=1), precision = P(y=1 | pred=1)\ny = np.array([1, 1, 0, 0, 1]); pred = np.array([1, 0, 1, 0, 1])\nprint(pred[y == 1].mean(), y[pred == 1].mean())"
+  },
+  "bayesthm": {
+    "n": "Bayes’ Theorem",
+    "d": "Bayes' theorem tells you how to reverse a conditional probability: it computes P(A|B) from P(B|A), the prior probability P(A) and the overall probability P(B). It is the rule for updating a belief about A after observing evidence B.\n\nThe prior P(A) is multiplied by the likelihood P(B|A) and renormalized by the evidence P(B), which can be expanded as a sum over all hypotheses. The naive Bayes classifier applies it directly, with the extra assumption that features are conditionally independent given the class. It is the foundation of Bayesian inference, MAP estimation, Bayesian optimization and spam filtering, and it explains why base rates matter when interpreting any detector.\n\nThe most common mistake is ignoring the prior, known as base-rate neglect. When positives are rare, even an accurate test produces mostly false alarms, so a high P(B|A) does not imply a high P(A|B).",
+    "f": "P(A|B) = P(B|A)·P(A) / P(B)",
+    "u": [
+      "Naive Bayes text and spam classification",
+      "Updating beliefs in Bayesian inference",
+      "Interpreting alerts from rare-event detectors"
+    ],
+    "x": "A security operations team calibrates an intrusion alert by combining the detector's true and false positive rates with the low base rate of real attacks. Bayes' theorem shows that most alerts are false, so the team routes them to an automated triage step before paging an analyst.",
+    "c": "# Rare disease: prevalence 1%, sensitivity 99%, false positive rate 5%\np_d = 0.01\np_pos_given_d = 0.99\np_pos_given_not_d = 0.05\n\n# Evidence: total probability of a positive test\np_pos = p_pos_given_d * p_d + p_pos_given_not_d * (1 - p_d)\n\n# Posterior P(disease | positive)\np_d_given_pos = p_pos_given_d * p_d / p_pos\nprint(round(p_d_given_pos, 3))   # about 0.167, not 0.99\n\n# Naive Bayes applies the same rule to text features\nfrom sklearn.naive_bayes import MultinomialNB\nfrom sklearn.feature_extraction.text import CountVectorizer\ntexts = [\"win cash now\", \"meeting at noon\", \"cash prize win\", \"lunch at noon\"]\nvec = CountVectorizer(); X = vec.fit_transform(texts)\nclf = MultinomialNB().fit(X, [1, 0, 1, 0])\nprint(clf.predict_proba(vec.transform([\"win lunch\"])))"
+  },
+  "priorpost": {
+    "n": "Prior & Posterior",
+    "d": "The prior is a probability distribution expressing what is believed about an unknown quantity before seeing the data; the posterior is the updated distribution after the data are taken into account. Bayes' theorem connects them: the posterior is proportional to the likelihood times the prior.\n\nWith little data the prior has a strong influence; as data accumulate, the likelihood dominates and posteriors from different reasonable priors converge. Conjugate priors, such as the Beta prior for a Bernoulli rate, keep the posterior in the same family and give closed-form updates. Priors appear in machine learning as regularization (a Gaussian prior on weights corresponds to L2, a Laplace prior to L1), in Bayesian A/B testing, in Thompson sampling for bandits, and in Bayesian optimization.\n\nA misconception is that a flat prior is always neutral. It is flat only in one parameterization, and on a transformed scale it becomes informative.",
+    "f": "p(θ | D) ∝ p(D | θ) · p(θ)",
+    "u": [
+      "Bayesian A/B testing of conversion rates",
+      "Thompson sampling for multi-armed bandits",
+      "Shrinking estimates for items with little data"
+    ],
+    "x": "A recommendation team estimates click-through rates for new items with a Beta prior fitted to historical items. A new item with three clicks in five impressions gets a posterior estimate pulled toward the typical rate instead of a raw 60%, which prevents it from being ranked first on noise.",
+    "c": "import numpy as np\nfrom scipy.stats import beta\n\n# Prior belief about a click-through rate: Beta(2, 48), mean 0.04\na0, b0 = 2, 48\n\n# Observed data: 3 clicks in 5 impressions\nclicks, views = 3, 5\n\n# Conjugate update: posterior is Beta(a0 + clicks, b0 + misses)\npost = beta(a0 + clicks, b0 + views - clicks)\nprint(round(clicks / views, 3))       # raw rate 0.6\nprint(round(post.mean(), 3))          # shrunk toward prior, about 0.09\nprint(post.interval(0.95))            # 95% credible interval\n\n# Thompson sampling draws from each arm's posterior\nrng = np.random.default_rng(0)\nprint(rng.beta(a0 + clicks, b0 + views - clicks))"
+  },
+  "likelihood": {
+    "n": "Likelihood",
+    "d": "The likelihood is the probability (or density) of the observed data viewed as a function of the model parameters, with the data held fixed. It answers how well each candidate parameter value explains what was actually observed.\n\nFor independent observations the likelihood is the product of the per-example probabilities, so in practice one works with the log-likelihood, a sum that is numerically stable and easier to differentiate. Maximizing it gives maximum likelihood estimation, and most training losses are negative log-likelihoods: cross-entropy for classifiers and language models, squared error under Gaussian noise. Perplexity is the exponentiated average negative log-likelihood per token, and likelihood ratios drive many statistical tests and model comparisons.\n\nThe key misconception is treating the likelihood as a probability distribution over parameters. It does not integrate to 1 over θ, and it does not say how probable a parameter is; that requires a prior and Bayes' theorem.",
+    "f": "L(θ) = Πᵢ p(xᵢ | θ), ℓ(θ) = Σᵢ log p(xᵢ | θ)",
+    "u": [
+      "Negative log-likelihood as a training loss",
+      "Perplexity of language models on held-out text",
+      "Comparing nested models with likelihood ratio tests"
+    ],
+    "x": "A language-model team tracks the average negative log-likelihood per token on a held-out corpus after each checkpoint. Rising held-out likelihood confirms that pretraining is still improving, and the same metric reported as perplexity is used to compare tokenizer variants only when vocabularies match.",
+    "c": "import numpy as np\nfrom scipy.stats import norm\n\nrng = np.random.default_rng(0)\ndata = rng.normal(loc=2.0, scale=1.0, size=200)\n\n# Log-likelihood of the data for several candidate means\nfor mu in (0.0, 1.0, 2.0, 3.0):\n    ll = norm.logpdf(data, loc=mu, scale=1.0).sum()\n    print(mu, round(ll, 1))           # highest near the true mean 2.0\n\n# Token-level NLL and perplexity from model probabilities\np_true_tokens = np.array([0.4, 0.1, 0.7, 0.25])\nnll = -np.log(p_true_tokens).mean()\nprint(round(nll, 3), round(np.exp(nll), 2))"
+  },
+  "mle": {
+    "n": "Maximum Likelihood Estimation (MLE)",
+    "d": "Maximum likelihood estimation chooses the parameter values that make the observed data most probable under the model. In practice it maximizes the log-likelihood, or equivalently minimizes the negative log-likelihood.\n\nFor some models the maximum has a closed form: the MLE of a Gaussian mean is the sample mean, and of a Bernoulli rate the observed fraction of successes. Many standard training procedures are MLE in disguise: least-squares linear regression under Gaussian noise, logistic regression with log loss, neural classifiers and language models trained with cross-entropy, and the EM algorithm for Gaussian mixtures. Under mild conditions MLE is consistent and asymptotically efficient.\n\nIts weakness is overfitting with small data or many parameters. A coin that landed heads three times out of three gets an estimated heads probability of 1, and the Gaussian variance MLE divides by n and is biased low. Regularization or MAP estimation counters this.",
+    "f": "θ̂ = argmax_θ Σᵢ log p(xᵢ | θ)",
+    "u": [
+      "Fitting logistic regression and generalized linear models",
+      "Training language models with cross-entropy",
+      "Estimating parameters of statistical distributions"
+    ],
+    "x": "A reliability team fits a Weibull distribution to time-to-failure data from field devices by maximum likelihood. The fitted parameters feed spare-part planning, and censored records from devices still working are included through their survival probability in the likelihood.",
+    "c": "import numpy as np\nfrom scipy.stats import norm\nfrom scipy.optimize import minimize\n\nrng = np.random.default_rng(0)\nx = rng.normal(5.0, 2.0, 1000)\n\n# Minimize negative log-likelihood over (mu, log sigma)\ndef nll(params):\n    mu, log_s = params\n    return -norm.logpdf(x, mu, np.exp(log_s)).sum()\n\nres = minimize(nll, x0=[0.0, 0.0])\nmu_hat, s_hat = res.x[0], np.exp(res.x[1])\nprint(round(mu_hat, 3), round(s_hat, 3))\n\n# Closed forms: sample mean and the ddof=0 std\nprint(round(x.mean(), 3), round(x.std(ddof=0), 3))"
+  },
+  "mapest": {
+    "n": "MAP Estimation",
+    "d": "Maximum a posteriori (MAP) estimation chooses the parameter value with the highest posterior probability, combining the likelihood of the data with a prior over parameters. It is maximum likelihood estimation plus a log-prior term.\n\nTaking logs turns the prior into an additive penalty. A zero-mean Gaussian prior on weights gives exactly an L2 (ridge) penalty, and a Laplace prior gives an L1 (lasso) penalty, so regularized regression and weight decay can be read as MAP estimation. With a Beta prior, a Bernoulli rate estimate becomes a smoothed fraction, which is the idea behind additive (Laplace) smoothing in naive Bayes. As the dataset grows, the likelihood dominates and MAP approaches MLE.\n\nMAP returns a single point, the posterior mode, not the full posterior, so it gives no uncertainty estimate. The mode can also be unrepresentative of the posterior and, unlike the full posterior, changes when the parameters are reparameterized.",
+    "f": "θ̂_MAP = argmax_θ [log p(D | θ) + log p(θ)]",
+    "u": [
+      "Interpreting L2 and L1 penalties as priors",
+      "Smoothing rare-category probability estimates",
+      "Stabilizing estimates with small datasets"
+    ],
+    "x": "A search team estimates the click-through rate of each query–document pair, many of which have only a handful of impressions. Using a MAP estimate with a Beta prior fitted to all pairs avoids extreme rates of 0 or 1 that would otherwise destabilize the ranking features.",
+    "c": "import numpy as np\nfrom sklearn.linear_model import Ridge, LinearRegression\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(20, 10))\ny = X[:, 0] + rng.normal(scale=1.0, size=20)\n\n# MLE (ordinary least squares) vs MAP with a Gaussian prior (ridge)\nmle = LinearRegression().fit(X, y)\nmap_ = Ridge(alpha=5.0).fit(X, y)        # alpha ~ noise var / prior var\nprint(np.abs(mle.coef_).sum().round(2), np.abs(map_.coef_).sum().round(2))\n\n# MAP for a coin with a Beta(2, 2) prior: mode of the posterior\nheads, n, a, b = 3, 3, 2, 2\nprint(heads / n)                          # MLE = 1.0\nprint((heads + a - 1) / (n + a + b - 2))  # MAP = 0.8"
+  },
+  "iid": {
+    "n": "i.i.d. Assumption",
+    "d": "Independent and identically distributed (i.i.d.) means that every observation is drawn from the same probability distribution and that no observation carries information about another. It is the default assumption behind most of statistics and supervised learning.\n\nIt justifies treating the average training loss as an estimate of the expected loss, random train/test splits and k-fold cross-validation, the central limit theorem behind standard errors, and the product form of the likelihood used in maximum likelihood estimation. Mini-batch gradient descent also relies on shuffled, roughly i.i.d. batches for unbiased gradient estimates.\n\nThe assumption is broken more often than it is noticed. Time series are not independent, several rows from the same patient or user are correlated, and production data drift away from the training distribution. Random splits on such data leak information and give optimistic scores; time-based validation and group k-fold respect the real structure.",
+    "f": "p(x₁, …, xₙ) = Πᵢ p(xᵢ)",
+    "u": [
+      "Justifying random splits and k-fold cross-validation",
+      "Deriving likelihoods and standard errors",
+      "Choosing group or time-based validation when violated"
+    ],
+    "x": "A health-tech team predicting readmission discovered that random splitting placed visits of the same patient in both training and test sets, inflating validation scores. Switching to group k-fold by patient ID gave a lower but realistic estimate that matched later production performance.",
+    "c": "import numpy as np\nfrom sklearn.model_selection import KFold, GroupKFold, TimeSeriesSplit\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(12, 3))\npatients = np.repeat([0, 1, 2, 3], 3)   # 3 rows per patient: not independent\n\n# Random K-fold assumes i.i.d. rows: patients leak across folds\nfor tr, te in KFold(4, shuffle=True, random_state=0).split(X):\n    print(\"shared:\", set(patients[tr]) & set(patients[te]))\n    break\n\n# GroupKFold keeps each patient in one fold\nfor tr, te in GroupKFold(4).split(X, groups=patients):\n    print(\"shared:\", set(patients[tr]) & set(patients[te]))\n    break\n\n# For time-ordered data, train only on the past\nprint(next(TimeSeriesSplit(3).split(X)))"
+  },
+  "clt": {
+    "n": "Central Limit Theorem",
+    "d": "The central limit theorem states that the mean of many independent random variables with finite variance is approximately normally distributed, whatever the shape of the original distribution. The approximation improves as the sample size n grows, and the spread of the mean shrinks like σ/√n.\n\nThis is why the normal distribution appears so widely and why normal-based tools work on non-normal data. Confidence intervals for a mean, the z-tests and t-tests used in A/B testing, standard errors of accuracy on a test set, and error bars across random seeds all rely on it. It also explains why mini-batch gradients look approximately Gaussian around the full gradient.\n\nThe theorem is about the distribution of the sample mean, not of the data: individual observations stay skewed. Convergence can be slow for heavy-tailed or highly skewed data, such as revenue per user, and it fails entirely when the variance is infinite.",
+    "f": "√n · (X̄ₙ − μ) / σ → N(0, 1)",
+    "u": [
+      "Confidence intervals for metric averages",
+      "Normal approximations in A/B test statistics",
+      "Error bars on test-set accuracy"
+    ],
+    "x": "An experimentation platform computes z-test confidence intervals for average revenue per user, which is extremely skewed at the user level. Because the normal approximation of the mean is slow for such data, the team checks it with bootstrap intervals on past experiments and caps extreme values before testing.",
+    "c": "import numpy as np\nfrom scipy.stats import skew\n\nrng = np.random.default_rng(0)\n# Strongly skewed population: exponential\npop = rng.exponential(scale=1.0, size=1_000_000)\nprint(round(skew(pop), 2))                  # about 2\n\n# Distribution of sample means for growing n\nfor n in (2, 30, 500):\n    means = rng.exponential(1.0, size=(20_000, n)).mean(axis=1)\n    # spread shrinks like 1/sqrt(n), skew fades toward 0\n    print(n, round(means.std(), 3), round(1 / np.sqrt(n), 3), round(skew(means), 2))"
+  },
+  "stderr": {
+    "n": "Standard Error",
+    "d": "The standard error is the standard deviation of an estimate across hypothetical repeated samples. It measures how precisely a statistic, most often a mean or a proportion, has been estimated from the data at hand.\n\nFor a sample mean it equals the standard deviation of the data divided by √n, so quadrupling the sample size halves the uncertainty. For a proportion p, such as accuracy on a test set, it is √(p(1 − p)/n). Standard errors are the building block of confidence intervals, of the z- and t-statistics in hypothesis testing and A/B testing, and of the coefficient tables reported for linear and logistic regression. When no formula is available, the bootstrap estimates it by resampling.\n\nThe frequent confusion is with the standard deviation. The standard deviation describes spread in the data and does not shrink with more samples; the standard error describes uncertainty in the estimate and does.",
+    "f": "SE(x̄) = s / √n",
+    "u": [
+      "Error bars for benchmark accuracy",
+      "Significance of regression coefficients",
+      "Sizing samples for a target precision"
+    ],
+    "x": "An evaluation team reports model accuracy on a 1,000-question benchmark together with its standard error. When two models differ by less than about two standard errors, the release notes describe them as comparable rather than claiming an improvement.",
+    "c": "import numpy as np\n\nrng = np.random.default_rng(0)\nx = rng.normal(100, 15, size=400)\n\nsd = x.std(ddof=1)\nse = sd / np.sqrt(len(x))\nprint(round(sd, 2), round(se, 2))      # spread of data vs of the mean\n\n# Standard error of an accuracy (a proportion)\ncorrect = rng.random(1000) < 0.82\np = correct.mean()\nprint(round(p, 3), round(np.sqrt(p * (1 - p) / len(correct)), 4))\n\n# Bootstrap estimate of the standard error of the median\nmeds = [np.median(rng.choice(x, len(x))) for _ in range(2000)]\nprint(round(np.std(meds), 2))"
+  },
+  "confint": {
+    "n": "Confidence Interval",
+    "d": "A confidence interval is a range computed from the data that, under repeated sampling, would contain the true value of a parameter in a stated fraction of cases, such as 95%. It expresses the uncertainty of an estimate rather than a single point.\n\nThe common form is estimate ± critical value × standard error, with critical value 1.96 for a 95% normal interval. Wilson intervals suit proportions near 0 or 1; bootstrap percentile intervals work for statistics without a simple formula, such as AUC or F1. Confidence intervals are used for A/B testing results, benchmark scores, regression coefficients and model comparisons.\n\nThe standard misreading is that a specific computed 95% interval contains the true value with 95% probability. The 95% refers to the procedure over many samples; a probability statement about the parameter itself requires a Bayesian credible interval.",
+    "f": "CI = θ̂ ± z_{1−α/2} · SE(θ̂)",
+    "u": [
+      "Reporting uncertainty of A/B test lifts",
+      "Bootstrap intervals for AUC and F1",
+      "Error ranges on leaderboard scores"
+    ],
+    "x": "A model evaluation team publishes bootstrap 95% confidence intervals for ROC-AUC on each customer segment. Segments with few positive cases get wide intervals, which prevents product managers from over-reading small differences between model versions there.",
+    "c": "import numpy as np\nfrom scipy import stats\nfrom sklearn.metrics import roc_auc_score\nfrom statsmodels.stats.proportion import proportion_confint\n\nrng = np.random.default_rng(0)\nx = rng.normal(50, 10, 200)\nprint(stats.t.interval(0.95, df=len(x) - 1, loc=x.mean(), scale=stats.sem(x)))\n\n# Wilson interval for 830 correct out of 1000\nprint(proportion_confint(830, 1000, alpha=0.05, method=\"wilson\"))\n\n# Bootstrap percentile interval for AUC\ny = rng.integers(0, 2, 500); s = y + rng.normal(0, 1.2, 500)\naucs = []\nfor _ in range(1000):\n    i = rng.integers(0, 500, 500)\n    aucs.append(roc_auc_score(y[i], s[i]))\nprint(np.percentile(aucs, [2.5, 97.5]))"
+  },
+  "hyptest": {
+    "n": "Hypothesis Testing & p-value",
+    "d": "Hypothesis testing is a procedure for deciding whether data provide enough evidence against a default claim, the null hypothesis, such as \"the two models have equal accuracy\". The p-value is the probability, assuming the null is true, of seeing a result at least as extreme as the one observed.\n\nA test statistic (t, z, chi-squared) is computed from the data and compared with its distribution under the null; if the p-value falls below a significance level α chosen in advance, often 0.05, the null is rejected. Practitioners use t-tests and z-tests in A/B testing, McNemar's test for comparing two classifiers on the same test set, chi-squared tests for feature–target independence, and Kolmogorov–Smirnov tests for data drift.\n\nThe p-value is not the probability that the null is true, and a small p-value does not mean a large or important effect. Running many tests without correction also inflates false positives.",
+    "f": "p = P(|T| ≥ |t_obs| | H₀)",
+    "u": [
+      "Deciding A/B test outcomes",
+      "Comparing two classifiers with McNemar's test",
+      "Detecting feature drift with KS tests"
+    ],
+    "x": "An ML platform runs a two-sample Kolmogorov–Smirnov test on each input feature, comparing yesterday's traffic with the training data. Because hundreds of features are tested daily, the team applies a false discovery rate correction and also requires a minimum effect size before raising a drift alert.",
+    "c": "import numpy as np\nfrom scipy import stats\nfrom statsmodels.stats.contingency_tables import mcnemar\n\nrng = np.random.default_rng(0)\na = rng.normal(10.0, 2.0, 300)\nb = rng.normal(10.4, 2.0, 300)\nprint(stats.ttest_ind(a, b, equal_var=False).pvalue)   # Welch t-test\n\n# Drift check: does production differ from training?\ntrain = rng.normal(0, 1, 5000); prod = rng.normal(0.1, 1, 5000)\nprint(stats.ks_2samp(train, prod).pvalue)\n\n# McNemar: two classifiers on the same test items\n# rows: model A right/wrong, cols: model B right/wrong\ntable = [[700, 45], [25, 230]]\nprint(mcnemar(table, exact=False).pvalue)"
+  },
+  "abtest": {
+    "n": "A/B Testing",
+    "d": "A/B testing is a randomized controlled experiment in which users are randomly assigned to a control version (A) or a treatment version (B), and a pre-chosen metric is compared between the groups. Randomization makes the groups comparable, so a significant difference can be attributed to the change itself.\n\nThe team fixes the primary metric, minimum detectable effect, significance level and sample size before launch, runs it for full weekly cycles, then applies a hypothesis test and confidence interval on the difference. It is the standard way to validate a new ranking model, recommendation algorithm, pricing rule or LLM prompt in production, because offline metrics often fail to predict online impact.\n\nThe classic pitfall is peeking: checking results repeatedly and stopping as soon as p < 0.05 greatly inflates false positives unless a sequential testing method is used. Novelty effects, sample ratio mismatch and interference between users are other common traps.",
+    "f": "z = (p̂_B − p̂_A) / √(p̂(1 − p̂)(1/n_A + 1/n_B))",
+    "u": [
+      "Validating new ranking or recommendation models online",
+      "Testing pricing, UI and prompt changes",
+      "Measuring true impact beyond offline metrics"
+    ],
+    "x": "A streaming service ships a new recommendation model only after an A/B test in which a random share of users receive it. The team checks for sample ratio mismatch on the first day and evaluates watch time over two full weeks to avoid novelty effects.",
+    "c": "import numpy as np\nfrom statsmodels.stats.proportion import proportions_ztest, confint_proportions_2indep\nfrom statsmodels.stats.power import NormalIndPower\nfrom statsmodels.stats.proportion import proportion_effectsize\n\n# Sample size per group to detect 10.0% -> 10.5% with 80% power\nes = proportion_effectsize(0.105, 0.10)\nprint(round(NormalIndPower().solve_power(es, alpha=0.05, power=0.8)))\n\n# After the test: conversions and users per group (B, A)\nconv = np.array([5420, 5100]); users = np.array([50_000, 50_000])\nstat, p = proportions_ztest(conv, users)\nprint(round(p, 4))\nprint(confint_proportions_2indep(conv[0], users[0], conv[1], users[1]))"
+  },
+  "kldiv": {
+    "n": "KL Divergence",
+    "d": "The Kullback–Leibler (KL) divergence measures how much one probability distribution P differs from a reference distribution Q. It is the expected extra number of bits (or nats) needed to encode samples from P using a code optimized for Q.\n\nIt is always non-negative and zero only when P equals Q, but it is not symmetric and not a true distance. Cross-entropy equals the entropy of P plus KL(P‖Q), so minimizing cross-entropy loss against fixed labels minimizes KL. KL appears in the VAE loss as a regularizer toward the prior, in RLHF as a penalty that keeps the policy close to the reference model, in knowledge distillation between teacher and student outputs, and in drift monitoring.\n\nDirection matters. Forward KL(P‖Q) is mean-covering and punishes Q for missing any mode of P, while reverse KL(Q‖P) is mode-seeking. KL is also infinite when Q assigns zero probability where P does not.",
+    "f": "KL(P‖Q) = Σₓ P(x) · log(P(x) / Q(x))",
+    "u": [
+      "KL penalty to the reference model in RLHF",
+      "Regularizing the latent space of VAEs",
+      "Distilling a teacher's output distribution"
+    ],
+    "x": "A team fine-tuning a chat model with PPO adds a per-token KL penalty between the policy and the frozen SFT model to the reward. Monitoring the average KL during training shows when the policy starts drifting far enough to exploit weaknesses of the reward model.",
+    "c": "import numpy as np\nimport torch\nimport torch.nn.functional as F\nfrom scipy.stats import entropy\n\np = np.array([0.6, 0.3, 0.1])\nq = np.array([0.4, 0.4, 0.2])\nprint(entropy(p, q), entropy(q, p))     # KL(P||Q) != KL(Q||P)\n\n# Distillation: KL between teacher and student distributions\nteacher_logits = torch.tensor([[2.0, 1.0, 0.1]])\nstudent_logits = torch.tensor([[1.5, 1.2, 0.3]])\nT = 2.0\nkl = F.kl_div(F.log_softmax(student_logits / T, dim=-1),\n              F.softmax(teacher_logits / T, dim=-1),\n              reduction=\"batchmean\") * T * T\nprint(kl.item())"
+  },
+  "mutualinfo": {
+    "n": "Mutual Information",
+    "d": "Mutual information measures how much knowing one variable reduces uncertainty about another. It is the KL divergence between the joint distribution of X and Y and the product of their marginals, so it is zero exactly when the two are independent.\n\nUnlike the correlation coefficient, mutual information captures any kind of dependence, linear or not, and works for categorical variables. It equals the entropy of Y minus the conditional entropy of Y given X, which is the same quantity that information gain uses to choose splits in decision trees. Practitioners use it for feature selection, for detecting non-linear relationships during EDA, in contrastive learning objectives such as InfoNCE that bound it, and in clustering evaluation.\n\nEstimating mutual information for continuous variables is hard. Histogram estimates depend on bin choice, nearest-neighbor estimators are noisy in high dimensions, and raw values are not comparable across features with different entropies.",
+    "f": "I(X; Y) = Σ p(x, y) · log[p(x, y) / (p(x)·p(y))]",
+    "u": [
+      "Feature selection with non-linear dependencies",
+      "Information gain for decision tree splits",
+      "Comparing clusterings with normalized mutual information"
+    ],
+    "x": "A fraud team ranks hundreds of candidate features by their estimated mutual information with the fraud label before training. Several features with near-zero correlation but high mutual information turn out to have threshold-like effects that a gradient-boosted model exploits.",
+    "c": "import numpy as np\nfrom scipy.stats import pearsonr\nfrom sklearn.feature_selection import mutual_info_regression\nfrom sklearn.metrics import normalized_mutual_info_score\n\nrng = np.random.default_rng(0)\nx = rng.uniform(-2, 2, 2000)\nnoise = rng.normal(size=2000)\ny = x ** 2 + 0.1 * rng.normal(size=2000)   # non-linear dependence\n\nprint(round(pearsonr(x, y).statistic, 3))     # near 0\nX = np.column_stack([x, noise])\nprint(mutual_info_regression(X, y, random_state=0).round(2))  # x high, noise ~0\n\n# NMI compares two clusterings, ignoring label names\nprint(normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0]))   # 1.0"
+  },
+  "montecarlo": {
+    "n": "Monte Carlo Estimation",
+    "d": "Monte Carlo estimation approximates an expected value, integral or probability by averaging over random samples. Instead of solving an integral analytically, you draw samples from the relevant distribution, evaluate the quantity on each, and take the mean.\n\nBy the law of large numbers the estimate converges to the true value, and its standard error shrinks like 1/√N regardless of dimension, which makes the method practical for high-dimensional problems where grids are impossible. In machine learning, mini-batch gradients are Monte Carlo estimates of the full gradient, MC dropout averages predictions over random dropout masks for uncertainty, reinforcement learning estimates returns from sampled episodes, VAEs use sampled latents, and the bootstrap is Monte Carlo resampling.\n\nThe pitfall is slow convergence: halving the error requires four times as many samples. Rare-event probabilities need enormous sample counts, which is why variance reduction techniques such as importance sampling exist.",
+    "f": "E[f(X)] ≈ (1/N) Σᵢ f(xᵢ), xᵢ ~ p(x)",
+    "u": [
+      "MC dropout for predictive uncertainty",
+      "Estimating returns in reinforcement learning",
+      "Simulating risk and demand scenarios"
+    ],
+    "x": "A supply-chain team simulates thousands of demand scenarios drawn from a forecasting model's predictive distribution to estimate the probability of a stockout under each reorder policy. The number of simulations is increased until the estimated stockout probabilities stop changing meaningfully between runs.",
+    "c": "import numpy as np\nimport torch\nimport torch.nn as nn\n\nrng = np.random.default_rng(0)\n# Estimate pi: fraction of random points inside the unit circle\nfor n in (100, 10_000, 1_000_000):\n    pts = rng.uniform(-1, 1, size=(n, 2))\n    print(n, 4 * np.mean((pts ** 2).sum(axis=1) < 1))\n\n# MC dropout: keep dropout active and average many passes\nmodel = nn.Sequential(nn.Linear(4, 32), nn.ReLU(), nn.Dropout(0.2), nn.Linear(32, 1))\nmodel.train()                                  # dropout stays on\nx = torch.randn(1, 4)\nwith torch.no_grad():\n    preds = torch.stack([model(x) for _ in range(100)])\nprint(preds.mean().item(), preds.std().item())  # estimate and uncertainty"
+  },
+  "markovchain": {
+    "n": "Markov Chain",
+    "d": "A Markov chain is a random process that moves between states where the probability of the next state depends only on the current state, not on how the process got there. It is fully described by its transition probabilities, collected in a transition matrix whose rows sum to 1.\n\nUnder mild conditions a chain converges to a stationary distribution that no longer changes from step to step. PageRank is the stationary distribution of a web random walk, MCMC methods such as Metropolis-Hastings and Gibbs sampling build chains whose stationary distribution is a target posterior, reinforcement learning models environments as Markov decision processes, and n-gram models and hidden Markov models are Markov chains.\n\nThe Markov property is an assumption, not a fact about the data. Real sequences often have long-range dependencies, which is why transformers condition on the whole context rather than only the previous token.",
+    "f": "P(Xₜ₊₁ = j | Xₜ = i, …, X₀) = P(Xₜ₊₁ = j | Xₜ = i)",
+    "u": [
+      "MCMC sampling from Bayesian posteriors",
+      "Ranking pages or users with random walks",
+      "Modeling user navigation and churn states"
+    ],
+    "x": "A subscription business models each customer's monthly status as a Markov chain over states such as active, paused and churned, estimating transition probabilities from history. The stationary distribution and multi-step transition probabilities give forecasts of long-run churn under different retention offers.",
+    "c": "import numpy as np\n\n# States: 0 active, 1 paused, 2 churned (absorbing)\nP = np.array([[0.90, 0.07, 0.03],\n              [0.40, 0.45, 0.15],\n              [0.00, 0.00, 1.00]])\nassert np.allclose(P.sum(axis=1), 1)\n\n# Distribution after 12 months starting from 'active'\nstart = np.array([1.0, 0.0, 0.0])\nprint(start @ np.linalg.matrix_power(P, 12))\n\n# Stationary distribution of an ergodic chain: left eigenvector for eigenvalue 1\nQ = np.array([[0.9, 0.1], [0.5, 0.5]])\nw, v = np.linalg.eig(Q.T)\npi = np.real(v[:, np.argmax(np.isclose(w, 1))])\nprint(pi / pi.sum())                 # about [0.833, 0.167]"
+  },
+  "causation": {
+    "n": "Correlation vs Causation",
+    "d": "Correlation means two variables move together; causation means changing one would change the other. A correlation can arise without any causal link, through a common cause, reverse causation, selection effects or chance, so observed association alone does not show what an intervention would do.\n\nThis distinction decides how models can be used. A predictive model trained on observational data learns correlations, which is fine for forecasting but not for deciding actions: a feature that predicts churn may not reduce churn when changed. Randomized A/B testing establishes causal effects directly; when experiments are impossible, causal inference methods such as propensity score matching, instrumental variables, difference-in-differences or uplift modeling estimate it under explicit assumptions. SHAP values describe the model, not the world.\n\nThe common pitfall is reading a strong partial dependence plot or regression coefficient as the effect of an intervention, which is valid only when confounding is ruled out.",
+    "f": "P(Y | X = x) ≠ P(Y | do(X = x)) in general",
+    "u": [
+      "Deciding when an A/B test is required",
+      "Uplift modeling for targeted interventions",
+      "Interpreting SHAP and feature importance responsibly"
+    ],
+    "x": "A retailer's churn model showed that customers who contacted support were more likely to churn, and a proposal to discourage support contacts followed. A randomized test of proactive support outreach showed the opposite effect, because unhappy customers both contact support and churn.",
+    "c": "import numpy as np\n\nrng = np.random.default_rng(0)\nn = 100_000\n# Common cause: hot weather drives both ice-cream sales and drownings\nheat = rng.normal(size=n)\nice_cream = 2 * heat + rng.normal(size=n)\ndrownings = 1.5 * heat + rng.normal(size=n)\nprint(np.corrcoef(ice_cream, drownings)[0, 1].round(2))   # strong correlation\n\n# Intervention: set ice-cream sales at random, independent of heat\nice_do = rng.normal(size=n) * ice_cream.std()\ndrown_do = 1.5 * heat + rng.normal(size=n)   # unaffected by ice cream\nprint(np.corrcoef(ice_do, drown_do)[0, 1].round(2))       # about 0"
+  },
+  "confounder": {
+    "n": "Confounding Variable",
+    "d": "A confounding variable is a third factor that influences both a supposed cause and an outcome, creating an association between them that is not a causal effect. Age, for example, affects both medication use and health outcomes.\n\nIf a confounder is left out of an analysis, the estimated effect of the variable of interest absorbs its influence, which is a form of omitted-variable bias. In extreme cases the direction of an association can flip when the confounder is controlled, known as Simpson's paradox. Randomized experiments such as A/B testing break confounding by design; observational studies adjust for measured confounders through stratification, regression or propensity score matching. In machine learning, confounders also cause shortcut learning, such as a classifier keying on a scanner marker that correlates with disease.\n\nAdjustment only handles measured confounders, and adjusting for a consequence of the treatment adds bias instead of removing it.",
+    "f": "Z → X and Z → Y ⇒ X and Y associated without X → Y",
+    "u": [
+      "Adjusting observational analyses with propensity scores",
+      "Explaining Simpson's paradox in aggregated reports",
+      "Detecting shortcut features in classifiers"
+    ],
+    "x": "A medical imaging team found that its pneumonia classifier relied on markers specific to portable scanners, which were used mainly for sicker inpatients. The scanner type was a confounder, so the team stratified evaluation by scanner and added training data balanced across devices.",
+    "c": "import numpy as np\nimport pandas as pd\nimport statsmodels.formula.api as smf\n\nrng = np.random.default_rng(0)\nn = 5000\nage = rng.uniform(20, 80, n)                    # confounder\ntreated = (rng.random(n) < (age - 20) / 60).astype(int)  # older -> more treatment\noutcome = 0.05 * age - 1.0 * treated + rng.normal(size=n) # true effect: -1.0\ndf = pd.DataFrame({\"age\": age, \"treated\": treated, \"y\": outcome})\n\n# Naive estimate ignores age and is biased upward\nprint(smf.ols(\"y ~ treated\", df).fit().params[\"treated\"].round(2))\n# Adjusting for the confounder recovers about -1.0\nprint(smf.ols(\"y ~ treated + age\", df).fit().params[\"treated\"].round(2))"
+  },
+  "samplingbias": {
+    "n": "Sampling Bias",
+    "d": "Sampling bias occurs when the data collected are not representative of the population the model or analysis is meant to describe, because some members were more likely to be included than others. Estimates and models then reflect the sample's quirks rather than reality.\n\nForms include selection bias (only approved loan applicants have repayment labels), survivorship bias (only products still on sale are analyzed), non-response bias in surveys, and convenience samples such as data from one region or device type. In machine learning it leads to models that perform well on validation data drawn the same way but fail in production, and to fairness problems when groups are underrepresented. Remedies include stratified sampling, reweighting by inverse inclusion probability, collecting data from the missing segments.\n\nA larger dataset does not fix sampling bias. Collecting more data through the same skewed process only makes a wrong estimate more confident.",
+    "f": "E_sample[f(X)] ≠ E_population[f(X)] when P(selected | X) varies",
+    "u": [
+      "Credit models trained only on approved applicants",
+      "Reweighting surveys and logged data to population",
+      "Auditing dataset coverage across user groups"
+    ],
+    "x": "A speech recognition team noticed much higher error rates for some accents in production than in validation. The training and validation recordings had been collected from volunteers in a few regions, so the team added targeted data collection and reported error rates per accent group.",
+    "c": "import numpy as np\n\nrng = np.random.default_rng(0)\n# Population of incomes, but richer people respond more often to a survey\nincome = rng.lognormal(mean=10.5, sigma=0.6, size=200_000)\np_respond = np.clip(income / income.max() * 5, 0.01, 1.0)\nresponded = rng.random(income.size) < p_respond\n\nprint(round(income.mean()))                 # true population mean\nprint(round(income[responded].mean()))      # biased sample mean (too high)\n\n# Correct by inverse-probability weighting\nw = 1 / p_respond[responded]\nprint(round(np.average(income[responded], weights=w)))"
+  },
+  "heterosked": {
+    "n": "Heteroscedasticity",
+    "d": "Heteroscedasticity means that the variance of the errors in a model is not constant but changes with the inputs or the predicted value. The opposite, constant error variance, is called homoscedasticity.\n\nIt is typical when the scale of the target varies: errors in predicting house prices or revenue are larger for expensive houses and large customers. A residuals-versus-fitted plot shaped like a funnel is the classic sign, and the Breusch–Pagan and White tests check for it formally. In linear regression, ordinary least squares coefficients remain unbiased, but the usual standard errors, confidence intervals and p-values become wrong. Common fixes are heteroscedasticity-robust (sandwich) standard errors, weighted least squares, modeling a log-transformed target, or predicting the variance explicitly, for example with a Gaussian negative log-likelihood or quantile regression.\n\nA misconception is that heteroscedasticity biases the predictions themselves. It mainly makes uncertainty estimates and uniform prediction intervals misleading.",
+    "f": "Var(εᵢ | xᵢ) = σᵢ² (not constant)",
+    "u": [
+      "Diagnosing residual plots in regression",
+      "Robust standard errors for coefficient inference",
+      "Building input-dependent prediction intervals for forecasts"
+    ],
+    "x": "A property valuation team found that a constant-width prediction interval was too narrow for luxury homes and too wide for small apartments. They switched to quantile regression for the interval bounds so that its width grows with the predicted price.",
+    "c": "import numpy as np\nimport statsmodels.api as sm\nfrom statsmodels.stats.diagnostic import het_breuschpagan\n\nrng = np.random.default_rng(0)\nx = rng.uniform(1, 10, 500)\ny = 3 * x + rng.normal(scale=0.5 * x)        # noise grows with x\nX = sm.add_constant(x)\n\nols = sm.OLS(y, X).fit()\nprint(het_breuschpagan(ols.resid, X)[1])      # small p-value: heteroscedastic\n\n# Same coefficients, corrected (sandwich) standard errors\nrobust = sm.OLS(y, X).fit(cov_type=\"HC3\")\nprint(ols.bse.round(3), robust.bse.round(3))"
+  }
+}

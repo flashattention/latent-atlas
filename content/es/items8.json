@@ -1,0 +1,462 @@
+{
+ "histogram": {
+  "n": "Histograma",
+  "d": "Un histograma muestra la distribución de una variable numérica dividiendo su rango en intervalos (bins) y dibujando una barra cuya altura es el número (o la proporción) de valores en cada intervalo. Su forma indica dónde se concentran los valores, si la distribución es simétrica o asimétrica, si tiene uno o varios picos y si unos pocos valores extremos quedan lejos del resto.\n\nEn el análisis exploratorio de datos, los histogramas son la primera comprobación de cada variable numérica: revelan asimetrías que piden una transformación logarítmica antes de una regresión lineal, picos en valores por defecto como 0 o 999 y rangos recortados. Comparar los histogramas de entrenamiento y de producción es una forma sencilla de detectar deriva de datos. La principal trampa es el ancho de los intervalos: con muy pocos se oculta estructura como la bimodalidad y con demasiados el gráfico se convierte en ruido, así que conviene probar varios anchos o una regla como la de Freedman-Diaconis.",
+  "u": [
+   "Comprobar la asimetría de las variables antes de elegir transformaciones",
+   "Comparar distribuciones de variables entre entrenamiento y producción",
+   "Detectar valores por defecto y picos de errores de captura"
+  ],
+  "x": "Un equipo de pagos grafica cada semana histogramas de los importes de las transacciones, tanto del conjunto de entrenamiento como del tráfico real. Cuando llega una nueva categoría de comercios, el histograma en producción desarrolla un segundo pico, lo que lleva a revisar si el modelo de fraude necesita reentrenarse."
+ },
+ "boxplot": {
+  "n": "Diagrama de caja (box plot)",
+  "d": "Un diagrama de caja resume una variable numérica con cinco números: la mediana, el primer y el tercer cuartil, que forman la caja, y unos bigotes que llegan hasta los valores más extremos situados a menos de 1,5 veces el rango intercuartílico (IQR) de la caja. Los puntos más allá de los bigotes se dibujan por separado como posibles valores atípicos.\n\nComo ocupa poco espacio, el diagrama de caja es la forma estándar de comparar una variable entre muchos grupos, por ejemplo el error del modelo por región o la latencia por servidor. En machine learning sirve para detectar valores atípicos, comprobar si una variable separa las clases y comparar las puntuaciones de validación cruzada de varios modelos. Un error frecuente es creer que todo punto fuera de los bigotes es un error que hay que eliminar. La regla de 1,5×IQR señala muchos valores legítimos en datos asimétricos o de colas pesadas, y además el diagrama de caja oculta la bimodalidad, por lo que conviene acompañarlo de un histograma.",
+  "u": [
+   "Comparar puntuaciones de validación cruzada entre modelos candidatos",
+   "Revisar las variables numéricas en busca de valores extremos",
+   "Comparar una métrica entre grupos o segmentos"
+  ],
+  "x": "Un equipo de MLOps dibuja diagramas de caja del error de predicción por tienda para un modelo de previsión de demanda. Se investigan unas pocas tiendas con cajas mucho más anchas y resulta que reportan sus datos de forma irregular, así que reciben un modelo propio."
+ },
+ "scatterplot": {
+  "n": "Gráfico de dispersión",
+  "d": "Un gráfico de dispersión dibuja un punto por observación en las coordenadas que dan dos variables numéricas, de modo que la forma de la nube de puntos muestra cómo se relacionan. Una nube inclinada y estrecha indica una relación lineal fuerte; una banda curva, una relación no lineal; grupos separados sugieren clústeres, y los puntos aislados son valores atípicos.\n\nLos profesionales usan gráficos de dispersión para comparar una variable con el objetivo antes de una regresión lineal, representar valores predichos frente a reales, buscar patrones en los residuos y visualizar embeddings 2D de PCA, t-SNE o UMAP coloreados por clase. Una trampa habitual es la sobreimpresión (overplotting): con cientos de miles de puntos la nube se vuelve una mancha sólida que oculta la densidad. Usa transparencia, marcadores pequeños, muestreo o un histograma 2D. Recuerda también que un patrón claro en un gráfico de dispersión muestra asociación, no causalidad.",
+  "u": [
+   "Representar valores predichos frente a reales tras una regresión",
+   "Revisar los residuos en busca de curvatura o dispersión variable",
+   "Visualizar embeddings 2D coloreados por clase"
+  ],
+  "x": "Un equipo de tasación inmobiliaria representa los precios de venta predichos frente a los reales en cada pliegue de validación. Los puntos se abren en abanico en los precios altos, lo que revela que el error crece con el precio y lleva al equipo a modelar el logaritmo del precio."
+ },
+ "heatmap": {
+  "n": "Mapa de calor (heatmap)",
+  "d": "Un mapa de calor muestra una matriz de números como una cuadrícula de celdas coloreadas, donde el color de cada celda codifica su valor. Convierte una tabla grande en una imagen en la que los bloques, los gradientes de color y los valores atípicos saltan a la vista.\n\nEn machine learning, los mapas de calor más comunes son las matrices de correlación de variables, las matrices de confusión de clasificadores, los pesos de atención de una capa de un Transformer, las puntuaciones de una búsqueda en rejilla de hiperparámetros y los mapas de valores faltantes, donde cada celda indica si falta un valor. Agrupar filas y columnas mediante clustering antes de dibujar junta las variables similares para que la estructura de bloques sea visible. La principal trampa es la escala de color. Un mapa de colores divergente necesita fijar su punto medio en un valor con sentido, como cero para las correlaciones, y un rango autoescalado puede hacer que diferencias mínimas parezcan enormes. Anota los valores de las celdas cuando importen las cifras exactas.",
+  "u": [
+   "Visualizar matrices de correlación de variables durante el EDA",
+   "Leer la matriz de confusión de un clasificador",
+   "Inspeccionar pesos de atención o puntuaciones de búsqueda en rejilla"
+  ],
+  "x": "Un equipo de riesgo de crédito dibuja un mapa de calor agrupado de las correlaciones entre variables antes de entrenar una regresión logística. Varios bloques brillantes revelan grupos de variables de saldo casi idénticas, y el equipo conserva una por bloque para reducir la multicolinealidad."
+ },
+ "qqplot": {
+  "n": "Gráfico Q-Q (cuantil-cuantil)",
+  "d": "Un gráfico Q-Q compara los cuantiles de una muestra con los de una distribución de referencia, normalmente la distribución normal, representando unos frente a otros. Si los datos siguen la distribución de referencia, los puntos quedan sobre una recta; las curvaturas sistemáticas muestran en qué se diferencian.\n\nSu forma es fácil de leer con práctica. Una forma de S con ambos extremos alejándose de la recta indica colas pesadas; una curva hacia un solo lado indica asimetría; unos pocos puntos fuera de la recta en los extremos son valores atípicos. Los profesionales usan gráficos Q-Q para comprobar el supuesto de normalidad de los residuos en una regresión lineal, decidir si hace falta una transformación logarítmica o de Box-Cox y comparar directamente dos muestras. Una trampa habitual es confiar en cambio en una prueba formal de normalidad: con muestras grandes, esas pruebas rechazan desviaciones mínimas e inofensivas, mientras que el gráfico Q-Q muestra lo grande que es realmente la desviación.",
+  "u": [
+   "Comprobar la normalidad de los residuos de una regresión lineal",
+   "Decidir si una variable necesita una transformación",
+   "Comparar el comportamiento en las colas de dos muestras"
+  ],
+  "x": "Un equipo de análisis cuantitativo ajusta un modelo lineal a rentabilidades diarias e inspecciona un gráfico Q-Q de los residuos. Los extremos se alejan bruscamente de la recta, lo que muestra colas pesadas, así que el equipo pasa a un modelo de error t de Student para sus estimaciones de riesgo."
+ },
+ "feature": {
+  "n": "Variable (feature)",
+  "d": "Una variable (feature, también llamada característica) es una entrada medible que un modelo usa para hacer una predicción, como la edad de un cliente, el número de palabras de un correo o la intensidad de un píxel. Un conjunto de datos suele organizarse como una matriz con una fila por ejemplo y una columna por variable, y el modelo aprende cómo depende el objetivo de esas columnas.\n\nLas variables pueden ser numéricas, categóricas, texto o representaciones aprendidas como los embeddings. Gran parte del machine learning clásico es ingeniería de variables: construir variables informativas, codificar categorías, escalar y tratar los valores faltantes. La importancia de variables y los valores SHAP describen qué variables impulsan las predicciones. Una trampa clave es usar una variable que no estará disponible en el momento de la predicción, o que se calcula a partir del objetivo; eso es fuga de datos y produce modelos que parecen excelentes en validación y fallan en producción.",
+  "u": [
+   "Construir entradas para modelos de gradient boosting con árboles",
+   "Seleccionar columnas informativas a partir de logs en bruto",
+   "Explicar predicciones mediante la importancia de variables"
+  ],
+  "x": "Un negocio de suscripciones construye para su modelo de abandono variables como los días desde el último inicio de sesión, el número de tickets de soporte del último mes y el tipo de plan. Cada variable se calcula solo con datos disponibles a la fecha de predicción, de modo que el modelo ve exactamente lo que tendrá en producción."
+ },
+ "label": {
+  "n": "Etiqueta (variable objetivo)",
+  "d": "Una etiqueta, también llamada objetivo (target), es la respuesta conocida que un modelo supervisado aprende a predecir para cada ejemplo: una clase como spam o no spam, o un número como un precio de venta. El modelo se entrena para que sus salidas coincidan con las etiquetas, por lo que la etiqueta define qué está optimizando realmente el modelo.\n\nLas etiquetas proceden de anotadores humanos, de eventos de negocio como una compra posterior o un impago, o de reglas automáticas. En clasificación suelen codificarse como enteros o vectores one-hot; en regresión son valores continuos. La elección de la etiqueta condiciona todo lo que viene después, incluida la función de pérdida, la métrica de evaluación y el desbalance de clases. Una trampa común es una etiqueta que no refleja el objetivo real, por ejemplo predecir clics cuando al negocio le importan las compras. Otra es la fuga de la etiqueta, en la que una variable se deriva de la etiqueta o de información registrada después de ella.",
+  "u": [
+   "Definir el objetivo de predicción en aprendizaje supervisado",
+   "Recopilar anotaciones humanas para tareas de clasificación",
+   "Derivar etiquetas de resultado a partir de logs de eventos de negocio"
+  ],
+  "x": "Una plataforma de préstamos define su etiqueta como si un préstamo acumula más de 90 días de retraso en los 12 meses posteriores a su concesión. Como ese resultado tarda un año en observarse, el equipo entrena solo con préstamos lo bastante antiguos como para tener una etiqueta definitiva."
+ },
+ "tabular": {
+  "n": "Datos tabulares",
+  "d": "Los datos tabulares son datos organizados como una tabla, con una fila por ejemplo y una columna por variable, donde las columnas pueden mezclar tipos numéricos, categóricos, de fecha y de texto. Las hojas de cálculo, las tablas de bases de datos relacionales y las exportaciones CSV son su forma cotidiana, y la mayoría de los problemas de predicción de negocio empiezan aquí.\n\nA diferencia de las imágenes o el texto, las columnas de una tabla no tienen un orden espacial ni secuencial, y cada una tiene su propia escala y significado. Esto favorece a los modelos que manejan bien columnas heterogéneas: los árboles de gradient boosting como XGBoost, LightGBM y CatBoost siguen siendo la opción por defecto más fuerte en la mayoría de los benchmarks tabulares, con la regresión logística y los random forests como líneas base sólidas. Preparar datos tabulares implica joins, agregaciones, codificación de variables categóricas, tratamiento de valores faltantes y una partición temporal cuidadosa. Un error frecuente es creer que una red neuronal profunda superará por defecto a los árboles potenciados en tablas; normalmente necesita mucho más ajuste y a menudo sigue perdiendo.",
+  "u": [
+   "Scoring crediticio a partir de tablas de cuentas de clientes",
+   "Predicción de abandono con datos de CRM y de uso",
+   "Previsión de demanda a partir de registros de transacciones de venta"
+  ],
+  "x": "Una aseguradora une las tablas de pólizas, siniestros y clientes en una fila por póliza y entrena un modelo LightGBM para predecir la probabilidad de siniestro. El equipo prefiere los árboles potenciados porque manejan tipos de columna mixtos y valores faltantes con poco preprocesamiento."
+ },
+ "numcat": {
+  "n": "Variables numéricas frente a categóricas",
+  "d": "Las variables numéricas son cantidades con las que tiene sentido hacer aritmética, como los ingresos o la temperatura, mientras que las variables categóricas toman valores de un conjunto de etiquetas, como el país o el tipo de producto, sin significado numérico. La distinción decide cómo debe codificarse una variable antes de que un modelo pueda usarla.\n\nLas variables numéricas pueden necesitar escalado para modelos lineales, SVM, k-NN y redes neuronales, y a veces una transformación logarítmica si son asimétricas. Las variables categóricas deben convertirse en números: codificación one-hot si hay pocas categorías, target encoding o embeddings si hay muchas, o el soporte nativo de categorías de CatBoost y LightGBM. Hay números que en realidad son categorías disfrazadas. Los códigos postales, los IDs de usuario y los códigos de producto se guardan como enteros, pero tratarlos como cantidades inventa un orden y unas distancias que no existen. A la inversa, una variable numérica con muy pocos valores puede funcionar mejor como categoría.",
+  "u": [
+   "Elegir codificadores en un pipeline de preprocesamiento",
+   "Detectar columnas de ID guardadas como enteros",
+   "Decidir qué columnas necesitan escalado"
+  ],
+  "x": "Un sitio de reservas de viajes construye un ColumnTransformer de scikit-learn que escala el precio y la duración del viaje, pero aplica codificación one-hot a la región de destino y al tipo de dispositivo. Una primera versión trataba como numéricos los códigos de aeropuerto guardados como enteros, y pasarlos a categóricos mejoró el modelo."
+ },
+ "ordinal": {
+  "n": "Variables ordinales frente a nominales",
+  "d": "Las variables nominales son categorías sin orden natural, como el color o el país, mientras que las variables ordinales son categorías con un orden significativo pero sin un espaciado fijo, como el nivel educativo o una valoración baja, media o alta. Ambas son categóricas, pero el orden cambia cómo deben codificarse.\n\nPara una variable ordinal, asignar a las categorías enteros crecientes (bajo=0, medio=1, alto=2) conserva el orden y permite que un árbol haga divisiones sobre ella o que un modelo lineal ajuste un efecto monótono. Para una variable nominal, los códigos enteros inventarían un orden y un espaciado que los datos no tienen, por lo que se usa en su lugar codificación one-hot, target encoding o embeddings. Una trampa común es aplicar el OrdinalEncoder de scikit-learn con su orden alfabético por defecto a una variable realmente ordinal: \"high\" queda entonces antes que \"low\", así que hay que pasar explícitamente el orden de las categorías.",
+  "u": [
+   "Codificar respuestas de encuestas y valoraciones de satisfacción",
+   "Codificar tallas de producto o niveles de cliente",
+   "Elegir entre codificación one-hot y codificación entera"
+  ],
+  "x": "Un equipo de analítica de RR. HH. que predice la rotación de empleados codifica el nivel del puesto como un entero ordenado, porque los niveles más altos implican más antigüedad. El departamento, que no tiene orden, se codifica en cambio con one-hot."
+ },
+ "cardinality": {
+  "n": "Cardinalidad",
+  "d": "La cardinalidad de una variable categórica es el número de valores distintos que toma. Una variable como el género o el tipo de dispositivo tiene cardinalidad baja, mientras que el ID de usuario, el código postal o el SKU de producto pueden tener miles o millones de valores y se dice que son de alta cardinalidad.\n\nLa cardinalidad decide cómo puede codificarse una variable. La codificación one-hot funciona con un puñado de valores, pero genera matrices dispersas enormes con variables de alta cardinalidad. Las alternativas incluyen agrupar los valores raros en una categoría \"otros\", target encoding con suavizado y ajuste out-of-fold, codificación por frecuencia, el truco de hashing y embeddings aprendidos en redes neuronales. CatBoost usa estadísticas de objetivo ordenadas precisamente para este caso. Una trampa es que las variables de alta cardinalidad permiten a los modelos de árboles memorizar: una categoría vista solo unas pocas veces puede emparejarse perfectamente con sus etiquetas, inflando las puntuaciones de entrenamiento, y un target encoding ingenuo calculado sobre las mismas filas filtra la etiqueta.",
+  "u": [
+   "Elegir un codificador para cada columna categórica",
+   "Detectar columnas tipo ID durante el perfilado de datos",
+   "Agrupar categorías raras antes de la codificación one-hot"
+  ],
+  "x": "Un equipo de ad tech tiene una variable con el dominio del editor que toma cientos de miles de valores. En su modelo de regresión logística aplica el truco de hashing para repartir el dominio en un número fijo de cubetas, y en su modelo neuronal de ranking aprende un embedding para él."
+ },
+ "missingval": {
+  "n": "Valores faltantes (MCAR, MAR, MNAR)",
+  "d": "Los valores faltantes son entradas sin valor registrado, y el motivo por el que faltan determina cómo pueden tratarse. Los datos faltan completamente al azar (MCAR) cuando la ausencia no está relacionada con ningún dato, faltan al azar (MAR) cuando depende solo de otras variables observadas, y no faltan al azar (MNAR) cuando depende del propio valor no observado, como cuando las personas con ingresos altos se saltan la pregunta sobre ingresos.\n\nCon MCAR, eliminar filas pierde datos pero no sesga las estimaciones. Con MAR, la imputación a partir de otras columnas, como la imputación iterativa o por k-NN, puede recuperar estimaciones insesgadas. Con MNAR ningún método corrige del todo el sesgo sin supuestos adicionales. En modelado predictivo, añadir un indicador binario de \"faltaba\" suele ayudar, porque la propia ausencia aporta señal. Una trampa común es ajustar el imputador sobre todo el conjunto de datos antes de dividirlo, lo que filtra estadísticas del conjunto de prueba al entrenamiento.",
+  "u": [
+   "Imputar huecos en registros de sensores y médicos",
+   "Añadir indicadores de ausencia a modelos tabulares",
+   "Auditar datos de encuestas por sesgo de no respuesta"
+  ],
+  "x": "Un modelo de reingreso hospitalario detecta que los valores de laboratorio suelen faltar en pacientes a los que no se consideró lo bastante enfermos como para hacerles la prueba. El equipo añade un indicador de ausencia para cada análisis, porque la falta de una prueba es en sí misma predictiva."
+ },
+ "duplicates": {
+  "n": "Registros duplicados",
+  "d": "Los registros duplicados son filas que describen la misma entidad o el mismo evento del mundo real más de una vez, ya sea como copias exactas o como casi duplicados que difieren en el formato, las marcas de tiempo o pequeñas ediciones. Surgen de cargas de datos repetidas, joins que multiplican filas, reintentos en el registro de eventos y texto web extraído con scraping.\n\nLos duplicados sesgan las estadísticas hacia los elementos repetidos y, lo que es más grave, rompen la evaluación: si el mismo ejemplo acaba tanto en el conjunto de entrenamiento como en el de prueba, el modelo se evalúa con datos que ha memorizado, así que las métricas de validación son demasiado optimistas. Los duplicados exactos se encuentran calculando hashes de las filas o de las columnas clave; los casi duplicados requieren coincidencia difusa, MinHash o similitud de embeddings. El preentrenamiento de grandes modelos de lenguaje depende mucho de la deduplicación. Una trampa es deduplicar sin pensar en los grupos: varios registros del mismo cliente no son duplicados, pero aun así necesitan una partición que respete los grupos, como GroupKFold.",
+  "u": [
+   "Eliminar filas repetidas tras los joins de un pipeline de datos",
+   "Deduplicar texto web para el preentrenamiento de modelos de lenguaje",
+   "Evitar el solapamiento entre conjuntos de entrenamiento y prueba"
+  ],
+  "x": "Un equipo que construye un modelo de autocompletado de código descubre que muchos archivos de su conjunto de evaluación también aparecen, con ediciones mínimas, en el corpus de entrenamiento. Ejecuta una detección de casi duplicados con MinHash sobre ambos conjuntos y elimina los archivos solapados antes de publicar resultados."
+ },
+ "labelnoise": {
+  "n": "Ruido en las etiquetas",
+  "d": "El ruido en las etiquetas significa que algunas etiquetas de entrenamiento son incorrectas: la imagen de un gato etiquetada como perro, una transacción legítima marcada como fraude o una reseña anotada con el sentimiento equivocado. Procede de errores de los anotadores, ejemplos ambiguos, reglas de etiquetado automático y etiquetas registradas antes de que un resultado fuera definitivo.\n\nEl ruido puede ser aleatorio, cambiando etiquetas de forma uniforme, o sistemático, cuando ciertas clases o anotadores se confunden de manera constante; el ruido sistemático es mucho más dañino porque el modelo aprende el sesgo. Los modelos grandes y flexibles, como las redes neuronales profundas, pueden memorizar etiquetas ruidosas, lo que perjudica la generalización. Entre los remedios están usar varios anotadores con comprobaciones de acuerdo, el confident learning para encontrar ejemplos probablemente mal etiquetados, el suavizado de etiquetas, las pérdidas robustas y la parada temprana. Una trampa frecuente es ignorar el ruido en el conjunto de prueba: si las etiquetas de evaluación son erróneas, las comparaciones entre modelos y las estimaciones de exactitud dejan de ser fiables, por muy limpios que estén los datos de entrenamiento.",
+  "u": [
+   "Auditar anotaciones de crowdsourcing antes de entrenar",
+   "Encontrar ejemplos mal etiquetados con predicciones out-of-fold",
+   "Entrenar clasificadores robustos con datos débilmente etiquetados"
+  ],
+  "x": "Un equipo de moderación de contenidos marca los ejemplos de entrenamiento en los que un clasificador con validación cruzada discrepa con confianza de la etiqueta humana. Los revisores vuelven a anotar esos elementos y muchos resultan ser errores de etiquetado reales causados por una guía de políticas desactualizada."
+ },
+ "sparsedata": {
+  "n": "Datos dispersos",
+  "d": "Los datos dispersos son datos en los que la mayoría de las entradas son cero o están ausentes, como una matriz de bolsa de palabras en la que cada documento usa una fracción mínima del vocabulario, una matriz de valoraciones usuario-ítem o categorías con codificación one-hot. Guardar solo los valores distintos de cero y sus posiciones, como en los formatos CSR o COO, ahorra memoria y cómputo en varios órdenes de magnitud.\n\nMuchos métodos aprovechan directamente la dispersión: los modelos lineales, la regresión logística y las SVM lineales sobre variables TF-IDF, las máquinas de factorización y la factorización de matrices para recomendación, y los árboles de gradient boosting que se saltan los ceros. Una trampa común es convertir sin querer una matriz dispersa en densa, por ejemplo al centrarla con StandardScaler, que resta la media y rellena cada cero con un valor distinto de cero; usa en su lugar un escalado sin centrado o MaxAbsScaler. Los datos dispersos también necesitan regularización, ya que muchas variables aparecen solo unas pocas veces.",
+  "u": [
+   "Clasificación de texto con variables TF-IDF",
+   "Recomendación a partir de matrices de interacción usuario-ítem",
+   "Variables categóricas de alta cardinalidad con codificación one-hot"
+  ],
+  "x": "Un enrutador de tickets de soporte representa cada ticket como un vector TF-IDF sobre un vocabulario de cientos de miles de términos. Guardada en formato disperso, la matriz completa cabe en memoria y un clasificador lineal se entrena en minutos."
+ },
+ "interaction": {
+  "n": "Interacción entre variables",
+  "d": "Existe una interacción entre variables cuando el efecto de una variable sobre el objetivo depende del valor de otra. Por ejemplo, un descuento puede aumentar mucho las compras de los clientes nuevos pero apenas las de los fieles; ninguna de las dos variables por separado capta ese patrón.\n\nUna regresión lineal simple suma efectos independientes y no puede representar interacciones a menos que se añadan explícitamente como términos de producto, como x₁·x₂, o mediante variables polinómicas. Los árboles de decisión, los árboles de gradient boosting y las redes neuronales aprenden interacciones automáticamente, porque una división sobre una variable cambia cómo se comporta la siguiente. Las máquinas de factorización modelan de forma eficiente las interacciones por pares en datos dispersos. Los valores de interacción SHAP y los gráficos de dependencia parcial ayudan a detectarlas. Una trampa es añadir a mano todos los productos por pares: el número de variables crece de forma cuadrática, lo que favorece el sobreajuste y la multicolinealidad, así que conviene añadir solo interacciones con una razón clara del dominio o usar un modelo que las encuentre.",
+  "u": [
+   "Añadir términos de producto a modelos lineales de precios",
+   "Detectar interacciones con valores de interacción SHAP",
+   "Predicción de clics con máquinas de factorización"
+  ],
+  "x": "Un equipo de analítica de marketing descubre que un modelo lineal de uplift no capta que las campañas por correo solo funcionan con clientes en dispositivos móviles. Añadir un término de producto entre el indicador de campaña y el tipo de dispositivo recoge el patrón y hace que el coeficiente sea directamente interpretable."
+ },
+ "baseline": {
+  "n": "Modelo de referencia (línea base)",
+  "d": "Un modelo de referencia, o línea base (baseline), es un modelo deliberadamente simple cuya puntuación debe superar cualquier modelo propuesto para justificar su complejidad. Las líneas base típicas son predecir la clase mayoritaria, la media de entrenamiento, el último valor observado en una serie temporal, o una regresión logística o una regresión lineal sencillas.\n\nLas líneas base dan significado a los valores de las métricas. Una exactitud del 95 % parece alta hasta que la línea base de clase mayoritaria también obtiene un 95 % en un conjunto de datos desbalanceado; un error de previsión solo es útil cuando se compara con la previsión ingenua estacional. Construir primero una línea base también pone a prueba todo el pipeline, desde la carga de datos hasta la evaluación, antes de dedicar tiempo al ajuste. Un error común es elegir una línea base débil que hace que cualquier modelo parezca bueno. Reporta una línea base trivial y una línea base simple pero fuerte, como un modelo lineal ajustado o árboles de gradient boosting con la configuración por defecto, y evalúa ambas sobre la misma partición.",
+  "u": [
+   "Verificar métricas en tareas de clasificación desbalanceadas",
+   "Previsiones ingenuas y ingenuas estacionales para series temporales",
+   "Comparar modelos profundos con modelos lineales"
+  ],
+  "x": "Un equipo que propone un modelo Transformer para clasificar tickets entrena primero una línea base de TF-IDF con regresión logística. El Transformer solo se adopta después de superar claramente a la línea base en el mismo conjunto reservado, lo que justifica su mayor coste de servicio."
+ },
+ "timeseries": {
+  "n": "Datos de series temporales",
+  "d": "Los datos de series temporales son una secuencia de observaciones registradas en orden cronológico, normalmente a intervalos regulares, como la carga eléctrica por hora, las ventas diarias o las lecturas de un sensor por segundo. Su propiedad definitoria es que las observaciones vecinas dependen unas de otras, de modo que el orden de las filas contiene información.\n\nUna serie temporal suele describirse como una combinación de tendencia, estacionalidad y ruido, y muchos métodos modelan estas partes de forma explícita: ARIMA, el suavizado exponencial, Prophet y los árboles de gradient boosting sobre variables de retardo, además de los modelos de previsión recurrentes y basados en Transformer. Entre las herramientas útiles están los gráficos de autocorrelación, la diferenciación y las pruebas de estacionariedad. La trampa más importante es la evaluación: la validación cruzada K-fold aleatoria mezcla filas futuras en el conjunto de entrenamiento y filtra información, así que la validación siempre debe entrenar con el pasado y evaluar con el futuro, por ejemplo con una partición de ventana expansiva o de origen móvil.",
+  "u": [
+   "Prever la demanda de productos y las necesidades de inventario",
+   "Detectar anomalías en métricas de servidores y sensores",
+   "Predecir la carga energética para la planificación de la red"
+  ],
+  "x": "Una cadena de supermercados prevé la demanda diaria por producto y tienda con variables de retardo y un modelo de gradient boosting. La validación usa particiones de origen móvil que siempre entrenan con semanas anteriores y evalúan con las siguientes, igual que se hacen las previsiones en producción."
+ },
+ "trend": {
+  "n": "Tendencia",
+  "d": "Una tendencia es la dirección a largo plazo de una serie temporal: un aumento, una disminución o un cambio de nivel sostenido que persiste más allá de los ciclos estacionales y del ruido a corto plazo. El aumento del número de suscriptores durante varios años o la pérdida gradual de sensibilidad de un sensor son tendencias.\n\nLas tendencias se estiman mediante suavizado, como una media móvil o LOESS, ajustando una recta o una curva a lo largo del tiempo, o como un componente de una descomposición como STL. Los métodos de previsión tratan la tendencia de forma explícita: el suavizado exponencial de Holt añade un término de tendencia, ARIMA la elimina mediante diferenciación y Prophet ajusta una tendencia lineal por tramos con puntos de cambio. Una tendencia hace que una serie sea no estacionaria, por lo que muchos modelos necesitan eliminarla primero. Una trampa notable afecta a los modelos basados en árboles, como los random forests y los árboles de gradient boosting: no pueden extrapolar, así que en una serie con tendencia no predicen valores más altos que los vistos en entrenamiento. Elimina antes la tendencia o modélala por separado.",
+  "u": [
+   "Eliminar el crecimiento a largo plazo antes del análisis estacional",
+   "Proyectar el crecimiento de usuarios para planificar capacidad",
+   "Detectar la degradación lenta en lecturas de sensores"
+  ],
+  "x": "Un proveedor de nube ajusta una tendencia al uso mensual de almacenamiento para planificar compras de hardware. Como su modelo de previsión de gradient boosting no puede extrapolar más allá de los niveles pasados, el equipo modela la tendencia con un término lineal y deja que los árboles aprendan solo la variación restante."
+ },
+ "seasonality": {
+  "n": "Estacionalidad",
+  "d": "La estacionalidad es un patrón de una serie temporal que se repite con un periodo fijo y conocido, como el aumento de las ventas minoristas cada diciembre, los picos de tráfico a las mismas horas cada día o la menor actividad en fin de semana. El periodo lo fija el calendario o el propio proceso, no las fluctuaciones aleatorias de los datos.\n\nLa estacionalidad aparece como picos regulares en un gráfico de autocorrelación en el periodo y sus múltiplos. Se trata con descomposición estacional (STL), diferenciación estacional, modelos SARIMA y Holt-Winters, términos de Fourier como en Prophet o variables de calendario como la hora, el día de la semana y el mes para los árboles de gradient boosting. Muchas series tienen varias estacionalidades a la vez, como ciclos diarios y semanales en datos horarios. Una trampa es confundir estacionalidad con ciclos: los ciclos económicos también suben y bajan, pero con una duración irregular, así que un modelo de periodo fijo los predecirá mal. Los festivos que cambian de fecha también necesitan variables explícitas.",
+  "u": [
+   "Añadir variables de calendario a modelos de previsión de demanda",
+   "Eliminar los ciclos semanales antes de detectar anomalías",
+   "Planificar la plantilla según los picos diarios y semanales"
+  ],
+  "x": "Un centro de llamadas prevé el volumen horario de llamadas con términos estacionales diarios y semanales más indicadores de festivos. Eliminar el patrón estacional también permite al equipo señalar picos inusuales que indican una caída del servicio en otra parte de la empresa."
+ },
+ "whitenoise": {
+  "n": "Ruido blanco",
+  "d": "El ruido blanco es una secuencia de valores aleatorios con media cero, varianza constante y ninguna correlación entre dos instantes cualesquiera. Conocer los valores pasados no aporta información sobre el siguiente, así que el ruido blanco es la definición misma de una serie impredecible.\n\nEn el modelado de series temporales es el estado deseado para los residuos: si un modelo de previsión como ARIMA ha captado toda la estructura, sus residuos deberían parecer ruido blanco, sin picos significativos en el gráfico de autocorrelación. La prueba de Ljung-Box lo comprueba formalmente. El ruido blanco es también la pieza básica de otros procesos: un paseo aleatorio es la suma acumulada de ruido blanco, y los modelos ARMA son ruido blanco filtrado. Un error frecuente es creer que el ruido blanco debe tener distribución normal; el ruido blanco gaussiano es solo un caso, y la definición exige únicamente autocorrelación nula, no independencia ni normalidad.",
+  "u": [
+   "Revisar si queda estructura en los residuos de una previsión",
+   "Contrastar la autocorrelación con la prueba de Ljung-Box",
+   "Simular ruido para series temporales sintéticas"
+  ],
+  "x": "Una compañía eléctrica valida cada mes su modelo de previsión de carga con una prueba de Ljung-Box sobre los residuos. Cuando la prueba empieza a rechazar el ruido blanco en un retardo de 24 horas, el equipo descubre que un cambio en la zona horaria de la medición ha desplazado el patrón diario."
+ },
+ "randomwalk": {
+  "n": "Paseo aleatorio",
+  "d": "Un paseo aleatorio es una serie temporal en la que cada valor es igual al anterior más un paso aleatorio, de modo que la serie deambula sin volver a un nivel fijo. Es la suma acumulada de ruido blanco, y la mejor previsión del valor de mañana es simplemente el valor de hoy.\n\nComo los shocks nunca se desvanecen, la varianza de un paseo aleatorio crece con el tiempo y la serie es no estacionaria; su autocorrelación decae muy lentamente. Los precios de los activos suelen aproximarse como paseos aleatorios, y por eso la previsión ingenua del último valor es una línea base difícil de batir en finanzas. Diferenciar una vez un paseo aleatorio devuelve los pasos de ruido blanco, que es la idea detrás de la parte integrada (I) de ARIMA. Una trampa importante es la regresión espuria: dos paseos aleatorios independientes regresados uno sobre otro suelen mostrar un R² alto y coeficientes significativos, así que conviene contrastar la estacionariedad con una prueba de Dickey-Fuller aumentada antes de hacer regresiones con series con tendencia.",
+  "u": [
+   "Línea base ingenua del último valor para prever precios",
+   "Contrastar raíces unitarias antes de una regresión",
+   "Simular trayectorias de precios y deriva de sensores"
+  ],
+  "x": "Un equipo de investigación de trading compara cada señal candidata con una previsión de paseo aleatorio del precio del día siguiente. Las señales que no superan fuera de muestra a la previsión del último valor se descartan, aunque parezcan sólidas en el periodo de entrenamiento."
+ },
+ "differencing": {
+  "n": "Diferenciación",
+  "d": "La diferenciación transforma una serie temporal en los cambios entre observaciones consecutivas, sustituyendo cada valor por su valor menos el anterior. Elimina una tendencia estocástica o los cambios de nivel y a menudo convierte una serie no estacionaria en estacionaria.\n\nLa primera diferencia elimina una tendencia lineal o un paseo aleatorio; diferenciar dos veces elimina una tendencia cuadrática. La diferenciación estacional resta el valor de una temporada antes, y_t − y_{t−m}, para eliminar un patrón repetitivo. La diferenciación es la \"I\" de ARIMA, donde d indica cuántas veces se aplica, y es habitual antes de ajustar una regresión o árboles de gradient boosting a series con tendencia. Las previsiones hechas en la escala diferenciada deben acumularse para volver al nivel original. Una trampa es la sobrediferenciación: aplicarla a una serie ya estacionaria añade autocorrelación negativa e infla la varianza, así que comprueba con una prueba de Dickey-Fuller aumentada o KPSS y diferencia solo lo necesario.",
+  "u": [
+   "Hacer estacionaria una serie antes de ARIMA",
+   "Eliminar la estacionalidad anual con diferencias de retardo 12",
+   "Modelar cambios en lugar de niveles para los árboles"
+  ],
+  "x": "El modelo de previsión con gradient boosting de un minorista predice el cambio semanal de las ventas en lugar de su nivel, lo que elimina el crecimiento a largo plazo que los árboles no pueden extrapolar. Los cambios predichos se suman a la última semana observada para obtener la previsión final."
+ },
+ "horizon": {
+  "n": "Horizonte de previsión",
+  "d": "El horizonte de previsión es lo lejos en el futuro que se hace una previsión, medido en pasos de tiempo desde el último punto observado, por ejemplo un día o 13 semanas vista. Lo fija la decisión a la que sirve la previsión: la carga de la próxima hora para el despacho de la red, la demanda del próximo trimestre para las compras.\n\nEl error casi siempre crece con el horizonte, porque la incertidumbre se acumula y quedan menos entradas recientes informativas, así que la precisión debe reportarse por paso del horizonte y no como un único promedio. Las previsiones multipaso pueden hacerse de forma recursiva, realimentando cada predicción como entrada, lo que acumula errores; de forma directa, entrenando un modelo distinto por horizonte; o con modelos de salida múltiple como las redes secuencia a secuencia. Una trampa común es validar con un horizonte distinto del que se usa en producción, por ejemplo evaluar previsiones a un paso con variables de retardo 1 cuando las decisiones reales necesitan previsiones a cuatro semanas, momento en el que esos retardos recientes aún no se conocen.",
+  "u": [
+   "Fijar plazos de compra en la planificación de inventario",
+   "Reportar el error de previsión por paso del horizonte",
+   "Elegir entre estrategias multipaso recursivas y directas"
+  ],
+  "x": "Un minorista de moda debe pedir el género ocho semanas antes de que llegue, así que su modelo de demanda se evalúa solo con un horizonte de ocho semanas. Las variables se limitan a la información disponible ocho semanas antes de cada semana objetivo."
+ },
+ "vector": {
+  "n": "Vector",
+  "d": "Un vector es una lista ordenada de números, como (3,2; −1,0; 0,5), que puede interpretarse como un punto o una flecha en un espacio con un eje por componente. El número de componentes es su dimensión, y los vectores pueden sumarse componente a componente y multiplicarse por un escalar.\n\nCasi todo lo que procesa un modelo es un vector: una fila de variables, los pesos de una regresión lineal, un embedding de palabra o de frase, un gradiente, las probabilidades de salida de un clasificador. La geometría de los vectores proporciona las operaciones centrales del machine learning, como el producto escalar, las normas vectoriales, la distancia euclídea y la similitud del coseno, que sustentan k vecinos más cercanos, k-means y la búsqueda vectorial. Una fuente habitual de errores es confundir formas: en NumPy un array 1D de forma (d,) no es ni un vector fila ni un vector columna, y mezclarlo con arrays de forma (d, 1) hace broadcasting en silencio hasta una matriz d×d.",
+  "u": [
+   "Representar un ejemplo como vector de variables",
+   "Almacenar embeddings de texto e imagen para búsqueda",
+   "Contener los pesos y gradientes del modelo"
+  ],
+  "x": "Un servicio de streaming musical representa cada pista como un vector de embedding de 128 dimensiones aprendido de las sesiones de escucha. Las recomendaciones se obtienen buscando los vectores de pistas más cercanos al vector del historial de escucha reciente del usuario."
+ },
+ "matrix": {
+  "n": "Matriz",
+  "d": "Una matriz es una disposición rectangular de números en filas y columnas; una matriz m×n tiene m filas y n columnas. Puede leerse como una tabla de datos o como una aplicación lineal que transforma vectores de n dimensiones en vectores de m dimensiones mediante la multiplicación matriz-vector.\n\nAmbas lecturas están por todas partes en machine learning. Un conjunto de datos es una matriz de diseño X con una fila por ejemplo y una columna por variable. Los pesos de una capa lineal forman una matriz W, de modo que una capa densa calcula Wx + b. Las matrices de covarianza, las matrices de confusión, las matrices de puntuaciones de atención y las matrices de valoraciones usuario-ítem son otros ejemplos. Las operaciones clave incluyen la traspuesta, la multiplicación de matrices, la inversa y descomposiciones como la descomposición en valores propios y la SVD, que sustentan el PCA y métodos de bajo rango como LoRA. Una trampa es invertir explícitamente matrices para resolver sistemas lineales; los solvers como np.linalg.solve o los mínimos cuadrados son más rápidos y numéricamente más estables.",
+  "u": [
+   "Almacenar un conjunto de datos como matriz de diseño",
+   "Pesos de las capas totalmente conectadas de una red neuronal",
+   "Matrices de valoraciones usuario-ítem para recomendación"
+  ],
+  "x": "Una empresa de comercio electrónico guarda el feedback implícito como una matriz dispersa de usuarios por productos y la factoriza en dos matrices estrechas de factores de usuario y de producto. Su producto aproxima la matriz original y rellena puntuaciones para productos que el usuario no ha visto."
+ },
+ "tensor": {
+  "n": "Tensor",
+  "d": "En machine learning, un tensor es un array multidimensional de números: un escalar tiene 0 ejes, un vector 1, una matriz 2 y los tensores de orden superior 3 o más. La forma (shape) indica el tamaño de cada eje, como (batch, channels, height, width) para un lote de imágenes.\n\nLos frameworks de deep learning como PyTorch, TensorFlow y JAX giran en torno a los tensores. Un tensor tiene una forma, un tipo de dato como float32 o bfloat16 y un dispositivo como CPU o GPU, y las operaciones sobre él pueden diferenciarse automáticamente. Formas típicas son (batch, sequence, hidden) para las activaciones de un Transformer y (batch, heads, seq, seq) para las puntuaciones de atención. El broadcasting permite combinar tensores de formas compatibles sin copias. Una trampa común es suponer un orden de ejes concreto: los frameworks y las bibliotecas difieren, por ejemplo en imágenes channels-first frente a channels-last, y una confusión silenciosa puede entrenar sin errores pero aprender sinsentidos.",
+  "u": [
+   "Lotes de imágenes en redes convolucionales",
+   "Activaciones que fluyen por las capas de un Transformer",
+   "Cómputo en GPU con diferenciación automática"
+  ],
+  "x": "Un equipo de visión por computador porta un modelo desde un pipeline de imágenes channels-last a PyTorch, que espera tensores channels-first. Una aserción de forma añadida en la entrada del modelo detecta un lote traspuesto que, de otro modo, había entrenado sin ningún error."
+ },
+ "dotproduct": {
+  "n": "Producto escalar",
+  "d": "El producto escalar de dos vectores de la misma longitud es la suma de los productos de sus componentes correspondientes, y da un único número. Geométricamente es igual al producto de las dos longitudes por el coseno del ángulo entre ellos, así que es grande y positivo cuando los vectores apuntan en la misma dirección, cero cuando son ortogonales y negativo cuando apuntan en direcciones opuestas.\n\nEl producto escalar es la operación más utilizada del machine learning. La puntuación de un modelo lineal es el producto escalar w·x más un sesgo; cada neurona calcula uno; la multiplicación de matrices es una cuadrícula de productos escalares; las puntuaciones de atención de un Transformer son productos escalares entre queries y keys. Una trampa es usar el producto escalar en bruto como similitud cuando las longitudes de los vectores varían: los vectores más largos puntúan más alto sea cual sea su dirección, así que, si solo importa la dirección, conviene normalizar primero, lo que da la similitud del coseno.",
+  "u": [
+   "Puntuar ejemplos en modelos lineales y logísticos",
+   "Calcular puntuaciones de atención query-key en Transformers",
+   "Ordenar ítems por similitud de embeddings"
+  ],
+  "x": "Un equipo de recomendación puntúa los ítems candidatos con el producto escalar entre el embedding del usuario y el de cada ítem, que un índice vectorial calcula rápidamente para millones de ítems. El equipo mantiene el producto escalar en bruto en lugar de la similitud del coseno porque la longitud de los vectores de ítem se entrenó para reflejar la popularidad."
+ },
+ "matmul": {
+  "n": "Multiplicación de matrices",
+  "d": "La multiplicación de matrices combina una matriz A de m×k y una matriz B de k×n en una matriz C de m×n, donde cada elemento Cᵢⱼ es el producto escalar de la fila i de A por la columna j de B. Las dimensiones interiores deben coincidir, y el resultado representa aplicar primero la aplicación lineal B y después A.\n\nEs el núcleo computacional del deep learning. Una capa densa aplicada a un lote es una multiplicación de matrices del lote de entrada por la matriz de pesos; la atención calcula QKᵀ y después multiplica por V. Las GPU y las TPU están construidas en torno a ella, y su coste de unas 2·m·k·n operaciones de coma flotante domina el cómputo de entrenamiento. Un error frecuente es creer que es conmutativa: AB en general es distinto de BA, y BA puede ni siquiera estar definido. Otra trampa es confundirla con el producto elemento a elemento, que se escribe * en NumPy y PyTorch, frente a @ para la multiplicación de matrices.",
+  "u": [
+   "Paso hacia delante de las capas densas de una red neuronal",
+   "Calcular la atención en modelos Transformer",
+   "Estimar el cómputo de entrenamiento en FLOPs"
+  ],
+  "x": "Un equipo de inferencia perfila un modelo de lenguaje y descubre que la mayor parte del tiempo de GPU se va en unas pocas multiplicaciones de matrices grandes de los bloques de atención y MLP. Pasarlas a bfloat16 y fusionar multiplicaciones pequeñas en otras por lotes más grandes aumenta el throughput sin cambiar el modelo."
+ },
+ "vecnorm": {
+  "n": "Norma vectorial (L1, L2)",
+  "d": "Una norma vectorial asigna una longitud no negativa a un vector. La norma L2 es la longitud en línea recta de siempre, la raíz cuadrada de la suma de los componentes al cuadrado; la norma L1 es la suma de los valores absolutos; la norma L∞ es el mayor valor absoluto. Todas son casos particulares de la norma Lp.\n\nLas normas aparecen en todo el machine learning. Las penalizaciones L2 y L1 sobre los pesos dan lugar a la regresión ridge y al lasso; la penalización L1 lleva algunos pesos exactamente a cero, lo que realiza selección de variables, mientras que L2 reduce todos los pesos de forma suave. El recorte de gradientes reescala los gradientes cuya norma L2 supera un umbral. Los embeddings se normalizan en L2 antes de la búsqueda por similitud del coseno, y las normas de las diferencias definen la distancia euclídea y la de Manhattan. Una confusión común es entre la norma L2 y su cuadrado: la regresión ridge penaliza la norma al cuadrado ‖w‖₂², cuyo gradiente es más sencillo, mientras que el recorte y la normalización usan la norma en sí.",
+  "u": [
+   "Regularización L1 y L2 de los pesos del modelo",
+   "Recorte por norma del gradiente durante el entrenamiento de redes",
+   "Normalizar embeddings antes de la búsqueda por similitud"
+  ],
+  "x": "Un equipo que entrena un Transformer grande recorta la norma L2 global de los gradientes a 1,0 en cada paso. Registrar la norma del gradiente antes del recorte les da además una señal de alerta temprana, porque los picos repentinos suelen preceder a la divergencia de la pérdida."
+ },
+ "euclidean": {
+  "n": "Distancia euclídea",
+  "d": "La distancia euclídea es la distancia en línea recta entre dos puntos, calculada como la raíz cuadrada de la suma de las diferencias al cuadrado en todas las coordenadas. Es la norma L2 del vector diferencia y coincide con la distancia geométrica habitual en dos o tres dimensiones.\n\nMuchos algoritmos dependen directamente de ella: k vecinos más cercanos busca los puntos de entrenamiento más próximos, k-means asigna cada punto al centroide más cercano y minimiza la distancia euclídea al cuadrado, los kernels RBF de las SVM decaen con ella y las bases de datos vectoriales suelen ofrecerla como métrica de búsqueda. Como cada coordenada contribuye en su propia escala, las variables deben estandarizarse antes; si no, una variable medida en dólares domina a otra medida en años. En un espacio de alta dimensión las distancias se concentran, de modo que el vecino más cercano y el más lejano quedan casi igual de lejos. Para vectores normalizados en L2, la distancia euclídea al cuadrado es igual a 2 − 2·cos θ, así que ordena los vecinos exactamente igual que la similitud del coseno.",
+  "u": [
+   "Búsqueda de vecinos más cercanos en modelos k-NN",
+   "Asignar puntos a clústeres en k-means",
+   "Búsqueda vectorial sobre embeddings normalizados"
+  ],
+  "x": "Una plataforma inmobiliaria recomienda viviendas comparables con k vecinos más cercanos a partir de la superficie, la antigüedad, la ubicación y el precio. Como las variables en bruto tenían escalas muy distintas, el equipo las estandariza antes de calcular las distancias euclídeas para que el precio deje de dominar el resultado."
+ },
+ "cosine": {
+  "n": "Similitud del coseno",
+  "d": "La similitud del coseno mide hasta qué punto dos vectores apuntan en la misma dirección y se calcula como su producto escalar dividido por el producto de sus longitudes. Va de −1 para direcciones opuestas, pasando por 0 para vectores ortogonales, hasta 1 para direcciones idénticas, e ignora por completo la longitud de los vectores.\n\nEs la similitud estándar para texto y embeddings, porque la dirección de un embedding codifica el significado, mientras que su longitud suele reflejar la frecuencia o el tamaño del documento. La búsqueda semántica, la recuperación para RAG, la detección de duplicados y la recomendación comparan embeddings de frases o de ítems mediante la similitud del coseno; los índices vectoriales suelen implementarla como un producto escalar sobre vectores normalizados en L2. La distancia del coseno se define como 1 − similitud del coseno. Una trampa es interpretar la puntuación como una probabilidad calibrada o comparar umbrales entre modelos: cada modelo de embeddings tiene su propio rango típico, y algunos producen puntuaciones todas altas, así que los umbrales deben ajustarse para cada modelo.",
+  "u": [
+   "Búsqueda semántica sobre embeddings de frases",
+   "Recuperar pasajes de contexto para sistemas RAG",
+   "Detectar documentos y preguntas casi duplicados"
+  ],
+  "x": "Una plataforma de atención al cliente calcula el embedding de cada pregunta entrante y la compara mediante la similitud del coseno con preguntas ya respondidas. Las coincidencias por encima de un umbral ajustado con pares etiquetados se sugieren a los agentes, y el umbral se vuelve a ajustar cada vez que cambia el modelo de embeddings."
+ },
+ "distmetric": {
+  "n": "Métrica de distancia",
+  "d": "Una métrica de distancia es una función que mide lo lejos que están dos objetos y cumple cuatro reglas: las distancias son no negativas, valen cero solo para objetos idénticos, son simétricas y cumplen la desigualdad triangular, d(x, z) ≤ d(x, y) + d(y, z). Las distancias euclídea, de Manhattan, de Chebyshov, de Hamming y de Jaccard son métricas habituales.\n\nLa elección de la métrica define qué significa \"similar\" para k vecinos más cercanos, k-means, el clustering jerárquico, DBSCAN y la búsqueda vectorial. La distancia de Manhattan se deja dominar menos por una sola diferencia grande que la euclídea; la de Hamming es adecuada para códigos binarios; la de Jaccard compara conjuntos; la distancia de Mahalanobis tiene en cuenta las variables correlacionadas. Algunas medidas populares no son métricas verdaderas: la distancia del coseno y la distancia euclídea al cuadrado incumplen la desigualdad triangular, y la divergencia KL ni siquiera es simétrica. Esto importa porque estructuras de índice como los ball trees y algunas garantías de clustering suponen una métrica verdadera, y una elección inadecuada puede devolver vecinos erróneos sin avisar.",
+  "u": [
+   "Elegir la métrica para k-NN y clustering",
+   "Comparar huellas binarias con la distancia de Hamming",
+   "Medir el solapamiento entre conjuntos con la distancia de Jaccard"
+  ],
+  "x": "Un grupo de investigación en química busca en una biblioteca de compuestos codificando cada molécula como una huella binaria y comparando las huellas con la distancia de Jaccard (Tanimoto). Esta métrica refleja las subestructuras compartidas mucho mejor que la distancia euclídea sobre los mismos bits."
+ },
+ "projection": {
+  "n": "Proyección",
+  "d": "Una proyección lleva un vector a una recta, un plano u otro subespacio buscando el punto más cercano dentro de ese subespacio. La proyección de x sobre una dirección u es la componente de x a lo largo de u; lo que queda, x menos su proyección, es ortogonal al subespacio.\n\nLa proyección es la geometría que hay detrás de varios métodos fundamentales. La regresión lineal por mínimos cuadrados proyecta el vector objetivo sobre el espacio generado por las columnas de variables, y el residuo es ortogonal a cada variable. El PCA proyecta los datos sobre las pocas direcciones de mayor varianza para reducir la dimensión. Las proyecciones aleatorias, justificadas por el lema de Johnson-Lindenstrauss, conservan aproximadamente las distancias mientras reducen la dimensión. En las redes neuronales, las proyecciones de query, key y value son simplemente capas lineales aprendidas. Una trampa es proyectar sobre una dirección que no tiene longitud unitaria sin dividir por su norma al cuadrado, lo que escala mal el resultado.",
+  "u": [
+   "Reducir la dimensión con PCA antes de modelar",
+   "Ajuste por mínimos cuadrados en regresión lineal",
+   "Proyección aleatoria para reducir variables de alta dimensión"
+  ],
+  "x": "Un equipo de búsqueda almacena embeddings de documentos de 768 dimensiones, pero los proyecta a 128 dimensiones con un PCA ajustado sobre una muestra del corpus. Los vectores más pequeños reducen considerablemente la memoria del índice, y el recall se comprueba con un conjunto de consultas etiquetadas antes del despliegue."
+ },
+ "orthogonal": {
+  "n": "Ortogonalidad",
+  "d": "Dos vectores son ortogonales cuando su producto escalar es cero, lo que significa que forman un ángulo recto y ninguno tiene componente en la dirección del otro. Un conjunto de vectores unitarios ortogonales entre sí es ortonormal, y una matriz cuadrada cuyas columnas son ortonormales es una matriz ortogonal: rota o refleja los vectores sin cambiar su longitud, y su inversa es simplemente su traspuesta.\n\nLa ortogonalidad aparece en todo el machine learning. Las componentes principales del PCA son direcciones ortogonales, por lo que las variables transformadas están incorrelacionadas. Los residuos de mínimos cuadrados son ortogonales a cada columna de variables. La inicialización ortogonal mantiene estables las normas de la señal en redes profundas y recurrentes, y la descomposición QR construye bases ortonormales para solvers numéricos estables. En un espacio de alta dimensión, los vectores aleatorios son casi ortogonales, y por eso los embeddings no relacionados tienen una similitud del coseno cercana a cero. Una confusión común es equiparar ortogonal con independiente: para datos centrados, la ortogonalidad significa correlación nula, lo que no descarta una dependencia no lineal.",
+  "u": [
+   "Componentes incorrelacionadas producidas por el PCA",
+   "Inicialización ortogonal de los pesos de redes recurrentes",
+   "Resolución estable de mínimos cuadrados mediante descomposición QR"
+  ],
+  "x": "Un equipo que entrena un modelo recurrente profundo para secuencias de sensores inicializa su matriz de pesos recurrentes como una matriz ortogonal. Como conserva la longitud de los vectores, las activaciones y los gradientes no explotan ni se desvanecen tan rápido en secuencias largas."
+ },
+ "eigen": {
+  "n": "Valores y vectores propios",
+  "d": "Un vector propio (autovector) de una matriz cuadrada A es un vector no nulo cuya dirección no cambia al aplicarle A; solo se escala, y el factor de escala es su valor propio (autovalor) λ. Es decir, Av = λv, de modo que a lo largo de un vector propio la matriz actúa como una simple multiplicación por un número.\n\nPara una matriz simétrica, como una matriz de covarianza, los vectores propios son ortogonales y los valores propios son reales, así que la matriz puede escribirse como QΛQᵀ. El PCA usa exactamente esto: los vectores propios de la matriz de covarianza son las componentes principales y los valores propios son las varianzas a lo largo de ellas. Los valores propios también describen la dinámica del entrenamiento: el mayor valor propio del hessiano limita la tasa de aprendizaje estable en el descenso de gradiente, y los valores propios mayores que 1 en las matrices de pesos recurrentes provocan señales que explotan. Un error frecuente es creer que toda matriz tiene valores propios reales; las matrices no simétricas, como las rotaciones, pueden tenerlos complejos.",
+  "u": [
+   "Componentes principales a partir de la matriz de covarianza",
+   "Clustering espectral sobre laplacianos de grafos",
+   "Analizar la curvatura y la estabilidad durante el entrenamiento"
+  ],
+  "x": "Un equipo de analítica de fraude aplica clustering espectral a un grafo de cuentas que comparten dispositivos. Los vectores propios del laplaciano del grafo con los valores propios más pequeños separan grupos de cuentas muy conectadas, que se envían a los investigadores como posibles redes de fraude."
+ },
+ "matrank": {
+  "n": "Rango de una matriz",
+  "d": "El rango de una matriz es el número de filas linealmente independientes, que siempre coincide con el número de columnas linealmente independientes. Cuenta cuántas direcciones realmente distintas contiene la matriz; una matriz m×n tiene rango como máximo min(m, n), y es de rango completo cuando alcanza ese límite.\n\nEl rango importa siempre que haya variables o parámetros redundantes. Si una matriz de diseño es de rango deficiente, por ejemplo cuando una codificación one-hot completa convive con un intercepto, la regresión lineal no tiene solución única; una regularización como la regresión ridge o eliminar una columna lo resuelve. La estructura de bajo rango también se explota deliberadamente: la SVD truncada, la factorización de matrices y LoRA, que hace fine-tuning de un modelo grande aprendiendo una actualización de pesos de rango pequeño r. Una trampa es calcular el rango exacto sobre datos en coma flotante: el ruido hace que casi toda matriz sea técnicamente de rango completo, así que el rango numérico se juzga por cuántos valores singulares superan una tolerancia.",
+  "u": [
+   "Detectar variables redundantes en regresión lineal",
+   "Factorización de matrices de bajo rango para recomendación",
+   "Adaptadores de bajo rango como LoRA para fine-tuning"
+  ],
+  "x": "Un analista que construye una regresión de precios obtiene coeficientes enormes e inestables y descubre que la matriz de diseño es de rango deficiente porque las columnas one-hot de la región suman exactamente la columna del intercepto. Eliminar una categoría por variable restablece el rango completo y unas estimaciones estables."
+ },
+ "covmatrix": {
+  "n": "Matriz de covarianza",
+  "d": "Una matriz de covarianza reúne las covarianzas entre cada par de variables de un conjunto de datos: el elemento (i, j) es la covarianza de la variable i con la variable j, y la diagonal contiene la varianza de cada variable. Para d variables es una matriz simétrica d×d que siempre es semidefinida positiva.\n\nResume la dispersión lineal y la covariación de los datos en su conjunto. El PCA toma sus vectores propios como componentes principales; la distribución normal multivariante, los modelos de mezcla gaussiana y el LDA se parametrizan con ella; la distancia de Mahalanobis usa su inversa para medir distancias en unidades que tienen en cuenta las variables correlacionadas; el blanqueo (whitening) transforma los datos para que su covarianza sea la identidad. Dividiendo por las desviaciones típicas se convierte en la matriz de correlación. Una trampa clave es estimarla con pocas muestras en relación con el número de variables: la covarianza muestral se vuelve ruidosa o singular y no puede invertirse, por lo que se usan en su lugar estimadores de contracción (shrinkage) como Ledoit-Wolf.",
+  "u": [
+   "Calcular las componentes principales para el PCA",
+   "Distancia de Mahalanobis para detección de anomalías multivariante",
+   "Estimación del riesgo de una cartera a partir de rentabilidades"
+  ],
+  "x": "Un equipo de calidad en una fábrica ajusta una matriz de covarianza a las lecturas de muchos sensores correlacionados durante el funcionamiento normal. Las nuevas lecturas se marcan cuando su distancia de Mahalanobis es inusualmente grande, y un estimador de Ledoit-Wolf mantiene estable la inversa pese a disponer de pocos datos normales."
+ },
+ "derivative": {
+  "n": "Derivada",
+  "d": "La derivada de una función en un punto es su tasa de cambio instantánea: cuánto cambia la salida por unidad de cambio de la entrada, para un cambio infinitesimalmente pequeño. Geométricamente es la pendiente de la recta tangente a la curva en ese punto.\n\nLas derivadas son la forma en que aprenden los modelos. El entrenamiento minimiza una pérdida, y la derivada de la pérdida respecto a un parámetro indica en qué dirección, y con qué pendiente, cambia la pérdida si se mueve un poco ese parámetro. El descenso de gradiente da pasos en contra de esa pendiente. La retropropagación aplica la regla de la cadena, que multiplica las derivadas de funciones anidadas, para obtener las derivadas a través de cada capa de una red neuronal, y los frameworks las calculan mediante diferenciación automática y no con fórmulas simbólicas ni diferencias finitas. Una trampa es suponer que toda función usada en el entrenamiento es derivable en todas partes: ReLU y el valor absoluto tienen un pico en cero, donde los frameworks simplemente eligen un subgradiente por convención.",
+  "u": [
+   "Calcular la pendiente de la pérdida en el entrenamiento basado en gradientes",
+   "Regla de la cadena a través de las capas en la retropropagación",
+   "Verificar gradientes analíticos con diferencias finitas"
+  ],
+  "x": "Un ingeniero que escribe una pérdida personalizada para un modelo de ranking verifica su implementación comparando la derivada de autograd de PyTorch con una estimación por diferencias finitas sobre entradas aleatorias. Una discrepancia revela un factor que faltaba en una función backward escrita a mano."
+ },
+ "partialderiv": {
+  "n": "Derivada parcial",
+  "d": "Una derivada parcial mide cómo cambia una función de varias variables cuando varía una entrada y todas las demás se mantienen fijas. Para f(x, y), ∂f/∂x es la pendiente en la dirección x en un punto, calculada tratando y como una constante.\n\nLa pérdida de un modelo depende de muchos parámetros a la vez, a menudo millones o miles de millones, y la derivada parcial respecto a cada parámetro indica cómo responde la pérdida al cambiar solo ese parámetro. Reunir todas las derivadas parciales da el gradiente, que siguen el descenso de gradiente y Adam; la retropropagación las calcula todas de forma eficiente en una sola pasada hacia atrás. Una trampa es interpretar una derivada parcial como el efecto total de una entrada: cuando las entradas están correlacionadas, cambiar una suele mover también otras, así que la pendiente de una en una puede ser engañosa para la interpretación.",
+  "u": [
+   "Pendiente de la pérdida por parámetro durante el entrenamiento de redes",
+   "Derivar reglas de actualización para modelos lineales",
+   "Análisis de sensibilidad de las salidas del modelo a las entradas"
+  ],
+  "x": "Un equipo de precios calcula la derivada parcial de la salida de un modelo de demanda respecto al precio, manteniendo fijas las demás entradas, para estimar la sensibilidad local al precio de cada producto. Tratan el resultado con cautela porque en los datos de entrenamiento el precio está correlacionado con las promociones."
+ },
+ "gradient": {
+  "n": "Gradiente",
+  "d": "El gradiente de una función de varias variables es el vector de todas sus derivadas parciales. En cualquier punto apunta en la dirección en la que la función crece más rápido, y su longitud es la tasa de ese crecimiento; moverse en perpendicular a él deja la función sin cambios en primer orden.\n\nEntrenar un modelo consiste en seguir el gradiente negativo de la pérdida respecto a los parámetros: el descenso de gradiente, SGD, momentum y Adam lo usan, y la retropropagación lo calcula de forma eficiente en las redes neuronales. Los gradientes respecto a las entradas también son útiles, para mapas de saliencia, ejemplos adversarios y gradientes integrados. Los problemas prácticos giran en torno al tamaño del gradiente: el desvanecimiento de gradientes estanca el aprendizaje en redes profundas, la explosión de gradientes lo hace divergir, y el recorte de gradientes, las capas de normalización y las conexiones residuales abordan ambos. Una trampa es olvidar reiniciar los gradientes acumulados entre pasos en PyTorch, lo que suma en silencio los gradientes de varios lotes.",
+  "u": [
+   "Actualización de parámetros en el descenso de gradiente y Adam",
+   "Mapas de saliencia a partir de gradientes de entrada",
+   "Vigilar las normas del gradiente para la estabilidad del entrenamiento"
+  ],
+  "x": "Un equipo que hace fine-tuning de un modelo grande registra la norma del gradiente de cada capa. Cuando se eliminó por accidente el warmup de la tasa de aprendizaje, los registros mostraron picos en la norma del gradiente en los primeros pasos, lo que explicó por qué la pérdida había divergido."
+ },
+ "jacobian": {
+  "n": "Jacobiano",
+  "d": "El jacobiano de una función que lleva n entradas a m salidas es la matriz m×n de todas sus derivadas parciales de primer orden: la fila i contiene el gradiente de la salida i. Es la mejor aproximación lineal de la función cerca de un punto y describe cómo un pequeño cambio en cada entrada mueve cada salida.\n\nLa retropropagación es una cadena de productos de jacobianos: el jacobiano de cada capa lleva los cambios de su entrada a cambios de su salida, y la diferenciación automática en modo inverso multiplica un vector fila por estos jacobianos desde la pérdida hacia atrás, razón por la que nunca necesita construir jacobianos completos de forma explícita. Su determinante mide cómo la función estira el volumen, lo que usan los flujos normalizadores (normalizing flows) para obtener verosimilitudes exactas. Su norma respecto a las entradas mide la sensibilidad. Una trampa es materializar el jacobiano completo de una red grande: su tamaño es el número de salidas por el de entradas, así que conviene usar productos vector-jacobiano o jacobiano-vector.",
+  "u": [
+   "Diferenciación automática en modo inverso en deep learning",
+   "Verosimilitud por cambio de variables en flujos normalizadores",
+   "Medir la sensibilidad a las entradas para análisis de robustez"
+  ],
+  "x": "Un equipo de investigación que construye un flujo normalizador para estimar densidades diseña cada capa de modo que su jacobiano sea triangular. El logaritmo del determinante se reduce entonces a una suma sobre la diagonal, lo que mantiene barato el cálculo exacto de la verosimilitud para entradas de alta dimensión."
+ },
+ "hessian": {
+  "n": "Hessiano",
+  "d": "El hessiano (matriz hessiana) de una función escalar de varias variables es la matriz cuadrada de sus derivadas parciales de segundo orden. El elemento (i, j) es ∂²f/∂xᵢ∂xⱼ, y la matriz describe la curvatura de la función: cómo cambia el propio gradiente al moverse en cada dirección.\n\nEn un punto donde el gradiente es cero, el hessiano lo clasifica: si todos los valores propios son positivos es un mínimo local, si todos son negativos un máximo, y con signos mixtos un punto de silla, algo habitual en las superficies de pérdida de las redes neuronales. El método de Newton usa la inversa del hessiano para dar pasos que tienen en cuenta la curvatura, y los métodos cuasi-Newton como L-BFGS la aproximan; los solvers de regresión logística y el boosting de segundo orden de XGBoost lo usan directamente. Su mayor valor propio limita la tasa de aprendizaje estable del descenso de gradiente. La trampa es el tamaño: para d parámetros tiene d² elementos, así que en redes profundas se usan productos hessiano-vector en lugar de la matriz completa.",
+  "u": [
+   "Optimización de Newton y L-BFGS para modelos convexos",
+   "Gradient boosting de segundo orden en XGBoost",
+   "Analizar la curvatura y la agudeza de la superficie de pérdida"
+  ],
+  "x": "Un equipo que entrena una regresión logística con unos cientos de variables usa un solver de tipo Newton que construye el hessiano en cada paso. Converge en pocas iteraciones, lo cual importa porque el modelo se reentrena cada hora con datos nuevos."
+ },
+ "logsumexp": {
+  "n": "Log-sum-exp y estabilidad numérica",
+  "d": "Log-sum-exp calcula log(Σ exp(xᵢ)) evitando el desbordamiento (overflow) y el subdesbordamiento (underflow) mediante restar primero el valor máximo, con la identidad log Σ exp(xᵢ) = m + log Σ exp(xᵢ − m). En general, la estabilidad numérica consiste en organizar un cálculo para que el rango y la precisión limitados de los números en coma flotante no corrompan el resultado.\n\nEl truco está en todas partes en machine learning. Softmax resta el logit máximo antes de exponenciar; la pérdida de entropía cruzada se calcula a partir de los logits mediante log-softmax y no tomando el logaritmo de las probabilidades de softmax; los modelos de mezcla gaussiana y los HMM combinan probabilidades en espacio logarítmico. Hábitos relacionados son sumar log-verosimilitudes en lugar de multiplicar probabilidades pequeñas y el escalado de la pérdida en el entrenamiento con precisión mixta. Un error común es aplicar softmax y luego el logaritmo, o una sigmoide seguida de entropía cruzada binaria, en lugar de las funciones fusionadas: con logits grandes esto produce log(0) y pérdidas NaN.",
+  "u": [
+   "Softmax y entropía cruzada estables a partir de logits",
+   "Sumar probabilidades en espacio logarítmico en modelos de mezcla",
+   "Evitar pérdidas NaN en el entrenamiento con precisión mixta"
+  ],
+  "x": "Un equipo observa pérdidas NaN ocasionales al entrenar un clasificador en float16. La causa es un logaritmo manual de las salidas de softmax que sufren subdesbordamiento hasta cero, y cambiar a la entropía cruzada fusionada del framework sobre los logits en bruto elimina los NaN."
+ },
+ "nonlinearity": {
+  "n": "Linealidad frente a no linealidad",
+  "d": "Una función es lineal cuando escalar su entrada escala su salida por el mismo factor y la salida para una suma de entradas es igual a la suma de las salidas; en la práctica esto significa que las salidas son sumas ponderadas de las entradas, posiblemente más una constante. Una función no lineal rompe estas reglas, como ocurre con los cuadrados, los umbrales, los productos de variables o una ReLU.\n\nLa distinción decide qué puede representar un modelo. La regresión lineal y la regresión logística producen funciones de decisión lineales, por lo que no pueden captar patrones tipo XOR ni interacciones a menos que se añadan variables no lineales. Apilar capas lineales en una red neuronal sigue dando una única aplicación lineal, y por eso se colocan funciones de activación como ReLU, GELU o la sigmoide entre las capas; con ellas, una red puede aproximar cualquier función continua. Un error frecuente es creer que la regresión logística es no lineal por su sigmoide: su frontera de decisión sigue siendo un hiperplano recto en el espacio de variables.",
+  "u": [
+   "Funciones de activación entre las capas de una red neuronal",
+   "Variables polinómicas y splines para modelos lineales",
+   "Métodos kernel para fronteras de decisión curvas"
+  ],
+  "x": "Un equipo de analítica descubre que su regresión logística para la aprobación de préstamos no capta un patrón en el que el riesgo solo sube cuando tanto la deuda como la utilización del crédito son altas. Un modelo de árboles de gradient boosting capta esta interacción no lineal sin ingeniería de variables manual."
+ },
+ "highdim": {
+  "n": "Espacio de alta dimensión",
+  "d": "Un espacio de alta dimensión es un espacio vectorial con muchas coordenadas, desde decenas hasta muchos miles, como un embedding de frase de 768 dimensiones o un vector TF-IDF sobre un vocabulario grande. Allí la geometría se comporta de forma muy distinta a las dos o tres dimensiones que podemos imaginar.\n\nEl volumen se concentra cerca de la superficie de una bola, los vectores aleatorios son casi ortogonales y las distancias entre puntos aleatorios se vuelven casi iguales, de modo que el cociente entre el vecino más cercano y el más lejano se acerca a uno. Es la maldición de la dimensionalidad: los métodos basados en distancias, como k vecinos más cercanos y k-means, pierden contraste, y la cantidad de datos necesaria para cubrir el espacio crece exponencialmente. Los datos reales suelen estar cerca de una variedad de dimensión mucho menor, y por eso funcionan el PCA, UMAP y los embeddings aprendidos, y por eso sigue siendo útil la búsqueda aproximada de vecinos más cercanos sobre embeddings. Un error frecuente es creer que más variables siempre ayudan; las dimensiones irrelevantes añaden ruido a las distancias y favorecen el sobreajuste.",
+  "u": [
+   "Búsqueda vectorial en espacios de embeddings densos",
+   "Reducción de dimensionalidad antes del clustering o k-NN",
+   "Regularizar modelos con muchas variables y pocas muestras"
+  ],
+  "x": "Un equipo de genómica con decenas de miles de variables de expresión génica por paciente y solo unos cientos de pacientes aplica PCA antes del clustering. Sin reducción, las distancias de k-means estaban dominadas por genes de ruido y producían clústeres inestables."
+ }
+}

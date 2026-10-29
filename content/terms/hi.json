@@ -1,0 +1,2824 @@
+{
+ "eda": [
+  "Exploratory Data Analysis (EDA)",
+  "Exploratory Data Analysis",
+  "exploratory data analysis",
+  "EDA"
+ ],
+ "supervised": [
+  "Supervised Learning (पर्यवेक्षित अधिगम)",
+  "Supervised Learning",
+  "पर्यवेक्षित अधिगम",
+  "supervised learning",
+  "supervised training"
+ ],
+ "unsupervised": [
+  "Unsupervised Learning (अपर्यवेक्षित अधिगम)",
+  "Unsupervised Learning",
+  "अपर्यवेक्षित अधिगम",
+  "unsupervised learning",
+  "unsupervised"
+ ],
+ "selfsup": [
+  "Self-Supervised Learning (स्व-पर्यवेक्षित अधिगम)",
+  "Self-Supervised Learning",
+  "स्व-पर्यवेक्षित अधिगम",
+  "self-supervised learning",
+  "self-supervised"
+ ],
+ "rl": [
+  "Reinforcement Learning (सुदृढ़ीकरण अधिगम)",
+  "Reinforcement Learning",
+  "सुदृढ़ीकरण अधिगम",
+  "reinforcement learning"
+ ],
+ "split": [
+  "Train / Validation / Test Split",
+  "validation set",
+  "test set",
+  "held-out set",
+  "validation split",
+  "training set",
+  "train/test splits",
+  "test sets",
+  "training sets"
+ ],
+ "cv": [
+  "Cross-Validation (क्रॉस-वैलिडेशन)",
+  "Cross-Validation",
+  "क्रॉस-वैलिडेशन",
+  "cross-validation",
+  "cross-validated",
+  "k-fold cross-validation",
+  "k-fold"
+ ],
+ "stratified": [
+  "Stratified Sampling (स्तरीकृत नमूनाकरण)",
+  "Stratified Sampling",
+  "स्तरीकृत नमूनाकरण",
+  "stratified sampling",
+  "stratified split",
+  "stratification",
+  "stratified"
+ ],
+ "leak": [
+  "Data Leakage (डेटा लीकेज)",
+  "Data Leakage",
+  "डेटा लीकेज",
+  "data leakage",
+  "leakage",
+  "target leakage",
+  "label leakage"
+ ],
+ "overfit": [
+  "Overfitting (ओवरफिटिंग)",
+  "Overfitting",
+  "ओवरफिटिंग",
+  "overfit"
+ ],
+ "underfit": [
+  "Underfitting (अंडरफिटिंग)",
+  "Underfitting",
+  "अंडरफिटिंग",
+  "underfit"
+ ],
+ "biasvar": [
+  "Bias–Variance Tradeoff",
+  "bias–variance tradeoff",
+  "bias-variance tradeoff",
+  "bias–variance",
+  "bias-variance"
+ ],
+ "curse": [
+  "Curse of Dimensionality (आयामीयता का अभिशाप)",
+  "Curse of Dimensionality",
+  "आयामीयता का अभिशाप",
+  "curse of dimensionality"
+ ],
+ "learncurve": [
+  "Learning Curve",
+  "learning curve",
+  "learning curves"
+ ],
+ "drift": [
+  "Data Drift और Distribution Shift",
+  "data drift",
+  "distribution shift",
+  "concept drift",
+  "drift"
+ ],
+ "minmax": [
+  "Min-Max Normalization",
+  "min-max normalization",
+  "min-max scaling",
+  "min-max"
+ ],
+ "standard": [
+  "Standardization (Z-score मानकीकरण)",
+  "Standardization",
+  "Z-score मानकीकरण",
+  "standardize",
+  "standardized",
+  "z-score",
+  "z-scores",
+  "StandardScaler"
+ ],
+ "robust": [
+  "Robust Scaling",
+  "robust scaling"
+ ],
+ "logtf": [
+  "Log Transform (लघुगणकीय रूपांतरण)",
+  "Log Transform",
+  "लघुगणकीय रूपांतरण",
+  "log transform",
+  "log-transform",
+  "log-transformed",
+  "log transforms"
+ ],
+ "boxcox": [
+  "Box-Cox Transform",
+  "Box-Cox transform",
+  "Box-Cox",
+  "Yeo-Johnson"
+ ],
+ "impute": [
+  "Missing Value Imputation",
+  "imputation",
+  "missing value imputation",
+  "impute",
+  "imputer",
+  "imputers"
+ ],
+ "outlier": [
+  "Outlier Handling",
+  "outlier",
+  "outliers",
+  "outlier handling"
+ ],
+ "clipwin": [
+  "Clipping और Winsorizing",
+  "winsorizing",
+  "winsorize"
+ ],
+ "onehot": [
+  "One-Hot Encoding",
+  "one-hot encoding",
+  "one-hot",
+  "one-hot encoded",
+  "one-hot encodings"
+ ],
+ "targetenc": [
+  "Target Encoding",
+  "target encoding",
+  "target-encoded",
+  "target encoder",
+  "target encoders"
+ ],
+ "freqenc": [
+  "Frequency Encoding",
+  "frequency encoding"
+ ],
+ "binning": [
+  "Binning (Discretization / विविक्तीकरण)",
+  "Binning",
+  "विविक्तीकरण"
+ ],
+ "featureeng": [
+  "Feature Engineering",
+  "feature engineering",
+  "engineered features"
+ ],
+ "lagfeat": [
+  "Lag Features",
+  "lag features"
+ ],
+ "rollfeat": [
+  "Rolling Window Features",
+  "rolling window features",
+  "rolling mean",
+  "rolling means",
+  "rolling window",
+  "rolling statistics"
+ ],
+ "imbalance": [
+  "Class Imbalance (वर्ग असंतुलन)",
+  "Class Imbalance",
+  "वर्ग असंतुलन",
+  "class imbalance",
+  "imbalanced"
+ ],
+ "smote": [
+  "SMOTE Oversampling",
+  "SMOTE"
+ ],
+ "undersample": [
+  "Undersampling",
+  "undersampled"
+ ],
+ "classweight": [
+  "Class Weights",
+  "class weights",
+  "class_weight",
+  "class weighting"
+ ],
+ "featsel": [
+  "Feature Selection",
+  "feature selection"
+ ],
+ "vif": [
+  "Multicollinearity और VIF",
+  "multicollinearity",
+  "VIF",
+  "variance inflation factor",
+  "collinear"
+ ],
+ "dimred": [
+  "Dimensionality Reduction (आयाम न्यूनीकरण)",
+  "Dimensionality Reduction",
+  "आयाम न्यूनीकरण",
+  "dimensionality reduction"
+ ],
+ "l1": [
+  "L1 Regularization (Lasso)",
+  "L1 Regularization",
+  "L1 regularization",
+  "lasso",
+  "L1 penalty"
+ ],
+ "l2": [
+  "L2 Regularization (Ridge)",
+  "L2 Regularization",
+  "L2 regularization",
+  "ridge regression",
+  "ridge",
+  "L2 penalty"
+ ],
+ "elasticnet": [
+  "Elastic Net",
+  "elastic net"
+ ],
+ "weightdecay": [
+  "Weight Decay",
+  "weight decay"
+ ],
+ "dropout": [
+  "Dropout"
+ ],
+ "earlystop": [
+  "Early Stopping",
+  "early stopping"
+ ],
+ "augment": [
+  "Data Augmentation",
+  "data augmentation",
+  "augmentation",
+  "augmentations"
+ ],
+ "labelsmooth": [
+  "Label Smoothing",
+  "label smoothing"
+ ],
+ "batchnorm": [
+  "Batch Normalization",
+  "batch normalization",
+  "BatchNorm",
+  "batch norm"
+ ],
+ "layernorm": [
+  "Layer Normalization",
+  "layer normalization",
+  "LayerNorm"
+ ],
+ "rmsnorm": [
+  "RMSNorm"
+ ],
+ "gradclip": [
+  "Gradient Clipping",
+  "gradient clipping"
+ ],
+ "linreg": [
+  "Linear Regression (रैखिक प्रतिगमन)",
+  "Linear Regression",
+  "रैखिक प्रतिगमन",
+  "linear regression",
+  "ordinary least squares",
+  "OLS",
+  "least squares"
+ ],
+ "tls": [
+  "Total Least Squares",
+  "total least squares",
+  "TLS",
+  "orthogonal regression"
+ ],
+ "polyreg": [
+  "Polynomial Regression",
+  "polynomial regression",
+  "polynomial features"
+ ],
+ "logreg": [
+  "Logistic Regression",
+  "logistic regression"
+ ],
+ "knn": [
+  "k-Nearest Neighbors (KNN)",
+  "k-Nearest Neighbors",
+  "k-nearest neighbors",
+  "KNN",
+  "k-NN",
+  "nearest neighbors",
+  "nearest neighbor"
+ ],
+ "naivebayes": [
+  "Naive Bayes"
+ ],
+ "svm": [
+  "Support Vector Machine (SVM)",
+  "Support Vector Machine",
+  "support vector machine",
+  "support vector machines",
+  "SVM",
+  "SVMs",
+  "support vectors",
+  "support vector"
+ ],
+ "kerneltrick": [
+  "Kernel Trick",
+  "kernel trick",
+  "RBF kernel",
+  "kernel function",
+  "kernel matrix"
+ ],
+ "lda": [
+  "Linear Discriminant Analysis (LDA)",
+  "Linear Discriminant Analysis",
+  "linear discriminant analysis",
+  "LDA"
+ ],
+ "perceptron": [
+  "Perceptron",
+  "perceptrons"
+ ],
+ "dtree": [
+  "Decision Tree (निर्णय वृक्ष)",
+  "Decision Tree",
+  "निर्णय वृक्ष",
+  "decision tree",
+  "decision trees"
+ ],
+ "gini": [
+  "Gini Impurity",
+  "Gini impurity",
+  "Gini"
+ ],
+ "entropy": [
+  "Entropy और Information Gain",
+  "entropy",
+  "information gain"
+ ],
+ "cart": [
+  "CART और Axis-Aligned Splits",
+  "CART",
+  "axis-aligned splits",
+  "axis-aligned"
+ ],
+ "pruning": [
+  "Tree Pruning",
+  "tree pruning",
+  "cost-complexity pruning"
+ ],
+ "bootstrap": [
+  "Bootstrap Sampling",
+  "bootstrap sampling",
+  "bootstrap sample",
+  "bootstrap samples",
+  "bootstrap",
+  "bootstrapping"
+ ],
+ "bagging": [
+  "Bagging",
+  "bagged"
+ ],
+ "oob": [
+  "Out-of-Bag (OOB) Score",
+  "Out-of-Bag Score",
+  "out-of-bag",
+  "OOB"
+ ],
+ "rf": [
+  "Random Forest (रैंडम फ़ॉरेस्ट)",
+  "Random Forest",
+  "रैंडम फ़ॉरेस्ट",
+  "random forest",
+  "random forests"
+ ],
+ "maxfeat": [
+  "Feature Subsampling (max_features)",
+  "Feature Subsampling",
+  "feature subsampling",
+  "max_features"
+ ],
+ "extratrees": [
+  "Extra Trees",
+  "extra trees",
+  "extremely randomized trees"
+ ],
+ "boosting": [
+  "Boosting",
+  "boosted"
+ ],
+ "adaboost": [
+  "AdaBoost"
+ ],
+ "gbm": [
+  "Gradient Boosting",
+  "gradient boosting",
+  "gradient-boosted",
+  "gradient-boosted trees"
+ ],
+ "xgboost": [
+  "XGBoost"
+ ],
+ "lightgbm": [
+  "LightGBM"
+ ],
+ "catboost": [
+  "CatBoost"
+ ],
+ "goss": [
+  "GOSS (Gradient-based One-Side Sampling)",
+  "GOSS",
+  "gradient-based one-side sampling"
+ ],
+ "histsplit": [
+  "Histogram-Based Splitting",
+  "histogram-based splitting",
+  "histogram-based"
+ ],
+ "subsample": [
+  "Row Subsampling (Stochastic GB)",
+  "Row Subsampling",
+  "row subsampling",
+  "stochastic gradient boosting"
+ ],
+ "shrinkage": [
+  "Shrinkage (Boosting में Learning Rate)",
+  "Shrinkage",
+  "Boosting में Learning Rate"
+ ],
+ "stacking": [
+  "Stacking",
+  "meta-learner"
+ ],
+ "voting": [
+  "Voting Ensemble",
+  "voting ensemble",
+  "soft voting",
+  "hard voting",
+  "majority vote",
+  "majority voting"
+ ],
+ "confusion": [
+  "Confusion Matrix",
+  "confusion matrix",
+  "confusion matrices",
+  "True और False Positives",
+  "true positives",
+  "false positives",
+  "true positive",
+  "false positive",
+  "true negatives",
+  "false negatives",
+  "true negative",
+  "false negative",
+  "false alarms",
+  "false alarm"
+ ],
+ "accuracy": [
+  "Accuracy"
+ ],
+ "precision": [
+  "Precision (परिशुद्धता)",
+  "Precision",
+  "परिशुद्धता"
+ ],
+ "recall": [
+  "Recall (रिकॉल)",
+  "Recall",
+  "रिकॉल"
+ ],
+ "f1": [
+  "F1 Score",
+  "F1 score",
+  "F1"
+ ],
+ "roc": [
+  "ROC Curve",
+  "ROC curve",
+  "ROC curves",
+  "ROC"
+ ],
+ "rocauc": [
+  "ROC-AUC",
+  "AUC"
+ ],
+ "prcurve": [
+  "Precision–Recall Curve",
+  "precision–recall curve",
+  "PR curve",
+  "PR curves",
+  "precision–recall curves"
+ ],
+ "prauc": [
+  "PR-AUC",
+  "average precision"
+ ],
+ "threshold": [
+  "Decision Threshold",
+  "decision threshold",
+  "decision thresholds",
+  "threshold tuning"
+ ],
+ "calibration": [
+  "Probability Calibration",
+  "probability calibration",
+  "calibration",
+  "calibrated",
+  "miscalibrated",
+  "Platt scaling",
+  "isotonic regression",
+  "reliability diagram"
+ ],
+ "logloss": [
+  "Log Loss (Cross-Entropy)",
+  "Log Loss",
+  "log loss"
+ ],
+ "mse": [
+  "MSE / RMSE",
+  "MSE",
+  "RMSE",
+  "mean squared error",
+  "root mean squared error"
+ ],
+ "mae": [
+  "MAE",
+  "mean absolute error"
+ ],
+ "r2": [
+  "R² (निर्धारण गुणांक / Coefficient of Determination)",
+  "R²",
+  "निर्धारण गुणांक"
+ ],
+ "mdi": [
+  "Mean Decrease in Impurity (MDI)",
+  "Mean Decrease in Impurity",
+  "mean decrease in impurity",
+  "MDI"
+ ],
+ "permimp": [
+  "Permutation Importance",
+  "permutation importance"
+ ],
+ "shap": [
+  "SHAP (Shapley Values)",
+  "SHAP",
+  "Shapley values",
+  "Shapley value",
+  "SHAP values",
+  "Shapley"
+ ],
+ "treeshap": [
+  "TreeSHAP"
+ ],
+ "pdp": [
+  "Partial Dependence Plot (PDP)",
+  "Partial Dependence Plot",
+  "partial dependence plot",
+  "partial dependence plots",
+  "PDP",
+  "partial dependence"
+ ],
+ "ice": [
+  "ICE Plot (Individual Conditional Expectation)",
+  "ICE Plot",
+  "ICE plots",
+  "ICE curves",
+  "individual conditional expectation"
+ ],
+ "lime": [
+  "LIME (Local Interpretable Model-agnostic Explanations)",
+  "LIME"
+ ],
+ "counterfactual": [
+  "Counterfactual व्याख्याएँ (Counterfactual Explanations)",
+  "Counterfactual व्याख्याएँ",
+  "counterfactual explanation",
+  "counterfactual",
+  "counterfactuals"
+ ],
+ "kmeans": [
+  "k-Means Clustering",
+  "k-means"
+ ],
+ "hierclust": [
+  "Hierarchical Clustering (पदानुक्रमित clustering)",
+  "Hierarchical Clustering",
+  "पदानुक्रमित clustering",
+  "hierarchical clustering",
+  "dendrogram"
+ ],
+ "dbscan": [
+  "DBSCAN",
+  "HDBSCAN"
+ ],
+ "gmm": [
+  "Gaussian Mixture Model (GMM)",
+  "Gaussian Mixture Model",
+  "Gaussian mixture model",
+  "Gaussian mixture models",
+  "Gaussian mixture",
+  "GMM",
+  "Gaussian mixtures"
+ ],
+ "em": [
+  "EM Algorithm (Expectation-Maximization)",
+  "EM Algorithm",
+  "EM algorithm",
+  "expectation-maximization"
+ ],
+ "pca": [
+  "PCA (Principal Component Analysis / मुख्य घटक विश्लेषण)",
+  "PCA",
+  "मुख्य घटक विश्लेषण",
+  "principal component analysis",
+  "principal components",
+  "principal component"
+ ],
+ "kpca": [
+  "Kernel PCA",
+  "kernel PCA"
+ ],
+ "svd": [
+  "Singular Value Decomposition (SVD)",
+  "Singular Value Decomposition",
+  "singular value decomposition",
+  "SVD",
+  "singular values",
+  "singular vectors",
+  "truncated SVD"
+ ],
+ "tsne": [
+  "t-SNE"
+ ],
+ "umap": [
+  "UMAP"
+ ],
+ "autoencoder": [
+  "Autoencoder",
+  "autoencoders"
+ ],
+ "isoforest": [
+  "Isolation Forest",
+  "isolation forest"
+ ],
+ "lof": [
+  "Local Outlier Factor (LOF)",
+  "Local Outlier Factor",
+  "local outlier factor",
+  "LOF"
+ ],
+ "spectral": [
+  "Spectral Clustering",
+  "spectral clustering"
+ ],
+ "stationarity": [
+  "Stationarity (स्थिरता)",
+  "Stationarity",
+  "stationary",
+  "non-stationary"
+ ],
+ "acf": [
+  "Autocorrelation (ACF / PACF)",
+  "Autocorrelation",
+  "ACF",
+  "PACF",
+  "partial autocorrelation"
+ ],
+ "decomp": [
+  "Seasonal Decomposition (मौसमी विघटन)",
+  "Seasonal Decomposition",
+  "मौसमी विघटन",
+  "seasonal decomposition",
+  "STL"
+ ],
+ "arima": [
+  "ARIMA"
+ ],
+ "sarima": [
+  "SARIMA"
+ ],
+ "prophet": [
+  "Prophet"
+ ],
+ "holtwinters": [
+  "Exponential Smoothing (Holt-Winters)",
+  "Exponential Smoothing",
+  "exponential smoothing",
+  "Holt-Winters",
+  "ETS"
+ ],
+ "tssplit": [
+  "समय-आधारित Validation (Time-Based Validation)",
+  "समय-आधारित Validation",
+  "time-based validation",
+  "time-based split",
+  "rolling-origin",
+  "backtesting"
+ ],
+ "multistep": [
+  "Multi-Step Forecasting (बहु-चरणीय पूर्वानुमान)",
+  "Multi-Step Forecasting",
+  "बहु-चरणीय पूर्वानुमान",
+  "multi-step forecasting",
+  "multi-step"
+ ],
+ "gbmts": [
+  "Time Series के लिए Gradient Boosting"
+ ],
+ "nbeats": [
+  "N-BEATS",
+  "N-HiTS"
+ ],
+ "tft": [
+  "Temporal Fusion Transformer (TFT)",
+  "Temporal Fusion Transformer",
+  "temporal fusion transformer",
+  "TFT"
+ ],
+ "patchtst": [
+  "PatchTST"
+ ],
+ "tsfm": [
+  "Time-Series Foundation Models",
+  "time-series foundation models",
+  "TimesFM",
+  "Chronos",
+  "Moirai"
+ ],
+ "gd": [
+  "Gradient Descent (प्रवणता अवतरण)",
+  "Gradient Descent",
+  "प्रवणता अवतरण",
+  "gradient descent"
+ ],
+ "sgd": [
+  "Stochastic Gradient Descent (SGD)",
+  "Stochastic Gradient Descent",
+  "stochastic gradient descent",
+  "SGD"
+ ],
+ "minibatch": [
+  "Mini-Batch",
+  "mini-batch"
+ ],
+ "momentum": [
+  "Momentum"
+ ],
+ "nesterov": [
+  "Nesterov Accelerated Gradient",
+  "Nesterov",
+  "Nesterov momentum",
+  "Nesterov accelerated gradient"
+ ],
+ "rmsprop": [
+  "RMSProp"
+ ],
+ "adam": [
+  "Adam"
+ ],
+ "adamw": [
+  "AdamW"
+ ],
+ "lr": [
+  "Learning Rate",
+  "learning rate",
+  "learning rates",
+  "step size",
+  "step sizes"
+ ],
+ "lrsched": [
+  "Learning Rate Schedules (learning rate अनुसूचियाँ)",
+  "Learning Rate Schedules",
+  "learning rate अनुसूचियाँ",
+  "learning rate schedule",
+  "learning rate schedules",
+  "learning-rate schedule",
+  "cosine schedule",
+  "cosine decay",
+  "cosine annealing",
+  "step decay",
+  "learning-rate schedules"
+ ],
+ "warmup": [
+  "Warmup"
+ ],
+ "landscape": [
+  "Loss Landscape",
+  "loss landscape",
+  "loss surfaces"
+ ],
+ "saddle": [
+  "Saddle Points (सैडल पॉइंट)",
+  "Saddle Points",
+  "सैडल पॉइंट",
+  "saddle point",
+  "saddle points"
+ ],
+ "sharpflat": [
+  "Sharp बनाम Flat Minima",
+  "sharp minima",
+  "flat minima",
+  "sharp minimum",
+  "flat minimum",
+  "SAM",
+  "sharpness-aware minimization"
+ ],
+ "convex": [
+  "Convex Optimization (उत्तल अनुकूलन)",
+  "Convex Optimization",
+  "उत्तल अनुकूलन",
+  "convex optimization",
+  "convex",
+  "non-convex"
+ ],
+ "newton": [
+  "Second-Order Methods (Newton)",
+  "Second-Order Methods",
+  "Newton's method",
+  "Newton",
+  "second-order methods",
+  "L-BFGS",
+  "BFGS",
+  "quasi-Newton"
+ ],
+ "gridsearch": [
+  "Grid Search",
+  "grid search",
+  "grid searches"
+ ],
+ "randsearch": [
+  "Random Search",
+  "random search"
+ ],
+ "bayesopt": [
+  "Bayesian Optimization",
+  "Bayesian optimization",
+  "Optuna"
+ ],
+ "neuron": [
+  "Artificial Neuron (कृत्रिम न्यूरॉन)",
+  "Artificial Neuron",
+  "कृत्रिम न्यूरॉन",
+  "artificial neuron",
+  "neuron",
+  "neurons"
+ ],
+ "mlp": [
+  "Multilayer Perceptron (MLP)",
+  "Multilayer Perceptron",
+  "multilayer perceptron",
+  "MLP",
+  "MLPs"
+ ],
+ "backprop": [
+  "Backpropagation",
+  "backward pass",
+  "backward passes"
+ ],
+ "autograd": [
+  "Chain Rule & Autograd",
+  "chain rule",
+  "autograd",
+  "automatic differentiation"
+ ],
+ "relu": [
+  "ReLU",
+  "Leaky ReLU"
+ ],
+ "sigmoid": [
+  "Sigmoid",
+  "sigmoids",
+  "logistic function"
+ ],
+ "tanh": [
+  "Tanh"
+ ],
+ "gelu": [
+  "GELU"
+ ],
+ "swiglu": [
+  "SwiGLU"
+ ],
+ "softmax": [
+  "Softmax"
+ ],
+ "xent": [
+  "Cross-Entropy Loss",
+  "cross-entropy loss",
+  "cross-entropy",
+  "binary cross-entropy",
+  "cross-entropy losses"
+ ],
+ "vanishing": [
+  "Vanishing & Exploding Gradients",
+  "vanishing gradients",
+  "exploding gradients",
+  "vanish",
+  "vanishing"
+ ],
+ "residual": [
+  "Residual Connections",
+  "residual connection",
+  "residual connections",
+  "skip connection",
+  "skip connections",
+  "residual stream",
+  "residual blocks",
+  "residual streams"
+ ],
+ "init": [
+  "Weight Initialization (Xavier / He)",
+  "Weight Initialization",
+  "weight initialization",
+  "Xavier initialization",
+  "He initialization",
+  "Xavier",
+  "Kaiming",
+  "initialization",
+  "initializations"
+ ],
+ "uat": [
+  "Universal Approximation Theorem (सार्वत्रिक सन्निकटन प्रमेय)",
+  "Universal Approximation Theorem",
+  "सार्वत्रिक सन्निकटन प्रमेय",
+  "universal approximation theorem",
+  "universal approximation"
+ ],
+ "embedding": [
+  "Embedding Layer",
+  "embedding layer",
+  "embedding layers",
+  "embedding table",
+  "embedding tables",
+  "embedding",
+  "embeddings",
+  "embedding matrix"
+ ],
+ "cnn": [
+  "Convolutional Neural Network (CNN)",
+  "Convolutional Neural Network",
+  "convolutional neural network",
+  "CNN",
+  "CNNs",
+  "convolutional network",
+  "convolutional networks"
+ ],
+ "convolution": [
+  "Convolution",
+  "convolutions",
+  "convolutional layer",
+  "convolutional layers",
+  "convolutional"
+ ],
+ "pooling": [
+  "Pooling",
+  "max pooling",
+  "average pooling",
+  "mean pooling",
+  "global average pooling"
+ ],
+ "resnet": [
+  "ResNet",
+  "ResNets",
+  "ResNet-50"
+ ],
+ "rnn": [
+  "Recurrent Neural Network (RNN)",
+  "Recurrent Neural Network",
+  "recurrent neural network",
+  "RNN",
+  "RNNs",
+  "recurrent network",
+  "recurrent networks",
+  "recurrent"
+ ],
+ "lstm": [
+  "LSTM",
+  "LSTMs",
+  "long short-term memory"
+ ],
+ "gru": [
+  "GRU",
+  "GRUs",
+  "gated recurrent unit"
+ ],
+ "bidir": [
+  "Bidirectional RNN",
+  "bidirectional"
+ ],
+ "seq2seq": [
+  "Seq2Seq",
+  "seq2seq",
+  "sequence-to-sequence"
+ ],
+ "word2vec": [
+  "Word2Vec",
+  "word2vec",
+  "skip-gram",
+  "CBOW",
+  "word embeddings"
+ ],
+ "unet": [
+  "U-Net",
+  "U-Nets"
+ ],
+ "gnn": [
+  "Graph Neural Network (GNN)",
+  "Graph Neural Network",
+  "graph neural network",
+  "graph neural networks",
+  "GNNs",
+  "GCN"
+ ],
+ "vit": [
+  "Vision Transformer (ViT)",
+  "Vision Transformer",
+  "vision transformer",
+  "vision transformers",
+  "ViT",
+  "ViTs"
+ ],
+ "clip": [
+  "CLIP"
+ ],
+ "contrastive": [
+  "Contrastive Learning",
+  "contrastive learning",
+  "contrastive",
+  "InfoNCE",
+  "SimCLR"
+ ],
+ "gan": [
+  "Generative Adversarial Network (GAN)",
+  "Generative Adversarial Network",
+  "generative adversarial network",
+  "GAN",
+  "GANs",
+  "discriminator",
+  "discriminators"
+ ],
+ "vae": [
+  "Variational Autoencoder (VAE)",
+  "Variational Autoencoder",
+  "variational autoencoder",
+  "variational autoencoders",
+  "VAE",
+  "VAEs",
+  "ELBO",
+  "reparameterization trick"
+ ],
+ "diffusion": [
+  "Diffusion Models",
+  "diffusion model",
+  "diffusion models",
+  "diffusion",
+  "DDPM"
+ ],
+ "latentdiff": [
+  "Latent Diffusion",
+  "latent diffusion",
+  "Stable Diffusion",
+  "latent diffusion models",
+  "latent diffusion model"
+ ],
+ "flowmatch": [
+  "Flow Matching",
+  "flow matching",
+  "rectified flow"
+ ],
+ "autoregressive": [
+  "Autoregressive Models",
+  "autoregressive"
+ ],
+ "dlm": [
+  "Diffusion Language Models",
+  "diffusion language model",
+  "diffusion language models"
+ ],
+ "attention": [
+  "Attention Mechanism",
+  "attention",
+  "attention weights",
+  "attention scores",
+  "attention heads",
+  "attend",
+  "scaled dot-product attention"
+ ],
+ "selfattn": [
+  "Self-Attention",
+  "self-attention"
+ ],
+ "qkv": [
+  "Query, Key, Value (Q, K, V)",
+  "Query, Key, Value",
+  "query vector",
+  "key vectors",
+  "value vectors"
+ ],
+ "mha": [
+  "Multi-Head Attention",
+  "multi-head attention"
+ ],
+ "crossattn": [
+  "Cross-Attention",
+  "cross-attention"
+ ],
+ "causalmask": [
+  "Causal Mask",
+  "causal mask",
+  "causal masking"
+ ],
+ "posenc": [
+  "Positional Encoding",
+  "positional encoding",
+  "positional encodings",
+  "position encoding",
+  "position embeddings",
+  "positional embeddings",
+  "position embedding",
+  "sinusoidal"
+ ],
+ "rope": [
+  "Rotary Position Embedding (RoPE)",
+  "Rotary Position Embedding",
+  "RoPE",
+  "rotary position embedding",
+  "rotary position embeddings",
+  "rotary"
+ ],
+ "alibi": [
+  "ALiBi (Attention with Linear Biases)",
+  "ALiBi"
+ ],
+ "transformer": [
+  "Transformer Block",
+  "transformer block",
+  "transformer blocks",
+  "transformer",
+  "transformers",
+  "transformer layer",
+  "transformer layers"
+ ],
+ "encoderonly": [
+  "Encoder-Only Models (BERT)",
+  "Encoder-Only Models",
+  "encoder-only",
+  "BERT",
+  "RoBERTa",
+  "DistilBERT"
+ ],
+ "decoderonly": [
+  "Decoder-Only Models (GPT)",
+  "Decoder-Only Models",
+  "decoder-only",
+  "GPT",
+  "GPT-2",
+  "GPT-3"
+ ],
+ "encdec": [
+  "Encoder–Decoder Models (T5)",
+  "Encoder–Decoder Models",
+  "encoder-decoder",
+  "T5",
+  "BART",
+  "encoder-decoders"
+ ],
+ "ffn": [
+  "Feed-Forward Network (FFN)",
+  "Feed-Forward Network",
+  "feed-forward network",
+  "feed-forward",
+  "feedforward",
+  "FFN",
+  "FFNs",
+  "feed-forward layer",
+  "feed-forward layers"
+ ],
+ "prenorm": [
+  "Pre-Norm बनाम Post-Norm",
+  "pre-norm",
+  "post-norm",
+  "Pre-LN",
+  "Post-LN"
+ ],
+ "tokenization": [
+  "Tokenization",
+  "tokenizer",
+  "tokenizers",
+  "tokenized",
+  "tokenize"
+ ],
+ "bpe": [
+  "Byte-Pair Encoding (BPE)",
+  "Byte-Pair Encoding",
+  "byte-pair encoding",
+  "BPE",
+  "WordPiece"
+ ],
+ "mlm": [
+  "Masked Language Modeling (MLM)",
+  "Masked Language Modeling",
+  "masked language modeling",
+  "MLM",
+  "masked tokens"
+ ],
+ "nexttoken": [
+  "Next-Token Prediction",
+  "next-token prediction",
+  "next-token"
+ ],
+ "kvcache": [
+  "KV Cache",
+  "KV cache",
+  "KV-cache",
+  "KV caching",
+  "key-value cache"
+ ],
+ "flashattn": [
+  "FlashAttention"
+ ],
+ "mqa": [
+  "Multi-Query Attention (MQA)",
+  "Multi-Query Attention",
+  "multi-query attention",
+  "MQA"
+ ],
+ "gqa": [
+  "Grouped-Query Attention (GQA)",
+  "Grouped-Query Attention",
+  "grouped-query attention",
+  "GQA"
+ ],
+ "swa": [
+  "Sliding Window Attention",
+  "sliding window attention",
+  "sliding window",
+  "sliding-window",
+  "sliding windows"
+ ],
+ "sparseattn": [
+  "Sparse Attention",
+  "sparse attention"
+ ],
+ "linattn": [
+  "Linear Attention",
+  "linear attention"
+ ],
+ "scaling": [
+  "Scaling Laws",
+  "scaling laws"
+ ],
+ "chinchilla": [
+  "Chinchilla-Optimal Training",
+  "Chinchilla",
+  "Chinchilla-optimal"
+ ],
+ "icl": [
+  "In-Context Learning (ICL)",
+  "In-Context Learning",
+  "in-context learning",
+  "few-shot",
+  "zero-shot",
+  "in-context"
+ ],
+ "pretrain": [
+  "Pretraining",
+  "pretrained",
+  "pretrain"
+ ],
+ "sft": [
+  "Supervised Fine-Tuning (SFT)",
+  "Supervised Fine-Tuning",
+  "supervised fine-tuning",
+  "SFT",
+  "instruction tuning"
+ ],
+ "rlhf": [
+  "RLHF (Reinforcement Learning from Human Feedback)",
+  "RLHF",
+  "reinforcement learning from human feedback"
+ ],
+ "rewardmodel": [
+  "Reward Model",
+  "reward model",
+  "reward models"
+ ],
+ "ppo": [
+  "PPO (Proximal Policy Optimization)",
+  "PPO",
+  "proximal policy optimization"
+ ],
+ "dpo": [
+  "DPO (Direct Preference Optimization)",
+  "DPO",
+  "direct preference optimization"
+ ],
+ "grpo": [
+  "GRPO (Group Relative Policy Optimization)",
+  "GRPO",
+  "group relative policy optimization"
+ ],
+ "rlvr": [
+  "RL with Verifiable Rewards (RLVR)",
+  "RL with Verifiable Rewards",
+  "RLVR",
+  "verifiable rewards"
+ ],
+ "cai": [
+  "Constitutional AI & RLAIF",
+  "Constitutional AI",
+  "RLAIF"
+ ],
+ "lora": [
+  "LoRA (Low-Rank Adaptation)",
+  "LoRA",
+  "LoRA adapters",
+  "LoRA adapter"
+ ],
+ "qlora": [
+  "QLoRA"
+ ],
+ "adapters": [
+  "Adapters & PEFT",
+  "adapters",
+  "adapter",
+  "PEFT",
+  "parameter-efficient fine-tuning"
+ ],
+ "prompttuning": [
+  "Prefix Tuning & Prompt Tuning",
+  "prefix tuning",
+  "prompt tuning",
+  "soft prompt",
+  "soft prompts"
+ ],
+ "distill": [
+  "Knowledge Distillation",
+  "knowledge distillation",
+  "distillation",
+  "distilled",
+  "distill"
+ ],
+ "synthdata": [
+  "Synthetic Data",
+  "synthetic data"
+ ],
+ "forgetting": [
+  "Catastrophic Forgetting",
+  "catastrophic forgetting",
+  "forgetting"
+ ],
+ "quantization": [
+  "Quantization",
+  "quantized",
+  "quantize"
+ ],
+ "gptq": [
+  "INT8 / INT4 Weight Quantization (GPTQ, AWQ)",
+  "INT8 / INT4 Weight Quantization",
+  "GPTQ",
+  "AWQ",
+  "INT8",
+  "INT4",
+  "int8",
+  "int4",
+  "4-bit",
+  "8-bit"
+ ],
+ "mixedprec": [
+  "Mixed Precision (FP16 / BF16)",
+  "Mixed Precision",
+  "mixed precision",
+  "mixed-precision",
+  "FP16",
+  "BF16",
+  "fp16",
+  "bf16",
+  "bfloat16",
+  "float16",
+  "loss scaling"
+ ],
+ "prune": [
+  "Pruning",
+  "prune",
+  "structured pruning",
+  "unstructured pruning"
+ ],
+ "gradaccum": [
+  "Gradient Accumulation",
+  "gradient accumulation"
+ ],
+ "gradckpt": [
+  "Gradient Checkpointing",
+  "gradient checkpointing",
+  "activation checkpointing"
+ ],
+ "parallelism": [
+  "Data, Tensor और Pipeline Parallelism",
+  "data parallelism",
+  "tensor parallelism",
+  "pipeline parallelism",
+  "expert parallelism",
+  "tensor-parallel",
+  "FSDP",
+  "ZeRO",
+  "parallelism",
+  "sharded",
+  "sharding"
+ ],
+ "greedy": [
+  "Greedy Decoding",
+  "greedy decoding"
+ ],
+ "beam": [
+  "Beam Search",
+  "beam search",
+  "beam width",
+  "beams"
+ ],
+ "temperature": [
+  "Temperature"
+ ],
+ "topk": [
+  "Top-k Sampling",
+  "top-k sampling",
+  "top-k"
+ ],
+ "topp": [
+  "Top-p (Nucleus) Sampling",
+  "Top-p Sampling",
+  "top-p sampling",
+  "top-p",
+  "nucleus sampling"
+ ],
+ "specdec": [
+  "Speculative Decoding",
+  "speculative decoding"
+ ],
+ "pagedattn": [
+  "PagedAttention",
+  "vLLM"
+ ],
+ "contbatch": [
+  "Continuous Batching",
+  "continuous batching",
+  "iteration-level batching",
+  "static batching"
+ ],
+ "longctx": [
+  "Long Context Extension",
+  "long context extension",
+  "long-context",
+  "long context",
+  "context extension",
+  "YaRN",
+  "position interpolation",
+  "NTK-aware"
+ ],
+ "prompting": [
+  "Prompt Engineering",
+  "prompt engineering",
+  "prompting",
+  "system prompt",
+  "system prompts"
+ ],
+ "cot": [
+  "Chain-of-Thought (CoT)",
+  "Chain-of-Thought",
+  "chain-of-thought",
+  "chain of thought"
+ ],
+ "selfcons": [
+  "Self-Consistency",
+  "self-consistency"
+ ],
+ "tot": [
+  "Tree of Thoughts (ToT)",
+  "Tree of Thoughts",
+  "tree of thoughts"
+ ],
+ "rag": [
+  "Retrieval-Augmented Generation (RAG)",
+  "Retrieval-Augmented Generation",
+  "retrieval-augmented generation",
+  "RAG",
+  "retrieval-augmented"
+ ],
+ "vectordb": [
+  "Vector Search और ANN",
+  "vector search",
+  "vector databases",
+  "vector index",
+  "ANN",
+  "approximate nearest neighbor",
+  "approximate nearest-neighbor",
+  "HNSW",
+  "IVF",
+  "product quantization",
+  "vector indexes"
+ ],
+ "embedmodel": [
+  "Text Embeddings",
+  "text embeddings",
+  "text embedding",
+  "embedding models",
+  "sentence embeddings",
+  "sentence embedding",
+  "bi-encoder",
+  "dense retrieval",
+  "dense retrievers"
+ ],
+ "rerank": [
+  "Reranking",
+  "reranker",
+  "rerank",
+  "reranked",
+  "cross-encoder"
+ ],
+ "agent": [
+  "LLM Agents",
+  "LLM agent"
+ ],
+ "tooluse": [
+  "Tool Use और Function Calling",
+  "tool use",
+  "function calling",
+  "tool call",
+  "tool calls"
+ ],
+ "react": [
+  "ReAct (Reason + Act)",
+  "ReAct"
+ ],
+ "ttc": [
+  "Reasoning Models और Test-Time Compute",
+  "reasoning models",
+  "test-time compute",
+  "reasoning traces",
+  "reasoning trace"
+ ],
+ "llmeval": [
+  "LLM Evaluation और Benchmarks",
+  "LLM evaluation",
+  "LLM-as-a-judge",
+  "LLM judge",
+  "LLM judges",
+  "MMLU",
+  "benchmark contamination"
+ ],
+ "moe": [
+  "Mixture of Experts (MoE)",
+  "Mixture of Experts",
+  "mixture of experts",
+  "mixture-of-experts",
+  "MoE",
+  "experts",
+  "expert"
+ ],
+ "router": [
+  "Router और Top-k Gating",
+  "router",
+  "top-k gating",
+  "gating network",
+  "routing",
+  "top-k routing",
+  "expert-choice routing",
+  "token routing"
+ ],
+ "loadbal": [
+  "Load-Balancing Loss",
+  "load-balancing loss",
+  "load-balancing",
+  "expert collapse",
+  "capacity factor"
+ ],
+ "finegrained": [
+  "Fine-Grained और Shared Experts",
+  "shared experts",
+  "shared expert",
+  "DeepSeekMoE"
+ ],
+ "ssm": [
+  "State Space Models (S4)",
+  "State Space Models",
+  "state space model",
+  "state space models",
+  "state-space models",
+  "SSM",
+  "SSMs",
+  "S4"
+ ],
+ "mamba": [
+  "Mamba (Selective SSM)",
+  "Mamba"
+ ],
+ "rwkv": [
+  "RWKV"
+ ],
+ "hybrid": [
+  "Hybrid Architectures (Jamba)",
+  "Hybrid Architectures",
+  "hybrid architectures",
+  "Jamba"
+ ],
+ "mla": [
+  "Multi-Head Latent Attention (MLA)",
+  "Multi-Head Latent Attention",
+  "multi-head latent attention",
+  "MLA"
+ ],
+ "mtp": [
+  "Multi-Token Prediction (MTP)",
+  "Multi-Token Prediction",
+  "multi-token prediction",
+  "MTP"
+ ],
+ "mod": [
+  "Mixture of Depths (MoD)",
+  "Mixture of Depths",
+  "mixture of depths",
+  "MoD"
+ ],
+ "ringattn": [
+  "Ring Attention",
+  "ring attention"
+ ],
+ "multimodal": [
+  "Multimodal LLMs",
+  "multimodal LLM",
+  "multimodal",
+  "vision-language model",
+  "vision-language models",
+  "vision encoder",
+  "vision encoders"
+ ],
+ "vla": [
+  "Vision-Language-Action Models (VLA)",
+  "Vision-Language-Action Models",
+  "vision-language-action",
+  "VLA"
+ ],
+ "worldmodel": [
+  "World Models",
+  "world model",
+  "world models"
+ ],
+ "jepa": [
+  "JEPA (Joint-Embedding Predictive Architecture)",
+  "JEPA",
+  "I-JEPA",
+  "V-JEPA",
+  "joint-embedding predictive architecture"
+ ],
+ "kan": [
+  "Kolmogorov–Arnold Networks (KAN)",
+  "Kolmogorov–Arnold Networks",
+  "KAN",
+  "KANs",
+  "Kolmogorov–Arnold"
+ ],
+ "ttt": [
+  "Test-Time Training (TTT)",
+  "Test-Time Training",
+  "test-time training",
+  "TTT"
+ ],
+ "merging": [
+  "Model Merging",
+  "model merging",
+  "task arithmetic",
+  "model soups",
+  "TIES"
+ ],
+ "bitnet": [
+  "1-bit LLMs (BitNet)",
+  "1-bit LLMs",
+  "BitNet",
+  "ternary weights",
+  "ternary"
+ ],
+ "mechinterp": [
+  "Mechanistic Interpretability",
+  "mechanistic interpretability",
+  "circuits",
+  "activation patching",
+  "induction heads",
+  "probing",
+  "linear probes",
+  "probes"
+ ],
+ "sae": [
+  "Interpretability के लिए Sparse Autoencoders (SAE)",
+  "Interpretability के लिए Sparse Autoencoders",
+  "sparse autoencoder",
+  "sparse autoencoders",
+  "SAEs"
+ ],
+ "mean": [
+  "Mean (औसत)",
+  "Mean",
+  "औसत",
+  "average",
+  "averages",
+  "sample mean",
+  "औसतों",
+  "means"
+ ],
+ "median": [
+  "Median (माध्यिका)",
+  "Median",
+  "माध्यिका"
+ ],
+ "variance": [
+  "Variance (प्रसरण)",
+  "Variance",
+  "प्रसरण",
+  "variances"
+ ],
+ "stddev": [
+  "Standard Deviation (मानक विचलन)",
+  "Standard Deviation",
+  "मानक विचलन",
+  "standard deviation",
+  "standard deviations"
+ ],
+ "covariance": [
+  "Covariance (सहप्रसरण)",
+  "Covariance",
+  "सहप्रसरण",
+  "covariances"
+ ],
+ "correlation": [
+  "Correlation Coefficient (सहसंबंध गुणांक)",
+  "Correlation Coefficient",
+  "सहसंबंध गुणांक",
+  "correlation coefficient",
+  "correlation",
+  "correlations",
+  "correlated",
+  "uncorrelated",
+  "Pearson correlation",
+  "Spearman correlation",
+  "Pearson",
+  "Spearman"
+ ],
+ "corrmatrix": [
+  "Correlation Matrix (सहसंबंध मैट्रिक्स)",
+  "Correlation Matrix",
+  "सहसंबंध मैट्रिक्स",
+  "correlation matrix",
+  "correlation matrices"
+ ],
+ "quantile": [
+  "Quantiles और Percentiles",
+  "quantile",
+  "quantiles",
+  "percentile",
+  "percentiles",
+  "quartile",
+  "quartiles",
+  "p95",
+  "p99",
+  "p50"
+ ],
+ "iqr": [
+  "Interquartile Range (IQR)",
+  "Interquartile Range",
+  "interquartile range",
+  "IQR"
+ ],
+ "skewness": [
+  "Skewness (विषमता)",
+  "Skewness",
+  "विषमता",
+  "skewed",
+  "skew",
+  "right-skewed",
+  "left-skewed"
+ ],
+ "kurtosis": [
+  "Kurtosis और Heavy Tails",
+  "kurtosis",
+  "heavy tails",
+  "heavy-tailed"
+ ],
+ "probdist": [
+  "Probability Distribution (प्रायिकता वितरण)",
+  "Probability Distribution",
+  "प्रायिकता वितरण",
+  "probability distribution",
+  "distribution",
+  "distributions",
+  "probability mass function",
+  "probability density"
+ ],
+ "normaldist": [
+  "Normal (Gaussian) Distribution",
+  "Normal Distribution",
+  "normal distribution",
+  "Gaussian distribution",
+  "Gaussian",
+  "normally distributed",
+  "standard normal"
+ ],
+ "binomial": [
+  "Bernoulli और Binomial Distributions",
+  "binomial distribution",
+  "Bernoulli distribution",
+  "binomial",
+  "Bernoulli"
+ ],
+ "poisson": [
+  "Poisson Distribution",
+  "Poisson distribution",
+  "Poisson"
+ ],
+ "uniformdist": [
+  "Uniform Distribution (एकसमान वितरण)",
+  "Uniform Distribution",
+  "एकसमान वितरण",
+  "uniform distribution",
+  "uniform distributions"
+ ],
+ "expectation": [
+  "Expected Value (अपेक्षित मान)",
+  "Expected Value",
+  "अपेक्षित मान",
+  "expected value",
+  "expectation",
+  "expectations"
+ ],
+ "condprob": [
+  "Conditional Probability (सशर्त प्रायिकता)",
+  "Conditional Probability",
+  "सशर्त प्रायिकता",
+  "conditional probability",
+  "conditional probabilities"
+ ],
+ "bayesthm": [
+  "Bayes’ Theorem (बेयज़ प्रमेय)",
+  "Bayes’ Theorem",
+  "बेयज़ प्रमेय",
+  "Bayes' theorem"
+ ],
+ "priorpost": [
+  "Prior और Posterior",
+  "prior",
+  "priors",
+  "posterior",
+  "posteriors",
+  "posterior distribution"
+ ],
+ "likelihood": [
+  "Likelihood",
+  "likelihoods",
+  "log-likelihood",
+  "negative log-likelihood",
+  "log-likelihoods",
+  "negative log-likelihoods"
+ ],
+ "mle": [
+  "Maximum Likelihood Estimation (MLE)",
+  "Maximum Likelihood Estimation",
+  "maximum likelihood estimation",
+  "maximum likelihood",
+  "MLE"
+ ],
+ "mapest": [
+  "MAP Estimation",
+  "MAP estimation",
+  "maximum a posteriori"
+ ],
+ "iid": [
+  "i.i.d. Assumption (i.i.d. धारणा)",
+  "i.i.d. Assumption",
+  "i.i.d. धारणा",
+  "i.i.d.",
+  "independent and identically distributed"
+ ],
+ "clt": [
+  "Central Limit Theorem (केंद्रीय सीमा प्रमेय)",
+  "Central Limit Theorem",
+  "केंद्रीय सीमा प्रमेय",
+  "central limit theorem"
+ ],
+ "stderr": [
+  "Standard Error (मानक त्रुटि)",
+  "Standard Error",
+  "मानक त्रुटि",
+  "standard error",
+  "standard errors"
+ ],
+ "confint": [
+  "Confidence Interval (विश्वास्यता अंतराल)",
+  "Confidence Interval",
+  "विश्वास्यता अंतराल",
+  "confidence interval",
+  "confidence intervals",
+  "prediction interval",
+  "prediction intervals"
+ ],
+ "hyptest": [
+  "Hypothesis Testing और p-value",
+  "hypothesis testing",
+  "hypothesis test",
+  "p-value",
+  "p-values",
+  "null hypothesis",
+  "t-tests"
+ ],
+ "abtest": [
+  "A/B Testing",
+  "A/B testing",
+  "A/B test",
+  "A/B tests"
+ ],
+ "kldiv": [
+  "KL Divergence",
+  "KL divergence",
+  "KL",
+  "Kullback–Leibler",
+  "KL penalty"
+ ],
+ "mutualinfo": [
+  "Mutual Information (पारस्परिक सूचना)",
+  "Mutual Information",
+  "पारस्परिक सूचना",
+  "mutual information"
+ ],
+ "montecarlo": [
+  "Monte Carlo Estimation",
+  "Monte Carlo",
+  "Monte Carlo estimation"
+ ],
+ "markovchain": [
+  "Markov Chain (मार्कोव श्रृंखला)",
+  "Markov Chain",
+  "मार्कोव श्रृंखला",
+  "Markov chain",
+  "Markov chains",
+  "MCMC",
+  "Markov"
+ ],
+ "causation": [
+  "Correlation बनाम Causation",
+  "causation",
+  "causal inference",
+  "causally"
+ ],
+ "confounder": [
+  "Confounding Variable",
+  "confounding variable",
+  "confounder",
+  "confounders",
+  "confounding"
+ ],
+ "samplingbias": [
+  "Sampling Bias (नमूनाकरण पूर्वाग्रह)",
+  "Sampling Bias",
+  "नमूनाकरण पूर्वाग्रह",
+  "sampling bias",
+  "selection bias",
+  "survivorship bias"
+ ],
+ "heterosked": [
+  "Heteroscedasticity (विषमविचलनता)",
+  "Heteroscedasticity",
+  "विषमविचलनता",
+  "homoscedastic",
+  "homoscedasticity"
+ ],
+ "histogram": [
+  "Histogram (आयतचित्र)",
+  "Histogram",
+  "आयतचित्र",
+  "histograms"
+ ],
+ "boxplot": [
+  "Box Plot",
+  "box plot",
+  "box plots"
+ ],
+ "scatterplot": [
+  "Scatter Plot (प्रकीर्ण आरेख)",
+  "Scatter Plot",
+  "प्रकीर्ण आरेख",
+  "scatter plot",
+  "scatter plots"
+ ],
+ "heatmap": [
+  "Heatmap",
+  "heatmaps"
+ ],
+ "qqplot": [
+  "Q-Q Plot (Quantile-Quantile Plot)",
+  "Q-Q Plot",
+  "Q-Q plot",
+  "Q-Q plots"
+ ],
+ "feature": [
+  "Feature",
+  "features"
+ ],
+ "label": [
+  "Label (Target)",
+  "Label",
+  "labels",
+  "labeled",
+  "ground truth",
+  "ground-truth"
+ ],
+ "tabular": [
+  "Tabular Data (सारणीबद्ध डेटा)",
+  "Tabular Data",
+  "सारणीबद्ध डेटा",
+  "tabular data",
+  "tabular"
+ ],
+ "numcat": [
+  "Numerical बनाम Categorical Features",
+  "categorical features",
+  "categorical feature",
+  "numerical features",
+  "numeric features",
+  "categorical variables",
+  "categorical variable",
+  "categorical",
+  "categorical columns",
+  "categoricals"
+ ],
+ "ordinal": [
+  "Ordinal बनाम Nominal Variables",
+  "ordinal",
+  "nominal",
+  "ordinal variables",
+  "nominal variables"
+ ],
+ "cardinality": [
+  "Cardinality",
+  "high-cardinality",
+  "low-cardinality"
+ ],
+ "missingval": [
+  "Missing Values (MCAR, MAR, MNAR)",
+  "Missing Values",
+  "missing values",
+  "missing value",
+  "MCAR",
+  "MAR",
+  "MNAR",
+  "missingness",
+  "NaN",
+  "NaNs"
+ ],
+ "duplicates": [
+  "Duplicate Records",
+  "duplicate records",
+  "duplicates",
+  "duplicate",
+  "deduplication",
+  "deduplicate",
+  "near-duplicates",
+  "near-duplicate"
+ ],
+ "labelnoise": [
+  "Label Noise",
+  "label noise",
+  "noisy labels",
+  "label errors"
+ ],
+ "sparsedata": [
+  "Sparse Data (विरल डेटा)",
+  "Sparse Data",
+  "विरल डेटा",
+  "sparse data",
+  "sparse matrix",
+  "sparse matrices",
+  "sparse features",
+  "sparse vector"
+ ],
+ "interaction": [
+  "Feature Interaction",
+  "feature interaction",
+  "feature interactions",
+  "interaction terms",
+  "interaction features"
+ ],
+ "baseline": [
+  "Baseline Model",
+  "baseline model",
+  "baseline",
+  "baselines"
+ ],
+ "timeseries": [
+  "Time Series Data (काल श्रेणी डेटा)",
+  "Time Series Data",
+  "काल श्रेणी डेटा",
+  "time series data",
+  "time series",
+  "time-series"
+ ],
+ "trend": [
+  "Trend (प्रवृत्ति)",
+  "Trend",
+  "trends"
+ ],
+ "seasonality": [
+  "Seasonality (मौसमीपन)",
+  "Seasonality",
+  "मौसमीपन",
+  "seasonal",
+  "seasonalities"
+ ],
+ "whitenoise": [
+  "White Noise (श्वेत रव)",
+  "White Noise",
+  "श्वेत रव",
+  "white noise"
+ ],
+ "randomwalk": [
+  "Random Walk (यादृच्छिक भ्रमण)",
+  "Random Walk",
+  "यादृच्छिक भ्रमण",
+  "random walk",
+  "random walks"
+ ],
+ "differencing": [
+  "Differencing (अंतरण)",
+  "Differencing",
+  "अंतरण",
+  "differenced"
+ ],
+ "horizon": [
+  "Forecast Horizon (पूर्वानुमान क्षितिज)",
+  "Forecast Horizon",
+  "पूर्वानुमान क्षितिज",
+  "forecast horizon",
+  "horizon",
+  "horizons"
+ ],
+ "vector": [
+  "Vector (सदिश)",
+  "Vector",
+  "सदिश",
+  "vectors"
+ ],
+ "matrix": [
+  "Matrix (आव्यूह)",
+  "Matrix",
+  "आव्यूह",
+  "matrices"
+ ],
+ "tensor": [
+  "Tensor (टेंसर)",
+  "Tensor",
+  "टेंसर",
+  "tensors"
+ ],
+ "dotproduct": [
+  "Dot Product (बिंदु गुणनफल)",
+  "Dot Product",
+  "बिंदु गुणनफल",
+  "dot product",
+  "dot products",
+  "inner product",
+  "inner products",
+  "dot-product"
+ ],
+ "matmul": [
+  "Matrix Multiplication (आव्यूह गुणन)",
+  "Matrix Multiplication",
+  "आव्यूह गुणन",
+  "matrix multiplication",
+  "matrix multiplications",
+  "matrix multiply",
+  "matmul",
+  "matmuls",
+  "GEMM",
+  "matrix-vector"
+ ],
+ "vecnorm": [
+  "Vector Norm (L1, L2)",
+  "Vector Norm",
+  "vector norm",
+  "vector norms",
+  "L2 norm",
+  "L1 norm",
+  "norm",
+  "norms"
+ ],
+ "euclidean": [
+  "Euclidean Distance (यूक्लिडीय दूरी)",
+  "Euclidean Distance",
+  "यूक्लिडीय दूरी",
+  "Euclidean distance",
+  "Euclidean distances",
+  "Euclidean"
+ ],
+ "cosine": [
+  "Cosine Similarity (कोसाइन समानता)",
+  "Cosine Similarity",
+  "कोसाइन समानता",
+  "cosine similarity",
+  "cosine similarities",
+  "cosine distance"
+ ],
+ "distmetric": [
+  "Distance Metric (दूरी मापक)",
+  "Distance Metric",
+  "दूरी मापक",
+  "distance metric",
+  "distance metrics",
+  "Manhattan distance",
+  "Mahalanobis distance",
+  "Mahalanobis",
+  "Manhattan"
+ ],
+ "projection": [
+  "Projection (प्रक्षेपण)",
+  "Projection",
+  "प्रक्षेपण",
+  "projections"
+ ],
+ "orthogonal": [
+  "Orthogonality (लांबिकता)",
+  "Orthogonality",
+  "लांबिकता",
+  "orthogonal",
+  "orthonormal"
+ ],
+ "eigen": [
+  "Eigenvalues और Eigenvectors (आइगेन मान और आइगेन सदिश)",
+  "Eigenvalues और Eigenvectors",
+  "आइगेन मान और आइगेन सदिश",
+  "eigenvalues",
+  "eigenvalue",
+  "eigenvectors",
+  "eigenvector",
+  "eigendecomposition"
+ ],
+ "matrank": [
+  "Matrix Rank (आव्यूह कोटि)",
+  "Matrix Rank",
+  "आव्यूह कोटि",
+  "matrix rank",
+  "low-rank",
+  "full rank",
+  "rank-deficient"
+ ],
+ "covmatrix": [
+  "Covariance Matrix (सहप्रसरण मैट्रिक्स)",
+  "Covariance Matrix",
+  "सहप्रसरण मैट्रिक्स",
+  "covariance matrix",
+  "covariance matrices"
+ ],
+ "derivative": [
+  "Derivative (अवकलज)",
+  "Derivative",
+  "अवकलज",
+  "derivatives"
+ ],
+ "partialderiv": [
+  "Partial Derivative (आंशिक अवकलज)",
+  "Partial Derivative",
+  "आंशिक अवकलज",
+  "partial derivative",
+  "partial derivatives"
+ ],
+ "gradient": [
+  "Gradient (प्रवणता)",
+  "Gradient",
+  "प्रवणता",
+  "gradients"
+ ],
+ "jacobian": [
+  "Jacobian (जैकोबियन)",
+  "Jacobian",
+  "जैकोबियन",
+  "Jacobians"
+ ],
+ "hessian": [
+  "Hessian (हेसियन)",
+  "Hessian",
+  "हेसियन",
+  "Hessians",
+  "curvature"
+ ],
+ "logsumexp": [
+  "Log-Sum-Exp और Numerical Stability",
+  "log-sum-exp",
+  "numerical stability"
+ ],
+ "nonlinearity": [
+  "Linearity बनाम Nonlinearity (रैखिकता बनाम अरैखिकता)",
+  "Linearity बनाम Nonlinearity",
+  "रैखिकता बनाम अरैखिकता",
+  "nonlinearity",
+  "nonlinearities",
+  "nonlinear",
+  "non-linear",
+  "linearity"
+ ],
+ "highdim": [
+  "High-Dimensional Space (उच्च-आयामी समष्टि)",
+  "High-Dimensional Space",
+  "उच्च-आयामी समष्टि",
+  "high-dimensional space",
+  "high-dimensional",
+  "high dimensions"
+ ],
+ "lossfn": [
+  "Loss Function (हानि फलन)",
+  "Loss Function",
+  "हानि फलन",
+  "loss function",
+  "loss functions",
+  "loss",
+  "losses"
+ ],
+ "objective": [
+  "Objective Function (उद्देश्य फलन)",
+  "Objective Function",
+  "उद्देश्य फलन",
+  "objective function",
+  "objective",
+  "objectives"
+ ],
+ "paramhyper": [
+  "Parameters बनाम Hyperparameters",
+  "hyperparameter",
+  "hyperparameters",
+  "parameters",
+  "parameter"
+ ],
+ "weightsbias": [
+  "Weights और Bias",
+  "weights",
+  "weight",
+  "weight matrix",
+  "weight matrices"
+ ],
+ "epoch": [
+  "Epoch, Batch और Iteration",
+  "epoch",
+  "epochs",
+  "batch size",
+  "batch sizes",
+  "batch",
+  "batches",
+  "iteration",
+  "iterations"
+ ],
+ "convergence": [
+  "Convergence (अभिसरण)",
+  "Convergence",
+  "अभिसरण",
+  "converge"
+ ],
+ "localmin": [
+  "Local बनाम Global Minimum",
+  "local minimum",
+  "local minima",
+  "global minimum",
+  "local optima",
+  "global optimum"
+ ],
+ "closedform": [
+  "Closed-Form Solution (बंद-रूप हल)",
+  "Closed-Form Solution",
+  "बंद-रूप हल",
+  "closed-form solution",
+  "closed-form",
+  "closed form"
+ ],
+ "stochastic": [
+  "Stochastic बनाम Deterministic",
+  "stochastic",
+  "deterministic"
+ ],
+ "lagrange": [
+  "Lagrange Multipliers और Constraints",
+  "Lagrange multipliers",
+  "constrained optimization",
+  "KKT"
+ ],
+ "generalization": [
+  "Generalization (सामान्यीकरण)",
+  "Generalization",
+  "सामान्यीकरण",
+  "generalize",
+  "generalization gap",
+  "generalized"
+ ],
+ "capacity": [
+  "Model Capacity (मॉडल क्षमता)",
+  "Model Capacity",
+  "मॉडल क्षमता",
+  "model capacity"
+ ],
+ "inductivebias": [
+  "Inductive Bias (आगमनात्मक पूर्वाग्रह)",
+  "Inductive Bias",
+  "आगमनात्मक पूर्वाग्रह",
+  "inductive bias",
+  "inductive biases"
+ ],
+ "trainloop": [
+  "Training Loop",
+  "training loop"
+ ],
+ "checkpoint": [
+  "Model Checkpoint",
+  "model checkpoint",
+  "checkpoint",
+  "checkpoints",
+  "checkpointing"
+ ],
+ "hingeloss": [
+  "Hinge Loss",
+  "hinge loss"
+ ],
+ "huberloss": [
+  "Huber Loss",
+  "Huber loss",
+  "Huber",
+  "smooth L1"
+ ],
+ "focalloss": [
+  "Focal Loss",
+  "focal loss"
+ ],
+ "mape": [
+  "MAPE (Mean Absolute Percentage Error)",
+  "MAPE",
+  "mean absolute percentage error",
+  "sMAPE",
+  "MASE"
+ ],
+ "rankmetrics": [
+  "Ranking Metrics (NDCG, MRR)",
+  "Ranking Metrics",
+  "ranking metrics",
+  "NDCG",
+  "MRR",
+  "recall@k",
+  "mean reciprocal rank"
+ ],
+ "iou": [
+  "Intersection over Union (IoU)",
+  "Intersection over Union",
+  "intersection over union",
+  "IoU",
+  "Jaccard"
+ ],
+ "baserate": [
+  "Base Rate (आधार दर)",
+  "Base Rate",
+  "आधार दर",
+  "base rate",
+  "base rates",
+  "prevalence",
+  "positive rate"
+ ],
+ "activation": [
+  "Activation Function",
+  "activation function",
+  "activation functions",
+  "activation",
+  "activations"
+ ],
+ "hiddenlayer": [
+  "Hidden Layer",
+  "hidden layer",
+  "hidden layers",
+  "hidden units",
+  "hidden unit"
+ ],
+ "hiddenstate": [
+  "Hidden State",
+  "hidden state",
+  "hidden states"
+ ],
+ "logits": [
+  "Logits",
+  "logit"
+ ],
+ "featuremap": [
+  "Feature Map",
+  "feature map",
+  "feature maps"
+ ],
+ "kernelfilter": [
+  "Kernel (Filter)",
+  "convolutional filter"
+ ],
+ "stridepad": [
+  "Stride और Padding",
+  "stride",
+  "strides",
+  "padding",
+  "strided"
+ ],
+ "receptive": [
+  "Receptive Field",
+  "receptive field"
+ ],
+ "channels": [
+  "Channels",
+  "channel"
+ ],
+ "latentspace": [
+  "Latent Space",
+  "latent space",
+  "latent spaces",
+  "latent",
+  "latents",
+  "latent vector",
+  "latent vectors",
+  "latent code"
+ ],
+ "representation": [
+  "Representation Learning",
+  "representation learning",
+  "representations",
+  "representation"
+ ],
+ "weightshare": [
+  "Weight Sharing",
+  "weight sharing"
+ ],
+ "paramcount": [
+  "Parameter Count",
+  "parameter count",
+  "parameter counts"
+ ],
+ "flops": [
+  "FLOPs",
+  "FLOP",
+  "FLOPS"
+ ],
+ "floatfmt": [
+  "Floating-Point Formats",
+  "floating-point formats",
+  "floating point",
+  "floating-point",
+  "FP32",
+  "fp32",
+  "float32",
+  "FP8",
+  "fp8",
+  "low precision",
+  "full-precision"
+ ],
+ "sparsity": [
+  "Sparsity (विरलता)",
+  "Sparsity",
+  "विरलता"
+ ],
+ "token": [
+  "Token",
+  "tokens"
+ ],
+ "vocab": [
+  "Vocabulary (शब्दावली)",
+  "Vocabulary",
+  "vocabularies"
+ ],
+ "contextwin": [
+  "Context Window",
+  "context window",
+  "context length",
+  "context lengths",
+  "sequence length",
+  "sequence lengths"
+ ],
+ "prompt": [
+  "Prompt",
+  "prompts"
+ ],
+ "finetuning": [
+  "Fine-Tuning",
+  "fine-tuning",
+  "fine-tuned",
+  "fine-tune",
+  "fine-tunes"
+ ],
+ "foundation": [
+  "Foundation Model",
+  "foundation model",
+  "foundation models"
+ ],
+ "perplexity": [
+  "Perplexity"
+ ],
+ "logprob": [
+  "Log-Probability",
+  "log-probability",
+  "log-probabilities"
+ ],
+ "ngram": [
+  "N-gram",
+  "n-grams",
+  "bigrams",
+  "trigrams",
+  "unigram",
+  "unigrams"
+ ],
+ "tfidf": [
+  "TF-IDF",
+  "tf-idf",
+  "BM25"
+ ],
+ "bagofwords": [
+  "Bag of Words",
+  "bag of words",
+  "bag-of-words"
+ ],
+ "hallucination": [
+  "Hallucination",
+  "hallucinate",
+  "hallucinated"
+ ],
+ "alignment": [
+  "Alignment"
+ ],
+ "mdp": [
+  "Markov Decision Process (MDP)",
+  "Markov Decision Process",
+  "Markov decision process",
+  "Markov decision processes",
+  "MDP",
+  "MDPs"
+ ],
+ "policy": [
+  "Policy"
+ ],
+ "reward": [
+  "Reward",
+  "rewards"
+ ],
+ "stateaction": [
+  "State और Action",
+  "state-action",
+  "actions"
+ ],
+ "valuefn": [
+  "Value Function",
+  "value function",
+  "value network",
+  "critic"
+ ],
+ "explore": [
+  "Exploration बनाम Exploitation",
+  "exploration",
+  "exploitation"
+ ],
+ "inference": [
+  "Inference"
+ ],
+ "latency": [
+  "Latency और Throughput",
+  "latency",
+  "latencies",
+  "throughput",
+  "tail latency",
+  "p99 latency"
+ ],
+ "gpu": [
+  "GPU और VRAM",
+  "GPU",
+  "GPUs",
+  "VRAM",
+  "GPU memory",
+  "accelerator",
+  "accelerators",
+  "TPUs"
+ ],
+ "serving": [
+  "Model Serving",
+  "model serving",
+  "serving",
+  "inference server",
+  "endpoints"
+ ],
+ "monitoring": [
+  "Model Monitoring",
+  "model monitoring",
+  "monitoring",
+  "dashboard",
+  "alerts"
+ ],
+ "retraining": [
+  "Retraining",
+  "retrain"
+ ],
+ "featurestore": [
+  "Feature Store",
+  "feature store",
+  "feature stores",
+  "training-serving skew"
+ ],
+ "mlpipeline": [
+  "ML Pipeline",
+  "ML pipeline",
+  "pipeline",
+  "pipelines"
+ ],
+ "benchmark": [
+  "Benchmark",
+  "benchmarks",
+  "leaderboard",
+  "leaderboards"
+ ],
+ "anomaly": [
+  "Anomaly Detection (विसंगति पहचान)",
+  "Anomaly Detection",
+  "विसंगति पहचान",
+  "anomaly detection",
+  "anomaly detector",
+  "anomalies",
+  "anomaly",
+  "anomaly score"
+ ],
+ "recsys": [
+  "Recommender System",
+  "recommender system",
+  "recommender systems",
+  "recommender",
+  "recommendation",
+  "recommendations",
+  "recommendation systems"
+ ],
+ "ctr": [
+  "Click-Through Rate (CTR)",
+  "Click-Through Rate",
+  "click-through rate",
+  "click-through rates",
+  "CTR",
+  "click-through"
+ ],
+ "coldstart": [
+  "Cold Start",
+  "cold start",
+  "cold-start"
+ ],
+ "collabfilter": [
+  "Collaborative Filtering",
+  "collaborative filtering",
+  "matrix factorization"
+ ],
+ "fraud": [
+  "Fraud Detection (धोखाधड़ी पहचान)",
+  "Fraud Detection",
+  "धोखाधड़ी पहचान",
+  "fraud detection",
+  "fraud",
+  "fraudulent"
+ ],
+ "churn": [
+  "Churn Prediction",
+  "churn prediction",
+  "churn",
+  "churned",
+  "churn predictions"
+ ],
+ "demandfc": [
+  "Demand Forecasting (मांग पूर्वानुमान)",
+  "Demand Forecasting",
+  "मांग पूर्वानुमान",
+  "demand forecasting",
+  "demand forecast",
+  "demand forecasts"
+ ],
+ "creditscore": [
+  "Credit Scoring",
+  "credit scoring",
+  "credit risk",
+  "scorecard",
+  "scorecards",
+  "credit scorecards"
+ ]
+}

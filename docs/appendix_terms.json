@@ -1,0 +1,673 @@
+{
+ "zstat": {
+  "name": "Appendix A · Statistics & Probability",
+  "items": [
+   {
+    "id": "mean",
+    "en": "Mean (Average)"
+   },
+   {
+    "id": "median",
+    "en": "Median"
+   },
+   {
+    "id": "variance",
+    "en": "Variance"
+   },
+   {
+    "id": "stddev",
+    "en": "Standard Deviation"
+   },
+   {
+    "id": "covariance",
+    "en": "Covariance"
+   },
+   {
+    "id": "correlation",
+    "en": "Correlation Coefficient"
+   },
+   {
+    "id": "corrmatrix",
+    "en": "Correlation Matrix"
+   },
+   {
+    "id": "quantile",
+    "en": "Quantiles & Percentiles"
+   },
+   {
+    "id": "iqr",
+    "en": "Interquartile Range (IQR)"
+   },
+   {
+    "id": "skewness",
+    "en": "Skewness"
+   },
+   {
+    "id": "kurtosis",
+    "en": "Kurtosis & Heavy Tails"
+   },
+   {
+    "id": "probdist",
+    "en": "Probability Distribution"
+   },
+   {
+    "id": "normaldist",
+    "en": "Normal (Gaussian) Distribution"
+   },
+   {
+    "id": "binomial",
+    "en": "Bernoulli & Binomial Distributions"
+   },
+   {
+    "id": "poisson",
+    "en": "Poisson Distribution"
+   },
+   {
+    "id": "uniformdist",
+    "en": "Uniform Distribution"
+   },
+   {
+    "id": "expectation",
+    "en": "Expected Value"
+   },
+   {
+    "id": "condprob",
+    "en": "Conditional Probability"
+   },
+   {
+    "id": "bayesthm",
+    "en": "Bayes’ Theorem"
+   },
+   {
+    "id": "priorpost",
+    "en": "Prior & Posterior"
+   },
+   {
+    "id": "likelihood",
+    "en": "Likelihood"
+   },
+   {
+    "id": "mle",
+    "en": "Maximum Likelihood Estimation (MLE)"
+   },
+   {
+    "id": "mapest",
+    "en": "MAP Estimation"
+   },
+   {
+    "id": "iid",
+    "en": "i.i.d. Assumption"
+   },
+   {
+    "id": "clt",
+    "en": "Central Limit Theorem"
+   },
+   {
+    "id": "stderr",
+    "en": "Standard Error"
+   },
+   {
+    "id": "confint",
+    "en": "Confidence Interval"
+   },
+   {
+    "id": "hyptest",
+    "en": "Hypothesis Testing & p-value"
+   },
+   {
+    "id": "abtest",
+    "en": "A/B Testing"
+   },
+   {
+    "id": "kldiv",
+    "en": "KL Divergence"
+   },
+   {
+    "id": "mutualinfo",
+    "en": "Mutual Information"
+   },
+   {
+    "id": "montecarlo",
+    "en": "Monte Carlo Estimation"
+   },
+   {
+    "id": "markovchain",
+    "en": "Markov Chain"
+   },
+   {
+    "id": "causation",
+    "en": "Correlation vs Causation"
+   },
+   {
+    "id": "confounder",
+    "en": "Confounding Variable"
+   },
+   {
+    "id": "samplingbias",
+    "en": "Sampling Bias"
+   },
+   {
+    "id": "heterosked",
+    "en": "Heteroscedasticity"
+   }
+  ]
+ },
+ "zdata": {
+  "name": "Appendix B · Data & Visualization",
+  "items": [
+   {
+    "id": "histogram",
+    "en": "Histogram"
+   },
+   {
+    "id": "boxplot",
+    "en": "Box Plot"
+   },
+   {
+    "id": "scatterplot",
+    "en": "Scatter Plot"
+   },
+   {
+    "id": "heatmap",
+    "en": "Heatmap"
+   },
+   {
+    "id": "qqplot",
+    "en": "Q-Q Plot"
+   },
+   {
+    "id": "feature",
+    "en": "Feature"
+   },
+   {
+    "id": "label",
+    "en": "Label (Target)"
+   },
+   {
+    "id": "tabular",
+    "en": "Tabular Data"
+   },
+   {
+    "id": "numcat",
+    "en": "Numerical vs Categorical Features"
+   },
+   {
+    "id": "ordinal",
+    "en": "Ordinal vs Nominal Variables"
+   },
+   {
+    "id": "cardinality",
+    "en": "Cardinality"
+   },
+   {
+    "id": "missingval",
+    "en": "Missing Values (MCAR, MAR, MNAR)"
+   },
+   {
+    "id": "duplicates",
+    "en": "Duplicate Records"
+   },
+   {
+    "id": "labelnoise",
+    "en": "Label Noise"
+   },
+   {
+    "id": "sparsedata",
+    "en": "Sparse Data"
+   },
+   {
+    "id": "interaction",
+    "en": "Feature Interaction"
+   },
+   {
+    "id": "baseline",
+    "en": "Baseline Model"
+   },
+   {
+    "id": "timeseries",
+    "en": "Time Series Data"
+   },
+   {
+    "id": "trend",
+    "en": "Trend"
+   },
+   {
+    "id": "seasonality",
+    "en": "Seasonality"
+   },
+   {
+    "id": "whitenoise",
+    "en": "White Noise"
+   },
+   {
+    "id": "randomwalk",
+    "en": "Random Walk"
+   },
+   {
+    "id": "differencing",
+    "en": "Differencing"
+   },
+   {
+    "id": "horizon",
+    "en": "Forecast Horizon"
+   }
+  ]
+ },
+ "zmath": {
+  "name": "Appendix C · Linear Algebra & Calculus",
+  "items": [
+   {
+    "id": "vector",
+    "en": "Vector"
+   },
+   {
+    "id": "matrix",
+    "en": "Matrix"
+   },
+   {
+    "id": "tensor",
+    "en": "Tensor"
+   },
+   {
+    "id": "dotproduct",
+    "en": "Dot Product"
+   },
+   {
+    "id": "matmul",
+    "en": "Matrix Multiplication"
+   },
+   {
+    "id": "vecnorm",
+    "en": "Vector Norm (L1, L2)"
+   },
+   {
+    "id": "euclidean",
+    "en": "Euclidean Distance"
+   },
+   {
+    "id": "cosine",
+    "en": "Cosine Similarity"
+   },
+   {
+    "id": "distmetric",
+    "en": "Distance Metric"
+   },
+   {
+    "id": "projection",
+    "en": "Projection"
+   },
+   {
+    "id": "orthogonal",
+    "en": "Orthogonality"
+   },
+   {
+    "id": "eigen",
+    "en": "Eigenvalues & Eigenvectors"
+   },
+   {
+    "id": "matrank",
+    "en": "Matrix Rank"
+   },
+   {
+    "id": "covmatrix",
+    "en": "Covariance Matrix"
+   },
+   {
+    "id": "derivative",
+    "en": "Derivative"
+   },
+   {
+    "id": "partialderiv",
+    "en": "Partial Derivative"
+   },
+   {
+    "id": "gradient",
+    "en": "Gradient"
+   },
+   {
+    "id": "jacobian",
+    "en": "Jacobian"
+   },
+   {
+    "id": "hessian",
+    "en": "Hessian"
+   },
+   {
+    "id": "logsumexp",
+    "en": "Log-Sum-Exp & Numerical Stability"
+   },
+   {
+    "id": "nonlinearity",
+    "en": "Linearity vs Nonlinearity"
+   },
+   {
+    "id": "highdim",
+    "en": "High-Dimensional Space"
+   }
+  ]
+ },
+ "ztrain": {
+  "name": "Appendix D · Training & Optimization",
+  "items": [
+   {
+    "id": "lossfn",
+    "en": "Loss Function"
+   },
+   {
+    "id": "objective",
+    "en": "Objective Function"
+   },
+   {
+    "id": "paramhyper",
+    "en": "Parameters vs Hyperparameters"
+   },
+   {
+    "id": "weightsbias",
+    "en": "Weights & Bias"
+   },
+   {
+    "id": "epoch",
+    "en": "Epoch, Batch & Iteration"
+   },
+   {
+    "id": "convergence",
+    "en": "Convergence"
+   },
+   {
+    "id": "localmin",
+    "en": "Local vs Global Minimum"
+   },
+   {
+    "id": "closedform",
+    "en": "Closed-Form Solution"
+   },
+   {
+    "id": "stochastic",
+    "en": "Stochastic vs Deterministic"
+   },
+   {
+    "id": "lagrange",
+    "en": "Lagrange Multipliers & Constraints"
+   },
+   {
+    "id": "generalization",
+    "en": "Generalization"
+   },
+   {
+    "id": "capacity",
+    "en": "Model Capacity"
+   },
+   {
+    "id": "inductivebias",
+    "en": "Inductive Bias"
+   },
+   {
+    "id": "trainloop",
+    "en": "Training Loop"
+   },
+   {
+    "id": "checkpoint",
+    "en": "Model Checkpoint"
+   },
+   {
+    "id": "hingeloss",
+    "en": "Hinge Loss"
+   },
+   {
+    "id": "huberloss",
+    "en": "Huber Loss"
+   },
+   {
+    "id": "focalloss",
+    "en": "Focal Loss"
+   },
+   {
+    "id": "mape",
+    "en": "MAPE"
+   },
+   {
+    "id": "rankmetrics",
+    "en": "Ranking Metrics (NDCG, MRR)"
+   },
+   {
+    "id": "iou",
+    "en": "Intersection over Union (IoU)"
+   },
+   {
+    "id": "truepos",
+    "en": "True & False Positives"
+   },
+   {
+    "id": "baserate",
+    "en": "Base Rate"
+   }
+  ]
+ },
+ "znn": {
+  "name": "Appendix E · Neural Network Building Blocks",
+  "items": [
+   {
+    "id": "activation",
+    "en": "Activation Function"
+   },
+   {
+    "id": "hiddenlayer",
+    "en": "Hidden Layer"
+   },
+   {
+    "id": "hiddenstate",
+    "en": "Hidden State"
+   },
+   {
+    "id": "logits",
+    "en": "Logits"
+   },
+   {
+    "id": "featuremap",
+    "en": "Feature Map"
+   },
+   {
+    "id": "kernelfilter",
+    "en": "Kernel (Filter)"
+   },
+   {
+    "id": "stridepad",
+    "en": "Stride & Padding"
+   },
+   {
+    "id": "receptive",
+    "en": "Receptive Field"
+   },
+   {
+    "id": "channels",
+    "en": "Channels"
+   },
+   {
+    "id": "latentspace",
+    "en": "Latent Space"
+   },
+   {
+    "id": "representation",
+    "en": "Representation Learning"
+   },
+   {
+    "id": "weightshare",
+    "en": "Weight Sharing"
+   },
+   {
+    "id": "paramcount",
+    "en": "Parameter Count"
+   },
+   {
+    "id": "flops",
+    "en": "FLOPs"
+   },
+   {
+    "id": "floatfmt",
+    "en": "Floating-Point Formats"
+   },
+   {
+    "id": "sparsity",
+    "en": "Sparsity"
+   }
+  ]
+ },
+ "zlang": {
+  "name": "Appendix F · Language Models & RL",
+  "items": [
+   {
+    "id": "token",
+    "en": "Token"
+   },
+   {
+    "id": "vocab",
+    "en": "Vocabulary"
+   },
+   {
+    "id": "contextwin",
+    "en": "Context Window"
+   },
+   {
+    "id": "prompt",
+    "en": "Prompt"
+   },
+   {
+    "id": "finetuning",
+    "en": "Fine-Tuning"
+   },
+   {
+    "id": "foundation",
+    "en": "Foundation Model"
+   },
+   {
+    "id": "perplexity",
+    "en": "Perplexity"
+   },
+   {
+    "id": "logprob",
+    "en": "Log-Probability"
+   },
+   {
+    "id": "ngram",
+    "en": "N-gram"
+   },
+   {
+    "id": "tfidf",
+    "en": "TF-IDF"
+   },
+   {
+    "id": "bagofwords",
+    "en": "Bag of Words"
+   },
+   {
+    "id": "hallucination",
+    "en": "Hallucination"
+   },
+   {
+    "id": "alignment",
+    "en": "Alignment"
+   },
+   {
+    "id": "mdp",
+    "en": "Markov Decision Process (MDP)"
+   },
+   {
+    "id": "policy",
+    "en": "Policy"
+   },
+   {
+    "id": "reward",
+    "en": "Reward"
+   },
+   {
+    "id": "stateaction",
+    "en": "State & Action"
+   },
+   {
+    "id": "valuefn",
+    "en": "Value Function"
+   },
+   {
+    "id": "explore",
+    "en": "Exploration vs Exploitation"
+   }
+  ]
+ },
+ "zprod": {
+  "name": "Appendix G · ML in Production",
+  "items": [
+   {
+    "id": "inference",
+    "en": "Inference"
+   },
+   {
+    "id": "latency",
+    "en": "Latency & Throughput"
+   },
+   {
+    "id": "gpu",
+    "en": "GPU & VRAM"
+   },
+   {
+    "id": "serving",
+    "en": "Model Serving"
+   },
+   {
+    "id": "monitoring",
+    "en": "Model Monitoring"
+   },
+   {
+    "id": "retraining",
+    "en": "Retraining"
+   },
+   {
+    "id": "featurestore",
+    "en": "Feature Store"
+   },
+   {
+    "id": "mlpipeline",
+    "en": "ML Pipeline"
+   },
+   {
+    "id": "benchmark",
+    "en": "Benchmark"
+   },
+   {
+    "id": "anomaly",
+    "en": "Anomaly Detection"
+   },
+   {
+    "id": "recsys",
+    "en": "Recommender System"
+   },
+   {
+    "id": "ctr",
+    "en": "Click-Through Rate (CTR)"
+   },
+   {
+    "id": "coldstart",
+    "en": "Cold Start"
+   },
+   {
+    "id": "collabfilter",
+    "en": "Collaborative Filtering"
+   },
+   {
+    "id": "fraud",
+    "en": "Fraud Detection"
+   },
+   {
+    "id": "churn",
+    "en": "Churn Prediction"
+   },
+   {
+    "id": "demandfc",
+    "en": "Demand Forecasting"
+   },
+   {
+    "id": "creditscore",
+    "en": "Credit Scoring"
+   }
+  ]
+ }
+}

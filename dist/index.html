@@ -154,6 +154,13 @@ html[lang="ar"] h1.name, html[lang="hi"] h1.name { line-height: 1.3; letter-spac
 .prose { font-family: var(--serif); font-size: clamp(1.1rem, 1.25vw, 1.24rem); line-height: 1.66; color: var(--ink); min-width: 0; }
 .prose p { margin: 0 0 1em; }
 .prose p:first-child::first-line { }
+/* term links in the prose: quiet underline, clay highlight on hover */
+a.tlink { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--acc) 60%, transparent); text-decoration-thickness: 1px; text-underline-offset: 0.22em; border-radius: 3px; transition: background-color .12s, text-decoration-color .12s; }
+a.tlink:hover, a.tlink:focus-visible { background: color-mix(in srgb, var(--acc) 42%, transparent); text-decoration-color: transparent; box-shadow: 0 0 0 2px color-mix(in srgb, var(--acc) 42%, transparent); }
+/* appendix pages: a close button that stays in view and returns to the page the visit started from */
+.apxbar { position: sticky; top: calc(72px + env(safe-area-inset-top, 0px)); height: 0; z-index: 15; display: flex; justify-content: flex-end; }
+.apxclose { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--rule); background: var(--paper); color: var(--ink-2); box-shadow: 0 10px 28px -16px rgba(0,0,0,.45); }
+.apxclose:hover { background: var(--paper-2); color: var(--ink); }
 html[lang="ko"] .prose, html[lang="ja"] .prose, html[lang="zh"] .prose { line-height: 1.85; word-break: keep-all; }
 html[lang="ar"] .prose { line-height: 1.95; }
 .aside { min-width: 0; display: grid; gap: 28px; padding-top: 6px; }
@@ -205,6 +212,8 @@ html[lang="ar"] .prose { line-height: 1.95; }
 .feat figcaption a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .toc { margin-top: 88px; }
 .toc > h2 { font: 400 clamp(1.6rem, 2.6vw, 2.2rem) var(--serif); margin: 0 0 18px; }
+.toc > h2.apxh { margin-top: 72px; }
+.rail .apxh { margin: 26px 0 10px; }
 .tocrow { display: grid; grid-template-columns: 64px minmax(0, 22ch) minmax(0, 1fr); gap: 8px 28px; padding: 22px 0; border-top: 1px solid var(--rule); align-items: baseline; }
 .tocrow .no { font: 400 1.6rem var(--serif); color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .tocrow h3 { margin: 0; font: 400 clamp(1.3rem, 2vw, 1.75rem)/1.15 var(--serif); }
@@ -328,6 +337,13 @@ footer { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--rule);
 <script src="js/viz-c.js"></script>
 <script src="js/viz-d.js"></script>
 <script src="js/viz-e.js"></script>
+<script src="js/viz-zstat.js"></script>
+<script src="js/viz-zdata.js"></script>
+<script src="js/viz-zmath.js"></script>
+<script src="js/viz-ztrain.js"></script>
+<script src="js/viz-znn.js"></script>
+<script src="js/viz-zlang.js"></script>
+<script src="js/viz-zprod.js"></script>
 <script src="js/stage.js"></script>
 <script src="js/flags.js"></script>
 <script src="js/base.js"></script>

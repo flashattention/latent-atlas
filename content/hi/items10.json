@@ -1,0 +1,372 @@
+{
+ "token": {
+  "n": "Token",
+  "d": "Token वह मूल इकाई है जिसे language model पढ़ता और लिखता है; आमतौर पर यह एक शब्द, शब्द का एक टुकड़ा, कोई विराम चिह्न या एक byte होता है।\n\nTokenizer कच्चे text को tokens में बाँटता है और हर token को एक तय vocabulary के integer id से जोड़ता है; मॉडल कभी अक्षर नहीं देखता, केवल ये ids देखता है, जिन्हें embedding layer vectors में बदलती है। Byte-pair encoding (BPE) जैसी subword योजनाएँ बार-बार आने वाले शब्दों को पूरा रखती हैं और दुर्लभ शब्दों को छोटे टुकड़ों में तोड़ती हैं, ताकि किसी भी string को दर्शाया जा सके।\n\nLLM के लगभग हर काम की इकाई token ही है: context window, next-token prediction, API की कीमत, generation की गति और KV cache, सब tokens में मापे जाते हैं। एक आम गलतफ़हमी यह है कि एक token एक शब्द के बराबर होता है। अंग्रेज़ी text में औसतन एक token लगभग तीन-चौथाई शब्द के बराबर होता है, जबकि code, संख्याओं और कई गैर-अंग्रेज़ी भाषाओं को काफ़ी अधिक tokens चाहिए।",
+  "u": [
+   "LLM API की लागत और prompt की लंबाई का अनुमान",
+   "Text को context window में समाने लायक बजट करना",
+   "Generation की गति tokens प्रति सेकंड में मापना"
+  ],
+  "x": "एक customer-support टीम हर आने वाले ticket को LLM को भेजने से पहले उसके tokens गिनती है, और लंबे email threads को छोटा कर देती है ताकि request मॉडल की context सीमा के भीतर रहे। यही token गिनती मासिक लागत dashboard में भी जाती है, क्योंकि provider हर input और output token के हिसाब से बिल करता है।"
+ },
+ "vocab": {
+  "n": "Vocabulary (शब्दावली)",
+  "d": "Vocabulary उन अलग-अलग tokens का तय समूह है जिन्हें tokenizer और मॉडल जानते हैं, और हर token को एक integer id दिया गया होता है।\n\nइसे pretraining से पहले एक बार बनाया जाता है, byte-pair encoding (BPE), WordPiece या Unigram जैसे algorithm से, जो training corpus से बार-बार आने वाले अक्षर-क्रम तब तक चुनता है जब तक लक्ष्य आकार न पहुँच जाए। आम LLM vocabularies में लगभग 30,000 से 200,000 से अधिक entries होती हैं, साथ में padding और sequence के आरंभ व अंत के लिए special tokens।\n\nआकार एक trade-off है। बड़ी vocabulary sequences को छोटा करती है, जिससे context और compute बचते हैं, लेकिन embedding layer और output softmax बड़े हो जाते हैं, और दुर्लभ entries को बहुत कम training updates मिलते हैं। Vocabulary मॉडल से बँधी होती है: pretrained मॉडल का tokenizer यूँ ही बदला नहीं जा सकता, और fine-tuning के लिए नए tokens जोड़ने पर embedding का आकार बढ़ाकर नई rows को train करना पड़ता है। Bag of words या TF-IDF पर आधारित पारंपरिक NLP मॉडल भी एक vocabulary पर निर्भर करते हैं।",
+  "u": [
+   "LLM की pretraining से पहले tokenizer का आकार चुनना",
+   "मॉडल की fine-tuning से पहले domain tokens जोड़ना",
+   "Bag-of-words text classifiers में features सीमित करना"
+  ],
+  "x": "एक open मॉडल की fine-tuning कर रही legal-tech टीम document markup और clause tags के लिए कुछ सौ special tokens जोड़ती है। वे embedding matrix का आकार बढ़ाते हैं, नई rows को मौजूदा embeddings के mean से initialize करते हैं, और training शुरू होने से पहले जाँचते हैं कि tokenized अनुबंध text सचमुच छोटा हो गया है।"
+ },
+ "contextwin": {
+  "n": "Context Window",
+  "d": "Context window tokens की वह अधिकतम संख्या है जिसे language model एक साथ ध्यान में रख सकता है, जिसमें prompt और उसके द्वारा generate किए गए tokens दोनों शामिल हैं।\n\nTransformer में हर token इस window के भीतर बाकी tokens पर attend करता है, इसलिए इसके बाहर की कोई भी चीज़ मॉडल को दिखाई नहीं देती। यह सीमा training से आती है: RoPE जैसे positional encodings एक निश्चित लंबाई तक सीखे जाते हैं, और self-attention की लागत sequence length के साथ quadratic रूप से बढ़ती है, जबकि KV cache की memory linear रूप से बढ़ती है। Long context extension तकनीकें और FlashAttention इस सीमा को लाखों tokens के आसपास तक ले जाती हैं।\n\nWindow system design को आकार देती है: retrieval-augmented generation (RAG), chunking, पुराने chat turns का सारांश और truncation, सब जानकारी को इसमें समाने के लिए ही हैं। एक आम भूल यह मान लेना है कि मॉडल अपनी पूरी window का समान रूप से अच्छा उपयोग करता है। कई मॉडल लंबे input के बीच में रखे तथ्यों को शुरुआत या अंत के पास रखे तथ्यों की तुलना में कम भरोसे से याद करते हैं।",
+  "u": [
+   "RAG prompts के लिए retrieved chunks का आकार तय करना",
+   "लंबे chat इतिहास को काटना या सारांशित करना",
+   "लंबे documents के विश्लेषण के लिए मॉडल चुनना"
+  ],
+  "x": "एक document-review product मॉडल की context window से बड़े अनुबंधों को overlapping हिस्सों में बाँटता है, हर हिस्से से दायित्व निकालता है और परिणामों को जोड़ देता है। छोटे अनुबंधों के लिए वह पूरा text एक ही request में भेजता है, जिससे टीम ने पाया कि cross-references अधिक सुसंगत रहते हैं।"
+ },
+ "prompt": {
+  "n": "Prompt",
+  "d": "Prompt वह input text है जो language model को दिया जाता है ताकि वह आगे क्या generate करे, यह उससे तय हो।\n\nक्योंकि decoder-only मॉडल केवल किसी sequence को आगे बढ़ाता है, prompt ही काम को परिभाषित करता है: इसमें निर्देश, system message, उदाहरण, retrieved documents, tool के परिणाम और अब तक की बातचीत हो सकती है। Chat मॉडल prompt को role markers वाले एक structured template में पाते हैं, जिसे tokenizer special tokens में बदल देता है। फिर मॉडल एक-एक token करके आगे का हिस्सा predict करता है।\n\nPrompt engineering, in-context learning, chain-of-thought और retrieval-augmented generation (RAG) में prompts ही नियंत्रण का मुख्य साधन हैं, और production systems में इन्हें code की तरह version और evaluate किया जाता है। एक आम गलतफ़हमी यह है कि prompt मॉडल को कुछ स्थायी रूप से सिखा देता है। Weights में कुछ नहीं बदलता; निर्देश केवल उसी request पर लागू होते हैं, और prompt का हर token context window और लागत में गिना जाता है।",
+  "u": [
+   "System और user messages से chat मॉडलों को निर्देश देना",
+   "In-context learning के लिए few-shot उदाहरण देना",
+   "RAG requests में retrieved documents जोड़ना"
+  ],
+  "x": "एक marketing platform अपने product-description prompts को version control में रखता है, जिनमें एक system message, दो हल किए गए उदाहरण और product गुणों के लिए slots होते हैं। हर prompt बदलाव release से पहले एक तय evaluation set पर चलाया जाता है, क्योंकि शब्दों में छोटे बदलाव भी हज़ारों generated pages में लहजा और लंबाई बदल सकते हैं।"
+ },
+ "finetuning": {
+  "n": "Fine-Tuning",
+  "d": "Fine-tuning एक pretrained मॉडल की छोटे, task-specific dataset पर आगे की training है, ताकि वह किसी नए task, domain या शैली के अनुरूप ढल जाए।\n\nमॉडल pretraining में सीखे गए weights से शुरू होता है, जो पहले से सामान्य features को समेटे होते हैं, और gradient descent नए डेटा पर कम learning rate के साथ उन्हें update करता है। Full fine-tuning हर parameter को update करती है; LoRA, QLoRA और adapters जैसी parameter-efficient विधियाँ इसके बजाय थोड़े-से अतिरिक्त weights train करती हैं। LLMs के लिए instruction-response जोड़ों पर supervised fine-tuning (SFT) के बाद आमतौर पर RLHF या DPO जैसी preference विधियाँ आती हैं।\n\nFine-tuning foundation model से production मॉडल तक पहुँचने का मानक रास्ता है, vision में भी और भाषा में भी। इसके मुख्य जोखिम छोटे datasets पर overfitting और catastrophic forgetting हैं, जिसमें मॉडल पहले की सामान्य क्षमताएँ खो देता है। बार-बार बदलने वाले तथ्य जोड़ने के लिए भी fine-tuning एक कमज़ोर तरीका है; retrieval आमतौर पर सस्ता और update करने में आसान होता है।",
+  "u": [
+   "LLMs को कंपनी के लहजे और format के अनुरूप ढालना",
+   "ImageNet backbones से image classifiers train करना",
+   "चिकित्सा या कानूनी text के लिए मॉडल विशेषीकृत करना"
+  ],
+  "x": "एक बैंक शिकायत-सारांशों के कुछ हज़ार समीक्षित उदाहरणों पर LoRA से एक open-weight LLM की fine-tuning करता है, ताकि outputs उसके regulatory template का पालन करें। हर training run के बाद catastrophic forgetting पकड़ने के लिए टीम अपने evaluation suite में एक general-ability benchmark रखती है।"
+ },
+ "foundation": {
+  "n": "Foundation Model",
+  "d": "Foundation model एक बड़ा मॉडल है जिसे बड़े पैमाने पर व्यापक डेटा पर pretrain किया गया है और जिसे कई downstream tasks के लिए ढाला जा सकता है।\n\nइस शब्द में GPT और Llama जैसे LLMs, BERT जैसे encoders, CLIP जैसे image-text मॉडल और time-series foundation models आते हैं। इन्हें विशाल unlabeled corpora पर next-token prediction या masked language modeling जैसे self-supervised objectives से train किया जाता है, ताकि महँगी सीख एक ही बार हो। उपयोगकर्ता फिर prompting, in-context learning, fine-tuning, LoRA या मॉडल के embeddings को features की तरह इस्तेमाल करके नए tasks तक पहुँचते हैं।\n\nFoundation models ने ML के तरीके को हर task के लिए अलग मॉडल train करने से बदलकर एक साझा मॉडल को ढालने की ओर मोड़ दिया, जिससे छोटे labeled datasets कहीं अधिक उपयोगी हो गए। हर application base मॉडल की कमज़ोरियाँ विरासत में पाती है: उसके training डेटा के पूर्वाग्रह, एक cutoff तारीख पर रुक जाने वाला ज्ञान, और hallucination जैसी विफलताएँ। असली लक्ष्य task पर base मॉडल का evaluation फिर भी ज़रूरी है।",
+  "u": [
+   "Task मॉडलों की fine-tuning का शुरुआती बिंदु",
+   "Prompts के साथ zero-shot classification",
+   "Search और clustering के लिए embeddings बनाना"
+  ],
+  "x": "एक बीमा कंपनी claim triage, document extraction और ग्राहक-उत्तर drafting को तीन अलग-अलग train किए गए systems के बजाय एक licensed foundation model पर बनाती है। हर use case के अपने prompts, evaluation set और ज़रूरत पड़ने पर एक छोटा LoRA adapter होता है, जबकि साझा base मॉडल को योजनाबद्ध schedule पर upgrade किया जाता है।"
+ },
+ "perplexity": {
+  "n": "Perplexity",
+  "d": "Perplexity मापती है कि language model किसी text का कितना अच्छा prediction करता है: यह प्रति token औसत negative log-probability का exponential है।\n\nसहज रूप से, 20 की perplexity का अर्थ है कि मॉडल औसतन उतना ही अनिश्चित है जितना हर कदम पर 20 tokens में से समान रूप से एक चुनते समय होता। कम बेहतर है, और एक पूर्ण मॉडल 1 तक पहुँचेगा। क्योंकि यह cross-entropy loss का exponential है, perplexity next-token prediction के training loss के साथ ठीक-ठीक चलती है।\n\nHeld-out text पर perplexity pretraining runs, scaling laws अध्ययनों, quantization जाँचों और domain-adaptation प्रयोगों का मानक intrinsic metric है। मुख्य जोखिम अलग tokenizers या vocabularies वाले मॉडलों के मानों की तुलना करना है: प्रति-token perplexity इस पर निर्भर करती है कि text कैसे बँटा है, इसलिए संख्याएँ तुलनीय नहीं होतीं। कम perplexity यह भी गारंटी नहीं देती कि मॉडल निर्देशों का पालन करेगा, अच्छा reasoning करेगा या hallucination से बचेगा, इसीलिए task benchmarks फिर भी ज़रूरी हैं।",
+  "u": [
+   "Language model की pretraining प्रगति ट्रैक करना",
+   "Quantization के बाद गुणवत्ता में गिरावट जाँचना",
+   "Held-out text पर domain-adapted मॉडलों की तुलना"
+  ],
+  "x": "सस्ती serving के लिए एक LLM को 4-bit में quantize कर रही टीम quantization से पहले और बाद में, उसी tokenizer के साथ, एक ही held-out corpus पर perplexity मापती है। थोड़ी बढ़त स्वीकार की जाती है, लेकिन किसी एक data slice पर बड़ी छलांग उन्हें दूसरा calibration set आज़माने के लिए वापस भेज देती है।"
+ },
+ "logprob": {
+  "n": "Log-Probability",
+  "d": "Log-probability किसी probability का natural logarithm है, इसलिए इसके मान ऋण अनंत और 0 के बीच होते हैं, और 0 का अर्थ निश्चितता है।\n\nमॉडल log-probabilities के साथ इसलिए काम करते हैं क्योंकि कई छोटी probabilities का गुणनफल floating point में underflow हो जाता है, जबकि उनके logs बस जुड़ जाते हैं। Language model logits देता है; log-softmax लगाने पर vocabulary के हर token की log-probability मिलती है, और पूरे sequence की log-probability उसके tokens पर इनका योग होती है।\n\nML में log-probabilities हर जगह हैं: maximum likelihood estimation इन्हें maximize करता है, cross-entropy loss और log loss इनका negative mean हैं, perplexity इनके औसत का exponential है, beam search hypotheses को इनके योग से rank करता है, और PPO व DPO इन्हें policy और reference मॉडल के बीच तुलना करते हैं। LLM APIs confidence scoring के लिए token log-probabilities भी लौटाते हैं। एक आम भूल अलग-अलग लंबाई के sequences की कच्ची log-probabilities की तुलना करना है; लंबे sequences का score हमेशा कम आता है, इसलिए आमतौर पर length normalization ज़रूरी होता है।",
+  "u": [
+   "मॉडल likelihood से उम्मीदवार उत्तरों को score करना",
+   "Maximum likelihood training में loss की गणना",
+   "कम-confidence वाले LLM outputs को समीक्षा के लिए चिह्नित करना"
+  ],
+  "x": "एक information-extraction सेवा हर निकाले गए field के साथ LLM API से token log-probabilities भी माँगती है। जिन fields की औसत log-probability एक tuned threshold से नीचे जाती है, उन्हें सीधे database में लिखने के बजाय मानव समीक्षक के पास भेजा जाता है।"
+ },
+ "ngram": {
+  "n": "N-gram",
+  "d": "N-gram n items का एक लगातार क्रम है, आमतौर पर शब्द या अक्षर: unigrams एकल items हैं, bigrams जोड़े और trigrams तिकड़ियाँ।\n\nN-grams की गिनती वह स्थानीय शब्द-क्रम पकड़ती है जो अकेले शब्द चूक जाते हैं, जैसे कि \"not good\" का अर्थ \"good\" से अलग है। एक पारंपरिक n-gram language model पिछले n−1 शब्दों की गिनती से अगले शब्द की probability का अनुमान लगाता है, और training में कभी न देखे गए sequences को संभालने के लिए smoothing का उपयोग करता है।\n\nN-grams bag of words और TF-IDF text classifiers में, spell checking में, near-duplicate पहचान में और BLEU व ROUGE जैसे evaluation metrics में अब भी उपयोगी features हैं, जो n-gram overlap गिनते हैं। LLM टीमें training डेटा में benchmark contamination पकड़ने के लिए भी n-gram overlap का उपयोग करती हैं। मुख्य सीमा sparsity है: संभावित n-grams की संख्या n के साथ exponential रूप से बढ़ती है, इसलिए अधिकतर लंबे n-grams बहुत कम या कभी नहीं दिखते, और गिनतियाँ अनदेखे पर मिलते-जुलते वाक्यांशों पर generalize नहीं कर पातीं।",
+  "u": [
+   "Text classifiers के लिए शब्द-जोड़ी features",
+   "Training corpora में test-set contamination पकड़ना",
+   "BLEU और ROUGE overlap scores की गणना"
+  ],
+  "x": "LLM training corpus तैयार कर रही एक टीम corpus और अपने evaluation benchmarks के बीच 13-gram overlaps गिनती है। Benchmark प्रश्नों के साथ लंबे n-grams साझा करने वाले documents हटा दिए जाते हैं, ताकि बताए गए scores रटने के बजाय generalization को दर्शाएँ।"
+ },
+ "tfidf": {
+  "n": "TF-IDF",
+  "d": "TF-IDF (term frequency–inverse document frequency) एक weighting है जो किसी शब्द को किसी document में तब ऊँचा score देती है जब वह उसमें बार-बार आता है लेकिन बाकी corpus में कम दिखता है।\n\nTerm frequency उन शब्दों को पुरस्कृत करती है जो document में प्रमुख हैं; inverse document frequency, यानी इस बात का logarithm कि कितने documents में वह शब्द है, \"the\" या \"data\" जैसे आम शब्दों को नीचे धकेलती है। हर document vocabulary पर एक sparse vector बन जाता है, जिसे आमतौर पर L2-normalize किया जाता है ताकि cosine similarity documents की निष्पक्ष तुलना करे।\n\nLogistic regression या linear SVM के साथ TF-IDF vectors text classification के लिए एक मज़बूत और तेज़ baseline हैं, और BM25 के साथ TF-IDF अब भी RAG systems में keyword search और hybrid retrieval को चलाता है। इसकी मुख्य सीमा यह है कि यह अर्थ को अनदेखा करता है: \"car\" और \"automobile\" जैसे पर्यायवाची कोई weight साझा नहीं करते, और जब तक n-grams न जोड़े जाएँ, शब्द-क्रम खो जाता है।",
+  "u": [
+   "Text classification के लिए तेज़ baselines",
+   "Hybrid search systems में keyword retrieval",
+   "Document clusters के विशिष्ट शब्द खोजना"
+  ],
+  "x": "एक support platform आने वाले tickets को TF-IDF और logistic regression मॉडल से टीमों तक पहुँचाता है, जो CPU पर कुछ ही मिनटों में फिर से train हो जाता है। टीम इसे production baseline के रूप में रखती है, जिसे कोई भी भारी transformer classifier इसकी जगह लेने से पहले साफ़ तौर पर हराए।"
+ },
+ "bagofwords": {
+  "n": "Bag of Words",
+  "d": "Bag of words किसी text को उसमें मौजूद हर vocabulary शब्द की गिनती के रूप में दर्शाता है, व्याकरण और शब्द-क्रम को अनदेखा करते हुए।\n\nVectorizer पहले training corpus से vocabulary बनाता है, फिर हर document को एक vector में बदलता है जिसमें हर शब्द के लिए एक entry होती है, जिसमें गिनती या उपस्थिति का binary flag होता है। क्योंकि अधिकतर documents vocabulary का बहुत छोटा हिस्सा इस्तेमाल करते हैं, vectors को sparse matrices के रूप में संग्रहीत किया जाता है। N-grams जोड़ने से कुछ स्थानीय क्रम लौट आता है, और TF-IDF गिनतियों को फिर से weight करता है।\n\nBag of words Naive Bayes spam filters, logistic regression text classifiers और topic models का पारंपरिक input है, और यह अब भी तेज़, व्याख्या-योग्य baselines देता है। मुख्य सीमा यह है कि \"dog bites man\" और \"man bites dog\" को एक जैसे vectors मिलते हैं, और पर्यायवाची आपस में असंबंधित रहते हैं। Vocabulary बनाते समय न देखे गए शब्द prediction के समय चुपचाप हटा दिए जाते हैं, जो आने वाले text में drift को छिपा सकता है।",
+  "u": [
+   "Naive Bayes spam और sentiment filters",
+   "व्याख्या-योग्य keyword-आधारित text classifiers",
+   "Topic modeling के लिए input features"
+  ],
+  "x": "एक email provider का पहली पंक्ति का spam filter multinomial Naive Bayes के साथ bag-of-words गिनतियों का उपयोग करता है, क्योंकि यह क्रमिक रूप से train होता है और messages को microseconds में score करता है। अनिश्चित score वाले messages एक धीमे neural मॉडल को भेजे जाते हैं।"
+ },
+ "hallucination": {
+  "n": "Hallucination",
+  "d": "Hallucination तब होता है जब language model ऐसा content generate करता है जो धाराप्रवाह और आत्मविश्वासी है, लेकिन गलत है या उसके input या ज्ञात तथ्यों से समर्थित नहीं है।\n\nयह LLMs की training के तरीके से उपजता है: next-token prediction विश्वसनीय लगने वाली निरंतरता को पुरस्कृत करता है, सत्यापित को नहीं, इसलिए जब मॉडल के पास ज्ञान नहीं होता तब भी वह सबसे संभावित लगने वाला text बना देता है, जैसे कोई गढ़ा हुआ citation, API function या आँकड़ा। ऊँचे temperature के साथ sampling और दुर्लभ तथ्यों के बारे में प्रश्न इसकी संभावना बढ़ाते हैं।\n\nबचाव के उपायों में retrieval-augmented generation (RAG) शामिल है जो उत्तरों को दिए गए documents पर आधारित करता है, citations माँगना, गणनाओं और lookups के लिए tool use, self-consistency जाँच, alignment के दौरान उत्तर न देने (abstention) की training, और तथ्यात्मकता मापने वाले evaluation sets। एक आम गलतफ़हमी यह है कि RAG hallucination को खत्म कर देता है। मॉडल फिर भी retrieved अंशों को गलत पढ़ सकता है, गलत जोड़ सकता है या अनदेखा कर सकता है, इसलिए grounded systems को यह जाँच भी चाहिए कि हर दावा स्रोतों से समर्थित है।",
+  "u": [
+   "LLM उत्तरों की तथ्यात्मकता का evaluation",
+   "Retrieval-augmented assistants में citation जाँच",
+   "कानूनी, चिकित्सा और वित्तीय outputs के लिए guardrails"
+  ],
+  "x": "एक legal research assistant केवल retrieved case documents से उत्तर देता है और हर दावे के साथ एक citation जोड़ता है। दूसरा verification चरण जाँचता है कि हर उद्धृत अंश में सचमुच बताया गया निर्णय मौजूद है, और जाँच में विफल उत्तरों को दिखाने के बजाय चिह्नित कर दिया जाता है।"
+ },
+ "alignment": {
+  "n": "Alignment",
+  "d": "Alignment किसी AI मॉडल के व्यवहार को उसके developers और users के इरादों और मूल्यों के अनुरूप बनाने का काम है: सहायक, ईमानदार और हानिरहित।\n\nPretrained LLM केवल text को आगे बढ़ाता है, इसलिए वह निर्देशों को अनदेखा कर सकता है, toxic content बना सकता है या हानिकारक requests में मदद कर सकता है। Alignment training pretraining के बाद इस व्यवहार को नया रूप देती है, आमतौर पर demonstrations पर supervised fine-tuning (SFT) से, फिर preference optimization से, जैसे reward model और PPO के साथ RLHF, DPO, या Constitutional AI और RLAIF। Red-teaming और safety evaluations परिणाम की जाँच करते हैं।\n\nAlignment का एक research पक्ष भी है: mechanistic interpretability और scalable oversight यह अध्ययन करते हैं कि क्या मॉडल इच्छित लक्ष्यों का पीछा करते हैं। एक आम जोखिम reward hacking है, जिसमें मॉडल सचमुच बेहतर होने के बजाय reward signal की खामियों का फ़ायदा उठाना सीख लेता है, जैसे बहुत ज़्यादा लंबा या हाँ-में-हाँ मिलाने वाला बन जाना। हानिरहित requests को ज़रूरत से ज़्यादा मना करना उल्टी विफलता है, इसलिए alignment evaluation को दोनों को मापना चाहिए।",
+  "u": [
+   "Chat assistants में निर्देशों का पालन",
+   "हानिकारक या toxic मॉडल outputs घटाना",
+   "सार्वजनिक मॉडल release से पहले red-teaming"
+  ],
+  "x": "एक AI lab प्रशिक्षित annotators से assistant responses पर pairwise preference निर्णय इकट्ठा करती है और अपने SFT मॉडल के ऊपर DPO चलाती है। Release से पहले aligned मॉडल का evaluation हानिकारक requests को मना करने पर और कुछ हानिरहित लेकिन संवेदनशील लगने वाले prompts पर किया जाता है, ताकि over-refusal पकड़ा जा सके।"
+ },
+ "mdp": {
+  "n": "Markov Decision Process (MDP)",
+  "d": "Markov decision process क्रमिक निर्णय-निर्माण का वह गणितीय मॉडल है जिसका उपयोग reinforcement learning में होता है: states, actions, transition probabilities, rewards और एक discount factor।\n\nहर कदम पर agent एक state देखता है, एक action चुनता है, reward पाता है और एक नई state में पहुँचता है। Markov property कहती है कि अगली state और reward केवल वर्तमान state और action पर निर्भर करते हैं। लक्ष्य एक ऐसी policy है जो भविष्य के rewards के अपेक्षित discounted योग को maximize करे।\n\nMDPs value iteration, Q-learning, policy gradients और PPO की नींव हैं, और ये RLHF को भी ढाँचा देते हैं, जहाँ state prompt और अब तक generate हुआ text है और हर action एक token है। एक आम भूल ऐसी state परिभाषित करना है जो वास्तव में Markov नहीं है, जैसे एक अकेला video frame जो वेग को छिपा देता है; तब समस्या partially observable हो जाती है, और state को इतिहास या hidden state से बढ़ाना पड़ता है।",
+  "u": [
+   "Control और robotics समस्याओं को औपचारिक रूप देना",
+   "RLHF के लिए LLM text generation को ढाँचा देना",
+   "Inventory और pricing निर्णयों का modeling"
+  ],
+  "x": "एक operations टीम गोदाम की भरपाई को एक MDP के रूप में मॉडल करती है, जिसकी state में मौजूदा stock और खुले orders हैं, actions order की मात्राएँ हैं, और reward holding और stockout की लागत घटाता है। पिछली माँग के simulator में सीखी गई policy की तुलना किसी भी rollout से पहले मौजूदा reorder-point नियम से की जाती है।"
+ },
+ "policy": {
+  "n": "Policy",
+  "d": "Reinforcement learning में policy agent का actions चुनने का नियम है: हर state से किसी action या actions पर एक probability distribution तक का mapping।\n\nDeterministic policy हर state के लिए एक action लौटाती है; stochastic policy π(a|s) probabilities लौटाती है, जिससे exploration संभव होता है और जो policy-gradient विधियों के लिए आवश्यक है। Policy एक table या neural network हो सकती है, जो value function से निकाली जाए या सीधे सीखी जाए।\n\nREINFORCE, PPO और GRPO जैसी policy-gradient विधियाँ policy के parameters को इस तरह बदलती हैं कि ऊँचे reward तक ले जाने वाले actions की probability बढ़े। RLHF में LLM स्वयं policy है: state अब तक का text है और हर action अगला token है। एक आम जोखिम policy को एक अपूर्ण reward के विरुद्ध इतना ज़ोर से optimize करना है कि वह अजीब व्यवहार की ओर बहक जाए; RLHF इसे KL penalty से सीमित करता है जो policy को reference मॉडल के करीब रखती है।",
+  "u": [
+   "Robots और game खेलने वाले agents को नियंत्रित करना",
+   "PPO या GRPO से LLMs की fine-tuning",
+   "Recommendation और bidding systems में actions चुनना"
+  ],
+  "x": "एक ad-bidding टीम एक neural policy train करती है जो auction features को bid multiplier से जोड़ती है; शुरुआत logged डेटा से होती है और फिर सीमित online exploration से उसे निखारा जाता है। हर नई policy असली खर्च नियंत्रित करने से पहले मौजूदा policy के विरुद्ध shadow mode में चलती है।"
+ },
+ "reward": {
+  "n": "Reward",
+  "d": "Reward वह scalar feedback signal है जो environment किसी action के बाद reinforcement learning agent को देता है।\n\nAgent अकेले rewards को नहीं बल्कि return को maximize करता है, यानी भविष्य के rewards का discounted योग, इसलिए वह बाद में बड़े लाभ के लिए अभी छोटी लागत स्वीकार कर सकता है। Discount factor γ तय करता है कि भविष्य कितना मायने रखता है। Rewards dense हो सकते हैं, जो हर कदम पर आते हैं, या sparse, जो केवल episode के अंत में आते हैं, जिससे सीखना कहीं कठिन हो जाता है।\n\nLLM training में rewards RLHF में एक सीखे गए reward model से, RLAIF में AI feedback से, या RL with verifiable rewards में unit tests और सटीक उत्तरों जैसी स्वचालित जाँचों से आते हैं। सबसे प्रसिद्ध जोखिम reward hacking है: agent ऊँचा score पाने का ऐसा तरीका खोज लेता है जो designer ने नहीं चाहा था, जैसे मॉडल का लंबे उत्तर देना क्योंकि reward model लंबाई को पसंद करता है।",
+  "u": [
+   "RL agents और robots के लिए objectives design करना",
+   "Reward models से LLM outputs को score करना",
+   "Code-generation training के लिए unit-test rewards"
+  ],
+  "x": "Reinforcement learning से code-generation मॉडल train कर रही एक टीम तभी 1 का reward देती है जब generated function छिपे हुए unit tests पास करे। शुरुआती policies को दिखने वाले test inputs के लिए विशेष मामले लिखते पाए जाने के बाद, वे outputs का sampling करके reward hacking पर नज़र रखते हैं।"
+ },
+ "stateaction": {
+  "n": "State और Action",
+  "d": "Reinforcement learning में state वह जानकारी है जो environment की वर्तमान स्थिति का वर्णन करती है, और action वह विकल्प है जो agent उस state में चुन सकता है।\n\nमूल loop में agent state sₜ देखता है, action aₜ लेता है, और environment एक reward और अगली state sₜ₊₁ लौटाता है। States छोटे vectors हो सकते हैं, जैसे cart की स्थिति और वेग, या उच्च-आयामी observations, जैसे images। Action spaces discrete होते हैं, जैसे बाएँ या दाएँ जाना, या continuous, जैसे robot arm के joints के torques।\n\nState और action का representation तय करता है कि कौन-से algorithms लागू होंगे: Q-learning और DQN को discrete actions चाहिए, जबकि continuous control में actor-critic विधियाँ इस्तेमाल होती हैं। RLHF में state prompt और अब तक generate हुआ text है और action अगला token है। एक आम गलती उस जानकारी को state से बाहर छोड़ देना है जिस पर reward निर्भर करता है, जिससे समस्या non-Markov बन जाती है।",
+  "u": [
+   "Robot control के लिए observation spaces design करना",
+   "Game agents के लिए discrete action sets तय करना",
+   "Text generation को state और action के रूप में दर्शाना"
+  ],
+  "x": "Cooling के लिए RL controller बना रही एक data-center टीम state को हाल के तापमान, server load और बाहरी मौसम के रूप में, और actions को सुरक्षित सीमाओं के भीतर setpoint बदलावों के रूप में परिभाषित करती है। Actions को छोटे, सीमित समायोजनों तक रखने से operators controller को live उपयोग के लिए मंज़ूरी दे पाते हैं।"
+ },
+ "valuefn": {
+  "n": "Value Function",
+  "d": "Value function अनुमान लगाता है कि किसी state, या state-action जोड़े, से आगे एक दी गई policy का पालन करने पर agent कितना अपेक्षित return इकट्ठा करेगा।\n\nState value V(s) बताता है कि किसी state में होना कितना अच्छा है; action value Q(s,a) बताता है कि वहाँ action a लेना कितना अच्छा है। दोनों Bellman equation को संतुष्ट करते हैं: एक value तत्काल reward और अगली state के discounted value के योग के बराबर होता है, इसलिए दोनों को bootstrapping से अनुभव द्वारा सीखा जा सकता है।\n\nQ-learning और DQN सीधे Q सीखते हैं और उस पर greedy ढंग से action लेते हैं। PPO जैसी actor-critic विधियाँ एक value network को critic के रूप में train करती हैं जो advantage A = Q − V के ज़रिए policy gradients का variance घटाता है; GRPO इस critic को हटा देता है और baseline के रूप में group औसत का उपयोग करता है। Value को reward से न मिलाएँ: reward तत्काल है, value अपेक्षित दीर्घकालिक कुल है।",
+  "u": [
+   "Discrete control के लिए Q-learning और DQN",
+   "Actor-critic और PPO में critic networks",
+   "Game खेलने वाले agents में position का मूल्यांकन"
+  ],
+  "x": "एक game studio playtesting के लिए actor-critic विधि से agents train करता है, जिसमें एक value network हर game position के अपेक्षित परिणाम का prediction करता है। Value अनुमानों को log भी किया जाता है ताकि वे levels उभरें जहाँ agents बहुत जल्दी जीत को लेकर आश्वस्त हो जाते हैं, जो designers को balance की समस्याओं की ओर इशारा करता है।"
+ },
+ "explore": {
+  "n": "Exploration बनाम Exploitation",
+  "d": "Exploration बनाम exploitation actions के बारे में और जानने के लिए उन्हें आज़माने और फ़िलहाल सबसे अच्छे दिखने वाले action को चुनने के बीच का trade-off है।\n\nजो agent केवल exploit करता है वह किसी औसत विकल्प पर अटक सकता है; जो केवल explore करता है वह उन विकल्पों पर reward गँवाता है जिन्हें वह पहले से खराब जानता है। मानक रणनीतियाँ हैं ε-greedy, जो छोटी probability ε के साथ एक random action चुनती है; upper confidence bound (UCB), जो अनिश्चित विकल्पों को एक bonus देता है; और Thompson sampling, जो हर विकल्प के value पर posterior से sample करता है।\n\nयह trade-off reinforcement learning, recommendations और ads के लिए multi-armed bandits, Bayesian optimization, और LLMs की RL fine-tuning के दौरान sampling temperature में दिखता है। Production recommender systems में एक आम जोखिम शुद्ध exploitation है: केवल उन items पर train हुआ मॉडल जिन्हें उसने पहले ही दिखाना चुना था, बाकी catalog के बारे में कुछ नहीं सीखता, जिससे popularity bias मज़बूत होता है और cold start से उबरना धीमा हो जाता है।",
+  "u": [
+   "Ads और recommendations के लिए multi-armed bandits",
+   "Reinforcement learning में exploration schedules",
+   "Bayesian optimization में acquisition functions"
+  ],
+  "x": "एक news app अपनी home screen की headlines चुनने के लिए Thompson sampling का उपयोग करता है, ताकि नई खबरों को click इतिहास बनने से पहले भी कुछ impressions मिलें। जैसे-जैसे हर खबर का click-through अनुमान अधिक निश्चित होता है, exploration पर खर्च होने वाला traffic का हिस्सा अपने आप घटता जाता है।"
+ },
+ "inference": {
+  "n": "Inference",
+  "d": "Inference एक trained मॉडल को नए inputs पर चलाकर predictions बनाना है, training के विपरीत, जो मॉडल के weights को update करती है।\n\nInference के दौरान weights स्थिर रहते हैं, कोई gradients नहीं निकाले जाते, और dropout व batch normalization जैसी layers अपने evaluation व्यवहार पर आ जाती हैं। यह batch mode में चल सकता है, पूरी table को रातोंरात score करते हुए, या online, latency बजट के भीतर एक-एक request का उत्तर देते हुए। LLMs के लिए inference दो चरणों में बँटता है: prefill चरण जो prompt को समानांतर रूप से process करता है, और decode चरण जो KV cache का उपयोग करके एक-एक token generate करता है।\n\nDeploy किए गए मॉडल की जीवनभर की लागत में आमतौर पर inference ही हावी रहता है, इसीलिए quantization, knowledge distillation, pruning, continuous batching और speculative decoding मौजूद हैं। एक क्लासिक भूल PyTorch मॉडल को training mode में छोड़ देना है, जिससे dropout सक्रिय रहता है; दूसरी है inference के समय inputs को training से अलग ढंग से preprocess करना, जो चुपचाप accuracy घटा देता है।",
+  "u": [
+   "Web APIs के पीछे real-time scoring",
+   "बड़ी tables पर रात्रिकालीन batch predictions",
+   "LLM chat products में text generation"
+  ],
+  "x": "एक retailer रात्रिकालीन batch job में churn मॉडल से अपने पूरे ग्राहक आधार को score करता है, जबकि एक अलग low-latency सेवा हर page view पर product recommender चलाती है। दोनों training का ठीक वही preprocessing code दोबारा उपयोग करते हैं, जो model artifact के साथ packaged है।"
+ },
+ "latency": {
+  "n": "Latency और Throughput",
+  "d": "Latency वह समय है जो एक request को आने से उत्तर मिलने तक लगता है; throughput यह है कि एक system प्रति इकाई समय में कितनी requests या tokens पूरे करता है।\n\nदोनों जुड़े हैं लेकिन अक्सर उल्टी दिशाओं में खिंचते हैं। कई requests को एक साथ batch करने से GPU का कहीं अधिक कुशल उपयोग होता है और throughput बढ़ता है, लेकिन हर request को batch भरने का इंतज़ार करना पड़ सकता है, जिससे latency बढ़ती है। Latency को p50 और p99 जैसे percentiles में बताया जाता है, क्योंकि औसत उन धीमे outliers को छिपा देते हैं जिन्हें users महसूस करते हैं। LLMs के लिए practitioners time to first token और प्रति output token समय को अलग-अलग ट्रैक करते हैं, और throughput को tokens प्रति सेकंड में।\n\nये संख्याएँ मॉडल के आकार, quantization, hardware, batching policy, continuous batching, KV cache और परिणामों की caching से जुड़े निर्णय तय करती हैं। एक आम गलती खाली machine पर एक अकेली request से latency का benchmark करना है; असली समवर्ती load में queueing tail latency को कई गुना बढ़ा सकती है, इसलिए load tests को production traffic के पैटर्न दोहराने चाहिए।",
+  "u": [
+   "Model APIs के लिए p99 latency लक्ष्य तय करना",
+   "GPU serving के लिए batch sizes चुनना",
+   "LLM token throughput के लिए capacity planning"
+  ],
+  "x": "एक search टीम को तय p99 latency बजट के भीतर reranked परिणाम लौटाने होते हैं, इसलिए उन्होंने अपने cross-encoder को एक छोटे मॉडल में distill किया और batch के इंतज़ार की अवधि पर सीमा लगाई। इसके बाद throughput को batches बड़े करके नहीं, बल्कि replicas जोड़कर बढ़ाया जाता है।"
+ },
+ "gpu": {
+  "n": "GPU और VRAM",
+  "d": "GPU हज़ारों समानांतर cores वाला processor है जो deep learning के केंद्र में मौजूद dense matrix multiplication के लिए बना है, और VRAM उसकी on-board memory है।\n\nGPUs पर training और inference तेज़ होते हैं क्योंकि किसी layer के operations समानांतर चल सकते हैं, खासकर tensor cores पर जो FP16, BF16 और कम-precision formats को तेज़ करते हैं। Computation जिस भी चीज़ को छूता है वह VRAM में समानी चाहिए: model weights, activations, training के दौरान gradients और optimizer states, और LLM inference के दौरान KV cache। Memory traffic अक्सर असली bottleneck होता है, जिसे attention के लिए FlashAttention घटाता है।\n\nVRAM की क्षमता आमतौर पर तय करती है कि क्या संभव है: मॉडल का आकार, batch size और context length। Mixed precision, quantization, gradient checkpointing, LoRA और data, tensor या pipeline parallelism, सब इसमें समाने के लिए ही हैं। एक आम गलतफ़हमी यह है कि memory की ज़रूरत केवल weights तय करते हैं; Adam के साथ training को activations गिनने से पहले ही weight memory का लगभग चार गुना या उससे अधिक चाहिए।",
+  "u": [
+   "LLM training और serving के लिए hardware का आकार तय करना",
+   "Memory में समाने के लिए batch size और precision चुनना",
+   "Training के दौरान out-of-memory errors का निदान"
+  ],
+  "x": "7-billion-parameter मॉडल serve करने की योजना बना रही एक टीम गणना करती है कि 16-bit weights को KV cache से पहले ही लगभग 14 GB चाहिए, इसलिए वे 4-bit quantization चुनते हैं ताकि एक 24 GB GPU पर कई समवर्ती long-context requests समा सकें। वे अधिकतम context length पर load-test करके पुष्टि करते हैं कि KV cache memory से बाहर नहीं जाता।"
+ },
+ "serving": {
+  "n": "Model Serving",
+  "d": "Model serving वह infrastructure है जो एक trained मॉडल को load करता है और applications की prediction requests का उत्तर देता है, आमतौर पर HTTP या gRPC API के ज़रिए।\n\nServing system मॉडल को उसके preprocessing के साथ package करता है, उसे memory में loaded रखता है, requests को batch करता है, traffic के अनुसार replicas घटाता-बढ़ाता है, और health checks व metrics उपलब्ध कराता है। सामान्य-उद्देश्य servers में TorchServe, Triton Inference Server और BentoML शामिल हैं; vLLM और TGI जैसे LLM servers continuous batching, PagedAttention और generated tokens की streaming जोड़ते हैं। Canary releases, shadow traffic और A/B testing जैसे deployment पैटर्न नए version को सुरक्षित रूप से खुद को साबित करने देते हैं।\n\nServing training को model monitoring, latency और throughput लक्ष्यों, और feature store से जोड़ता है, जिसे online भी वही features देने चाहिए जो offline देता है। सबसे प्रसिद्ध जोखिम training-serving skew है: serving path में features का training से अलग ढंग से निकाला जाना, जो बिना कोई error दिए predictions खराब कर देता है।",
+  "u": [
+   "Real-time model predictions के लिए REST endpoints",
+   "Streaming token responses वाले LLM APIs",
+   "नए model versions के canary और shadow releases"
+  ],
+  "x": "एक lending platform अपने credit मॉडल को एक internal API के पीछे serve करता है, जिसमें हर region में दो replicas हैं और हर नए version के लिए एक canary है जिसे traffic का छोटा हिस्सा मिलता है। Requests और predictions log किए जाते हैं ताकि monitoring live feature distributions की तुलना training डेटा से कर सके।"
+ },
+ "monitoring": {
+  "n": "Model Monitoring",
+  "d": "Model monitoring deploy किए गए मॉडल के inputs, outputs, performance और system health की निरंतर निगरानी है, ताकि पता चले कि वह कब इच्छित ढंग से काम करना बंद करता है।\n\nमॉडल चुपचाप खराब होते हैं: जब ग्राहक अपना व्यवहार बदलते हैं या कोई upstream pipeline nulls भेजने लगती है, तो कोई exception नहीं उठता। इसलिए monitoring कई परतों पर नज़र रखती है: missing rates और schema बदलाव जैसी data quality, population stability index या KL divergence जैसे आँकड़ों से मापा गया input data drift, prediction distribution drift, और labels आने पर ROC-AUC, precision या calibration जैसे असली metrics।\n\nMonitoring के alerts जाँच, rollback या retraining शुरू करते हैं। एक आम जोखिम केवल drift alarms पर निर्भर रहना है: किसी महत्वहीन feature में drift शायद मायने न रखे, जबकि features और label के बीच का संबंध बदलने पर बिना दिखने वाले drift के भी performance गिर सकता है। Label में देरी भी मायने रखती है; fraud labels हफ़्तों बाद आ सकते हैं, इसलिए तब तक proxy metrics चाहिए।",
+  "u": [
+   "Production features में data drift पकड़ना",
+   "Labels आने पर live accuracy ट्रैक करना",
+   "टूटी upstream data pipelines पर alert देना"
+  ],
+  "x": "एक fraud टीम अपने शीर्ष features के लिए रोज़ population stability index, decision threshold से ऊपर के transactions का हिस्सा, और देरी के साथ पुष्ट मामलों पर precision पर नज़र रखती है। एक card network के missing values में अचानक बढ़त का स्रोत एक upstream schema बदलाव निकला, और यह detection rates को नुकसान पहुँचाने से पहले पकड़ लिया गया।"
+ },
+ "retraining": {
+  "n": "Retraining",
+  "d": "Retraining एक deploy किए गए मॉडल को नए डेटा पर फिर से train करना है, ताकि वह उस दुनिया के बदलावों के साथ चलता रहे जिसका वह prediction करता है।\n\nData drift और concept drift के कारण deployment के बाद मॉडल की accuracy आमतौर पर घटती जाती है। टीमें तय schedule पर retrain करती हैं, जैसे साप्ताहिक या मासिक, या तब जब model monitoring खराब performance या drift पकड़ती है। नया मॉडल उसी ML pipeline से train होता है, time-based validation के साथ हाल के held-out डेटा पर evaluate होता है, मौजूदा production मॉडल से तुलना की जाती है, और तभी promote होता है जब वह कम से कम उतना ही अच्छा हो।\n\nRetraining के विकल्पों में training window, हाल के डेटा को अधिक weight देना या नहीं, और पुराने मॉडल से warm-start करना या शुरू से train करना शामिल हैं। एक आम जोखिम feedback contamination है: मॉडल के अपने निर्णय नए labels को आकार देते हैं, जैसे एक fraud मॉडल जो transactions को block कर देता है, जिससे उनका असली परिणाम कभी दिखता ही नहीं। दूसरा है guardrails के बिना स्वचालित promotion।",
+  "u": [
+   "Demand forecasting मॉडलों का निर्धारित refresh",
+   "Drift से शुरू होने वाली fraud मॉडलों की retraining",
+   "Promotion से पहले champion-challenger evaluation"
+  ],
+  "x": "एक food-delivery कंपनी अपने delivery-time मॉडल को हर हफ़्ते हाल के महीनों के orders पर retrain करती है। उम्मीदवार मॉडल को held-out orders के नवीनतम हफ़्ते पर मौजूदा champion को हराना होता है और हर शहर पर sanity checks पास करने होते हैं, तभी वह production version की जगह लेता है।"
+ },
+ "featurestore": {
+  "n": "Feature Store",
+  "d": "Feature store एक data system है जो machine-learning features को compute, संग्रहीत और serve करता है, ताकि training और production एक जैसी परिभाषाओं का उपयोग करें।\n\nइसके आमतौर पर दो हिस्से होते हैं: एक offline store जो training sets बनाने के लिए ऐतिहासिक feature मान रखता है, और एक online store, यानी low-latency key-value database, जो prediction के समय user या card जैसी किसी entity के नवीनतम मान लौटाता है। परिभाषाएँ एक बार लिखी जाती हैं और टीमों के बीच साझा की जाती हैं। Open-source Feast और cloud vendors के managed platforms इसी पैटर्न का पालन करते हैं।\n\nFeature stores training-serving skew को संबोधित करते हैं और point-in-time correct joins का समर्थन करते हैं: हर training उदाहरण के लिए वे feature मान वैसे लौटाते हैं जैसे वे label के timestamp पर थे, बाद के मान नहीं। इसमें चूक data leakage का एक शांत रूप है जो offline metrics को बढ़ा-चढ़ाकर दिखाता है। मुख्य लागत operational है: चलाने, ताज़ा रखने और monitor करने के लिए एक और system, जिसकी ज़रूरत केवल batch मॉडलों वाली छोटी टीमों को शायद न हो।",
+  "u": [
+   "Fraud मॉडलों को real-time user features देना",
+   "Point-in-time correct training sets बनाना",
+   "ML टीमों के बीच feature परिभाषाएँ साझा करना"
+  ],
+  "x": "एक payments कंपनी एक streaming job में कई windows पर प्रति card transactions की rolling गिनतियाँ निकालती है और उन्हें online store में लिखती है। Fraud मॉडल authorization के समय इन्हें milliseconds में पढ़ता है, और वही परिभाषाएँ offline store से ऐतिहासिक training डेटा बनाती हैं।"
+ },
+ "mlpipeline": {
+  "n": "ML Pipeline",
+  "d": "ML pipeline चरणों का एक स्वचालित, क्रमबद्ध अनुक्रम है जो कच्चे डेटा को एक trained, evaluated और deploy करने योग्य मॉडल में बदलता है।\n\nआम चरण हैं data ingestion, validation, feature engineering, splitting, training, hyperparameter tuning, evaluation, और मॉडल का उसके metrics और lineage के साथ registration। Airflow, Kubeflow Pipelines और इसी तरह के orchestrators चरणों को चलाते हैं, उनके outputs को cache करते हैं और उन्हें schedule या trigger पर दोबारा चलाते हैं। छोटे स्तर पर यह शब्द scikit-learn Pipeline के लिए भी इस्तेमाल होता है, जो preprocessing और मॉडल को एक object में जोड़ता है।\n\nPipelines परिणामों को reproducible बनाती हैं और retraining इन्हीं पर चलती है। Scikit-learn वाला रूप data leakage के एक क्लासिक रूप को भी रोकता है: cross-validation से पहले पूरे dataset पर scalers, imputers या target encoders को fit करने से test-fold की जानकारी training में रिस जाती है। इन्हें Pipeline में लपेटने का अर्थ है कि हर transformation केवल training fold पर fit होता है और inference के लिए मॉडल के साथ save होता है।",
+  "u": [
+   "दोहराने योग्य end-to-end model training runs",
+   "Cross-validation के भीतर leak-free preprocessing",
+   "निर्धारित retraining और model registration"
+  ],
+  "x": "एक insurance analytics टीम एक रात्रिकालीन pipeline चलाती है जो नए policy डेटा को schema के विरुद्ध validate करती है, features दोबारा बनाती है, एक pricing मॉडल retrain करती है और उसे evaluation report के साथ register करती है। Validation चरण विफल होने पर run रुक जाता है, ताकि कोई खराब upstream file कभी training तक न पहुँचे।"
+ },
+ "benchmark": {
+  "n": "Benchmark",
+  "d": "Benchmark एक मानकीकृत dataset, task और metric है जिसका उपयोग मॉडलों या systems की समान परिस्थितियों में तुलना के लिए होता है।\n\nप्रसिद्ध ML benchmarks में image classification के लिए ImageNet, language understanding के लिए GLUE और SuperGLUE, और LLMs के लिए MMLU, GSM8K, HumanEval और SWE-bench शामिल हैं; MLPerf hardware और software की गति का benchmark करता है। Benchmark data split, evaluation प्रक्रिया और scoring नियम तय करता है, ताकि बताई गई संख्या को दोहराया और तुलना किया जा सके।\n\nBenchmarks research की प्रगति और मॉडल चयन को आगे बढ़ाते हैं, और LLM evaluation reports में आमतौर पर इनमें से कई सूचीबद्ध होते हैं। इनके जोखिम अच्छी तरह दर्ज हैं: test-set contamination, जब benchmark items training डेटा में आ जाते हैं; saturation, जब शीर्ष मॉडल सभी सीमा के पास score करते हैं; और उस पर बार-बार tuning के ज़रिए benchmark पर overfitting। Benchmark scores अक्सर किसी विशेष product पर भी लागू नहीं होते, इसलिए टीमें असली user tasks से अपने internal evaluation sets बनाती हैं।",
+  "u": [
+   "Reasoning और coding tasks पर LLMs की तुलना",
+   "Inference hardware के performance को मापना",
+   "Releases के दौरान model quality ट्रैक करना"
+  ],
+  "x": "तीन LLM vendors का मूल्यांकन कर रहा एक enterprise सार्वजनिक benchmark scores का उपयोग केवल shortlist बनाने के लिए करता है, फिर graded reference उत्तरों के साथ कई सौ असली, anonymized support प्रश्नों का एक internal benchmark बनाता है। अंतिम चुनाव उसी internal set के साथ-साथ latency और प्रति request लागत पर आधारित होता है।"
+ },
+ "anomaly": {
+  "n": "Anomaly Detection (विसंगति पहचान)",
+  "d": "Anomaly detection उन observations को खोजने का task है जो डेटा के सामान्य पैटर्न से स्पष्ट रूप से अलग हैं, जैसे दुर्लभ घटनाएँ, खराबियाँ या हमले।\n\nक्योंकि anomalies दुर्लभ होती हैं और अक्सर unlabeled होती हैं, अधिकतर विधियाँ यह सीखती हैं कि सामान्य कैसा दिखता है और हर point को इस आधार पर score करती हैं कि वह उससे कितना दूर है। आम तरीके हैं z-scores या interquartile range पर सांख्यिकीय नियम, Local Outlier Factor (LOF) और DBSCAN जैसी density और distance विधियाँ, isolation forest, जो कुछ ही random splits से असामान्य points को अलग कर देता है, और autoencoder या PCA की reconstruction error।\n\nAnomaly detection fraud detection, उपकरण monitoring, network security और model monitoring में सहायक है। इसका केंद्रीय जोखिम threshold है: score की कोई इकाई नहीं होती, contamination rate आमतौर पर अज्ञात होता है, और बहुत नीचे रखा threshold operators को false positives से भर देता है। Labels के बिना evaluation कठिन है, इसलिए टीमें चिह्नित मामलों की समीक्षा करती हैं और उस sample पर precision ट्रैक करती हैं।",
+  "u": [
+   "Sensor डेटा से उपकरण की खराबी पकड़ना",
+   "संदिग्ध logins और network traffic पहचानना",
+   "Pipelines में data-quality समस्याएँ चिह्नित करना"
+  ],
+  "x": "एक निर्माता production machines की vibration sensor readings को कई हफ़्तों के सामान्य संचालन पर train किए गए isolation forest से score करता है। Alerts maintenance engineers को जाते हैं, जिनकी पुष्टियाँ threshold को tune करने और बाद में एक supervised मॉडल train करने के लिए इकट्ठा की जाती हैं।"
+ },
+ "recsys": {
+  "n": "Recommender System",
+  "d": "Recommender system अनुमान लगाता है कि कोई user कौन-से items, जैसे products, videos, गाने या लेख, चाहेगा, और उनमें से एक ranked चयन दिखाता है।\n\nबड़े systems आमतौर पर चरणों में काम करते हैं। Candidate generation लाखों में से कुछ सौ items निकालता है, collaborative filtering, users और items को एक ही vector space में embed करने वाले two-tower models, और approximate nearest-neighbor vector search का उपयोग करके। फिर एक ranking मॉडल, अक्सर gradient boosting या एक deep network, समृद्ध features के साथ candidates को score करता है ताकि click-through rate (CTR), watch time या खरीद का prediction हो।\n\nOffline गुणवत्ता NDCG और recall at k जैसे ranking metrics से मापी जाती है, लेकिन live users पर A/B testing निर्णायक परीक्षा है। मुख्य जोखिम हैं नए users और items के लिए cold start समस्या, popularity bias, और feedback loops, जिनमें system केवल उन्हीं items से सीखता है जिन्हें उसने पहले दिखाना चुना था, जो exploration न जोड़ने पर समय के साथ recommendations को संकरा कर देता है।",
+  "u": [
+   "Online stores में product recommendations",
+   "Personalized video और music feeds",
+   "समाचार लेखों और job postings की ranking"
+  ],
+  "x": "एक streaming सेवा two-tower embedding मॉडल और ANN index से candidates निकालती है, फिर उन्हें एक gradient-boosted मॉडल से rank करती है जो कुछ मिनटों से अधिक देखने की probability का prediction करता है। नई releases को थोड़ा exploration boost मिलता है ताकि viewing इतिहास न होने के बावजूद वे feedback इकट्ठा कर सकें।"
+ },
+ "ctr": {
+  "n": "Click-Through Rate (CTR)",
+  "d": "Click-through rate impressions का वह हिस्सा है, यानी किसी item के दिखाए जाने की संख्या, जिसका परिणाम click रहा।\n\nयह मापता है कि ads, search परिणाम या recommendations कितने आकर्षक हैं। Modeling target के रूप में predicted CTR यह probability है कि एक विशेष user एक विशेष संदर्भ में एक विशेष item पर click करेगा, जिसे impression logs से एक binary classifier सीखता है: logistic regression, factorization machines, gradient boosting या embedding layers वाले deep मॉडल। Ad auctions में predicted CTR को bid से गुणा किया जाता है, इसलिए probability को केवल सही ढंग से ranked ही नहीं, बल्कि अच्छी तरह calibrated भी होना चाहिए; ROC-AUC के साथ log loss और probability calibration पर भी नज़र रखी जाती है।\n\nCTR डेटा अत्यधिक imbalanced होता है, अक्सर clicks impressions के एक प्रतिशत से काफ़ी नीचे। एक आम जोखिम position bias है: ऊपर दिखाए गए items को प्रासंगिकता से परे अधिक clicks मिलते हैं, इसलिए logs पर भोलेपन से train हुआ मॉडल यह सीखता है कि items कहाँ रखे गए थे, न कि users क्या पसंद करते हैं।",
+  "u": [
+   "Real-time auctions में ads की ranking",
+   "Search परिणामों का क्रम optimize करना",
+   "A/B tests में recommendation variants की तुलना"
+  ],
+  "x": "एक ad platform हर योग्य ad के लिए milliseconds में CTR का prediction करता है और ads को bid गुणा predicted CTR से rank करता है। क्योंकि non-clicks का downsampling probabilities को विकृत करता है, टीम sampling rate के लिए मॉडल के predictions को सुधारती है और हर दिन ad श्रेणी के अनुसार calibration पर नज़र रखती है।"
+ },
+ "coldstart": {
+  "n": "Cold Start",
+  "d": "Cold start नए users, नए items या किसी नए system के लिए अच्छे predictions करने की समस्या है, जिनका interaction इतिहास बहुत कम या बिल्कुल नहीं है।\n\nयह collaborative filtering पर बने recommender systems पर सबसे ज़्यादा असर डालती है, जो पूरी तरह पिछले interactions से सीखते हैं: जिस product को अभी तक किसी ने नहीं खरीदा उसका कोई learned embedding नहीं होता, और नए user के पास मिलान के लिए कोई इतिहास नहीं होता। आम उपाय हैं content-आधारित features जैसे item का text, images और श्रेणी, जिन्हें pretrained मॉडल से embed किया जाता है; users के लिए demographic या context features; popularity-आधारित fallbacks; onboarding प्रश्न; और स्पष्ट exploration, जो जल्दी feedback पाने के लिए नए items कुछ users को दिखाता है।\n\nCollaborative signals को content features के साथ जोड़ने वाले hybrid मॉडल production का मानक उत्तर हैं। एक आम जोखिम केवल लंबे इतिहास वाले users और items पर evaluation करना है, जो छिपा देता है कि system नए लोगों के साथ कितना खराब व्यवहार करता है; cold-start performance को एक अलग slice के रूप में बताया जाना चाहिए।",
+  "u": [
+   "नए listed products की recommendation",
+   "नए users के पहले sessions को personalize करना",
+   "Interaction डेटा के बिना recommender शुरू करना"
+  ],
+  "x": "एक online marketplace हर नई listing के शीर्षक और photos को एक pretrained text-image मॉडल से embed करता है और उसे recommendation index में मिलते-जुलते स्थापित items के पास रखता है। जब listing पर्याप्त interactions इकट्ठा कर लेती है, तो उसका collaborative embedding content embedding की जगह ले लेता है।"
+ },
+ "collabfilter": {
+  "n": "Collaborative Filtering",
+  "d": "Collaborative filtering किसी user को समान व्यवहार वाले दूसरे users की पसंद के आधार पर items की recommendation करता है, केवल interaction डेटा का उपयोग करके और item content के बिना।\n\nNeighborhood विधियाँ users के बीच या items के बीच similarity निकालती हैं, आमतौर पर interaction vectors पर cosine similarity, और ऐसे items सुझाती हैं जो समान users को पसंद आए या उन items जैसे हों जो user को पसंद आए। Matrix factorization विधियाँ इसके बजाय sparse user-item matrix को low-rank user और item embedding matrices के गुणनफल के रूप में approximate करती हैं, जिन्हें alternating least squares या gradient descent से train किया जाता है।\n\nCollaborative filtering products, फ़िल्मों और संगीत के recommender systems को चलाता है, और इसके embeddings अक्सर candidate retrieval में जाते हैं। इसकी मुख्य कमज़ोरियाँ cold start समस्या, sparse डेटा और popularity bias हैं। एक सूक्ष्म जोखिम clicks या views जैसे implicit feedback को explicit ratings की तरह मानना है: interaction का न होना नापसंदगी नहीं है, इसलिए implicit विधियाँ देखी गई और न देखी गई entries को अलग-अलग weight देती हैं।",
+  "u": [
+   "खरीद इतिहास से product recommendations",
+   "\"अक्सर साथ खरीदे गए\" जैसी similar-item सूचियाँ",
+   "Ranking मॉडलों के लिए candidates निकालना"
+  ],
+  "x": "एक music सेवा हर रात अपनी listening matrix को implicit alternating least squares से factorize करती है, ताकि user और track embeddings बनें। ये embeddings personal playlists और similar-tracks feature दोनों को चलाते हैं, जबकि बिल्कुल नए tracks plays इकट्ठा होने तक audio features पर निर्भर रहते हैं।"
+ },
+ "fraud": {
+  "n": "Fraud Detection (धोखाधड़ी पहचान)",
+  "d": "Fraud detection machine learning से उन transactions, accounts या claims की पहचान करता है जो धोखाधड़ी वाले होने की संभावना रखते हैं, आमतौर पर real time में, नुकसान होने से पहले।\n\nइसे आमतौर पर अत्यधिक imbalanced डेटा पर binary classification के रूप में रखा जाता है, जिसमें fraud अक्सर घटनाओं के एक प्रतिशत से काफ़ी नीचे होता है। Transaction velocity, user के इतिहास के सापेक्ष राशि, device और location बदलाव जैसे engineered features पर XGBoost और LightGBM जैसे gradient boosting मॉडल उद्योग के मुख्य साधन हैं, जिन्हें नए पैटर्न के लिए anomaly detection और fraud rings के लिए graph neural networks से पूरक बनाया जाता है। Scores ऐसे नियमों में जाते हैं जो मंज़ूर, block या समीक्षा के लिए भेजते हैं।\n\nEvaluation accuracy के बजाय precision, recall, PR-AUC और लागत-आधारित decision thresholds का उपयोग करता है, क्योंकि इतनी कम base rates पर accuracy अर्थहीन है। जोखिमों में label delay शामिल है, क्योंकि chargebacks हफ़्तों बाद आते हैं; adversarial drift, क्योंकि धोखेबाज़ खुद को ढालते हैं; और transaction के बाद निकाले गए features से data leakage, जो offline में predictive दिखते हैं लेकिन निर्णय के समय उपलब्ध नहीं होते।",
+  "u": [
+   "Card transactions की real-time scoring",
+   "बीमा claim fraud का triage",
+   "नकली accounts और promotion दुरुपयोग पकड़ना"
+  ],
+  "x": "एक card issuer हर authorization को feature store से आने वाले real-time velocity features पर चलने वाले gradient-boosted मॉडल से score करता है। एक threshold से ऊपर के scores अस्वीकार किए जाते हैं और बीच का band step-up authentication शुरू करता है, जिसमें thresholds fraud की लागत बनाम ग्राहक की असुविधा के आधार पर तय होते हैं।"
+ },
+ "churn": {
+  "n": "Churn Prediction",
+  "d": "Churn prediction अनुमान लगाता है कि कौन-से ग्राहक आने वाली अवधि में किसी product का उपयोग बंद करने या subscription रद्द करने की संभावना रखते हैं।\n\nयह आमतौर पर snapshot design से बनी एक binary classification समस्या है: features हर ग्राहक के इतिहास से एक cutoff तारीख तक निकाले जाते हैं, जैसे usage trends, support tickets, payment विफलताएँ और ग्राहक बने रहने की अवधि, और label दर्ज करता है कि ग्राहक ने अगली window में churn किया या नहीं। Logistic regression और gradient boosting आम हैं, और SHAP values बताती हैं कि हर ग्राहक के जोखिम के पीछे कौन-से कारक हैं।\n\nScores retention campaigns के लिए ग्राहकों को rank करते हैं, इसलिए शीर्ष-ranked ग्राहकों में precision और calibration अक्सर कुल accuracy से अधिक मायने रखते हैं। एक मुख्य जोखिम cutoff के बाद दर्ज features के ज़रिए data leakage है। दूसरा केवल जोखिम के आधार पर कदम उठाना है: churn की सबसे अधिक संभावना वाले ग्राहक ज़रूरी नहीं कि वही हों जिन्हें छूट रोक लेगी, इसीलिए परिपक्व टीमें uplift modeling और interventions की A/B testing की ओर बढ़ती हैं।",
+  "u": [
+   "Subscription सेवाओं के लिए retention offers लक्षित करना",
+   "Account managers के संपर्क को प्राथमिकता देना",
+   "जोखिम में पड़े recurring revenue का पूर्वानुमान"
+  ],
+  "x": "एक telecom operator तय cutoff तारीख और 60-दिन की label window पर बने gradient-boosted churn मॉडल से सभी postpaid ग्राहकों को हर महीने score करता है। Retention टीम शीर्ष-ranked ग्राहकों से संपर्क करती है, और एक randomized holdout group मापता है कि क्या यह संपर्क सचमुच churn घटाता है।"
+ },
+ "demandfc": {
+  "n": "Demand Forecasting (मांग पूर्वानुमान)",
+  "d": "Demand forecasting यह अनुमान लगाता है कि भविष्य की अवधियों में किसी product या सेवा की कितनी ज़रूरत होगी, जैसे प्रति store प्रति दिन units।\n\nPredictions ऐतिहासिक बिक्री को trend, seasonality, छुट्टियों, कीमतों, promotions और मौसम के साथ जोड़कर बनते हैं। विधियाँ अलग-अलग series के लिए exponential smoothing, ARIMA और Prophet से लेकर lag features और rolling window features वाले gradient boosting जैसे global मॉडलों तक, और N-BEATS, Temporal Fusion Transformer और time-series foundation models जैसे deep मॉडलों तक जाती हैं जो हज़ारों series से एक साथ सीखते हैं। Quantile forecasts वे दायरे देते हैं जिनकी inventory निर्णयों को ज़रूरत होती है।\n\nValidation को समय के क्रम का सम्मान करना चाहिए, यानी business निर्णय से मेल खाते horizon के साथ time-based validation। एक आम जोखिम यह है कि दर्ज बिक्री असली माँग नहीं है: जब कोई item stock में नहीं होता, तो ग्राहकों के चाहने के बावजूद बिक्री शून्य हो जाती है, इसलिए कच्ची बिक्री पर train हुए मॉडल माँग को कम आँकते हैं, जब तक stockouts को चिह्नित या सुधारा न जाए।",
+  "u": [
+   "Store-स्तर पर inventory भरपाई और ordering",
+   "Call centers और गोदामों के लिए staffing",
+   "बिजली load और ride-demand की योजना"
+  ],
+  "x": "एक grocery chain सभी store और product संयोजनों पर एक global gradient-boosted मॉडल train करती है, जिसमें lagged बिक्री, promotions और छुट्टियों के flags का उपयोग होता है, और अगले दो हफ़्तों के लिए कई quantiles का prediction करती है। Stockout वाले दिनों को training targets से बाहर रखा जाता है ताकि मॉडल कृत्रिम रूप से कम माँग न सीखे।"
+ },
+ "creditscore": {
+  "n": "Credit Scoring",
+  "d": "Credit scoring यह probability अनुमानित करता है कि कोई borrower loan पर default करेगा, जिसका उपयोग lenders credit को मंज़ूर करने, उसकी कीमत तय करने और उसे सीमित करने के लिए करते हैं।\n\nक्लासिक साधन scorecard है: numeric features को binning से समूहों में बाँटा जाता है, हर bin को उसके weight of evidence से encode किया जाता है, और एक logistic regression उन्हें points में बदलता है जो जुड़कर score बनाते हैं। आधुनिक lenders bureau और application डेटा पर gradient boosting का भी उपयोग करते हैं, अक्सर monotonic constraints के साथ ताकि ऊँचा debt ratio कभी predicted जोखिम को कम न करे।\n\nCredit मॉडल कड़े नियमन में हैं। Lenders को प्रतिकूल निर्णयों की व्याख्या करनी होती है, इसीलिए व्याख्या-योग्य scorecards और SHAP explanations आम हैं, और संरक्षित समूहों के साथ अनुचित व्यवहार की जाँच करनी होती है। मुख्य evaluation साधन हैं ROC-AUC या Gini coefficient (2·AUC − 1), calibration और समय के साथ स्थिरता। एक ज्ञात जोखिम reject inference है: मॉडल केवल मंज़ूर हुए आवेदकों से सीखता है, इसलिए अस्वीकृत आवेदकों के परिणाम कभी दिखते ही नहीं।",
+  "u": [
+   "Consumer loans को मंज़ूर करना और उनकी कीमत तय करना",
+   "Credit card की सीमाएँ तय करना",
+   "विनियमित lending के लिए व्याख्या-योग्य scorecards"
+  ],
+  "x": "एक consumer lender monotonic constraints वाले gradient-boosted मॉडल से आवेदनों को score करता है और probabilities को एक परिचित points scale पर map करता है। हर अस्वीकृत आवेदक को मॉडल की explanations से शीर्ष कारण दिए जाते हैं, और score की स्थिरता की हर महीने development sample के विरुद्ध समीक्षा की जाती है।"
+ }
+}

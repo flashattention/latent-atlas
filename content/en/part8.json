@@ -1,0 +1,554 @@
+{
+ "histogram": {
+  "n": "Histogram",
+  "d": "A histogram shows the distribution of a numeric variable by splitting its range into bins and drawing a bar whose height is the number (or share) of values in each bin. Reading the shape tells you where values concentrate, whether the distribution is symmetric or skewed, whether it has one peak or several, and whether a few extreme values sit far from the rest.\n\nIn exploratory data analysis, histograms are the first check on every numeric feature: they reveal skewness that calls for a log transform before linear regression, spikes at default values such as 0 or 999, and clipped ranges. Comparing training and production histograms is a simple way to spot data drift. The main pitfall is bin width: too few bins hide structure such as bimodality, too many turn the plot into noise, so try several widths or a rule such as Freedman–Diaconis.",
+  "f": "bin width h = 2·IQR / n^(1/3)  (Freedman–Diaconis)",
+  "u": [
+   "Checking feature skew before choosing transforms",
+   "Comparing training and production feature distributions",
+   "Spotting default values and data-entry spikes"
+  ],
+  "x": "A payments team plots histograms of transaction amounts every week for both the training set and live traffic. When a new merchant category arrives, the live histogram develops a second peak, which prompts a review of whether the fraud model needs retraining.",
+  "c": "import numpy as np\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\nx = rng.lognormal(mean=3.0, sigma=0.8, size=5000)  # right-skewed data\n\n# Counts per bin, with an automatic bin-width rule\ncounts, edges = np.histogram(x, bins=\"fd\")\nprint(len(counts), \"bins, width\", edges[1] - edges[0])\n\nfig, axes = plt.subplots(1, 2, figsize=(9, 3))\naxes[0].hist(x, bins=\"fd\")               # raw scale: long right tail\naxes[1].hist(np.log(x), bins=\"fd\")       # log scale: roughly symmetric\naxes[0].set_title(\"raw\"); axes[1].set_title(\"log\")\nplt.show()"
+ },
+ "boxplot": {
+  "n": "Box Plot",
+  "d": "A box plot summarizes a numeric variable with five numbers: the median, the first and third quartiles that form the box, and whiskers that reach the most extreme values within 1.5 times the interquartile range (IQR) of the box. Points beyond the whiskers are drawn individually as candidate outliers.\n\nBecause it takes little space, a box plot is the standard way to compare one variable across many groups, for example model error per region or latency per server. In machine-learning work it supports outlier screening, checks of whether a feature separates the classes, and comparison of cross-validation scores across models. A common misconception is that every point outside the whiskers is an error to delete. The 1.5×IQR rule flags many legitimate values in skewed or heavy-tailed data, and a box plot also hides bimodality, so pair it with a histogram.",
+  "f": "whiskers: [Q1 − 1.5·IQR, Q3 + 1.5·IQR],  IQR = Q3 − Q1",
+  "u": [
+   "Comparing cross-validation scores across candidate models",
+   "Screening numeric features for extreme values",
+   "Comparing a metric across groups or segments"
+  ],
+  "x": "An MLOps team draws box plots of prediction error per store for a demand forecasting model. A handful of stores with much wider boxes are investigated and turn out to have irregular reporting, so they receive a separate model.",
+  "c": "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\ndf = pd.DataFrame({\n    \"model\": np.repeat([\"ridge\", \"rf\", \"gbm\"], 50),\n    \"rmse\": np.concatenate([rng.normal(m, s, 50) for m, s in [(5, .4), (4.5, .6), (4.2, .3)]]),\n})\n\n# Five-number summary per group\nq1, q3 = df[\"rmse\"].quantile([0.25, 0.75])\niqr = q3 - q1\noutliers = df[(df.rmse < q1 - 1.5 * iqr) | (df.rmse > q3 + 1.5 * iqr)]\nprint(len(outliers), \"points beyond the whiskers\")\n\ndf.boxplot(column=\"rmse\", by=\"model\")\nplt.show()"
+ },
+ "scatterplot": {
+  "n": "Scatter Plot",
+  "d": "A scatter plot draws one point per observation at the coordinates given by two numeric variables, so the shape of the point cloud shows how the variables relate. A tilted, narrow cloud signals a strong linear relationship; a curved band signals a nonlinear one; separate clumps suggest clusters; isolated points are outliers.\n\nPractitioners use scatter plots to check a feature against the target before linear regression, to plot predicted versus actual values, to inspect residuals for patterns, and to view 2D embeddings from PCA, t-SNE or UMAP colored by class. A common pitfall is overplotting: with hundreds of thousands of points the cloud becomes a solid blob, hiding density. Use transparency, small markers, sampling or a 2D histogram. Also remember that a clear pattern in a scatter plot shows association, not causation.",
+  "f": "",
+  "u": [
+   "Plotting predicted versus actual values after regression",
+   "Checking residuals for curvature or changing spread",
+   "Viewing 2D embeddings colored by class"
+  ],
+  "x": "A real-estate pricing team plots predicted against actual sale prices for each validation fold. Points fanning out at high prices reveal that errors grow with price, which leads the team to model the logarithm of price instead.",
+  "c": "import numpy as np\nimport matplotlib.pyplot as plt\nfrom sklearn.datasets import fetch_california_housing\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import cross_val_predict\n\nX, y = fetch_california_housing(return_X_y=True)\ny_pred = cross_val_predict(LinearRegression(), X, y, cv=5)\n\n# Predicted vs actual; alpha reduces overplotting\nplt.scatter(y, y_pred, s=4, alpha=0.2)\nlims = [y.min(), y.max()]\nplt.plot(lims, lims, \"r--\")              # perfect-prediction line\nplt.xlabel(\"actual\"); plt.ylabel(\"predicted\")\nplt.show()"
+ },
+ "heatmap": {
+  "n": "Heatmap",
+  "d": "A heatmap displays a matrix of numbers as a grid of colored cells, with the color of each cell encoding its value. It turns a large table into a picture where blocks, gradients and outliers stand out immediately.\n\nIn machine-learning work the most common heatmaps are correlation matrices of features, confusion matrices of classifiers, attention weights of a transformer layer, hyperparameter grid-search scores, and missing-value maps where each cell marks whether a value is absent. Clustering the rows and columns before plotting groups similar variables so that block structure becomes visible. The main pitfall is the color scale. A diverging colormap needs its midpoint fixed at a meaningful value such as zero for correlations, and an auto-scaled range can make tiny differences look dramatic. Annotate cell values when exact numbers matter.",
+  "f": "",
+  "u": [
+   "Visualizing feature correlation matrices during EDA",
+   "Reading a classifier's confusion matrix",
+   "Inspecting attention weights or grid-search scores"
+  ],
+  "x": "A credit-risk team plots a clustered heatmap of feature correlations before training a logistic regression. Several bright blocks reveal groups of nearly identical balance features, and the team keeps one feature per block to reduce multicollinearity.",
+  "c": "import numpy as np\nimport pandas as pd\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nfrom sklearn.datasets import load_breast_cancer\n\ndf = load_breast_cancer(as_frame=True).frame.iloc[:, :12]\ncorr = df.corr()\n\n# Diverging colormap centered at zero, values annotated\nsns.heatmap(corr, cmap=\"RdBu_r\", vmin=-1, vmax=1, center=0,\n            annot=True, fmt=\".1f\", square=True)\nplt.tight_layout()\nplt.show()"
+ },
+ "qqplot": {
+  "n": "Q-Q Plot (Quantile-Quantile Plot)",
+  "d": "A Q-Q plot compares the quantiles of a sample with the quantiles of a reference distribution, usually the normal distribution, by plotting one against the other. If the data follow the reference distribution, the points lie on a straight line; systematic bends show how they differ.\n\nThe shape is easy to read once learned. An S-shape with both ends bending away from the line means heavy tails; a curve bending one way means skewness; a few points off the line at the ends are outliers. Practitioners use Q-Q plots to check the normality assumption of residuals in linear regression, to decide whether a log or Box-Cox transform is needed, and to compare two samples directly. A common pitfall is relying on a formal normality test instead: with large samples such tests reject tiny, harmless deviations, while the Q-Q plot shows how large the deviation really is.",
+  "f": "plot (F⁻¹((i − 0.5)/n), x₍ᵢ₎)  for i = 1…n",
+  "u": [
+   "Checking normality of linear regression residuals",
+   "Deciding whether a feature needs a transform",
+   "Comparing tail behavior of two samples"
+  ],
+  "x": "A quantitative analytics team fits a linear model to daily returns and inspects a Q-Q plot of the residuals. The ends bend sharply away from the line, showing heavy tails, so the team switches to a Student-t error model for risk estimates.",
+  "c": "import numpy as np\nimport scipy.stats as stats\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\nresiduals = rng.standard_t(df=3, size=1000)  # heavy-tailed sample\n\nfig, axes = plt.subplots(1, 2, figsize=(9, 4))\n# Compare against the normal distribution: tails bend away\nstats.probplot(residuals, dist=\"norm\", plot=axes[0])\n# Compare against a t distribution with 3 degrees of freedom: straight line\nstats.probplot(residuals, dist=stats.t, sparams=(3,), plot=axes[1])\nplt.show()"
+ },
+ "feature": {
+  "n": "Feature",
+  "d": "A feature is one measurable input variable that a model uses to make a prediction, such as a customer's age, the number of words in an email, or a pixel intensity. A dataset is usually arranged as a matrix with one row per example and one column per feature, and the model learns how the target depends on these columns.\n\nFeatures can be numeric, categorical, text, or learned representations such as embeddings. Much of classical machine learning is feature engineering: building informative features, encoding categories, scaling and handling missing values. Feature importance and SHAP values describe which features drive predictions. A key pitfall is using a feature that will not be available at prediction time, or that is computed using the target; this is data leakage and produces models that look excellent in validation and fail in production.",
+  "f": "x = (x₁, x₂, …, x_d) ∈ ℝᵈ",
+  "u": [
+   "Building inputs for gradient-boosted tree models",
+   "Selecting informative columns from raw logs",
+   "Explaining predictions through feature importance"
+  ],
+  "x": "A subscription business builds features such as days since last login, number of support tickets in the past month, and plan type for its churn model. Each feature is computed from data as of the prediction date only, so the model sees exactly what will be available in production.",
+  "c": "import pandas as pd\n\nevents = pd.DataFrame({\n    \"user\": [1, 1, 2, 2, 2, 3],\n    \"ts\": pd.to_datetime([\"2024-01-02\", \"2024-01-20\", \"2024-01-05\",\n                          \"2024-01-06\", \"2024-01-25\", \"2024-01-10\"]),\n    \"amount\": [20, 35, 5, 12, 40, 60],\n})\ncutoff = pd.Timestamp(\"2024-02-01\")  # only use data before the prediction date\n\n# One row per user, one column per feature\nfeatures = events[events.ts < cutoff].groupby(\"user\").agg(\n    n_purchases=(\"amount\", \"size\"),\n    total_spend=(\"amount\", \"sum\"),\n    days_since_last=(\"ts\", lambda t: (cutoff - t.max()).days),\n)\nprint(features)"
+ },
+ "label": {
+  "n": "Label (Target)",
+  "d": "A label, also called the target, is the known answer that a supervised model learns to predict for each example: a class such as spam or not spam, or a number such as a sale price. The model is trained to make its outputs match the labels, so the label defines what the model is actually optimizing for.\n\nLabels come from human annotators, business events such as a later purchase or default, or automatic rules. In classification they are often encoded as integers or one-hot vectors; in regression they are continuous values. The label choice shapes everything downstream, including the loss function, the evaluation metric and class imbalance. A common pitfall is a label that does not match the real goal, for example predicting clicks when the business cares about purchases. Another is label leakage, where a feature is derived from the label or from information recorded after it.",
+  "f": "D = {(xᵢ, yᵢ)}ᵢ₌₁ⁿ,  yᵢ = label of example i",
+  "u": [
+   "Defining the prediction target for supervised learning",
+   "Collecting human annotations for classification tasks",
+   "Deriving outcome labels from business event logs"
+  ],
+  "x": "A lending platform defines its label as whether a loan is more than 90 days past due within 12 months of issue. Because that outcome takes a year to observe, the team trains only on loans old enough to have a final label.",
+  "c": "import pandas as pd\nfrom sklearn.preprocessing import LabelEncoder\n\nloans = pd.DataFrame({\n    \"loan_id\": [1, 2, 3, 4],\n    \"max_days_late_12m\": [0, 120, 15, 95],\n    \"issued\": pd.to_datetime([\"2022-03-01\", \"2022-05-01\", \"2022-06-01\", \"2023-11-01\"]),\n})\n# Keep only loans whose 12-month outcome is fully observed\nmature = loans[loans.issued <= \"2023-01-01\"].copy()\n\n# Binary label: defaulted within 12 months\nmature[\"y\"] = (mature[\"max_days_late_12m\"] > 90).astype(int)\n\n# Encoding string class labels as integers\nenc = LabelEncoder().fit([\"cat\", \"dog\", \"bird\"])\nprint(enc.transform([\"dog\", \"bird\"]), mature[[\"loan_id\", \"y\"]])"
+ },
+ "tabular": {
+  "n": "Tabular Data",
+  "d": "Tabular data is data organized as a table, with one row per example and one column per variable, where columns can mix numeric, categorical, date and text types. Spreadsheets, relational database tables and CSV exports are the everyday form of it, and most business prediction problems start here.\n\nUnlike images or text, columns in a table have no spatial or sequential order and each has its own scale and meaning. This favors models that handle heterogeneous columns well: gradient-boosted trees such as XGBoost, LightGBM and CatBoost remain the strongest default on most tabular benchmarks, with logistic regression and random forests as solid baselines. Preparing tabular data involves joins, aggregation, encoding of categorical features, handling missing values and careful time-based splitting. A common misconception is that a deep neural network will beat boosted trees on tables by default; it usually needs much more tuning and often still loses.",
+  "f": "",
+  "u": [
+   "Credit scoring from customer account tables",
+   "Churn prediction from CRM and usage data",
+   "Demand forecasting from sales transaction records"
+  ],
+  "x": "An insurer joins policy, claims and customer tables into one row per policy and trains a LightGBM model to predict claim likelihood. The team prefers boosted trees because they handle mixed column types and missing values with little preprocessing.",
+  "c": "import pandas as pd\nimport lightgbm as lgb\nfrom sklearn.model_selection import train_test_split\n\ndf = pd.read_csv(\"policies.csv\")   # one row per policy\ny = df.pop(\"had_claim\")\n\n# Mark string columns as categorical; LightGBM handles them natively\nfor col in df.select_dtypes(\"object\"):\n    df[col] = df[col].astype(\"category\")\n\nX_tr, X_te, y_tr, y_te = train_test_split(df, y, test_size=0.2,\n                                          stratify=y, random_state=0)\nmodel = lgb.LGBMClassifier(n_estimators=500, learning_rate=0.05)\nmodel.fit(X_tr, y_tr, eval_set=[(X_te, y_te)])\nprint(model.predict_proba(X_te)[:5, 1])"
+ },
+ "numcat": {
+  "n": "Numerical vs Categorical Features",
+  "d": "Numerical features are quantities on which arithmetic makes sense, such as income or temperature, while categorical features take values from a set of labels, such as country or product type, where the values have no numeric meaning. The distinction decides how a feature must be encoded before a model can use it.\n\nNumerical features may need scaling for linear models, SVMs, k-NN and neural networks, and sometimes a log transform for skew. Categorical features must be turned into numbers: one-hot encoding for few categories, target encoding or embeddings for many, or native categorical support in CatBoost and LightGBM. Numbers can be categorical in disguise. ZIP codes, user IDs and product codes are stored as integers, but treating them as quantities invents an order and distances that do not exist. Conversely, a numeric feature with only a few values may work better as a category.",
+  "f": "",
+  "u": [
+   "Choosing encoders in a preprocessing pipeline",
+   "Detecting ID columns stored as integers",
+   "Deciding which columns need scaling"
+  ],
+  "x": "A travel booking site builds a scikit-learn ColumnTransformer that scales price and trip length but one-hot encodes destination region and device type. An early version treated airport codes stored as integers as numeric, and fixing them to categorical improved the model.",
+  "c": "import pandas as pd\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.linear_model import LogisticRegression\n\ndf = pd.DataFrame({\n    \"price\": [120.0, 340.5, 89.9, 210.0],\n    \"nights\": [2, 5, 1, 3],\n    \"zip_code\": [10001, 94105, 60601, 10001],   # integer, but categorical\n    \"device\": [\"ios\", \"web\", \"android\", \"web\"],\n})\ny = [0, 1, 0, 1]\n\npre = ColumnTransformer([\n    (\"num\", StandardScaler(), [\"price\", \"nights\"]),\n    (\"cat\", OneHotEncoder(handle_unknown=\"ignore\"), [\"zip_code\", \"device\"]),\n])\nmodel = make_pipeline(pre, LogisticRegression()).fit(df, y)"
+ },
+ "ordinal": {
+  "n": "Ordinal vs Nominal Variables",
+  "d": "Nominal variables are categories with no natural order, such as color or country, while ordinal variables are categories with a meaningful order but no fixed spacing, such as education level or a rating of low, medium, high. Both are categorical, but the order changes how they should be encoded.\n\nFor an ordinal variable, mapping categories to increasing integers (low=0, medium=1, high=2) keeps the order and lets a tree split on it or a linear model fit a monotone effect. For a nominal variable, integer codes would invent an order and spacing that the data does not have, so one-hot encoding, target encoding or embeddings are used instead. A common pitfall is applying scikit-learn's OrdinalEncoder with its default alphabetical order to a truly ordinal variable: \"high\" then sorts before \"low\", so the explicit category order must be passed.",
+  "f": "",
+  "u": [
+   "Encoding survey responses and satisfaction ratings",
+   "Encoding product sizes or customer tiers",
+   "Choosing between one-hot and integer encoding"
+  ],
+  "x": "An HR analytics team predicting employee attrition encodes job level as an ordered integer because higher levels carry more seniority. Department, which has no order, is one-hot encoded instead.",
+  "c": "import pandas as pd\nfrom sklearn.preprocessing import OrdinalEncoder, OneHotEncoder\n\ndf = pd.DataFrame({\n    \"size\": [\"small\", \"large\", \"medium\", \"small\"],   # ordinal\n    \"color\": [\"red\", \"blue\", \"green\", \"red\"],        # nominal\n})\n\n# Ordinal: pass the true order explicitly (default would be alphabetical)\nord_enc = OrdinalEncoder(categories=[[\"small\", \"medium\", \"large\"]])\ndf[\"size_code\"] = ord_enc.fit_transform(df[[\"size\"]]).ravel()\n\n# Nominal: one column per category, no implied order\noh = OneHotEncoder(sparse_output=False).fit(df[[\"color\"]])\ncolor_cols = pd.DataFrame(oh.transform(df[[\"color\"]]),\n                          columns=oh.get_feature_names_out())\nprint(pd.concat([df, color_cols], axis=1))"
+ },
+ "cardinality": {
+  "n": "Cardinality",
+  "d": "The cardinality of a categorical feature is the number of distinct values it takes. A feature such as gender or device type has low cardinality, while user ID, ZIP code or product SKU can have thousands or millions of values and is called high-cardinality.\n\nCardinality decides how a feature can be encoded. One-hot encoding works for a handful of values but creates enormous sparse matrices for high-cardinality features. Alternatives include grouping rare values into an \"other\" bucket, target encoding with smoothing and out-of-fold fitting, frequency encoding, the hashing trick, and learned embeddings in neural networks. CatBoost uses ordered target statistics for exactly this case. A pitfall is that high-cardinality features let tree models memorize: a category seen only a few times can be perfectly matched to its labels, inflating training scores, and naive target encoding computed on the same rows leaks the label.",
+  "f": "cardinality(X) = |{distinct values of X}|",
+  "u": [
+   "Choosing an encoder for each categorical column",
+   "Detecting ID-like columns during data profiling",
+   "Bucketing rare categories before one-hot encoding"
+  ],
+  "x": "An ad-tech team has a feature for the publisher domain with hundreds of thousands of values. It hashes the domain into a fixed number of buckets for its logistic regression model and learns an embedding for it in its neural ranking model.",
+  "c": "import pandas as pd\nfrom sklearn.preprocessing import TargetEncoder\n\ndf = pd.read_csv(\"clicks.csv\")\ncats = df.select_dtypes(\"object\")\n\n# Cardinality of each categorical column\nprint(cats.nunique().sort_values(ascending=False))\n\n# Group rare values into a single bucket\ncounts = df[\"domain\"].value_counts()\nrare = counts[counts < 20].index\ndf[\"domain_grp\"] = df[\"domain\"].where(~df[\"domain\"].isin(rare), \"other\")\n\n# Target encoding with internal cross-fitting to limit leakage\nenc = TargetEncoder(target_type=\"binary\", random_state=0)\ndf[\"domain_te\"] = enc.fit_transform(df[[\"domain\"]], df[\"clicked\"]).ravel()"
+ },
+ "missingval": {
+  "n": "Missing Values (MCAR, MAR, MNAR)",
+  "d": "Missing values are entries with no recorded value, and the reason they are missing determines how they can be handled. Data is missing completely at random (MCAR) when missingness is unrelated to any data, missing at random (MAR) when it depends only on other observed variables, and missing not at random (MNAR) when it depends on the unobserved value itself, as when people with high incomes skip the income question.\n\nUnder MCAR, dropping rows loses data but does not bias estimates. Under MAR, imputation using other columns, such as iterative or k-NN imputation, can recover unbiased estimates. Under MNAR no method fully fixes the bias without extra assumptions. In predictive modeling, adding a binary \"was missing\" indicator often helps because missingness itself carries signal. A common pitfall is fitting the imputer on the full dataset before splitting, which leaks test statistics into training.",
+  "f": "",
+  "u": [
+   "Imputing gaps in sensor and medical records",
+   "Adding missingness indicators to tabular models",
+   "Auditing survey data for nonresponse bias"
+  ],
+  "x": "A hospital readmission model finds that lab values are often missing for patients who were not considered sick enough to test. The team adds a missingness indicator for each lab, because the absence of a test is itself predictive.",
+  "c": "import numpy as np\nfrom sklearn.experimental import enable_iterative_imputer  # noqa: F401\nfrom sklearn.impute import IterativeImputer, SimpleImputer\nfrom sklearn.model_selection import train_test_split\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(500, 4))\nX[rng.random(X.shape) < 0.1] = np.nan       # 10% missing\nprint(\"missing rate per column:\", np.isnan(X).mean(axis=0))\n\nX_tr, X_te = train_test_split(X, test_size=0.2, random_state=0)\n\n# Simple imputation plus a 0/1 indicator column for each feature with gaps\nsimple = SimpleImputer(strategy=\"median\", add_indicator=True).fit(X_tr)\n\n# Model-based imputation from the other columns (suited to MAR)\niterative = IterativeImputer(random_state=0).fit(X_tr)   # fit on train only\nX_te_imp = iterative.transform(X_te)"
+ },
+ "duplicates": {
+  "n": "Duplicate Records",
+  "d": "Duplicate records are rows that describe the same real-world entity or event more than once, either as exact copies or as near-duplicates that differ in formatting, timestamps or small edits. They arise from repeated data loads, joins that multiply rows, retries in event logging, and scraped web text.\n\nDuplicates bias statistics toward the repeated items and, more seriously, break evaluation: if the same example lands in both the training and the test split, the model is scored on data it has memorized, so validation metrics are too optimistic. Exact duplicates are found by hashing rows or key columns; near-duplicates need fuzzy matching, MinHash or embedding similarity. Large language model pretraining relies heavily on deduplication. A pitfall is deduplicating without thinking about grouping: multiple records from the same customer are not duplicates, but they still need a group-aware split such as GroupKFold.",
+  "f": "",
+  "u": [
+   "Removing repeated rows after data pipeline joins",
+   "Deduplicating web text for language model pretraining",
+   "Preventing overlap between training and test sets"
+  ],
+  "x": "A team building a code-completion model finds that many files in its evaluation set also appear, with tiny edits, in the training corpus. It runs MinHash near-duplicate detection across both sets and removes overlapping files before reporting results.",
+  "c": "import pandas as pd\nfrom sklearn.model_selection import GroupShuffleSplit\n\ndf = pd.DataFrame({\n    \"customer\": [1, 1, 2, 3, 3, 3],\n    \"email\": [\"A@x.com \", \"a@x.com\", \"b@y.com\", \"c@z.com\", \"c@z.com\", \"c@z.com\"],\n    \"amount\": [10, 10, 25, 7, 7, 9],\n})\n\n# Normalize before comparing, then drop exact duplicates\ndf[\"email\"] = df[\"email\"].str.strip().str.lower()\nprint(\"duplicates:\", df.duplicated().sum())\ndf = df.drop_duplicates()\n\n# Keep all rows of one customer in the same split\nsplit = GroupShuffleSplit(test_size=0.3, random_state=0)\ntrain_idx, test_idx = next(split.split(df, groups=df[\"customer\"]))"
+ },
+ "labelnoise": {
+  "n": "Label Noise",
+  "d": "Label noise means that some training labels are wrong: an image of a cat tagged as a dog, a legitimate transaction marked as fraud, or a review annotated with the wrong sentiment. It comes from annotator mistakes, ambiguous examples, automatic labeling rules and labels recorded before an outcome was final.\n\nNoise can be random, flipping labels uniformly, or systematic, where certain classes or annotators are consistently confused; systematic noise is far more harmful because the model learns the bias. Large flexible models such as deep neural networks can memorize noisy labels, which hurts generalization. Remedies include multiple annotators with agreement checks, confident learning to find likely mislabeled examples, label smoothing, robust losses and early stopping. A frequent pitfall is ignoring noise in the test set: if evaluation labels are wrong, model comparisons and accuracy estimates become unreliable, no matter how clean the training data is.",
+  "f": "P(ỹ = j | y = i) = Tᵢⱼ  (noise transition matrix)",
+  "u": [
+   "Auditing crowdsourced annotations before training",
+   "Finding mislabeled examples with out-of-fold predictions",
+   "Training robust classifiers on weakly labeled data"
+  ],
+  "x": "A content moderation team flags training examples where a cross-validated classifier confidently disagrees with the human label. Reviewers re-annotate those items, and many are found to be genuine labeling mistakes caused by an outdated policy guideline.",
+  "c": "import numpy as np\nfrom sklearn.datasets import make_classification\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import cross_val_predict\n\nX, y = make_classification(n_samples=2000, n_features=10, random_state=0)\nrng = np.random.default_rng(0)\nflip = rng.random(len(y)) < 0.05\ny_noisy = np.where(flip, 1 - y, y)          # inject 5% label noise\n\n# Out-of-fold probabilities: each row scored by a model that never saw it\nproba = cross_val_predict(LogisticRegression(max_iter=1000), X, y_noisy,\n                          cv=5, method=\"predict_proba\")\np_given = proba[np.arange(len(y)), y_noisy]\n\n# Lowest-confidence labels are the most likely to be wrong\nsuspects = np.argsort(p_given)[:100]\nprint(\"true flips among suspects:\", flip[suspects].mean())"
+ },
+ "sparsedata": {
+  "n": "Sparse Data",
+  "d": "Sparse data is data in which most entries are zero or absent, such as a bag-of-words matrix where each document uses a tiny fraction of the vocabulary, a user-item rating matrix, or one-hot encoded categories. Storing only the nonzero values and their positions, as in the CSR or COO formats, saves memory and computation by orders of magnitude.\n\nMany methods exploit sparsity directly: linear models, logistic regression and linear SVMs on TF-IDF features, factorization machines and matrix factorization for recommendation, and gradient-boosted trees that skip zeros. A common pitfall is accidentally converting a sparse matrix to a dense one, for example by centering it with StandardScaler, which subtracts the mean and fills every zero with a nonzero value; use scaling without centering or MaxAbsScaler instead. Sparse data also needs regularization, since many features appear only a few times.",
+  "f": "density = nnz / (n_rows × n_cols)",
+  "u": [
+   "Text classification with TF-IDF features",
+   "Recommendation from user-item interaction matrices",
+   "One-hot encoded high-cardinality categorical features"
+  ],
+  "x": "A support ticket router represents each ticket as a TF-IDF vector over a vocabulary of hundreds of thousands of terms. Kept in sparse format, the full matrix fits in memory and a linear classifier trains in minutes.",
+  "c": "import numpy as np\nfrom scipy import sparse\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.preprocessing import MaxAbsScaler\n\ndocs = [\"refund not received\", \"cannot log in to account\",\n        \"refund request for order\", \"password reset link expired\"]\nX = TfidfVectorizer().fit_transform(docs)    # scipy CSR matrix\n\ndensity = X.nnz / (X.shape[0] * X.shape[1])\nprint(X.shape, f\"density={density:.2f}\")\n\n# Scale without destroying sparsity (no mean-centering)\nX_scaled = MaxAbsScaler().fit_transform(X)\nprint(type(X_scaled))\n\n# Build a sparse matrix directly from (row, col, value) triplets\nR = sparse.coo_matrix(([5, 3, 4], ([0, 1, 2], [10, 3, 7])), shape=(3, 20)).tocsr()"
+ },
+ "interaction": {
+  "n": "Feature Interaction",
+  "d": "A feature interaction exists when the effect of one feature on the target depends on the value of another feature. For example, a discount may raise purchases strongly for new customers but barely for loyal ones; neither feature alone captures that pattern.\n\nA plain linear regression adds up separate effects and cannot represent interactions unless they are added explicitly as product terms such as x₁·x₂, or through polynomial features. Decision trees, gradient-boosted trees and neural networks learn interactions automatically, because a split on one feature changes how the next split behaves. Factorization machines model pairwise interactions efficiently for sparse data. SHAP interaction values and partial dependence plots help detect them. A pitfall is adding all pairwise products by hand: the number of features grows quadratically, which invites overfitting and multicollinearity, so add only interactions with a clear domain reason or use a model that finds them.",
+  "f": "ŷ = β₀ + β₁x₁ + β₂x₂ + β₃·x₁x₂",
+  "u": [
+   "Adding product terms to linear pricing models",
+   "Detecting interactions with SHAP interaction values",
+   "Click prediction with factorization machines"
+  ],
+  "x": "A marketing analytics team finds that a linear uplift model misses that email campaigns work only for customers on mobile devices. Adding a product term between the campaign flag and the device type captures the pattern and makes the coefficient directly interpretable.",
+  "c": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.preprocessing import PolynomialFeatures\n\nrng = np.random.default_rng(0)\nX = rng.uniform(0, 1, size=(1000, 2))\n# Target depends on the product of the two features\ny = 2 * X[:, 0] + 1 * X[:, 1] + 4 * X[:, 0] * X[:, 1] + rng.normal(0, .1, 1000)\n\nadditive = LinearRegression().fit(X, y)\nprint(\"additive R2:\", additive.score(X, y))\n\n# Add the x1*x2 interaction term only\ninter = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)\nXi = inter.fit_transform(X)\nmodel = LinearRegression().fit(Xi, y)\nprint(inter.get_feature_names_out(), model.coef_.round(2))"
+ },
+ "baseline": {
+  "n": "Baseline Model",
+  "d": "A baseline model is a deliberately simple reference model whose score any proposed model must beat to be worth its complexity. Typical baselines are predicting the majority class, the training mean, the last observed value in a time series, or a plain logistic regression or linear regression.\n\nBaselines turn metric values into meaning. An accuracy of 95% sounds strong until the majority-class baseline also scores 95% on an imbalanced dataset; a forecast error is only useful when compared with the naive seasonal forecast. Building a baseline first also tests the whole pipeline, from data loading to evaluation, before time is spent on tuning. A common mistake is choosing a weak baseline that makes any model look good. Report a trivial baseline and a strong simple baseline, such as a tuned linear model or gradient-boosted trees with default settings, and evaluate both on the same split.",
+  "f": "",
+  "u": [
+   "Sanity-checking metrics on imbalanced classification tasks",
+   "Naive and seasonal-naive forecasts for time series",
+   "Benchmarking deep models against linear models"
+  ],
+  "x": "A team proposing a transformer model for ticket classification first trains a TF-IDF plus logistic regression baseline. The transformer is adopted only after it clearly beats the baseline on the same held-out set, which justifies its extra serving cost.",
+  "c": "from sklearn.datasets import load_breast_cancer\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.model_selection import cross_val_score\n\nX, y = load_breast_cancer(return_X_y=True)\nmodels = {\n    \"majority class\": DummyClassifier(strategy=\"most_frequent\"),\n    \"logistic\": make_pipeline(StandardScaler(), LogisticRegression()),\n    \"boosted trees\": HistGradientBoostingClassifier(),\n}\n# Same folds and metric for every model\nfor name, m in models.items():\n    scores = cross_val_score(m, X, y, cv=5, scoring=\"roc_auc\")\n    print(f\"{name:15s} AUC={scores.mean():.3f}\")"
+ },
+ "timeseries": {
+  "n": "Time Series Data",
+  "d": "Time series data is a sequence of observations recorded in time order, usually at regular intervals, such as hourly electricity load, daily sales or per-second sensor readings. Its defining property is that neighboring observations depend on each other, so the order of rows carries information.\n\nA time series is often described as a combination of trend, seasonality and noise, and many methods model these parts explicitly: ARIMA, exponential smoothing, Prophet, and gradient-boosted trees on lag features, as well as recurrent and transformer forecasting models. Useful tools include autocorrelation plots, differencing and stationarity tests. The most important pitfall is evaluation: random K-fold cross-validation shuffles future rows into the training set and leaks information, so validation must always train on the past and test on the future, for example with an expanding-window or rolling-origin split.",
+  "f": "y_t = T_t + S_t + ε_t  (additive decomposition)",
+  "u": [
+   "Forecasting product demand and inventory needs",
+   "Detecting anomalies in server and sensor metrics",
+   "Predicting energy load for grid planning"
+  ],
+  "x": "A grocery chain forecasts daily demand per product and store using lag features and a gradient-boosted model. Validation uses rolling-origin splits that always train on earlier weeks and test on the following weeks, matching how forecasts are made in production.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import TimeSeriesSplit\n\nidx = pd.date_range(\"2023-01-01\", periods=365, freq=\"D\")\nt = np.arange(365)\ny = pd.Series(100 + 0.1 * t + 10 * np.sin(2 * np.pi * t / 7)\n              + np.random.default_rng(0).normal(0, 3, 365), index=idx)\n\n# Lag features use only past values\ndf = pd.DataFrame({\"y\": y, \"lag_1\": y.shift(1), \"lag_7\": y.shift(7)}).dropna()\n\n# Each split trains on the past and tests on the next block\nfor train_idx, test_idx in TimeSeriesSplit(n_splits=4).split(df):\n    print(df.index[train_idx[-1]].date(), \"->\", df.index[test_idx[0]].date())"
+ },
+ "trend": {
+  "n": "Trend",
+  "d": "A trend is the long-term direction of a time series: a sustained increase, decrease or change in level that persists beyond seasonal cycles and short-term noise. Rising subscriber counts over several years or a gradual decline in sensor sensitivity are trends.\n\nTrends are estimated by smoothing, such as a moving average or LOESS, by fitting a line or curve over time, or as one component of a decomposition such as STL. Forecasting methods treat trend explicitly: Holt's exponential smoothing adds a trend term, ARIMA removes it by differencing, and Prophet fits a piecewise linear trend with changepoints. A trend makes a series non-stationary, so many models need it removed first. A notable pitfall concerns tree-based models such as random forests and gradient-boosted trees: they cannot extrapolate, so on a trending series they predict values no higher than those seen in training. Detrend first or model the trend separately.",
+  "f": "T_t = β₀ + β₁·t  (linear trend)",
+  "u": [
+   "Removing long-term growth before seasonal analysis",
+   "Projecting user growth for capacity planning",
+   "Detecting slow degradation in sensor readings"
+  ],
+  "x": "A cloud provider fits a trend to monthly storage usage to plan hardware purchases. Because its gradient-boosted forecasting model cannot extrapolate beyond past levels, the team models the trend with a linear term and lets the trees learn only the remaining variation.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom statsmodels.tsa.seasonal import STL\n\nidx = pd.date_range(\"2020-01-01\", periods=48, freq=\"MS\")\nt = np.arange(48)\nrng = np.random.default_rng(0)\ny = pd.Series(50 + 2.0 * t + 8 * np.sin(2 * np.pi * t / 12) + rng.normal(0, 2, 48),\n              index=idx)\n\n# Decomposition separates trend from the 12-month seasonal cycle\nres = STL(y, period=12).fit()\ntrend = res.trend\n\n# Simple linear trend fit: slope per month\nslope, intercept = np.polyfit(t, y.values, deg=1)\nprint(f\"trend slope = {slope:.2f} per month\")"
+ },
+ "seasonality": {
+  "n": "Seasonality",
+  "d": "Seasonality is a pattern in a time series that repeats with a fixed, known period, such as higher retail sales every December, traffic peaks at the same hours each day, or lower activity on weekends. The period is set by the calendar or by the process, not by the data's random fluctuations.\n\nSeasonality shows up as regular peaks in an autocorrelation plot at the period and its multiples. It is handled by seasonal decomposition (STL), seasonal differencing, SARIMA and Holt-Winters models, Fourier terms as in Prophet, or calendar features such as hour, weekday and month for gradient-boosted trees. Many series have several seasonalities at once, such as daily and weekly cycles in hourly data. A pitfall is confusing seasonality with cycles: business cycles also rise and fall but with irregular length, so a fixed-period model will mispredict them. Holidays that move between dates also need explicit features.",
+  "f": "S_t = S_{t−m}  (period m)",
+  "u": [
+   "Adding calendar features to demand forecasting models",
+   "Removing weekly cycles before anomaly detection",
+   "Planning staffing around daily and weekly peaks"
+  ],
+  "x": "A call center forecasts hourly call volume with both daily and weekly seasonal terms plus holiday indicators. Removing the seasonal pattern also lets the team flag unusual spikes that signal an outage elsewhere in the company.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom statsmodels.tsa.stattools import acf\n\nidx = pd.date_range(\"2024-01-01\", periods=24 * 28, freq=\"h\")\nhour, dow = idx.hour.values, idx.dayofweek.values\nrng = np.random.default_rng(0)\ncalls = 50 + 20 * np.sin(2 * np.pi * hour / 24) - 15 * (dow >= 5) + rng.normal(0, 4, len(idx))\n\n# Autocorrelation peaks at lag 24 (daily) and 168 (weekly)\nr = acf(calls, nlags=200)\nprint(\"lag 24:\", r[24].round(2), \"lag 168:\", r[168].round(2))\n\n# Fourier terms for daily seasonality as model features\nk = np.arange(1, 4)\nfourier = np.column_stack([f(2 * np.pi * kk * hour / 24) for kk in k for f in (np.sin, np.cos)])"
+ },
+ "whitenoise": {
+  "n": "White Noise",
+  "d": "White noise is a sequence of random values with zero mean, constant variance and no correlation between any two time points. Knowing past values gives no information about the next one, so white noise is the definition of an unpredictable series.\n\nIn time series modeling it is the target state for residuals: if a forecasting model such as ARIMA has captured all the structure, its residuals should look like white noise, with no significant spikes in the autocorrelation plot. The Ljung-Box test checks this formally. White noise is also the building block of other processes: a random walk is the cumulative sum of white noise, and ARMA models are filtered white noise. A common misconception is that white noise must be normally distributed; Gaussian white noise is only one case, and the definition requires only zero autocorrelation, not independence or normality.",
+  "f": "E[ε_t] = 0,  Var(ε_t) = σ²,  Cov(ε_t, ε_s) = 0 for t ≠ s",
+  "u": [
+   "Checking forecast residuals for remaining structure",
+   "Testing autocorrelation with the Ljung-Box test",
+   "Simulating noise for synthetic time series"
+  ],
+  "x": "A utility company validates its load forecasting model by running a Ljung-Box test on the residuals every month. When the test starts rejecting white noise at a 24-hour lag, the team discovers that a change in metering time zone has shifted the daily pattern.",
+  "c": "import numpy as np\nfrom statsmodels.stats.diagnostic import acorr_ljungbox\nfrom statsmodels.tsa.stattools import acf\n\nrng = np.random.default_rng(0)\neps = rng.normal(0, 1, 1000)               # Gaussian white noise\n\n# Autocorrelations near zero at every nonzero lag\nprint(acf(eps, nlags=5).round(3))\n\n# Ljung-Box: large p-value means no evidence of autocorrelation\nprint(acorr_ljungbox(eps, lags=[10, 20]))\n\n# A series with structure fails the test\nar = np.zeros(1000)\nfor t in range(1, 1000):\n    ar[t] = 0.7 * ar[t - 1] + eps[t]\nprint(acorr_ljungbox(ar, lags=[10]))"
+ },
+ "randomwalk": {
+  "n": "Random Walk",
+  "d": "A random walk is a time series in which each value equals the previous value plus a random step, so the series wanders without returning to a fixed level. It is the cumulative sum of white noise, and the best forecast of tomorrow's value is simply today's value.\n\nBecause shocks never fade, the variance of a random walk grows with time and the series is non-stationary; its autocorrelation decays very slowly. Asset prices are often approximated as random walks, which is why the naive last-value forecast is a hard baseline to beat in finance. Differencing a random walk once returns the white-noise steps, which is the idea behind the integrated (I) part of ARIMA. A major pitfall is spurious regression: two independent random walks regressed on each other often show a high R² and significant coefficients, so test for stationarity with an augmented Dickey-Fuller test before regressing trending series.",
+  "f": "y_t = y_{t−1} + ε_t",
+  "u": [
+   "Naive last-value baseline for price forecasting",
+   "Testing for unit roots before regression",
+   "Simulating price paths and sensor drift"
+  ],
+  "x": "A trading research team checks every candidate signal against a random-walk forecast of the next day's price. Signals that cannot beat the last-value forecast out of sample are discarded, even when they look strong on the training period.",
+  "c": "import numpy as np\nfrom scipy import stats\nfrom statsmodels.tsa.stattools import adfuller\n\nrng = np.random.default_rng(0)\na = np.cumsum(rng.normal(size=1000))   # two independent random walks\nb = np.cumsum(rng.normal(size=1000))\n\n# Unit-root test: high p-value means non-stationary\nprint(\"ADF p-value:\", adfuller(a)[1])\n\n# Spurious regression: often a strong-looking fit despite independence\nr = stats.linregress(a, b)\nprint(\"R2 on levels:\", r.rvalue ** 2)\n\n# Differencing recovers the white-noise steps\nr_diff = stats.linregress(np.diff(a), np.diff(b))\nprint(\"R2 on differences:\", r_diff.rvalue ** 2)"
+ },
+ "differencing": {
+  "n": "Differencing",
+  "d": "Differencing transforms a time series into the changes between consecutive observations, replacing each value with its value minus the previous one. It removes a stochastic trend or level shifts and often turns a non-stationary series into a stationary one.\n\nFirst differencing removes a linear trend or a random walk; differencing twice removes a quadratic trend. Seasonal differencing subtracts the value one season ago, y_t − y_{t−m}, to remove a repeating pattern. Differencing is the \"I\" in ARIMA, where d counts how many times it is applied, and it is common before fitting regression or gradient-boosted trees to trending series. Forecasts made on the differenced scale must be cumulated back to the original level. A pitfall is over-differencing: applying it to an already stationary series adds negative autocorrelation and inflates variance, so check with an augmented Dickey-Fuller or KPSS test and difference only as much as needed.",
+  "f": "∇y_t = y_t − y_{t−1},  ∇_m y_t = y_t − y_{t−m}",
+  "u": [
+   "Making a series stationary before ARIMA",
+   "Removing yearly seasonality with lag-12 differences",
+   "Modeling changes instead of levels for trees"
+  ],
+  "x": "A retailer's gradient-boosted forecaster predicts the week-over-week change in sales rather than the level, which removes the long-term growth that trees cannot extrapolate. The predicted changes are added back to the last observed week to produce the final forecast.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom statsmodels.tsa.stattools import adfuller\n\nt = np.arange(120)\nrng = np.random.default_rng(0)\ny = pd.Series(100 + 0.8 * t + 10 * np.sin(2 * np.pi * t / 12) + rng.normal(0, 2, 120))\n\nd1 = y.diff().dropna()          # first difference removes the trend\nd12 = d1.diff(12).dropna()      # seasonal difference removes the yearly cycle\nfor name, s in [(\"level\", y), (\"diff\", d1), (\"diff+seasonal\", d12)]:\n    print(f\"{name:14s} ADF p={adfuller(s)[1]:.3f}\")\n\n# Invert: forecasts of changes are cumulated back onto the last level\npred_changes = np.array([1.0, 0.5, -0.2])\nlevel_forecast = y.iloc[-1] + np.cumsum(pred_changes)"
+ },
+ "horizon": {
+  "n": "Forecast Horizon",
+  "d": "The forecast horizon is how far into the future a forecast is made, measured in time steps from the last observed point, for example one day ahead or 13 weeks ahead. It is set by the decision the forecast supports: next-hour load for grid dispatch, next-quarter demand for purchasing.\n\nError almost always grows with the horizon, because uncertainty accumulates and fewer recent inputs remain informative, so accuracy should be reported per horizon step rather than as one average. Multi-step forecasts can be made recursively, feeding each prediction back as an input, which compounds errors; directly, training a separate model per horizon; or with multi-output models such as sequence-to-sequence networks. A common pitfall is validating at a different horizon than the one used in production, for example evaluating one-step-ahead forecasts with lag-1 features when real decisions need forecasts four weeks out, where those recent lags are not yet known.",
+  "f": "ŷ_{t+h | t},  h = 1, …, H",
+  "u": [
+   "Setting purchase lead times in inventory planning",
+   "Reporting forecast error per horizon step",
+   "Choosing recursive versus direct multi-step strategies"
+  ],
+  "x": "A fashion retailer must order stock eight weeks before it arrives, so its demand model is evaluated only at an eight-week horizon. Features are restricted to information available eight weeks before each target week.",
+  "c": "import numpy as np\nimport pandas as pd\nfrom sklearn.ensemble import HistGradientBoostingRegressor\n\nrng = np.random.default_rng(0)\ny = pd.Series(np.cumsum(rng.normal(0, 1, 500)) + 50)\nH = 4\n\n# Direct strategy: one model per horizon, features known at forecast time\nmodels = {}\nfor h in range(1, H + 1):\n    X = pd.concat({f\"lag_{k}\": y.shift(k) for k in range(0, 8)}, axis=1)\n    target = y.shift(-h)                      # value h steps ahead\n    data = pd.concat([X, target.rename(\"y\")], axis=1).dropna()\n    models[h] = HistGradientBoostingRegressor().fit(data.drop(columns=\"y\"), data[\"y\"])\n\nlatest = pd.DataFrame({f\"lag_{k}\": [y.iloc[-1 - k]] for k in range(0, 8)})\nprint([models[h].predict(latest)[0].round(2) for h in range(1, H + 1)])"
+ },
+ "vector": {
+  "n": "Vector",
+  "d": "A vector is an ordered list of numbers, such as (3.2, −1.0, 0.5), that can be read as a point or an arrow in a space with one axis per entry. The number of entries is its dimension, and vectors can be added entry by entry and multiplied by a scalar.\n\nAlmost everything a model processes is a vector: one row of features, the weights of a linear regression, a word or sentence embedding, a gradient, the output probabilities of a classifier. Geometry on vectors gives the core operations of machine learning, including the dot product, vector norms, Euclidean distance and cosine similarity, which drive k-nearest neighbors, k-means and vector search. A common source of bugs is confusing shapes: in NumPy a 1D array of shape (d,) is neither a row nor a column vector, and mixing it with arrays of shape (d, 1) silently broadcasts into a d×d matrix.",
+  "f": "x = (x₁, x₂, …, x_d) ∈ ℝᵈ,  a·x + b·y = (a·xᵢ + b·yᵢ)ᵢ",
+  "u": [
+   "Representing one example as a feature vector",
+   "Storing text and image embeddings for search",
+   "Holding model weights and gradients"
+  ],
+  "x": "A music streaming service represents every track as a 128-dimensional embedding vector learned from listening sessions. Recommendations are produced by finding the track vectors closest to the vector of the user's recent listening history.",
+  "c": "import numpy as np\nimport torch\n\nx = np.array([3.2, -1.0, 0.5])      # shape (3,)\ny = np.array([1.0, 2.0, 0.0])\n\nz = 2 * x + y                        # scalar multiple and addition\nprint(z, x.shape)\n\n# Shape pitfall: (3,) + (3, 1) broadcasts to a (3, 3) matrix\ncol = y.reshape(3, 1)\nprint((x + col).shape)\n\n# Embedding vectors in PyTorch: one 8-dim vector per token id\nemb = torch.nn.Embedding(num_embeddings=1000, embedding_dim=8)\nv = emb(torch.tensor([42]))          # shape (1, 8)"
+ },
+ "matrix": {
+  "n": "Matrix",
+  "d": "A matrix is a rectangular array of numbers arranged in rows and columns; an m×n matrix has m rows and n columns. It can be read either as a table of data or as a linear map that transforms n-dimensional vectors into m-dimensional ones by matrix-vector multiplication.\n\nBoth readings are everywhere in machine learning. A dataset is a design matrix X with one row per example and one column per feature. The weights of a linear layer are a matrix W, so a dense layer computes Wx + b. Covariance matrices, confusion matrices, attention score matrices and user-item rating matrices are other examples. Key operations include transpose, matrix multiplication, inverse and decompositions such as eigendecomposition and SVD, which underlie PCA and low-rank methods like LoRA. A pitfall is explicitly inverting matrices to solve linear systems; solvers such as np.linalg.solve or least squares are faster and numerically more stable.",
+  "f": "A ∈ ℝ^{m×n},  (Ax)ᵢ = Σⱼ Aᵢⱼ xⱼ",
+  "u": [
+   "Storing a dataset as a design matrix",
+   "Weights of fully connected neural network layers",
+   "User-item rating matrices for recommendation"
+  ],
+  "x": "An e-commerce company stores implicit feedback as a sparse user-by-product matrix and factorizes it into two thin matrices of user and product factors. Their product approximates the original matrix and fills in scores for products a user has not seen.",
+  "c": "import numpy as np\nimport torch\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(100, 3))          # design matrix: 100 rows, 3 features\nw_true = np.array([1.5, -2.0, 0.3])\ny = X @ w_true + rng.normal(0, .1, 100)\n\nprint(X.shape, X.T.shape)               # transpose swaps rows and columns\n\n# Least squares without forming an explicit inverse\nw_hat, *_ = np.linalg.lstsq(X, y, rcond=None)\nprint(w_hat.round(2))\n\n# A linear layer holds a weight matrix of shape (out, in)\nlayer = torch.nn.Linear(3, 4)\nprint(layer.weight.shape)               # torch.Size([4, 3])"
+ },
+ "tensor": {
+  "n": "Tensor",
+  "d": "In machine learning, a tensor is a multi-dimensional array of numbers: a scalar has 0 axes, a vector 1, a matrix 2, and higher-order tensors have 3 or more. The shape lists the size of each axis, such as (batch, channels, height, width) for a batch of images.\n\nDeep learning frameworks such as PyTorch, TensorFlow and JAX are built around tensors. A tensor carries a shape, a data type such as float32 or bfloat16, and a device such as CPU or GPU, and operations on it can be differentiated automatically. Typical shapes are (batch, sequence, hidden) for transformer activations and (batch, heads, seq, seq) for attention scores. Broadcasting lets tensors of compatible shapes combine without copies. A common pitfall is assuming a specific axis order: frameworks and libraries differ, for example channels-first versus channels-last images, and a silent mix-up can train without errors but learn nonsense.",
+  "f": "T ∈ ℝ^{d₁ × d₂ × … × d_k}",
+  "u": [
+   "Batches of images in convolutional networks",
+   "Activations flowing through transformer layers",
+   "GPU computation with automatic differentiation"
+  ],
+  "x": "A computer vision team ports a model from a channels-last image pipeline into PyTorch, which expects channels-first tensors. A shape assertion added at the model input catches a transposed batch that had otherwise trained without any error.",
+  "c": "import torch\n\nimages = torch.randn(32, 3, 224, 224)   # (batch, channels, height, width)\nprint(images.ndim, images.shape, images.dtype)\n\n# Transformer activations: (batch, sequence, hidden)\nh = torch.randn(8, 128, 768, device=\"cpu\", requires_grad=True)\nscores = h @ h.transpose(1, 2)          # (8, 128, 128) attention-like scores\nscores.mean().backward()                 # gradients flow through tensor ops\nprint(h.grad.shape)\n\n# Channels-last to channels-first, with an explicit check\nnhwc = torch.randn(32, 224, 224, 3)\nnchw = nhwc.permute(0, 3, 1, 2)\nassert nchw.shape[1] == 3"
+ },
+ "dotproduct": {
+  "n": "Dot Product",
+  "d": "The dot product of two vectors of the same length is the sum of the products of their corresponding entries, giving a single number. Geometrically it equals the product of the two lengths and the cosine of the angle between them, so it is large and positive when vectors point the same way, zero when they are orthogonal and negative when they point in opposite directions.\n\nThe dot product is the workhorse operation of machine learning. A linear model's score is the dot product w·x plus a bias; every neuron computes one; matrix multiplication is a grid of dot products; transformer attention scores are dot products between queries and keys. A pitfall is using the raw dot product as a similarity when vector lengths vary: longer vectors score higher regardless of direction, so normalize first if only direction matters, which gives cosine similarity.",
+  "f": "a·b = Σᵢ aᵢbᵢ = ‖a‖‖b‖ cos θ",
+  "u": [
+   "Scoring examples in linear and logistic models",
+   "Computing query-key attention scores in transformers",
+   "Ranking items by embedding similarity"
+  ],
+  "x": "A recommendation team scores candidate items with the dot product between a user embedding and each item embedding, which a vector index computes for millions of items quickly. The team keeps the raw dot product rather than cosine similarity because item vector length was trained to reflect popularity.",
+  "c": "import numpy as np\nimport torch\n\na = np.array([1.0, 2.0, 3.0])\nb = np.array([4.0, -1.0, 0.5])\nprint(a @ b, np.dot(a, b), (a * b).sum())   # three equivalent forms\n\n# Angle from the dot product\ncos_theta = a @ b / (np.linalg.norm(a) * np.linalg.norm(b))\nprint(\"angle (deg):\", np.degrees(np.arccos(cos_theta)).round(1))\n\n# Batched dot products: queries against keys (attention scores)\nQ = torch.randn(4, 64)     # 4 queries\nK = torch.randn(10, 64)    # 10 keys\nscores = Q @ K.T / 64 ** 0.5   # (4, 10), scaled as in attention"
+ },
+ "matmul": {
+  "n": "Matrix Multiplication",
+  "d": "Matrix multiplication combines an m×k matrix A and a k×n matrix B into an m×n matrix C, where each entry Cᵢⱼ is the dot product of row i of A with column j of B. The inner dimensions must match, and the result represents applying the linear map B first and then A.\n\nIt is the computational core of deep learning. A dense layer applied to a batch is one matrix multiplication of the input batch by the weight matrix; attention computes QKᵀ and then multiplies by V. GPUs and TPUs are built around it, and its cost of about 2·m·k·n floating-point operations dominates training compute. A common misconception is that it is commutative: AB generally differs from BA, and BA may not even be defined. Another pitfall is confusing it with the elementwise product, written * in NumPy and PyTorch, versus @ for matrix multiplication.",
+  "f": "C = AB,  Cᵢⱼ = Σₖ Aᵢₖ Bₖⱼ",
+  "u": [
+   "Forward pass of dense neural network layers",
+   "Computing attention in transformer models",
+   "Estimating training compute in FLOPs"
+  ],
+  "x": "An inference team profiles a language model and finds that most of the GPU time goes to a few large matrix multiplications in the attention and MLP blocks. Switching those to bfloat16 and fusing small multiplications into larger batched ones raises throughput without changing the model.",
+  "c": "import numpy as np\nimport torch\n\nA = np.arange(6).reshape(2, 3)     # 2x3\nB = np.arange(12).reshape(3, 4)    # 3x4\nC = A @ B                           # 2x4: inner dimensions (3) must match\nprint(C.shape, C[0, 1] == A[0] @ B[:, 1])\n\n# Not commutative, and @ differs from elementwise *\nM, N = np.array([[1, 2], [3, 4]]), np.array([[0, 1], [1, 0]])\nprint(np.array_equal(M @ N, N @ M), M * N)\n\n# A dense layer on a batch is one matmul: (batch, in) @ (in, out)\nx = torch.randn(64, 512)\nW = torch.randn(512, 256)\ny = x @ W                           # about 2*64*512*256 FLOPs"
+ },
+ "vecnorm": {
+  "n": "Vector Norm (L1, L2)",
+  "d": "A vector norm assigns a non-negative length to a vector. The L2 norm is the familiar straight-line length, the square root of the sum of squared entries; the L1 norm is the sum of absolute values; the L∞ norm is the largest absolute entry. All are special cases of the Lp norm.\n\nNorms appear throughout machine learning. L2 and L1 penalties on weights give ridge regression and lasso; the L1 penalty drives some weights exactly to zero, which performs feature selection, while L2 shrinks all weights smoothly. Gradient clipping rescales gradients whose L2 norm exceeds a threshold. Embeddings are L2-normalized before cosine similarity search, and norms of differences define Euclidean and Manhattan distance. A common confusion is between the L2 norm and its square: ridge regression penalizes the squared norm ‖w‖₂², which has a simpler gradient, whereas clipping and normalization use the norm itself.",
+  "f": "‖x‖_p = (Σᵢ |xᵢ|ᵖ)^(1/p);  ‖x‖₁ = Σ|xᵢ|,  ‖x‖₂ = √(Σ xᵢ²)",
+  "u": [
+   "L1 and L2 regularization of model weights",
+   "Gradient norm clipping during network training",
+   "Normalizing embeddings before similarity search"
+  ],
+  "x": "A team training a large transformer clips the global L2 norm of the gradients to 1.0 at every step. Logging the gradient norm before clipping also gives them an early warning signal, because sudden spikes often precede loss divergence.",
+  "c": "import numpy as np\nimport torch\n\nx = np.array([3.0, -4.0, 0.0])\nprint(np.linalg.norm(x, 1), np.linalg.norm(x), np.linalg.norm(x, np.inf))  # 7, 5, 4\n\n# L2-normalize rows (unit length) before cosine similarity search\nE = np.random.default_rng(0).normal(size=(5, 16))\nE_unit = E / np.linalg.norm(E, axis=1, keepdims=True)\n\n# Gradient clipping by global L2 norm in PyTorch\nmodel = torch.nn.Linear(16, 1)\nloss = model(torch.randn(8, 16)).pow(2).mean()\nloss.backward()\ntotal = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)\nprint(\"grad norm before clipping:\", float(total))"
+ },
+ "euclidean": {
+  "n": "Euclidean Distance",
+  "d": "Euclidean distance is the straight-line distance between two points, computed as the square root of the sum of squared differences across all coordinates. It is the L2 norm of the difference vector and matches ordinary geometric distance in two or three dimensions.\n\nMany algorithms rely on it directly: k-nearest neighbors finds the closest training points, k-means assigns each point to the nearest centroid and minimizes squared Euclidean distance, RBF kernels in SVMs decay with it, and vector databases often offer it as a search metric. Because every coordinate contributes on its own scale, features must be standardized first; otherwise a feature measured in dollars dominates one measured in years. In high-dimensional space distances concentrate, so the nearest and farthest neighbors become almost equally far. For L2-normalized vectors, squared Euclidean distance equals 2 − 2·cos θ, so it ranks neighbors exactly like cosine similarity.",
+  "f": "d(x, y) = ‖x − y‖₂ = √(Σᵢ (xᵢ − yᵢ)²)",
+  "u": [
+   "Nearest-neighbor search in k-NN models",
+   "Assigning points to clusters in k-means",
+   "Vector search over normalized embeddings"
+  ],
+  "x": "A real-estate platform recommends comparable homes with k-nearest neighbors on size, age, location and price. Because the raw features had very different scales, the team standardizes them before computing Euclidean distances so that price no longer dominates the result.",
+  "c": "import numpy as np\nfrom scipy.spatial.distance import cdist\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.neighbors import NearestNeighbors\n\na, b = np.array([1.0, 2.0, 3.0]), np.array([4.0, 6.0, 3.0])\nprint(np.linalg.norm(a - b))                 # 5.0\n\n# Scale features before distance-based methods\nX = np.array([[120, 5, 350_000], [95, 30, 290_000], [130, 2, 410_000.0]])\nXs = StandardScaler().fit_transform(X)\nD = cdist(Xs, Xs, metric=\"euclidean\")        # pairwise distance matrix\n\nnn = NearestNeighbors(n_neighbors=2).fit(Xs)\ndist, idx = nn.kneighbors(Xs[:1])\nprint(idx, dist.round(2))"
+ },
+ "cosine": {
+  "n": "Cosine Similarity",
+  "d": "Cosine similarity measures how closely two vectors point in the same direction, computed as their dot product divided by the product of their lengths. It ranges from −1 for opposite directions through 0 for orthogonal vectors to 1 for identical directions, and it ignores vector length entirely.\n\nIt is the standard similarity for text and embeddings, because the direction of an embedding encodes meaning while its length often reflects frequency or document size. Semantic search, retrieval for RAG, duplicate detection and recommendation compare sentence or item embeddings by cosine similarity; vector indexes usually implement it as a dot product on L2-normalized vectors. Cosine distance is defined as 1 − cosine similarity. A pitfall is reading the score as a calibrated probability or comparing thresholds across models: each embedding model has its own typical range, and some produce scores that are all high, so thresholds must be tuned per model.",
+  "f": "cos(a, b) = a·b / (‖a‖ ‖b‖)",
+  "u": [
+   "Semantic search over sentence embeddings",
+   "Retrieving context passages for RAG systems",
+   "Detecting near-duplicate documents and questions"
+  ],
+  "x": "A customer-support platform embeds every incoming question and compares it by cosine similarity with previously answered questions. Matches above a threshold tuned on labeled pairs are suggested to agents, and the threshold is re-tuned whenever the embedding model changes.",
+  "c": "import numpy as np\nfrom sklearn.metrics.pairwise import cosine_similarity\nfrom sentence_transformers import SentenceTransformer\n\na, b = np.array([1.0, 2.0, 3.0]), np.array([2.0, 4.0, 6.0])\nprint(a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))   # 1.0: same direction\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\ndocs = [\"How do I reset my password?\", \"I forgot my login password\",\n        \"What is your refund policy?\"]\nemb = model.encode(docs, normalize_embeddings=True)     # unit-length rows\n\n# On normalized vectors, cosine similarity is just the dot product\nsim = emb @ emb.T\nprint(np.allclose(sim, cosine_similarity(emb)), sim.round(2))"
+ },
+ "distmetric": {
+  "n": "Distance Metric",
+  "d": "A distance metric is a function that measures how far apart two objects are and satisfies four rules: distances are non-negative, zero only for identical objects, symmetric, and obey the triangle inequality, d(x, z) ≤ d(x, y) + d(y, z). Euclidean, Manhattan, Chebyshev, Hamming and Jaccard distance are common metrics.\n\nThe choice of metric defines what \"similar\" means for k-nearest neighbors, k-means, hierarchical clustering, DBSCAN and vector search. Manhattan distance is less dominated by single large differences than Euclidean; Hamming suits binary codes; Jaccard compares sets; Mahalanobis distance accounts for correlated features. Some popular measures are not true metrics: cosine distance and squared Euclidean distance violate the triangle inequality, and KL divergence is not even symmetric. This matters because index structures such as ball trees and some clustering guarantees assume a true metric, and a mismatched choice can silently return wrong neighbors.",
+  "f": "d(x,z) ≤ d(x,y) + d(y,z),  d(x,y) = d(y,x) ≥ 0,  d(x,y) = 0 ⇔ x = y",
+  "u": [
+   "Choosing the metric for k-NN and clustering",
+   "Comparing binary fingerprints with Hamming distance",
+   "Measuring set overlap with Jaccard distance"
+  ],
+  "x": "A chemistry research group searches a compound library by encoding each molecule as a binary fingerprint and comparing fingerprints with Jaccard (Tanimoto) distance. The metric reflects shared substructures far better than Euclidean distance on the same bits.",
+  "c": "import numpy as np\nfrom scipy.spatial.distance import pdist, squareform\nfrom sklearn.neighbors import KNeighborsClassifier\n\nX = np.array([[0, 0], [3, 4], [6, 0]], dtype=float)\nfor m in [\"euclidean\", \"cityblock\", \"chebyshev\"]:\n    print(m, squareform(pdist(X, metric=m))[0])\n\n# Binary vectors: Hamming and Jaccard\nB = np.array([[1, 1, 0, 1], [1, 0, 0, 1]], dtype=bool)\nprint(pdist(B, \"hamming\"), pdist(B, \"jaccard\"))\n\n# Triangle inequality fails for squared Euclidean distance\nd2 = squareform(pdist(np.array([[0.0], [1.0], [2.0]]), \"sqeuclidean\"))\nprint(d2[0, 2] <= d2[0, 1] + d2[1, 2])   # False: 4 > 1 + 1\n\nknn = KNeighborsClassifier(n_neighbors=3, metric=\"manhattan\")"
+ },
+ "projection": {
+  "n": "Projection",
+  "d": "A projection maps a vector onto a line, plane or other subspace by finding the closest point within that subspace. The projection of x onto a direction u is the component of x along u; what is left, x minus its projection, is orthogonal to the subspace.\n\nProjection is the geometry behind several core methods. Linear regression by least squares projects the target vector onto the space spanned by the feature columns, and the residual is orthogonal to every feature. PCA projects data onto the few directions of largest variance to reduce dimension. Random projections, justified by the Johnson-Lindenstrauss lemma, approximately preserve distances while shrinking dimension. In neural networks, the query, key and value projections are simply learned linear layers. A pitfall is projecting onto a direction that is not unit length without dividing by its squared norm, which scales the result incorrectly.",
+  "f": "proj_u(x) = (x·u / u·u) u;  P = X(XᵀX)⁻¹Xᵀ",
+  "u": [
+   "Reducing dimension with PCA before modeling",
+   "Least squares fitting in linear regression",
+   "Random projection to shrink high-dimensional features"
+  ],
+  "x": "A search team stores 768-dimensional document embeddings but projects them to 128 dimensions with PCA fitted on a sample of the corpus. The smaller vectors cut index memory substantially, and recall is checked on a labeled query set before rollout.",
+  "c": "import numpy as np\nfrom sklearn.decomposition import PCA\nfrom sklearn.random_projection import GaussianRandomProjection\n\nx, u = np.array([3.0, 4.0]), np.array([2.0, 0.0])\np = (x @ u) / (u @ u) * u          # projection onto the line along u\nprint(p, (x - p) @ u)              # residual is orthogonal: 0\n\n# Least squares fit = projection of y onto the column space of X\nrng = np.random.default_rng(0)\nX, y = rng.normal(size=(50, 3)), rng.normal(size=50)\ny_hat = X @ np.linalg.lstsq(X, y, rcond=None)[0]\nprint(np.allclose(X.T @ (y - y_hat), 0))\n\nZ = PCA(n_components=2).fit_transform(rng.normal(size=(200, 10)))\nR = GaussianRandomProjection(n_components=64).fit_transform(rng.normal(size=(100, 2000)))"
+ },
+ "orthogonal": {
+  "n": "Orthogonality",
+  "d": "Two vectors are orthogonal when their dot product is zero, which means they are at a right angle and carry no component of each other. A set of mutually orthogonal unit vectors is orthonormal, and a square matrix whose columns are orthonormal is an orthogonal matrix: it rotates or reflects vectors without changing their lengths, and its inverse is simply its transpose.\n\nOrthogonality appears throughout machine learning. Principal components in PCA are orthogonal directions, so the transformed features are uncorrelated. Least squares residuals are orthogonal to every feature column. Orthogonal initialization keeps signal norms stable in deep and recurrent networks, and QR decomposition builds orthonormal bases for stable numerical solvers. In high-dimensional space, random vectors are nearly orthogonal, which is why unrelated embeddings have cosine similarity near zero. A common confusion is equating orthogonal with independent: for centered data, orthogonality means zero correlation, which does not rule out nonlinear dependence.",
+  "f": "a·b = 0;  QᵀQ = I",
+  "u": [
+   "Uncorrelated components produced by PCA",
+   "Orthogonal initialization of recurrent network weights",
+   "Stable least squares solving via QR decomposition"
+  ],
+  "x": "A team training a deep recurrent model for sensor sequences initializes its recurrent weight matrix as an orthogonal matrix. Because it preserves vector lengths, activations and gradients neither explode nor vanish as quickly over long sequences.",
+  "c": "import numpy as np\nimport torch\n\na, b = np.array([1.0, 2.0]), np.array([-2.0, 1.0])\nprint(a @ b)                                   # 0.0: orthogonal\n\n# Orthonormal basis via QR; Q^T Q = I and lengths are preserved\nQ, _ = np.linalg.qr(np.random.default_rng(0).normal(size=(4, 4)))\nx = np.ones(4)\nprint(np.allclose(Q.T @ Q, np.eye(4)), np.linalg.norm(Q @ x), np.linalg.norm(x))\n\n# Random high-dimensional vectors are nearly orthogonal\nu, v = np.random.default_rng(1).normal(size=(2, 10_000))\nprint(u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))   # close to 0\n\nW = torch.empty(256, 256)\ntorch.nn.init.orthogonal_(W)                   # orthogonal initialization"
+ },
+ "eigen": {
+  "n": "Eigenvalues & Eigenvectors",
+  "d": "An eigenvector of a square matrix A is a nonzero vector whose direction does not change when A is applied to it; it is only scaled, and the scaling factor is its eigenvalue λ. In other words, Av = λv, so along an eigenvector the matrix acts like simple multiplication by a number.\n\nFor a symmetric matrix such as a covariance matrix, eigenvectors are orthogonal and eigenvalues are real, so the matrix can be written as QΛQᵀ. PCA uses exactly this: the eigenvectors of the covariance matrix are the principal components and the eigenvalues are the variances along them. Eigenvalues also describe training dynamics: the largest eigenvalue of the Hessian limits the stable learning rate in gradient descent, and eigenvalues of recurrent weight matrices above 1 cause exploding signals. A misconception is that every matrix has real eigenvalues; non-symmetric matrices, such as rotations, can have complex ones.",
+  "f": "A v = λ v;  Σ = Q Λ Qᵀ (symmetric Σ)",
+  "u": [
+   "Principal components from the covariance matrix",
+   "Spectral clustering on graph Laplacians",
+   "Analyzing curvature and stability during training"
+  ],
+  "x": "A fraud analytics team runs spectral clustering on a graph of accounts that share devices. The eigenvectors of the graph Laplacian with the smallest eigenvalues separate tightly connected groups of accounts, which are sent to investigators as possible fraud rings.",
+  "c": "import numpy as np\n\nA = np.array([[2.0, 1.0], [1.0, 2.0]])\nvals, vecs = np.linalg.eigh(A)          # eigh for symmetric matrices\nv, lam = vecs[:, 1], vals[1]\nprint(vals, np.allclose(A @ v, lam * v))  # A v = λ v\n\n# PCA via eigendecomposition of the covariance matrix\nrng = np.random.default_rng(0)\nX = rng.normal(size=(500, 3)) @ np.array([[3, 0, 0], [1, 1, 0], [0, 0, .2]])\nC = np.cov(X, rowvar=False)\nevals, evecs = np.linalg.eigh(C)\norder = evals.argsort()[::-1]\nprint(\"explained variance ratio:\", (evals[order] / evals.sum()).round(3))\nZ = (X - X.mean(0)) @ evecs[:, order[:2]]   # project onto top-2 components"
+ },
+ "matrank": {
+  "n": "Matrix Rank",
+  "d": "The rank of a matrix is the number of linearly independent rows, which always equals the number of linearly independent columns. It counts how many genuinely different directions the matrix contains; an m×n matrix has rank at most min(m, n), and it is full rank when it reaches that bound.\n\nRank matters whenever features or parameters are redundant. If a design matrix is rank-deficient, for example when a full one-hot encoding sits alongside an intercept, linear regression has no unique solution; regularization such as ridge regression or dropping a column fixes it. Low-rank structure is also exploited deliberately: truncated SVD, matrix factorization and LoRA, which fine-tunes a large model by learning a weight update of small rank r. A pitfall is computing rank exactly on floating-point data: noise makes almost every matrix technically full rank, so numerical rank is judged by how many singular values exceed a tolerance.",
+  "f": "rank(A) = number of nonzero singular values;  ΔW = BA, rank ≤ r",
+  "u": [
+   "Detecting redundant features in linear regression",
+   "Low-rank matrix factorization for recommendations",
+   "Low-rank adapters such as LoRA for fine-tuning"
+  ],
+  "x": "An analyst building a pricing regression gets unstable, huge coefficients and finds that the design matrix is rank-deficient because the one-hot encoded region columns sum to the intercept column. Dropping one category per feature restores full rank and stable estimates.",
+  "c": "import numpy as np\nimport torch\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(100, 3))\nX_dup = np.column_stack([X, X[:, 0] + X[:, 1]])    # 4th column is redundant\nprint(np.linalg.matrix_rank(X), np.linalg.matrix_rank(X_dup))  # 3 3\n\n# Numerical rank: singular values above a tolerance\ns = np.linalg.svd(X_dup + 1e-10 * rng.normal(size=X_dup.shape), compute_uv=False)\nprint(s.round(6))\n\n# LoRA-style low-rank update: (d x r) @ (r x d), rank at most r\nd, r = 1024, 8\nB, A = torch.zeros(d, r), torch.randn(r, d) * 0.01\ndelta_W = B @ A\nprint(delta_W.shape, B.numel() + A.numel(), \"params instead of\", d * d)"
+ },
+ "covmatrix": {
+  "n": "Covariance Matrix",
+  "d": "A covariance matrix collects the covariances between every pair of variables in a dataset: entry (i, j) is the covariance of feature i with feature j, and the diagonal holds each feature's variance. For d features it is a symmetric d×d matrix that is always positive semi-definite.\n\nIt summarizes the linear spread and co-movement of the data as a whole. PCA takes its eigenvectors as principal components; the multivariate normal distribution, Gaussian mixture models and LDA are parameterized by it; Mahalanobis distance uses its inverse to measure distance in units that account for correlated features; whitening transforms data so its covariance becomes the identity. Dividing by the standard deviations turns it into the correlation matrix. A key pitfall is estimation with few samples relative to features: the sample covariance becomes noisy or singular and cannot be inverted, so shrinkage estimators such as Ledoit-Wolf are used instead.",
+  "f": "Σ = (1/(n−1)) Σᵢ (xᵢ − x̄)(xᵢ − x̄)ᵀ",
+  "u": [
+   "Computing principal components for PCA",
+   "Mahalanobis distance for multivariate anomaly detection",
+   "Portfolio risk estimation from asset returns"
+  ],
+  "x": "A manufacturing quality team fits a covariance matrix to readings from many correlated sensors during normal operation. New readings are flagged when their Mahalanobis distance is unusually large, and a Ledoit-Wolf estimator keeps the inverse stable despite limited normal data.",
+  "c": "import numpy as np\nfrom sklearn.covariance import LedoitWolf\nfrom scipy.spatial.distance import mahalanobis\n\nrng = np.random.default_rng(0)\nX = rng.multivariate_normal([0, 0, 0], [[1, .8, 0], [.8, 1, 0], [0, 0, 2]], size=500)\n\nS = np.cov(X, rowvar=False)            # 3x3, variances on the diagonal\nprint(S.round(2), np.allclose(S, S.T))\n\n# Correlation matrix from the covariance matrix\nsd = np.sqrt(np.diag(S))\nR = S / np.outer(sd, sd)\n\n# Shrinkage estimate and Mahalanobis distance of a new point\nlw = LedoitWolf().fit(X)\nx_new = np.array([2.0, -2.0, 0.0])\nprint(mahalanobis(x_new, X.mean(0), np.linalg.inv(lw.covariance_)))"
+ },
+ "derivative": {
+  "n": "Derivative",
+  "d": "The derivative of a function at a point is its instantaneous rate of change: how much the output changes per unit change of the input, for an infinitesimally small change. Geometrically it is the slope of the tangent line to the curve at that point.\n\nDerivatives are how models learn. Training minimizes a loss, and the derivative of the loss with respect to a parameter says in which direction, and how steeply, the loss changes if that parameter is nudged. Gradient descent steps against this slope. Backpropagation applies the chain rule, which multiplies derivatives of nested functions, to get derivatives through every layer of a neural network, and frameworks compute them by automatic differentiation rather than by symbolic formulas or finite differences. A pitfall is assuming every function used in training is differentiable everywhere: ReLU and absolute value have kinks at zero, where frameworks simply pick a subgradient by convention.",
+  "f": "f′(x) = lim_{h→0} (f(x + h) − f(x)) / h;  (f∘g)′ = f′(g(x))·g′(x)",
+  "u": [
+   "Computing loss slopes for gradient-based training",
+   "Chain rule through layers in backpropagation",
+   "Checking analytic gradients with finite differences"
+  ],
+  "x": "An engineer writing a custom loss for a ranking model verifies its implementation by comparing PyTorch's autograd derivative with a finite-difference estimate on random inputs. A mismatch reveals a missing factor in a hand-written backward function.",
+  "c": "import torch\n\ndef f(x):\n    return x ** 3 - 2 * x            # f'(x) = 3x^2 - 2\n\nx = torch.tensor(1.5, requires_grad=True)\ny = f(x)\ny.backward()                          # automatic differentiation\nprint(\"autograd:\", x.grad.item())    # 3*2.25 - 2 = 4.75\n\n# Finite-difference check\nh = 1e-4\nfd = (f(torch.tensor(1.5 + h)) - f(torch.tensor(1.5 - h))) / (2 * h)\nprint(\"finite diff:\", fd.item())\n\n# Chain rule: d/dx sin(x^2) = cos(x^2) * 2x\nz = torch.tensor(0.7, requires_grad=True)\ntorch.sin(z ** 2).backward()\nprint(z.grad.item(), (torch.cos(z ** 2) * 2 * z).item())"
+ },
+ "partialderiv": {
+  "n": "Partial Derivative",
+  "d": "A partial derivative measures how a function of several variables changes when one input varies and all the others are held fixed. For f(x, y), ∂f/∂x is the slope along the x direction at a point, computed by treating y as a constant.\n\nA model's loss depends on many parameters at once, often millions or billions, and the partial derivative with respect to each parameter tells how the loss responds to changing that parameter alone. Collecting all partial derivatives gives the gradient, which gradient descent and Adam follow; backpropagation computes them all efficiently in one backward pass. A pitfall is reading a partial derivative as the total effect of an input: when inputs are correlated, changing one usually moves others too, so the one-at-a-time slope can be misleading for interpretation.",
+  "f": "∂f/∂xᵢ = lim_{h→0} (f(x + h·eᵢ) − f(x)) / h",
+  "u": [
+   "Per-parameter loss slopes during network training",
+   "Deriving update rules for linear models",
+   "Sensitivity analysis of model outputs to inputs"
+  ],
+  "x": "A pricing team computes the partial derivative of a demand model's output with respect to price, holding the other inputs fixed, to estimate local price sensitivity per product. They treat the result cautiously because price is correlated with promotions in the training data.",
+  "c": "import torch\n\n# f(x, y) = x^2 * y + 3y  ->  df/dx = 2xy, df/dy = x^2 + 3\nx = torch.tensor(2.0, requires_grad=True)\ny = torch.tensor(-1.0, requires_grad=True)\nf = x ** 2 * y + 3 * y\nf.backward()\nprint(x.grad.item(), y.grad.item())     # -4.0, 7.0\n\n# Partial derivatives of an MSE loss with respect to each weight\nX = torch.randn(100, 3)\nt = X @ torch.tensor([1.0, -2.0, 0.5])\nw = torch.zeros(3, requires_grad=True)\nloss = ((X @ w - t) ** 2).mean()\nloss.backward()\nprint(w.grad)   # one partial derivative per weight"
+ },
+ "gradient": {
+  "n": "Gradient",
+  "d": "The gradient of a function of several variables is the vector of all its partial derivatives. At any point it points in the direction in which the function increases fastest, and its length is the rate of that increase; moving perpendicular to it leaves the function unchanged to first order.\n\nTraining a model means following the negative gradient of the loss with respect to the parameters: gradient descent, SGD, momentum and Adam all use it, and backpropagation computes it efficiently for neural networks. Gradients with respect to the inputs are also useful, for saliency maps, adversarial examples and integrated gradients. Practical issues revolve around the gradient's size: vanishing gradients stall learning in deep networks, exploding gradients make it diverge, and gradient clipping, normalization layers and residual connections address both. A pitfall is forgetting to reset accumulated gradients between steps in PyTorch, which silently sums gradients across batches.",
+  "f": "∇f(x) = (∂f/∂x₁, …, ∂f/∂x_d);  θ ← θ − η∇L(θ)",
+  "u": [
+   "Parameter updates in gradient descent and Adam",
+   "Saliency maps from input gradients",
+   "Monitoring gradient norms for training stability"
+  ],
+  "x": "A team fine-tuning a large model logs the gradient norm of every layer. When a learning-rate warmup was accidentally removed, the logs showed gradient norms spiking in the first steps, explaining why the loss had diverged.",
+  "c": "import torch\n\n# Gradient of f(x) = x1^2 + 3*x2^2 at (1, 1) is (2, 6)\nx = torch.tensor([1.0, 1.0], requires_grad=True)\nf = x[0] ** 2 + 3 * x[1] ** 2\nf.backward()\nprint(x.grad)\n\n# Gradient descent on the same function\nx = torch.tensor([1.0, 1.0], requires_grad=True)\nopt = torch.optim.SGD([x], lr=0.1)\nfor step in range(50):\n    opt.zero_grad()                 # reset accumulated gradients\n    loss = x[0] ** 2 + 3 * x[1] ** 2\n    loss.backward()                 # compute the gradient\n    opt.step()                      # move against it\nprint(x.detach())                   # close to the minimum at (0, 0)"
+ },
+ "jacobian": {
+  "n": "Jacobian",
+  "d": "The Jacobian of a function that maps n inputs to m outputs is the m×n matrix of all first-order partial derivatives: row i holds the gradient of output i. It is the best linear approximation of the function near a point, describing how a small change in each input moves every output.\n\nBackpropagation is a chain of Jacobian products: each layer's Jacobian maps changes in its input to changes in its output, and reverse-mode automatic differentiation multiplies a row vector by these Jacobians from the loss backward, which is why it never needs to build full Jacobians explicitly. Its determinant measures how the function stretches volume, which normalizing flows use for exact likelihoods. Its norm with respect to inputs measures sensitivity. A pitfall is materializing a full Jacobian for a large network: its size is outputs times inputs, so use vector-Jacobian or Jacobian-vector products instead.",
+  "f": "Jᵢⱼ = ∂fᵢ/∂xⱼ,  J ∈ ℝ^{m×n};  f(x + δ) ≈ f(x) + Jδ",
+  "u": [
+   "Reverse-mode automatic differentiation in deep learning",
+   "Change-of-variables likelihoods in normalizing flows",
+   "Measuring input sensitivity for robustness analysis"
+  ],
+  "x": "A research team building a normalizing flow for density estimation designs each layer so its Jacobian is triangular. The log-determinant then reduces to a sum over the diagonal, keeping exact likelihood computation cheap for high-dimensional inputs.",
+  "c": "import torch\nfrom torch.autograd.functional import jacobian, vjp\n\ndef f(x):\n    # maps R^3 -> R^2\n    return torch.stack([x[0] * x[1], torch.sin(x[2]) + x[0] ** 2])\n\nx = torch.tensor([1.0, 2.0, 0.5])\nJ = jacobian(f, x)                  # shape (2, 3)\nprint(J)\n\n# Vector-Jacobian product: what backprop computes, without the full J\nv = torch.tensor([1.0, 0.0])\n_, vJ = vjp(f, x, v)\nprint(vJ, v @ J)                     # identical\n\n# Volume change of a linear map is |det J|\nA = torch.tensor([[2.0, 0.0], [1.0, 3.0]])\nprint(torch.linalg.slogdet(jacobian(lambda z: A @ z, torch.ones(2))))"
+ },
+ "hessian": {
+  "n": "Hessian",
+  "d": "The Hessian of a scalar function of several variables is the square matrix of its second-order partial derivatives. Entry (i, j) is ∂²f/∂xᵢ∂xⱼ, and the matrix describes the curvature of the function: how the gradient itself changes as you move in each direction.\n\nAt a point where the gradient is zero, the Hessian classifies it: all positive eigenvalues mean a local minimum, all negative a maximum, and mixed signs a saddle point, which is common in neural network loss surfaces. Newton's method uses the inverse Hessian to take curvature-aware steps, and quasi-Newton methods such as L-BFGS approximate it; logistic regression solvers and XGBoost's second-order boosting use it directly. The largest eigenvalue limits the stable learning rate for gradient descent. The pitfall is size: for d parameters it has d² entries, so for deep networks one uses Hessian-vector products instead of the full matrix.",
+  "f": "Hᵢⱼ = ∂²f/∂xᵢ∂xⱼ;  Newton: x ← x − H⁻¹∇f",
+  "u": [
+   "Newton and L-BFGS optimization of convex models",
+   "Second-order gradient boosting in XGBoost",
+   "Analyzing loss-surface curvature and sharpness"
+  ],
+  "x": "A team training a logistic regression on a few hundred features uses a Newton-type solver that builds the Hessian at each step. It converges in a few iterations, which matters because the model is retrained hourly on fresh data.",
+  "c": "import torch\nfrom torch.autograd.functional import hessian, hvp\n\ndef f(x):\n    return x[0] ** 2 + 3 * x[0] * x[1] + 2 * x[1] ** 2\n\nx = torch.tensor([1.0, -1.0])\nH = hessian(f, x)                    # [[2, 3], [3, 4]]\nprint(H, torch.linalg.eigvalsh(H))   # mixed signs: saddle point\n\n# Hessian-vector product without forming H\n_, Hv = hvp(f, x, torch.tensor([1.0, 0.0]))\nprint(Hv)                            # first column of H\n\n# One Newton step on a convex quadratic lands on the minimum\ng = lambda z: (z[0] - 3) ** 2 + 2 * (z[1] + 1) ** 2\nz = torch.zeros(2, requires_grad=True)\ngrad = torch.autograd.grad(g(z), z)[0]\nprint(z.detach() - torch.linalg.solve(hessian(g, z.detach()), grad))  # (3, -1)"
+ },
+ "logsumexp": {
+  "n": "Log-Sum-Exp & Numerical Stability",
+  "d": "Log-sum-exp computes log(Σ exp(xᵢ)) in a way that avoids overflow and underflow by first subtracting the maximum value, using the identity log Σ exp(xᵢ) = m + log Σ exp(xᵢ − m). Numerical stability in general means arranging a computation so that the limited range and precision of floating-point numbers do not corrupt the result.\n\nThe trick is everywhere in machine learning. Softmax subtracts the maximum logit before exponentiating; cross-entropy loss is computed from logits through log-softmax rather than by taking the log of softmax probabilities; Gaussian mixture models and HMMs combine probabilities in log space. Related habits include summing log-likelihoods instead of multiplying small probabilities, and loss scaling in mixed-precision training. A common bug is applying softmax and then log, or a sigmoid followed by binary cross-entropy, instead of the fused functions: with large logits this yields log(0) and NaN losses.",
+  "f": "logsumexp(x) = m + log Σᵢ exp(xᵢ − m),  m = maxᵢ xᵢ",
+  "u": [
+   "Stable softmax and cross-entropy from logits",
+   "Summing probabilities in log space for mixtures",
+   "Avoiding NaN losses in mixed-precision training"
+  ],
+  "x": "A team sees occasional NaN losses when training a classifier in float16. The cause is a manual log of softmax outputs that underflow to zero, and switching to the framework's fused cross-entropy on raw logits removes the NaNs.",
+  "c": "import numpy as np\nimport torch\nimport torch.nn.functional as F\nfrom scipy.special import logsumexp\n\nx = np.array([1000.0, 1001.0, 1002.0])\nprint(np.log(np.sum(np.exp(x))))          # inf: exp overflows\n\nm = x.max()\nprint(m + np.log(np.sum(np.exp(x - m))), logsumexp(x))   # stable: 1002.41\n\n# Fused, stable loss on logits versus manual log of softmax\nlogits = torch.tensor([[200.0, 0.0, -200.0]])\ntarget = torch.tensor([2])\nprint(torch.log(F.softmax(logits, dim=-1))[0, 2])   # -inf\nprint(F.cross_entropy(logits, target))      # finite: 400"
+ },
+ "nonlinearity": {
+  "n": "Linearity vs Nonlinearity",
+  "d": "A function is linear when scaling its input scales its output by the same factor and the output for a sum of inputs equals the sum of outputs; in practice this means outputs are weighted sums of inputs, possibly plus a constant. A nonlinear function breaks these rules, as with squares, thresholds, products of features or a ReLU.\n\nThe distinction decides what a model can represent. Linear regression and logistic regression produce linear decision functions, so they cannot capture XOR-like patterns or interactions unless nonlinear features are added. Stacking linear layers in a neural network still gives one linear map, which is why activation functions such as ReLU, GELU or sigmoid are placed between layers; with them, a network can approximate any continuous function. A misconception is that logistic regression is nonlinear because of its sigmoid: its decision boundary is still a straight hyperplane in feature space.",
+  "f": "linear: f(a·x + b·y) = a·f(x) + b·f(y);  W₂(W₁x) = (W₂W₁)x",
+  "u": [
+   "Activation functions between neural network layers",
+   "Polynomial and spline features for linear models",
+   "Kernel methods for curved decision boundaries"
+  ],
+  "x": "An analytics team finds that its logistic regression for loan approval misses a pattern where risk rises only when both debt and utilization are high. A gradient-boosted tree model captures this nonlinear interaction without manual feature engineering.",
+  "c": "import torch\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.neural_network import MLPClassifier\n\n# Two stacked linear layers collapse into a single linear map\nW1, W2 = torch.randn(16, 2), torch.randn(1, 16)\nx = torch.randn(5, 2)\nprint(torch.allclose(x @ W1.T @ W2.T, x @ (W2 @ W1).T, atol=1e-5))\n\n# XOR: not linearly separable\nX = np.array([[0, 0], [0, 1], [1, 0], [1, 1]] * 50, dtype=float)\ny = np.logical_xor(X[:, 0], X[:, 1]).astype(int)\nprint(\"linear:\", LogisticRegression().fit(X, y).score(X, y))      # about 0.5\nmlp = MLPClassifier(hidden_layer_sizes=(8,), activation=\"relu\",\n                    max_iter=2000, random_state=0).fit(X, y)\nprint(\"with ReLU:\", mlp.score(X, y))                               # 1.0"
+ },
+ "highdim": {
+  "n": "High-Dimensional Space",
+  "d": "High-dimensional space is a vector space with many coordinates, from dozens to many thousands, such as a 768-dimensional sentence embedding or a TF-IDF vector over a large vocabulary. Geometry there behaves very differently from the two or three dimensions people can picture.\n\nVolume concentrates near the surface of a ball, random vectors are almost orthogonal, and distances between random points become nearly equal, so the ratio between the nearest and farthest neighbor approaches one. This is the curse of dimensionality: methods based on distance, such as k-nearest neighbors and k-means, lose contrast, and the amount of data needed to cover the space grows exponentially. Real data usually lies near a much lower-dimensional manifold, which is why PCA, UMAP and learned embeddings work, and why approximate nearest neighbor search on embeddings remains useful. A misconception is that more features always help; irrelevant dimensions add noise to distances and invite overfitting.",
+  "f": "E‖x − y‖² = 2d for x, y ~ N(0, I_d);  std/mean of ‖x − y‖ → 0 as d → ∞",
+  "u": [
+   "Vector search over dense embedding spaces",
+   "Dimensionality reduction before clustering or k-NN",
+   "Regularizing models with many features and few samples"
+  ],
+  "x": "A genomics team with tens of thousands of gene-expression features per patient and only a few hundred patients applies PCA before clustering. Without reduction, k-means distances were dominated by noise genes and produced unstable clusters.",
+  "c": "import numpy as np\nfrom scipy.spatial.distance import pdist\n\nrng = np.random.default_rng(0)\nfor d in [2, 10, 100, 1000, 10000]:\n    X = rng.normal(size=(200, d))\n    dist = pdist(X)\n    # Relative contrast between farthest and nearest pairs shrinks with d\n    print(f\"d={d:6d}  max/min={dist.max() / dist.min():7.2f}  \"\n          f\"std/mean={dist.std() / dist.mean():.3f}\")\n\n# Random high-dimensional vectors are nearly orthogonal\nu, v = rng.normal(size=(2, 10000))\nprint(\"cosine:\", u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))"
+ }
+}

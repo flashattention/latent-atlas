@@ -1,0 +1,2393 @@
+{
+ "eda": [
+  "Análisis exploratorio de datos",
+  "EDA",
+  "análisis exploratorio"
+ ],
+ "supervised": [
+  "Aprendizaje supervisado",
+  "supervisado",
+  "supervisada",
+  "supervisados",
+  "supervisadas"
+ ],
+ "unsupervised": [
+  "Aprendizaje no supervisado",
+  "no supervisado",
+  "no supervisada"
+ ],
+ "selfsup": [
+  "Aprendizaje autosupervisado",
+  "autosupervisado",
+  "autosupervisada",
+  "autosupervisados",
+  "autosupervisadas"
+ ],
+ "rl": [
+  "Aprendizaje por refuerzo",
+  "RL"
+ ],
+ "split": [
+  "División en entrenamiento, validación y prueba",
+  "conjunto de validación",
+  "conjuntos de validación",
+  "conjunto de prueba",
+  "conjuntos de prueba",
+  "conjunto de entrenamiento",
+  "conjuntos de entrenamiento",
+  "partición de validación"
+ ],
+ "cv": [
+  "Validación cruzada",
+  "k-fold",
+  "validación cruzada k-fold"
+ ],
+ "stratified": [
+  "Muestreo estratificado",
+  "estratificado",
+  "estratificada",
+  "estratificación"
+ ],
+ "leak": [
+  "Fuga de datos",
+  "fuga de información",
+  "fugas de información",
+  "fuga del objetivo"
+ ],
+ "overfit": [
+  "Sobreajuste",
+  "sobreajustar",
+  "sobreajusta",
+  "sobreajustan",
+  "sobreajustados"
+ ],
+ "underfit": [
+  "Subajuste",
+  "subajustan",
+  "subajustado"
+ ],
+ "biasvar": [
+  "Compromiso sesgo-varianza",
+  "sesgo-varianza"
+ ],
+ "curse": [
+  "Maldición de la dimensionalidad"
+ ],
+ "learncurve": [
+  "Curva de aprendizaje",
+  "curvas de aprendizaje"
+ ],
+ "drift": [
+  "Deriva de datos y cambio de distribución",
+  "deriva de datos",
+  "cambio de distribución",
+  "deriva",
+  "data drift",
+  "deriva de concepto",
+  "concept drift",
+  "deriva de los datos"
+ ],
+ "minmax": [
+  "Normalización min-max",
+  "min-max",
+  "escalado min-max"
+ ],
+ "standard": [
+  "Estandarización",
+  "puntuación z",
+  "puntuaciones z",
+  "z-score",
+  "estandarizar",
+  "estandarizadas",
+  "estandarizados",
+  "estandariza",
+  "estandarizan",
+  "StandardScaler"
+ ],
+ "robust": [
+  "Escalado robusto"
+ ],
+ "logtf": [
+  "Transformación logarítmica",
+  "transformaciones logarítmicas",
+  "log1p"
+ ],
+ "boxcox": [
+  "Transformación de Box-Cox",
+  "transformación de Box-Cox",
+  "Box-Cox",
+  "Yeo-Johnson"
+ ],
+ "impute": [
+  "Imputación de valores faltantes",
+  "imputación",
+  "imputar",
+  "imputan"
+ ],
+ "outlier": [
+  "Tratamiento de valores atípicos",
+  "valores atípicos",
+  "valor atípico",
+  "atípicos",
+  "atípico",
+  "atípicas",
+  "outlier"
+ ],
+ "clipwin": [
+  "Recorte y winsorización",
+  "winsorización"
+ ],
+ "onehot": [
+  "Codificación one-hot",
+  "one-hot"
+ ],
+ "targetenc": [
+  "Target encoding"
+ ],
+ "freqenc": [
+  "Codificación por frecuencia"
+ ],
+ "binning": [
+  "Discretización",
+  "binning",
+  "discretiza",
+  "discretizadas"
+ ],
+ "featureeng": [
+  "Ingeniería de variables"
+ ],
+ "lagfeat": [
+  "Variables de retardo",
+  "variable de retardo",
+  "retardos",
+  "retardo",
+  "lag",
+  "valores retardados"
+ ],
+ "rollfeat": [
+  "Variables de ventana móvil",
+  "ventana móvil",
+  "media móvil",
+  "medias móviles",
+  "estadísticos móviles"
+ ],
+ "imbalance": [
+  "Desbalance de clases",
+  "desbalance",
+  "desbalanceado",
+  "desbalanceados",
+  "desbalanceada",
+  "desbalanceadas"
+ ],
+ "smote": [
+  "Sobremuestreo con SMOTE",
+  "SMOTE",
+  "sobremuestreo",
+  "sobremuestrear"
+ ],
+ "undersample": [
+  "Submuestreo",
+  "submuestrear"
+ ],
+ "classweight": [
+  "Pesos de clase",
+  "class_weight"
+ ],
+ "featsel": [
+  "Selección de variables"
+ ],
+ "vif": [
+  "Multicolinealidad y VIF",
+  "multicolinealidad",
+  "VIF",
+  "factor de inflación de la varianza",
+  "colineales"
+ ],
+ "dimred": [
+  "Reducción de dimensionalidad"
+ ],
+ "l1": [
+  "Regularización L1",
+  "regularización L1",
+  "lasso",
+  "penalización L1"
+ ],
+ "l2": [
+  "Regularización L2",
+  "regularización L2",
+  "ridge",
+  "penalización L2"
+ ],
+ "elasticnet": [
+  "Elastic net"
+ ],
+ "weightdecay": [
+  "Weight decay"
+ ],
+ "dropout": [
+  "Dropout"
+ ],
+ "earlystop": [
+  "Parada temprana"
+ ],
+ "augment": [
+  "Aumento de datos",
+  "aumentos de datos"
+ ],
+ "labelsmooth": [
+  "Suavizado de etiquetas",
+  "label smoothing"
+ ],
+ "batchnorm": [
+  "Normalización por lotes",
+  "batch normalization",
+  "batch norm",
+  "BatchNorm",
+  "batchnorm"
+ ],
+ "layernorm": [
+  "Normalización por capa",
+  "LayerNorm"
+ ],
+ "rmsnorm": [
+  "RMSNorm"
+ ],
+ "gradclip": [
+  "Recorte de gradientes",
+  "gradient clipping"
+ ],
+ "linreg": [
+  "Regresión lineal",
+  "modelo lineal",
+  "modelos lineales",
+  "mínimos cuadrados ordinarios"
+ ],
+ "tls": [
+  "Mínimos cuadrados totales"
+ ],
+ "polyreg": [
+  "Regresión polinómica"
+ ],
+ "logreg": [
+  "Regresión logística"
+ ],
+ "knn": [
+  "k vecinos más cercanos",
+  "vecinos más cercanos",
+  "KNN",
+  "k-NN"
+ ],
+ "naivebayes": [
+  "Naive Bayes"
+ ],
+ "svm": [
+  "Máquina de vectores de soporte",
+  "máquinas de vectores de soporte",
+  "SVM",
+  "vectores de soporte",
+  "vector de soporte"
+ ],
+ "kerneltrick": [
+  "Truco del kernel",
+  "métodos de kernel",
+  "kernel RBF",
+  "kernel gaussiano",
+  "función kernel",
+  "matriz kernel",
+  "matriz de kernel",
+  "SVM con kernel",
+  "kernels RBF"
+ ],
+ "lda": [
+  "Análisis discriminante lineal",
+  "LDA"
+ ],
+ "perceptron": [
+  "Perceptrón",
+  "perceptrones"
+ ],
+ "dtree": [
+  "Árbol de decisión",
+  "árboles de decisión",
+  "árbol",
+  "árboles"
+ ],
+ "gini": [
+  "Impureza de Gini",
+  "impureza de Gini",
+  "Gini",
+  "impureza"
+ ],
+ "entropy": [
+  "Entropía y ganancia de información",
+  "ganancia de información",
+  "entropía",
+  "entropías"
+ ],
+ "cart": [
+  "CART y divisiones alineadas con los ejes",
+  "CART",
+  "divisiones alineadas con los ejes",
+  "alineadas con los ejes"
+ ],
+ "pruning": [
+  "Poda de árboles"
+ ],
+ "bootstrap": [
+  "Muestreo bootstrap",
+  "bootstrap",
+  "muestras bootstrap",
+  "muestra bootstrap"
+ ],
+ "bagging": [
+  "Bagging"
+ ],
+ "oob": [
+  "Puntuación out-of-bag",
+  "out-of-bag",
+  "OOB"
+ ],
+ "rf": [
+  "Random forest",
+  "random forests"
+ ],
+ "maxfeat": [
+  "Submuestreo de variables",
+  "max_features",
+  "submuestreo de columnas",
+  "colsample_bytree"
+ ],
+ "extratrees": [
+  "Extra Trees",
+  "árboles extremadamente aleatorizados"
+ ],
+ "boosting": [
+  "Boosting"
+ ],
+ "adaboost": [
+  "AdaBoost"
+ ],
+ "gbm": [
+  "Gradient boosting"
+ ],
+ "xgboost": [
+  "XGBoost"
+ ],
+ "lightgbm": [
+  "LightGBM"
+ ],
+ "catboost": [
+  "CatBoost"
+ ],
+ "goss": [
+  "GOSS",
+  "Gradient-based One-Side Sampling"
+ ],
+ "histsplit": [
+  "División basada en histogramas",
+  "basada en histogramas"
+ ],
+ "subsample": [
+  "Submuestreo de filas",
+  "gradient boosting estocástico",
+  "boosting estocástico"
+ ],
+ "shrinkage": [
+  "Shrinkage",
+  "contracción"
+ ],
+ "stacking": [
+  "Stacking"
+ ],
+ "voting": [
+  "Ensamble por votación",
+  "votación",
+  "votación suave",
+  "votación dura",
+  "soft voting",
+  "hard voting"
+ ],
+ "confusion": [
+  "Matriz de confusión",
+  "matrices de confusión",
+  "Verdaderos y falsos positivos",
+  "verdaderos positivos",
+  "falsos positivos",
+  "verdadero positivo",
+  "falso positivo",
+  "verdaderos negativos",
+  "falsos negativos",
+  "falso negativo",
+  "verdadero negativo",
+  "tasa de falsos positivos",
+  "tasa de verdaderos positivos",
+  "especificidad"
+ ],
+ "accuracy": [
+  "Exactitud"
+ ],
+ "precision": [
+  "Precisión",
+  "precision"
+ ],
+ "recall": [
+  "Recall",
+  "exhaustividad"
+ ],
+ "f1": [
+  "Puntuación F1",
+  "puntuación F1",
+  "F1",
+  "macro-F1"
+ ],
+ "roc": [
+  "Curva ROC",
+  "curva ROC",
+  "curvas ROC",
+  "ROC"
+ ],
+ "rocauc": [
+  "ROC-AUC",
+  "AUC",
+  "área bajo la curva ROC"
+ ],
+ "prcurve": [
+  "Curva de precisión-recall",
+  "curvas de precisión-recall",
+  "curva PR",
+  "curvas PR"
+ ],
+ "prauc": [
+  "PR-AUC",
+  "precisión media",
+  "average precision"
+ ],
+ "threshold": [
+  "Umbral de decisión",
+  "umbrales de decisión"
+ ],
+ "calibration": [
+  "Calibración de probabilidades",
+  "calibración",
+  "calibrado",
+  "calibrada",
+  "calibradas",
+  "calibrados",
+  "calibrar",
+  "calibra",
+  "calibran",
+  "Platt scaling",
+  "escalado de Platt",
+  "regresión isotónica"
+ ],
+ "logloss": [
+  "Log loss"
+ ],
+ "mse": [
+  "MSE",
+  "RMSE",
+  "error cuadrático medio",
+  "raíz del error cuadrático medio"
+ ],
+ "mae": [
+  "MAE",
+  "error absoluto medio"
+ ],
+ "r2": [
+  "R²"
+ ],
+ "mdi": [
+  "Disminución media de la impureza",
+  "MDI"
+ ],
+ "permimp": [
+  "Importancia por permutación"
+ ],
+ "shap": [
+  "SHAP",
+  "valores de Shapley",
+  "valores SHAP",
+  "valor de Shapley",
+  "Shapley"
+ ],
+ "treeshap": [
+  "TreeSHAP"
+ ],
+ "pdp": [
+  "Gráfico de dependencia parcial",
+  "gráficos de dependencia parcial",
+  "dependencia parcial",
+  "PDP"
+ ],
+ "ice": [
+  "Gráfico ICE",
+  "gráficos ICE",
+  "ICE",
+  "expectativa condicional individual",
+  "curvas ICE"
+ ],
+ "lime": [
+  "LIME"
+ ],
+ "counterfactual": [
+  "Explicaciones contrafactuales",
+  "explicación contrafactual",
+  "contrafactual",
+  "contrafactuales"
+ ],
+ "kmeans": [
+  "Clustering k-means",
+  "k-means"
+ ],
+ "hierclust": [
+  "Clustering jerárquico",
+  "dendrograma"
+ ],
+ "dbscan": [
+  "DBSCAN",
+  "HDBSCAN"
+ ],
+ "gmm": [
+  "Modelo de mezcla gaussiana",
+  "modelos de mezcla gaussiana",
+  "mezcla gaussiana",
+  "mezclas gaussianas",
+  "GMM"
+ ],
+ "em": [
+  "Algoritmo EM",
+  "algoritmo EM",
+  "esperanza-maximización",
+  "EM"
+ ],
+ "pca": [
+  "PCA",
+  "análisis de componentes principales",
+  "componentes principales",
+  "componente principal"
+ ],
+ "kpca": [
+  "Kernel PCA"
+ ],
+ "svd": [
+  "Descomposición en valores singulares",
+  "SVD",
+  "valores singulares",
+  "valor singular"
+ ],
+ "tsne": [
+  "t-SNE"
+ ],
+ "umap": [
+  "UMAP"
+ ],
+ "autoencoder": [
+  "Autoencoder",
+  "autoencoders"
+ ],
+ "isoforest": [
+  "Isolation Forest"
+ ],
+ "lof": [
+  "Factor de anomalía local",
+  "LOF",
+  "Local Outlier Factor"
+ ],
+ "spectral": [
+  "Clustering espectral"
+ ],
+ "stationarity": [
+  "Estacionariedad",
+  "estacionaria",
+  "estacionario",
+  "estacionarios",
+  "no estacionaria",
+  "no estacionarios"
+ ],
+ "acf": [
+  "Autocorrelación",
+  "ACF",
+  "PACF",
+  "autocorrelación parcial",
+  "función de autocorrelación"
+ ],
+ "decomp": [
+  "Descomposición estacional",
+  "STL"
+ ],
+ "arima": [
+  "ARIMA",
+  "ARMA",
+  "modelo autorregresivo integrado de media móvil"
+ ],
+ "sarima": [
+  "SARIMA",
+  "SARIMAX"
+ ],
+ "prophet": [
+  "Prophet"
+ ],
+ "holtwinters": [
+  "Suavizado exponencial",
+  "Holt-Winters",
+  "ETS"
+ ],
+ "tssplit": [
+  "Validación temporal",
+  "validación cruzada temporal",
+  "backtesting"
+ ],
+ "multistep": [
+  "Predicción multipaso",
+  "multipaso"
+ ],
+ "gbmts": [
+  "Gradient boosting para series temporales"
+ ],
+ "nbeats": [
+  "N-BEATS",
+  "N-HiTS"
+ ],
+ "tft": [
+  "Temporal Fusion Transformer",
+  "TFT"
+ ],
+ "patchtst": [
+  "PatchTST"
+ ],
+ "tsfm": [
+  "Modelos fundacionales para series temporales",
+  "TimesFM",
+  "Chronos",
+  "Moirai",
+  "Lag-Llama"
+ ],
+ "gd": [
+  "Descenso de gradiente"
+ ],
+ "sgd": [
+  "Descenso de gradiente estocástico",
+  "SGD"
+ ],
+ "minibatch": [
+  "Mini-batch",
+  "mini-batches"
+ ],
+ "momentum": [
+  "Momentum",
+  "impulso"
+ ],
+ "nesterov": [
+  "Gradiente acelerado de Nesterov",
+  "gradiente acelerado de Nesterov",
+  "Nesterov"
+ ],
+ "rmsprop": [
+  "RMSProp"
+ ],
+ "adam": [
+  "Adam"
+ ],
+ "adamw": [
+  "AdamW"
+ ],
+ "lr": [
+  "Tasa de aprendizaje",
+  "tasas de aprendizaje",
+  "learning rate"
+ ],
+ "lrsched": [
+  "Programación de la tasa de aprendizaje",
+  "programaciones de la tasa de aprendizaje",
+  "decaimiento coseno",
+  "schedule",
+  "cosine annealing",
+  "recocido coseno",
+  "programación coseno"
+ ],
+ "warmup": [
+  "Warmup"
+ ],
+ "landscape": [
+  "Paisaje de pérdida",
+  "superficie de pérdida"
+ ],
+ "saddle": [
+  "Puntos de silla",
+  "punto de silla"
+ ],
+ "sharpflat": [
+  "Mínimos agudos frente a mínimos planos",
+  "mínimos agudos",
+  "mínimos planos",
+  "mínimo agudo",
+  "mínimo plano",
+  "SAM"
+ ],
+ "convex": [
+  "Optimización convexa",
+  "convexa",
+  "convexas",
+  "convexo",
+  "convexos",
+  "no convexas",
+  "no convexos"
+ ],
+ "newton": [
+  "Métodos de segundo orden",
+  "método de Newton",
+  "segundo orden",
+  "L-BFGS",
+  "BFGS",
+  "Newton",
+  "cuasi-Newton"
+ ],
+ "gridsearch": [
+  "Búsqueda en rejilla"
+ ],
+ "randsearch": [
+  "Búsqueda aleatoria"
+ ],
+ "bayesopt": [
+  "Optimización bayesiana",
+  "Optuna"
+ ],
+ "neuron": [
+  "Neurona artificial",
+  "neurona",
+  "neuronas"
+ ],
+ "mlp": [
+  "Perceptrón multicapa",
+  "MLP"
+ ],
+ "backprop": [
+  "Retropropagación"
+ ],
+ "autograd": [
+  "Regla de la cadena y autograd",
+  "regla de la cadena",
+  "autograd",
+  "diferenciación automática"
+ ],
+ "relu": [
+  "ReLU",
+  "Leaky ReLU"
+ ],
+ "sigmoid": [
+  "Sigmoide",
+  "sigmoides",
+  "función logística"
+ ],
+ "tanh": [
+  "Tanh",
+  "tangente hiperbólica"
+ ],
+ "gelu": [
+  "GELU"
+ ],
+ "swiglu": [
+  "SwiGLU"
+ ],
+ "softmax": [
+  "Softmax"
+ ],
+ "xent": [
+  "Pérdida de entropía cruzada",
+  "entropía cruzada"
+ ],
+ "vanishing": [
+  "Desvanecimiento y explosión de gradientes",
+  "desvanecimiento de gradientes",
+  "explosión de gradientes",
+  "gradientes que se desvanecen",
+  "desvanecimiento"
+ ],
+ "residual": [
+  "Conexiones residuales",
+  "conexión residual",
+  "skip connection",
+  "skip connections",
+  "conexiones de salto",
+  "flujo residual"
+ ],
+ "init": [
+  "Inicialización de pesos",
+  "inicialización",
+  "inicializaciones",
+  "inicialización de Xavier",
+  "inicialización de He",
+  "Xavier",
+  "Glorot"
+ ],
+ "uat": [
+  "Teorema de aproximación universal",
+  "aproximación universal"
+ ],
+ "embedding": [
+  "Capa de embedding",
+  "capas de embedding",
+  "embedding",
+  "embeddings"
+ ],
+ "cnn": [
+  "Red neuronal convolucional",
+  "CNN",
+  "red convolucional",
+  "redes convolucionales",
+  "convolucional",
+  "convolucionales"
+ ],
+ "convolution": [
+  "Convolución",
+  "convoluciones"
+ ],
+ "pooling": [
+  "Pooling",
+  "max pooling",
+  "average pooling"
+ ],
+ "resnet": [
+  "ResNet",
+  "ResNet-50"
+ ],
+ "rnn": [
+  "Red neuronal recurrente",
+  "redes neuronales recurrentes",
+  "RNN",
+  "red recurrente",
+  "redes recurrentes",
+  "recurrente",
+  "recurrentes"
+ ],
+ "lstm": [
+  "LSTM"
+ ],
+ "gru": [
+  "GRU"
+ ],
+ "bidir": [
+  "RNN bidireccional",
+  "bidireccional",
+  "bidireccionales"
+ ],
+ "seq2seq": [
+  "Seq2Seq",
+  "seq2seq",
+  "secuencia a secuencia"
+ ],
+ "word2vec": [
+  "Word2Vec",
+  "word2vec",
+  "skip-gram",
+  "CBOW"
+ ],
+ "unet": [
+  "U-Net"
+ ],
+ "gnn": [
+  "Red neuronal de grafos",
+  "redes neuronales de grafos",
+  "GNN"
+ ],
+ "vit": [
+  "Vision Transformer",
+  "Vision Transformers",
+  "ViT"
+ ],
+ "clip": [
+  "CLIP"
+ ],
+ "contrastive": [
+  "Aprendizaje contrastivo",
+  "contrastivo",
+  "InfoNCE",
+  "SimCLR"
+ ],
+ "gan": [
+  "Red generativa antagónica",
+  "GAN"
+ ],
+ "vae": [
+  "Autoencoder variacional",
+  "autoencoders variacionales",
+  "VAE"
+ ],
+ "diffusion": [
+  "Modelos de difusión",
+  "modelo de difusión",
+  "difusión"
+ ],
+ "latentdiff": [
+  "Difusión latente",
+  "Stable Diffusion"
+ ],
+ "flowmatch": [
+  "Flow matching",
+  "rectified flow"
+ ],
+ "autoregressive": [
+  "Modelos autorregresivos",
+  "modelo autorregresivo",
+  "autorregresivo",
+  "autorregresiva",
+  "autorregresivos"
+ ],
+ "dlm": [
+  "Modelos de lenguaje de difusión",
+  "modelo de lenguaje de difusión"
+ ],
+ "attention": [
+  "Mecanismo de atención",
+  "atención",
+  "pesos de atención",
+  "attention"
+ ],
+ "selfattn": [
+  "Autoatención"
+ ],
+ "qkv": [
+  "Query, Key, Value",
+  "claves y valores",
+  "queries",
+  "keys"
+ ],
+ "mha": [
+  "Atención multicabeza",
+  "multicabeza",
+  "cabezas de atención",
+  "cabezas",
+  "cabeza"
+ ],
+ "crossattn": [
+  "Atención cruzada"
+ ],
+ "causalmask": [
+  "Máscara causal",
+  "enmascaramiento causal"
+ ],
+ "posenc": [
+  "Codificación posicional",
+  "codificaciones posicionales",
+  "embeddings posicionales",
+  "embedding posicional"
+ ],
+ "rope": [
+  "Embedding posicional rotatorio",
+  "RoPE",
+  "embeddings posicionales rotatorios"
+ ],
+ "alibi": [
+  "ALiBi"
+ ],
+ "transformer": [
+  "Bloque Transformer",
+  "bloque Transformer",
+  "bloques Transformer",
+  "Transformer",
+  "Transformers",
+  "bloque transformer",
+  "bloques transformer"
+ ],
+ "encoderonly": [
+  "Modelos solo codificador",
+  "solo codificador",
+  "BERT",
+  "RoBERTa"
+ ],
+ "decoderonly": [
+  "Modelos solo decodificador",
+  "modelo solo decodificador",
+  "solo decodificador",
+  "GPT"
+ ],
+ "encdec": [
+  "Modelos codificador-decodificador",
+  "codificador-decodificador",
+  "T5"
+ ],
+ "ffn": [
+  "Red feed-forward",
+  "FFN",
+  "feed-forward",
+  "capa feed-forward",
+  "capas feed-forward",
+  "bloque feed-forward"
+ ],
+ "prenorm": [
+  "Pre-norm frente a post-norm",
+  "pre-norm",
+  "post-norm",
+  "Pre-LN",
+  "Post-LN"
+ ],
+ "tokenization": [
+  "Tokenización",
+  "tokenizador",
+  "tokenizadores",
+  "tokenizado"
+ ],
+ "bpe": [
+  "Byte-Pair Encoding",
+  "BPE",
+  "WordPiece"
+ ],
+ "mlm": [
+  "Modelado de lenguaje enmascarado",
+  "MLM",
+  "lenguaje enmascarado",
+  "tokens enmascarados"
+ ],
+ "nexttoken": [
+  "Predicción del siguiente token",
+  "siguiente token",
+  "predecir el siguiente token"
+ ],
+ "kvcache": [
+  "KV cache"
+ ],
+ "flashattn": [
+  "FlashAttention"
+ ],
+ "mqa": [
+  "Atención multiconsulta",
+  "MQA",
+  "multi-query attention"
+ ],
+ "gqa": [
+  "Atención de consultas agrupadas",
+  "GQA",
+  "grouped-query attention"
+ ],
+ "swa": [
+  "Atención de ventana deslizante",
+  "ventana deslizante",
+  "ventanas deslizantes",
+  "sliding window attention"
+ ],
+ "sparseattn": [
+  "Atención dispersa"
+ ],
+ "linattn": [
+  "Atención lineal"
+ ],
+ "scaling": [
+  "Leyes de escalado",
+  "scaling laws"
+ ],
+ "chinchilla": [
+  "Entrenamiento óptimo según Chinchilla",
+  "entrenamiento óptimo según Chinchilla",
+  "Chinchilla",
+  "óptimo según Chinchilla"
+ ],
+ "icl": [
+  "Aprendizaje en contexto",
+  "in-context learning",
+  "few-shot"
+ ],
+ "pretrain": [
+  "Preentrenamiento",
+  "preentrenado",
+  "preentrenada",
+  "preentrenados",
+  "preentrenadas",
+  "preentrenar",
+  "preentrena",
+  "pretraining"
+ ],
+ "sft": [
+  "Fine-tuning supervisado",
+  "SFT"
+ ],
+ "rlhf": [
+  "RLHF",
+  "aprendizaje por refuerzo a partir de retroalimentación humana"
+ ],
+ "rewardmodel": [
+  "Modelo de recompensa",
+  "modelos de recompensa"
+ ],
+ "ppo": [
+  "PPO",
+  "Proximal Policy Optimization"
+ ],
+ "dpo": [
+  "DPO",
+  "Direct Preference Optimization"
+ ],
+ "grpo": [
+  "GRPO",
+  "Group Relative Policy Optimization"
+ ],
+ "rlvr": [
+  "RL con recompensas verificables",
+  "RLVR",
+  "recompensas verificables"
+ ],
+ "cai": [
+  "IA constitucional y RLAIF",
+  "IA constitucional",
+  "RLAIF",
+  "Constitutional AI",
+  "constitución"
+ ],
+ "lora": [
+  "LoRA"
+ ],
+ "qlora": [
+  "QLoRA"
+ ],
+ "adapters": [
+  "Adaptadores y PEFT",
+  "adaptadores",
+  "adaptador",
+  "PEFT"
+ ],
+ "prompttuning": [
+  "Prefix tuning y prompt tuning",
+  "prefix tuning",
+  "prompt tuning"
+ ],
+ "distill": [
+  "Destilación de conocimiento",
+  "destilación",
+  "destilar",
+  "destilados",
+  "knowledge distillation"
+ ],
+ "synthdata": [
+  "Datos sintéticos",
+  "sintéticos",
+  "sintéticas"
+ ],
+ "forgetting": [
+  "Olvido catastrófico"
+ ],
+ "quantization": [
+  "Cuantización",
+  "cuantizado",
+  "cuantizada",
+  "cuantizados",
+  "cuantizadas",
+  "cuantizar",
+  "cuantiza",
+  "cuantizan"
+ ],
+ "gptq": [
+  "INT8",
+  "INT4",
+  "GPTQ",
+  "AWQ",
+  "int8",
+  "int4"
+ ],
+ "mixedprec": [
+  "Precisión mixta",
+  "FP16",
+  "BF16",
+  "bfloat16",
+  "float16",
+  "fp16",
+  "bf16"
+ ],
+ "prune": [
+  "Poda",
+  "pruning",
+  "podar",
+  "poda estructurada",
+  "poda no estructurada"
+ ],
+ "gradaccum": [
+  "Acumulación de gradientes"
+ ],
+ "gradckpt": [
+  "Gradient checkpointing",
+  "checkpointing de activaciones"
+ ],
+ "parallelism": [
+  "Paralelismo de datos, de tensores y de pipeline",
+  "paralelismo de datos",
+  "paralelismo de tensores",
+  "paralelismo de pipeline",
+  "paralelismo",
+  "FSDP",
+  "ZeRO"
+ ],
+ "greedy": [
+  "Decodificación voraz",
+  "voraz",
+  "voraces"
+ ],
+ "beam": [
+  "Búsqueda en haz",
+  "haz",
+  "haces"
+ ],
+ "temperature": [
+  "Temperatura",
+  "temperaturas"
+ ],
+ "topk": [
+  "Muestreo top-k"
+ ],
+ "topp": [
+  "Muestreo top-p",
+  "nucleus sampling",
+  "top-p",
+  "muestreo de núcleo"
+ ],
+ "specdec": [
+  "Decodificación especulativa",
+  "modelo borrador"
+ ],
+ "pagedattn": [
+  "PagedAttention"
+ ],
+ "contbatch": [
+  "Continuous batching"
+ ],
+ "longctx": [
+  "Ampliación del contexto largo",
+  "contexto largo",
+  "contextos largos",
+  "YaRN",
+  "interpolación de posiciones"
+ ],
+ "prompting": [
+  "Ingeniería de prompts",
+  "prompt engineering",
+  "few-shot prompting",
+  "prompting"
+ ],
+ "cot": [
+  "Cadena de pensamiento",
+  "cadenas de pensamiento"
+ ],
+ "selfcons": [
+  "Autoconsistencia"
+ ],
+ "tot": [
+  "Árbol de pensamientos",
+  "Tree of Thoughts"
+ ],
+ "rag": [
+  "Generación aumentada por recuperación",
+  "RAG"
+ ],
+ "vectordb": [
+  "Búsqueda vectorial y ANN",
+  "búsqueda vectorial",
+  "ANN",
+  "bases de datos vectoriales",
+  "índice vectorial",
+  "índices vectoriales",
+  "HNSW",
+  "vecinos más cercanos aproximados",
+  "búsqueda aproximada de vecinos"
+ ],
+ "embedmodel": [
+  "Embeddings de texto",
+  "embedding de texto",
+  "modelo de embeddings",
+  "modelos de embeddings",
+  "embeddings de frases",
+  "embeddings de oraciones"
+ ],
+ "rerank": [
+  "Reranking",
+  "reordenación",
+  "reranker",
+  "cross-encoder",
+  "cross-encoders",
+  "reordenar"
+ ],
+ "agent": [
+  "Agentes basados en LLM",
+  "agente basado en LLM"
+ ],
+ "tooluse": [
+  "Uso de herramientas y llamada a funciones",
+  "uso de herramientas",
+  "llamada a funciones",
+  "function calling",
+  "llamadas a herramientas"
+ ],
+ "react": [
+  "ReAct"
+ ],
+ "ttc": [
+  "Modelos de razonamiento y cómputo en tiempo de prueba",
+  "modelos de razonamiento",
+  "modelo de razonamiento",
+  "cómputo en tiempo de prueba",
+  "test-time compute"
+ ],
+ "llmeval": [
+  "Evaluación de LLM y benchmarks",
+  "evaluación de LLM",
+  "LLM-as-a-judge",
+  "LLM como juez",
+  "MMLU",
+  "contaminación de benchmarks"
+ ],
+ "moe": [
+  "Mixture of Experts",
+  "MoE",
+  "mezcla de expertos"
+ ],
+ "router": [
+  "Router y gating top-k",
+  "router",
+  "gating top-k",
+  "enrutador",
+  "enrutamiento",
+  "gating",
+  "red de gating"
+ ],
+ "loadbal": [
+  "Pérdida de equilibrio de carga",
+  "equilibrio de carga",
+  "pérdida auxiliar de equilibrio"
+ ],
+ "finegrained": [
+  "Expertos de grano fino y compartidos",
+  "expertos de grano fino",
+  "expertos compartidos",
+  "experto compartido",
+  "grano fino"
+ ],
+ "ssm": [
+  "Modelos de espacio de estados",
+  "modelo de espacio de estados",
+  "SSM",
+  "S4",
+  "espacio de estados"
+ ],
+ "mamba": [
+  "Mamba"
+ ],
+ "rwkv": [
+  "RWKV"
+ ],
+ "hybrid": [
+  "Arquitecturas híbridas",
+  "Jamba",
+  "modelos híbridos",
+  "modelo híbrido"
+ ],
+ "mla": [
+  "Atención latente multicabeza",
+  "MLA"
+ ],
+ "mtp": [
+  "Predicción multitoken",
+  "MTP"
+ ],
+ "mod": [
+  "Mixture of Depths",
+  "MoD"
+ ],
+ "ringattn": [
+  "Ring Attention"
+ ],
+ "multimodal": [
+  "LLM multimodales",
+  "LLM multimodal",
+  "multimodal",
+  "multimodales"
+ ],
+ "vla": [
+  "Modelos visión-lenguaje-acción",
+  "modelo visión-lenguaje-acción",
+  "VLA",
+  "visión-lenguaje-acción"
+ ],
+ "worldmodel": [
+  "Modelos del mundo",
+  "modelo del mundo"
+ ],
+ "jepa": [
+  "JEPA",
+  "I-JEPA",
+  "V-JEPA",
+  "arquitectura predictiva de embeddings conjuntos"
+ ],
+ "kan": [
+  "Redes de Kolmogórov-Arnold",
+  "red de Kolmogórov-Arnold",
+  "KAN",
+  "Kolmogórov-Arnold"
+ ],
+ "ttt": [
+  "Entrenamiento en tiempo de prueba",
+  "TTT",
+  "test-time training"
+ ],
+ "merging": [
+  "Fusión de modelos",
+  "TIES",
+  "DARE",
+  "model soups"
+ ],
+ "bitnet": [
+  "LLM de 1 bit",
+  "BitNet",
+  "BitNet b1.58",
+  "pesos ternarios",
+  "ternarios"
+ ],
+ "mechinterp": [
+  "Interpretabilidad mecanicista",
+  "circuitos",
+  "circuito"
+ ],
+ "sae": [
+  "Autoencoders dispersos para interpretabilidad",
+  "autoencoders dispersos",
+  "autoencoder disperso",
+  "SAE"
+ ],
+ "mean": [
+  "Media",
+  "medias",
+  "promedio",
+  "promedios",
+  "promediar",
+  "promedia",
+  "promedian",
+  "promediado"
+ ],
+ "median": [
+  "Mediana"
+ ],
+ "variance": [
+  "Varianza",
+  "varianzas"
+ ],
+ "stddev": [
+  "Desviación típica",
+  "desviaciones típicas"
+ ],
+ "covariance": [
+  "Covarianza",
+  "covarianzas"
+ ],
+ "correlation": [
+  "Coeficiente de correlación",
+  "correlación",
+  "correlaciones",
+  "correlacionado",
+  "correlacionada",
+  "correlacionados",
+  "correlacionadas",
+  "correlaciona",
+  "correlación de Pearson",
+  "correlación de Spearman",
+  "Pearson",
+  "Spearman"
+ ],
+ "corrmatrix": [
+  "Matriz de correlación",
+  "matrices de correlación"
+ ],
+ "quantile": [
+  "Cuantiles y percentiles",
+  "cuantil",
+  "cuantiles",
+  "percentil",
+  "percentiles",
+  "cuartil",
+  "cuartiles"
+ ],
+ "iqr": [
+  "Rango intercuartílico",
+  "IQR"
+ ],
+ "skewness": [
+  "Asimetría",
+  "asimetrías",
+  "asimétrica",
+  "asimétricas",
+  "asimétrico",
+  "asimétricos",
+  "sesgada",
+  "sesgadas",
+  "sesgado",
+  "sesgados",
+  "cola larga"
+ ],
+ "kurtosis": [
+  "Curtosis y colas pesadas",
+  "curtosis",
+  "colas pesadas"
+ ],
+ "probdist": [
+  "Distribución de probabilidad",
+  "distribución",
+  "distribuciones"
+ ],
+ "normaldist": [
+  "Distribución normal",
+  "gaussiana",
+  "gaussianas",
+  "gaussiano",
+  "gaussianos"
+ ],
+ "binomial": [
+  "Distribuciones de Bernoulli y binomial",
+  "distribución de Bernoulli",
+  "distribución binomial",
+  "Bernoulli",
+  "binomial"
+ ],
+ "poisson": [
+  "Distribución de Poisson",
+  "distribución de Poisson",
+  "Poisson"
+ ],
+ "uniformdist": [
+  "Distribución uniforme"
+ ],
+ "expectation": [
+  "Valor esperado",
+  "valores esperados",
+  "esperanza"
+ ],
+ "condprob": [
+  "Probabilidad condicional",
+  "probabilidades condicionales"
+ ],
+ "bayesthm": [
+  "Teorema de Bayes",
+  "teorema de Bayes"
+ ],
+ "priorpost": [
+  "Distribuciones a priori y a posteriori",
+  "distribución a priori",
+  "distribución a posteriori",
+  "distribuciones a priori",
+  "distribuciones a posteriori",
+  "a priori",
+  "a posteriori"
+ ],
+ "likelihood": [
+  "Verosimilitud",
+  "verosimilitudes",
+  "log-verosimilitud"
+ ],
+ "mle": [
+  "Estimación por máxima verosimilitud",
+  "máxima verosimilitud",
+  "MLE"
+ ],
+ "mapest": [
+  "Estimación MAP",
+  "estimación MAP",
+  "MAP"
+ ],
+ "iid": [
+  "Supuesto i.i.d.",
+  "i.i.d.",
+  "independientes e idénticamente distribuidas"
+ ],
+ "clt": [
+  "Teorema central del límite"
+ ],
+ "stderr": [
+  "Error estándar",
+  "errores estándar"
+ ],
+ "confint": [
+  "Intervalo de confianza",
+  "intervalos de confianza"
+ ],
+ "hyptest": [
+  "Contraste de hipótesis y valor p",
+  "contraste de hipótesis",
+  "valor p",
+  "valores p",
+  "p-valores",
+  "hipótesis nula",
+  "pruebas estadísticas"
+ ],
+ "abtest": [
+  "pruebas A/B",
+  "prueba A/B",
+  "experimentos A/B",
+  "A/B"
+ ],
+ "kldiv": [
+  "Divergencia KL",
+  "divergencia KL",
+  "divergencia de Kullback-Leibler",
+  "Kullback-Leibler",
+  "KL"
+ ],
+ "mutualinfo": [
+  "Información mutua"
+ ],
+ "montecarlo": [
+  "Estimación de Monte Carlo",
+  "estimación de Monte Carlo",
+  "Monte Carlo"
+ ],
+ "markovchain": [
+  "Cadena de Markov",
+  "cadena de Markov",
+  "cadenas de Markov",
+  "MCMC",
+  "markoviano"
+ ],
+ "causation": [
+  "Correlación frente a causalidad",
+  "causalidad",
+  "causal",
+  "causales",
+  "efecto causal",
+  "efectos causales",
+  "inferencia causal"
+ ],
+ "confounder": [
+  "Variable de confusión",
+  "variables de confusión"
+ ],
+ "samplingbias": [
+  "Sesgo de muestreo",
+  "sesgo de selección",
+  "sesgo de supervivencia"
+ ],
+ "heterosked": [
+  "Heterocedasticidad",
+  "homocedasticidad"
+ ],
+ "histogram": [
+  "Histograma",
+  "histogramas"
+ ],
+ "boxplot": [
+  "Diagrama de caja",
+  "diagramas de caja"
+ ],
+ "scatterplot": [
+  "Gráfico de dispersión",
+  "gráficos de dispersión",
+  "diagramas de dispersión"
+ ],
+ "heatmap": [
+  "Mapa de calor",
+  "mapas de calor"
+ ],
+ "qqplot": [
+  "Gráfico Q-Q",
+  "gráfico Q-Q",
+  "gráficos Q-Q",
+  "Q-Q"
+ ],
+ "feature": [
+  "Variable",
+  "variables",
+  "feature",
+  "features",
+  "característica",
+  "características",
+  "atributo",
+  "atributos",
+  "predictor",
+  "predictores"
+ ],
+ "label": [
+  "Etiqueta",
+  "etiquetas",
+  "variable objetivo",
+  "variables objetivo",
+  "target",
+  "etiquetado",
+  "etiquetados",
+  "etiquetada",
+  "etiquetadas"
+ ],
+ "tabular": [
+  "Datos tabulares",
+  "tabular",
+  "tabulares"
+ ],
+ "numcat": [
+  "Variables numéricas frente a categóricas",
+  "variables numéricas",
+  "variable numérica",
+  "variables categóricas",
+  "variable categórica",
+  "categórica",
+  "categóricas",
+  "categórico",
+  "categóricos",
+  "columnas categóricas",
+  "columna categórica",
+  "columnas numéricas",
+  "columna numérica"
+ ],
+ "ordinal": [
+  "Variables ordinales frente a nominales",
+  "variables ordinales",
+  "variable ordinal",
+  "ordinal",
+  "ordinales",
+  "nominal",
+  "nominales"
+ ],
+ "cardinality": [
+  "Cardinalidad",
+  "alta cardinalidad"
+ ],
+ "missingval": [
+  "Valores faltantes",
+  "valor faltante",
+  "faltantes",
+  "faltante",
+  "MCAR",
+  "MAR",
+  "MNAR",
+  "datos faltantes",
+  "NaN",
+  "nulos"
+ ],
+ "duplicates": [
+  "Registros duplicados",
+  "duplicados",
+  "duplicadas",
+  "deduplicación",
+  "deduplicar",
+  "casi duplicados"
+ ],
+ "labelnoise": [
+  "Ruido en las etiquetas",
+  "ruido de las etiquetas",
+  "etiquetas ruidosas",
+  "errores de etiquetado"
+ ],
+ "sparsedata": [
+  "Datos dispersos",
+  "matriz dispersa",
+  "matrices dispersas",
+  "vector disperso",
+  "disperso",
+  "dispersos",
+  "dispersas",
+  "dispersa"
+ ],
+ "interaction": [
+  "Interacción entre variables",
+  "interacciones entre variables",
+  "interacciones",
+  "términos de interacción"
+ ],
+ "baseline": [
+  "Modelo de referencia",
+  "modelos de referencia",
+  "línea base",
+  "líneas base",
+  "baseline"
+ ],
+ "timeseries": [
+  "Datos de series temporales",
+  "series temporales",
+  "serie temporal"
+ ],
+ "trend": [
+  "Tendencia",
+  "tendencias"
+ ],
+ "seasonality": [
+  "Estacionalidad",
+  "estacionalidades",
+  "estacional",
+  "estacionales",
+  "patrones estacionales",
+  "patrón estacional"
+ ],
+ "whitenoise": [
+  "Ruido blanco"
+ ],
+ "randomwalk": [
+  "Paseo aleatorio",
+  "paseos aleatorios"
+ ],
+ "differencing": [
+  "Diferenciación",
+  "diferenciar",
+  "diferenciada",
+  "diferenciación estacional"
+ ],
+ "horizon": [
+  "Horizonte de previsión",
+  "horizonte",
+  "horizontes",
+  "horizonte de predicción"
+ ],
+ "vector": [
+  "Vector",
+  "vectores",
+  "vectorial",
+  "vectoriales"
+ ],
+ "matrix": [
+  "Matriz",
+  "matrices"
+ ],
+ "tensor": [
+  "Tensor",
+  "tensores"
+ ],
+ "dotproduct": [
+  "Producto escalar",
+  "productos escalares",
+  "producto interno",
+  "productos internos"
+ ],
+ "matmul": [
+  "Multiplicación de matrices",
+  "multiplicaciones de matrices",
+  "GEMM"
+ ],
+ "vecnorm": [
+  "Norma vectorial",
+  "normas vectoriales",
+  "norma",
+  "normas",
+  "norma L2",
+  "norma L1"
+ ],
+ "euclidean": [
+  "Distancia euclídea",
+  "distancias euclídeas",
+  "euclídea",
+  "euclídeas"
+ ],
+ "cosine": [
+  "Similitud del coseno",
+  "similitudes coseno",
+  "distancia del coseno"
+ ],
+ "distmetric": [
+  "Métrica de distancia",
+  "métricas de distancia",
+  "distancia de Manhattan",
+  "distancia de Mahalanobis",
+  "Mahalanobis",
+  "distancia",
+  "distancias"
+ ],
+ "projection": [
+  "Proyección",
+  "proyecciones",
+  "proyectar",
+  "proyecta",
+  "proyectan",
+  "proyectados",
+  "matrices de proyección"
+ ],
+ "orthogonal": [
+  "Ortogonalidad",
+  "ortogonal",
+  "ortogonales",
+  "ortonormal",
+  "ortonormales"
+ ],
+ "eigen": [
+  "Valores y vectores propios",
+  "valores propios",
+  "valor propio",
+  "vectores propios",
+  "vector propio",
+  "autovalor",
+  "autovector"
+ ],
+ "matrank": [
+  "Rango de una matriz",
+  "bajo rango",
+  "rango completo"
+ ],
+ "covmatrix": [
+  "Matriz de covarianza",
+  "matrices de covarianza"
+ ],
+ "derivative": [
+  "Derivada",
+  "derivadas",
+  "diferenciable",
+  "diferenciables",
+  "no diferenciable"
+ ],
+ "partialderiv": [
+  "Derivada parcial",
+  "derivadas parciales"
+ ],
+ "gradient": [
+  "Gradiente",
+  "gradientes"
+ ],
+ "jacobian": [
+  "Jacobiano",
+  "jacobianos"
+ ],
+ "hessian": [
+  "Hessiano",
+  "hessiana",
+  "hessianos",
+  "matriz hessiana"
+ ],
+ "logsumexp": [
+  "Log-sum-exp y estabilidad numérica",
+  "log-sum-exp",
+  "estabilidad numérica",
+  "numéricamente estable",
+  "numéricamente estables",
+  "desbordamiento",
+  "underflow",
+  "overflow",
+  "subdesbordamiento"
+ ],
+ "nonlinearity": [
+  "Linealidad frente a no linealidad",
+  "no linealidad",
+  "no linealidades",
+  "no lineal",
+  "no lineales",
+  "linealidad",
+  "linealmente separables"
+ ],
+ "highdim": [
+  "Espacio de alta dimensión",
+  "alta dimensión",
+  "alta dimensionalidad"
+ ],
+ "lossfn": [
+  "Función de pérdida",
+  "pérdida",
+  "pérdidas"
+ ],
+ "objective": [
+  "Función objetivo"
+ ],
+ "paramhyper": [
+  "Parámetros frente a hiperparámetros",
+  "hiperparámetro",
+  "hiperparámetros",
+  "parámetro",
+  "parámetros"
+ ],
+ "weightsbias": [
+  "Pesos y sesgo",
+  "pesos",
+  "términos de sesgo",
+  "bias"
+ ],
+ "epoch": [
+  "Época, lote e iteración",
+  "época",
+  "épocas",
+  "lote",
+  "lotes",
+  "tamaño de lote",
+  "tamaños de lote",
+  "batch",
+  "batches",
+  "iteración",
+  "iteraciones",
+  "micro-lotes"
+ ],
+ "convergence": [
+  "Convergencia",
+  "converger",
+  "converge",
+  "convergen"
+ ],
+ "localmin": [
+  "Mínimo local frente a mínimo global",
+  "mínimo local",
+  "mínimos locales",
+  "mínimo global",
+  "óptimos locales",
+  "óptimo global"
+ ],
+ "closedform": [
+  "Solución de forma cerrada",
+  "forma cerrada",
+  "solución cerrada"
+ ],
+ "stochastic": [
+  "Estocástico frente a determinista",
+  "estocástico",
+  "estocástica",
+  "estocásticos",
+  "determinista",
+  "deterministas",
+  "determinismo",
+  "aleatoriedad"
+ ],
+ "lagrange": [
+  "Multiplicadores de Lagrange y restricciones",
+  "multiplicadores de Lagrange",
+  "Lagrange",
+  "KKT",
+  "optimización con restricciones"
+ ],
+ "generalization": [
+  "Generalización",
+  "generalizar",
+  "generaliza",
+  "generalizan",
+  "generalizable"
+ ],
+ "capacity": [
+  "Capacidad del modelo",
+  "más capacidad"
+ ],
+ "inductivebias": [
+  "Sesgo inductivo",
+  "sesgos inductivos"
+ ],
+ "trainloop": [
+  "Bucle de entrenamiento"
+ ],
+ "checkpoint": [
+  "Checkpoint del modelo",
+  "checkpoint",
+  "checkpoints"
+ ],
+ "hingeloss": [
+  "Pérdida hinge",
+  "hinge"
+ ],
+ "huberloss": [
+  "Pérdida de Huber",
+  "pérdida de Huber",
+  "Huber"
+ ],
+ "focalloss": [
+  "Focal loss"
+ ],
+ "mape": [
+  "MAPE",
+  "error porcentual absoluto medio",
+  "sMAPE",
+  "MASE"
+ ],
+ "rankmetrics": [
+  "Métricas de ranking",
+  "NDCG",
+  "MRR",
+  "recall@k",
+  "NDCG@10"
+ ],
+ "iou": [
+  "Intersección sobre unión",
+  "IoU",
+  "índice de Jaccard",
+  "Jaccard"
+ ],
+ "baserate": [
+  "Tasa base",
+  "tasas base",
+  "prevalencia",
+  "falacia de la tasa base"
+ ],
+ "activation": [
+  "Función de activación",
+  "funciones de activación",
+  "activación",
+  "activaciones"
+ ],
+ "hiddenlayer": [
+  "Capa oculta",
+  "capas ocultas",
+  "capa",
+  "capas"
+ ],
+ "hiddenstate": [
+  "Estado oculto",
+  "estados ocultos"
+ ],
+ "logits": [
+  "Logits",
+  "logit"
+ ],
+ "featuremap": [
+  "Mapa de características",
+  "mapas de características"
+ ],
+ "kernelfilter": [
+  "filtro convolucional",
+  "filtros",
+  "filtro",
+  "tamaño del kernel",
+  "tamaños de kernel"
+ ],
+ "stridepad": [
+  "Stride y padding",
+  "stride",
+  "padding",
+  "strides"
+ ],
+ "receptive": [
+  "Campo receptivo"
+ ],
+ "channels": [
+  "Canales",
+  "canales de entrada"
+ ],
+ "latentspace": [
+  "Espacio latente",
+  "espacios latentes",
+  "latente",
+  "latentes",
+  "variables latentes"
+ ],
+ "representation": [
+  "Aprendizaje de representaciones",
+  "representaciones",
+  "representación",
+  "representaciones aprendidas"
+ ],
+ "weightshare": [
+  "Compartición de pesos",
+  "pesos compartidos",
+  "comparten pesos",
+  "compartir pesos"
+ ],
+ "paramcount": [
+  "Número de parámetros",
+  "millones de parámetros",
+  "miles de millones de parámetros"
+ ],
+ "flops": [
+  "FLOPs",
+  "FLOP",
+  "FLOPS"
+ ],
+ "floatfmt": [
+  "Formatos de coma flotante",
+  "coma flotante",
+  "FP32",
+  "FP8",
+  "float32",
+  "fp32"
+ ],
+ "sparsity": [
+  "Dispersión",
+  "dispersión estructurada",
+  "dispersión no estructurada"
+ ],
+ "token": [
+  "Token",
+  "tokens"
+ ],
+ "vocab": [
+  "Vocabulario",
+  "vocabularios"
+ ],
+ "contextwin": [
+  "Ventana de contexto",
+  "longitud de contexto",
+  "longitud del contexto",
+  "contexto efectivo",
+  "longitud de secuencia",
+  "longitudes de secuencia",
+  "longitud de la secuencia"
+ ],
+ "prompt": [
+  "Prompt",
+  "prompts"
+ ],
+ "finetuning": [
+  "Fine-tuning"
+ ],
+ "foundation": [
+  "Modelo fundacional",
+  "modelos fundacionales",
+  "modelos base",
+  "modelo base"
+ ],
+ "perplexity": [
+  "Perplejidad"
+ ],
+ "logprob": [
+  "Log-probabilidad",
+  "log-probabilidades"
+ ],
+ "ngram": [
+  "N-grama",
+  "n-gramas",
+  "bigramas",
+  "trigramas"
+ ],
+ "tfidf": [
+  "TF-IDF",
+  "tf-idf",
+  "BM25"
+ ],
+ "bagofwords": [
+  "Bolsa de palabras",
+  "bolsas de palabras"
+ ],
+ "hallucination": [
+  "Alucinación",
+  "alucinaciones",
+  "alucinar"
+ ],
+ "alignment": [
+  "Alineamiento",
+  "alinear",
+  "alineado",
+  "alineados",
+  "alineada",
+  "alineadas"
+ ],
+ "mdp": [
+  "Proceso de decisión de Markov",
+  "proceso de decisión de Markov",
+  "procesos de decisión de Markov",
+  "MDP"
+ ],
+ "policy": [
+  "Política",
+  "políticas",
+  "policy"
+ ],
+ "reward": [
+  "Recompensa",
+  "recompensas",
+  "reward",
+  "rewards",
+  "retorno",
+  "retornos"
+ ],
+ "stateaction": [
+  "Estado y acción",
+  "par estado-acción",
+  "estado-acción"
+ ],
+ "valuefn": [
+  "Función de valor",
+  "Q-learning"
+ ],
+ "explore": [
+  "Exploración frente a explotación",
+  "exploración",
+  "explotación",
+  "ε-greedy",
+  "explorar",
+  "explotar"
+ ],
+ "inference": [
+  "Inferencia"
+ ],
+ "latency": [
+  "Latencia y throughput",
+  "latencia",
+  "latencias",
+  "throughput",
+  "tokens por segundo",
+  "p99",
+  "p95"
+ ],
+ "gpu": [
+  "GPU y VRAM",
+  "GPU",
+  "VRAM",
+  "memoria de GPU",
+  "memoria de la GPU",
+  "TPU"
+ ],
+ "serving": [
+  "Servicio de modelos",
+  "vLLM",
+  "despliegue",
+  "desplegar",
+  "desplegado",
+  "desplegadas",
+  "despliega"
+ ],
+ "monitoring": [
+  "Monitorización de modelos",
+  "monitorización",
+  "monitorizar",
+  "monitoriza",
+  "monitorizan"
+ ],
+ "retraining": [
+  "Reentrenamiento",
+  "reentrenamientos",
+  "reentrenar",
+  "reentrena",
+  "reentrenan",
+  "reentrenado"
+ ],
+ "featurestore": [
+  "Feature store",
+  "feature stores",
+  "Feast"
+ ],
+ "mlpipeline": [
+  "Pipeline de ML",
+  "pipeline de ML",
+  "Pipeline",
+  "pipelines",
+  "pipeline de scikit-learn",
+  "pipeline de preprocesamiento"
+ ],
+ "benchmark": [
+  "Benchmark",
+  "benchmarks"
+ ],
+ "anomaly": [
+  "Detección de anomalías",
+  "anomalías",
+  "anomalía"
+ ],
+ "recsys": [
+  "Sistema de recomendación",
+  "sistemas de recomendación",
+  "recomendador",
+  "recomendación",
+  "recomendaciones"
+ ],
+ "ctr": [
+  "Tasa de clics",
+  "CTR"
+ ],
+ "coldstart": [
+  "Arranque en frío"
+ ],
+ "collabfilter": [
+  "Filtrado colaborativo",
+  "factorización de matrices"
+ ],
+ "fraud": [
+  "Detección de fraude",
+  "fraude",
+  "fraudulentas",
+  "fraudulentos"
+ ],
+ "churn": [
+  "Predicción de abandono",
+  "abandono"
+ ],
+ "demandfc": [
+  "Previsión de la demanda",
+  "previsión de demanda",
+  "previsiones de demanda",
+  "predicción de la demanda",
+  "predicción de demanda",
+  "demanda"
+ ],
+ "creditscore": [
+  "Scoring crediticio",
+  "riesgo crediticio",
+  "calificación crediticia",
+  "modelos de crédito",
+  "modelo de crédito",
+  "crédito"
+ ]
+}

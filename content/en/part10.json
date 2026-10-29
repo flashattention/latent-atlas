@@ -1,0 +1,446 @@
+{
+ "token": {
+  "n": "Token",
+  "d": "A token is the basic unit of text that a language model reads and writes, usually a word, a piece of a word, a punctuation mark or a byte.\n\nA tokenizer splits raw text into tokens and maps each one to an integer id from a fixed vocabulary; the model never sees characters, only these ids, which an embedding layer turns into vectors. Subword schemes such as byte-pair encoding (BPE) keep frequent words whole and break rare words into smaller pieces, so any string can be represented.\n\nTokens are the unit of almost everything in LLM work: the context window, next-token prediction, API pricing, generation speed and the KV cache are all measured in tokens. A common misconception is that one token equals one word. English text averages roughly three quarters of a word per token, while code, numbers and many non-English languages need noticeably more tokens.",
+  "f": "",
+  "u": [
+   "Estimating LLM API cost and prompt length",
+   "Budgeting text to fit a context window",
+   "Measuring generation speed in tokens per second"
+  ],
+  "x": "A customer-support team counts the tokens of every incoming ticket before sending it to an LLM, truncating long email threads so the request stays under the model's context limit. The same token counts feed the monthly cost dashboard, because the provider bills per input and output token.",
+  "c": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\ntext = \"Tokenization splits unbelievable words.\"\n\nids = tok.encode(text)                     # integer token ids\npieces = tok.convert_ids_to_tokens(ids)    # subword strings\nprint(pieces)  # rare words become several pieces\nprint(len(ids), \"tokens for\", len(text.split()), \"words\")\n\n# Decoding the ids recovers the original text\nassert tok.decode(ids) == text"
+ },
+ "vocab": {
+  "n": "Vocabulary",
+  "d": "The vocabulary is the fixed set of distinct tokens that a tokenizer and model know, each assigned an integer id.\n\nIt is built once, before pretraining, by an algorithm such as byte-pair encoding (BPE), WordPiece or Unigram that chooses frequent character sequences from a training corpus until a target size is reached. Typical LLM vocabularies hold from about 30,000 to over 200,000 entries, plus special tokens for padding, beginning and end of sequence.\n\nSize is a trade-off. A larger vocabulary makes sequences shorter, which saves context and compute, but it enlarges the embedding layer and the output softmax, and rare entries receive few training updates. The vocabulary is tied to the model: a pretrained model cannot simply swap tokenizers, and adding new tokens for fine-tuning requires resizing and training the new embedding rows. Classic NLP models built on bag of words or TF-IDF also rely on a vocabulary.",
+  "f": "|V| = number of distinct tokens; output logits ∈ ℝ^|V|",
+  "u": [
+   "Choosing tokenizer size before pretraining an LLM",
+   "Adding domain tokens before fine-tuning a model",
+   "Limiting features in bag-of-words text classifiers"
+  ],
+  "x": "A legal-tech team fine-tuning an open model adds a few hundred special tokens for document markup and clause tags. They resize the embedding matrix, initialize the new rows from the mean of existing embeddings and verify that tokenized contract text becomes shorter before training starts.",
+  "c": "from transformers import AutoTokenizer, AutoModelForCausalLM\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\nprint(\"vocab size:\", len(tok))  # 50257 for GPT-2\n\n# Add domain-specific tokens\nadded = tok.add_tokens([\"<clause>\", \"</clause>\"])\nmodel.resize_token_embeddings(len(tok))  # new embedding rows\n\nprint(added, \"tokens added; new size:\", len(tok))\nprint(tok.tokenize(\"<clause>Payment terms</clause>\"))"
+ },
+ "contextwin": {
+  "n": "Context Window",
+  "d": "The context window is the maximum number of tokens a language model can take into account at once, covering the prompt and the tokens it generates.\n\nIn a Transformer every token attends to the others inside this window, so anything outside it is invisible to the model. The limit comes from training: positional encodings such as RoPE are learned up to some length, and self-attention cost grows quadratically with sequence length while the KV cache grows linearly in memory. Long context extension methods and FlashAttention push the limit to hundreds of thousands of tokens.\n\nThe window shapes system design: retrieval-augmented generation (RAG), chunking, summarizing old chat turns and truncation exist to fit information into it. A frequent pitfall is assuming that a model uses its whole window equally well. Many models recall facts placed in the middle of a long input less reliably than facts near the start or end.",
+  "f": "prompt tokens + generated tokens ≤ context length",
+  "u": [
+   "Sizing retrieved chunks for RAG prompts",
+   "Truncating or summarizing long chat histories",
+   "Choosing a model for long-document analysis"
+  ],
+  "x": "A document-review product splits contracts that exceed the model's context window into overlapping sections, extracts obligations from each section and merges the results. For shorter contracts it sends the full text in one request, which the team found gives more consistent cross-references.",
+  "c": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\nmax_ctx = 1024          # GPT-2 context length\nmax_new = 200           # room reserved for the answer\n\ndoc = open(\"contract.txt\").read()\nids = tok.encode(doc)\nbudget = max_ctx - max_new\n\n# Split into overlapping windows that fit the budget\nstride = budget - 100\nchunks = [ids[i:i + budget] for i in range(0, len(ids), stride)]\nprint(len(ids), \"tokens ->\", len(chunks), \"chunks\")"
+ },
+ "prompt": {
+  "n": "Prompt",
+  "d": "A prompt is the input text given to a language model to condition what it generates next.\n\nBecause a decoder-only model only continues a sequence, the prompt defines the task: it can hold instructions, a system message, examples, retrieved documents, tool results and the conversation so far. Chat models receive the prompt in a structured template with role markers, which the tokenizer turns into special tokens. The model then predicts the continuation one token at a time.\n\nPrompts are the main control surface in prompt engineering, in-context learning, chain-of-thought and retrieval-augmented generation (RAG), and they are versioned and evaluated like code in production systems. A common misconception is that a prompt teaches the model something permanent. Nothing in the weights changes; the instructions apply only within that request, and every token of the prompt counts against the context window and the cost.",
+  "f": "",
+  "u": [
+   "Instructing chat models with system and user messages",
+   "Supplying few-shot examples for in-context learning",
+   "Injecting retrieved documents into RAG requests"
+  ],
+  "x": "A marketing platform stores its product-description prompts in version control, with a system message, two worked examples and slots for product attributes. Each prompt change runs against a fixed evaluation set before release, because small wording edits can shift tone and length across thousands of generated pages.",
+  "c": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"Qwen/Qwen2.5-0.5B-Instruct\")\nmessages = [\n    {\"role\": \"system\", \"content\": \"You write concise product descriptions.\"},\n    {\"role\": \"user\", \"content\": \"Product: steel water bottle, 750 ml.\"},\n]\n\n# The chat template turns roles into the exact prompt string\nprompt = tok.apply_chat_template(messages, tokenize=False,\n                                 add_generation_prompt=True)\nprint(prompt)\nprint(len(tok.encode(prompt)), \"prompt tokens\")"
+ },
+ "finetuning": {
+  "n": "Fine-Tuning",
+  "d": "Fine-tuning is continued training of a pretrained model on a smaller, task-specific dataset so that it adapts to a new task, domain or style.\n\nThe model starts from weights learned during pretraining, which already encode general features, and gradient descent updates them with a lower learning rate on the new data. Full fine-tuning updates every parameter; parameter-efficient methods such as LoRA, QLoRA and adapters train a small number of extra weights instead. For LLMs, supervised fine-tuning (SFT) on instruction-response pairs is usually followed by preference methods such as RLHF or DPO.\n\nFine-tuning is the standard route from a foundation model to a production model, in vision as well as language. Its main pitfalls are overfitting on small datasets and catastrophic forgetting, where the model loses general abilities it had before. Fine-tuning is also a poor way to add frequently changing facts; retrieval is usually cheaper and easier to update.",
+  "f": "θ ← θ_pretrained, then θ ← θ − η∇L_task(θ)",
+  "u": [
+   "Adapting LLMs to a company's tone and format",
+   "Training image classifiers from ImageNet backbones",
+   "Specializing models for medical or legal text"
+  ],
+  "x": "A bank fine-tunes an open-weight LLM with LoRA on several thousand reviewed examples of complaint summaries, so outputs follow its regulatory template. The team keeps a general-ability benchmark in its evaluation suite to detect catastrophic forgetting after each training run.",
+  "c": "import torch\nfrom torch import nn\nfrom torchvision.models import resnet18, ResNet18_Weights\n\nmodel = resnet18(weights=ResNet18_Weights.DEFAULT)  # pretrained\nmodel.fc = nn.Linear(model.fc.in_features, 5)      # new head: 5 classes\n\n# Lower learning rate for the backbone, higher for the new head\nopt = torch.optim.AdamW([\n    {\"params\": [p for n, p in model.named_parameters()\n                if not n.startswith(\"fc\")], \"lr\": 1e-5},\n    {\"params\": model.fc.parameters(), \"lr\": 1e-3},\n])\n\nfor x, y in train_loader:  # task-specific data\n    loss = nn.functional.cross_entropy(model(x), y)\n    opt.zero_grad(); loss.backward(); opt.step()"
+ },
+ "foundation": {
+  "n": "Foundation Model",
+  "d": "A foundation model is a large model pretrained on broad data at scale that can be adapted to many downstream tasks.\n\nThe term covers LLMs such as GPT and Llama, encoders such as BERT, image-text models such as CLIP, and time-series foundation models. They are trained with self-supervised objectives such as next-token prediction or masked language modeling on huge unlabeled corpora, so the expensive learning happens once. Users then reach new tasks through prompting, in-context learning, fine-tuning, LoRA or by using the model's embeddings as features.\n\nFoundation models changed ML practice from training a model per task to adapting one shared model, which makes small labeled datasets far more useful. Every application inherits the base model's weaknesses: biases in its training data, knowledge that stops at a cutoff date, and failure modes such as hallucination. Evaluating the base model on the actual target task is still necessary.",
+  "f": "",
+  "u": [
+   "Starting point for fine-tuning task models",
+   "Zero-shot classification with prompts",
+   "Producing embeddings for search and clustering"
+  ],
+  "x": "An insurance company builds claim triage, document extraction and customer-reply drafting on one licensed foundation model instead of three separately trained systems. Each use case has its own prompts, evaluation set and, where needed, a small LoRA adapter, while the shared base model is upgraded on a planned schedule.",
+  "c": "from transformers import pipeline\n\n# One pretrained model, used for a task it was never trained on\nclf = pipeline(\"zero-shot-classification\",\n               model=\"facebook/bart-large-mnli\")\n\nticket = \"My card was charged twice for the same order.\"\nlabels = [\"billing\", \"shipping\", \"account access\", \"product defect\"]\n\nresult = clf(ticket, candidate_labels=labels)\nprint(result[\"labels\"][0], round(result[\"scores\"][0], 3))"
+ },
+ "perplexity": {
+  "n": "Perplexity",
+  "d": "Perplexity measures how well a language model predicts a text: it is the exponential of the average negative log-probability per token.\n\nIntuitively, a perplexity of 20 means the model is, on average, as uncertain as if it were choosing uniformly among 20 tokens at each step. Lower is better, and a perfect model would reach 1. Because it is the exponential of the cross-entropy loss, perplexity moves exactly with the training loss of next-token prediction.\n\nPerplexity on held-out text is the standard intrinsic metric for pretraining runs, scaling laws studies, quantization checks and domain-adaptation experiments. The main pitfall is comparing values across models with different tokenizers or vocabularies: per-token perplexity depends on how text is split, so the numbers are not comparable. Low perplexity also does not guarantee that a model follows instructions, reasons well or avoids hallucination, which is why task benchmarks are still needed.",
+  "f": "PPL = exp(−(1/N) Σᵢ log p(xᵢ | x₍<ᵢ₎))",
+  "u": [
+   "Tracking language-model pretraining progress",
+   "Checking quality loss after quantization",
+   "Comparing domain-adapted models on held-out text"
+  ],
+  "x": "A team quantizing an LLM to 4-bit for cheaper serving measures perplexity on the same held-out corpus before and after quantization, using the same tokenizer. A small rise is accepted, but a large jump on one data slice sends them back to try a different calibration set.",
+  "c": "import torch\nfrom transformers import AutoTokenizer, AutoModelForCausalLM\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\").eval()\n\ntext = \"The capital of France is Paris.\"\nids = tok(text, return_tensors=\"pt\").input_ids\n\nwith torch.no_grad():\n    # labels=ids gives the mean next-token cross-entropy\n    loss = model(ids, labels=ids).loss\n\nprint(\"perplexity:\", torch.exp(loss).item())"
+ },
+ "logprob": {
+  "n": "Log-Probability",
+  "d": "A log-probability is the natural logarithm of a probability, so values lie between minus infinity and 0, with 0 meaning certainty.\n\nModels work with log-probabilities because products of many small probabilities underflow in floating point, while their logs simply add. A language model outputs logits; applying log-softmax gives the log-probability of every token in the vocabulary, and the log-probability of a whole sequence is the sum over its tokens.\n\nLog-probabilities are everywhere in ML: maximum likelihood estimation maximizes them, cross-entropy loss and log loss are their negative mean, perplexity exponentiates their average, beam search ranks hypotheses by their sum, and PPO and DPO compare them between a policy and a reference model. LLM APIs also return token log-probabilities for confidence scoring. A common pitfall is comparing raw sequence log-probabilities of different lengths; longer sequences always score lower, so length normalization is usually required.",
+  "f": "log p(x₁…x_T) = Σₜ log p(xₜ | x₍<ₜ₎)",
+  "u": [
+   "Scoring candidate answers by model likelihood",
+   "Computing losses in maximum likelihood training",
+   "Flagging low-confidence LLM outputs for review"
+  ],
+  "x": "An information-extraction service asks the LLM API for token log-probabilities along with each extracted field. Fields whose average log-probability falls below a tuned threshold are routed to a human reviewer instead of being written straight into the database.",
+  "c": "import torch\nimport torch.nn.functional as F\nfrom transformers import AutoTokenizer, AutoModelForCausalLM\n\ntok = AutoTokenizer.from_pretrained(\"gpt2\")\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\").eval()\nids = tok(\"The sky is blue.\", return_tensors=\"pt\").input_ids\n\nwith torch.no_grad():\n    logits = model(ids).logits[:, :-1]          # predictions for next tokens\nlogp = F.log_softmax(logits, dim=-1)            # stable log-probabilities\ntoken_lp = logp.gather(-1, ids[:, 1:, None]).squeeze(-1)\n\nprint(\"per-token:\", token_lp)\nprint(\"sequence log-prob:\", token_lp.sum().item())\nprint(\"length-normalized:\", token_lp.mean().item())"
+ },
+ "ngram": {
+  "n": "N-gram",
+  "d": "An n-gram is a contiguous sequence of n items, usually words or characters: unigrams are single items, bigrams are pairs and trigrams are triples.\n\nCounting n-grams captures local word order that single words miss, for example that \"not good\" differs from \"good\". A classic n-gram language model estimates the probability of the next word from counts of the previous n−1 words, with smoothing to handle sequences never seen in training.\n\nN-grams remain useful features in bag of words and TF-IDF text classifiers, in spell checking, in near-duplicate detection, and in evaluation metrics such as BLEU and ROUGE, which count n-gram overlap. LLM teams also use n-gram overlap to detect benchmark contamination in training data. The main limitation is sparsity: the number of possible n-grams grows exponentially with n, so most long n-grams appear rarely or never, and counts cannot generalize to unseen but similar phrases.",
+  "f": "P(wₜ | wₜ₋ₙ₊₁…wₜ₋₁) ≈ count(wₜ₋ₙ₊₁…wₜ) / count(wₜ₋ₙ₊₁…wₜ₋₁)",
+  "u": [
+   "Word-pair features for text classifiers",
+   "Detecting test-set contamination in training corpora",
+   "Computing BLEU and ROUGE overlap scores"
+  ],
+  "x": "A team preparing an LLM training corpus computes 13-gram overlaps between the corpus and their evaluation benchmarks. Documents sharing long n-grams with benchmark questions are removed, so reported scores reflect generalization rather than memorization.",
+  "c": "from collections import Counter\nfrom sklearn.feature_extraction.text import CountVectorizer\n\ntext = \"the movie was not good not good at all\".split()\n\n# Manual bigram counts\nbigrams = Counter(zip(text, text[1:]))\nprint(bigrams.most_common(3))\n\n# Unigram + bigram features for a classifier\nvec = CountVectorizer(ngram_range=(1, 2))\nX = vec.fit_transform([\"not good\", \"very good\", \"not bad\"])\nprint(vec.get_feature_names_out())"
+ },
+ "tfidf": {
+  "n": "TF-IDF",
+  "d": "TF-IDF (term frequency–inverse document frequency) is a weighting that scores a word highly in a document when it appears often there but rarely across the rest of the corpus.\n\nThe term frequency rewards words that are prominent in the document; the inverse document frequency, a logarithm of how many documents contain the word, pushes down common words such as \"the\" or \"data\". Each document becomes a sparse vector over the vocabulary, usually L2-normalized so cosine similarity compares documents fairly.\n\nTF-IDF vectors with logistic regression or a linear SVM are a strong, fast baseline for text classification, and TF-IDF with BM25 still powers keyword search and hybrid retrieval in RAG systems. Its main limitation is that it ignores meaning: synonyms such as \"car\" and \"automobile\" share no weight, and word order is lost unless n-grams are added.",
+  "f": "tfidf(t,d) = tf(t,d) · log(N / df(t))",
+  "u": [
+   "Fast baselines for text classification",
+   "Keyword retrieval in hybrid search systems",
+   "Finding characteristic terms of document clusters"
+  ],
+  "x": "A support platform routes incoming tickets to teams with a TF-IDF and logistic regression model that retrains in minutes on a CPU. The team keeps it as the production baseline that any heavier transformer classifier must clearly beat before replacing it.",
+  "c": "from sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\n\ndocs = [\"refund not received\", \"cannot log in to account\",\n        \"refund for damaged item\", \"password reset fails\"]\nlabels = [\"billing\", \"access\", \"billing\", \"access\"]\n\n# IDF is learned inside the pipeline, on training data only\nclf = make_pipeline(TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True),\n                    LogisticRegression())\nclf.fit(docs, labels)\nprint(clf.predict([\"login password problem\"]))"
+ },
+ "bagofwords": {
+  "n": "Bag of Words",
+  "d": "Bag of words represents a text as the counts of each vocabulary word it contains, ignoring grammar and word order.\n\nA vectorizer first builds a vocabulary from the training corpus, then turns each document into a vector with one entry per word, holding a count or a binary presence flag. Because most documents use a tiny fraction of the vocabulary, the vectors are stored as sparse matrices. Adding n-grams restores some local order, and TF-IDF reweights the counts.\n\nBag of words is the classic input for Naive Bayes spam filters, logistic regression text classifiers and topic models, and it still serves quick, interpretable baselines. The key limitation is that \"dog bites man\" and \"man bites dog\" get identical vectors, and synonyms are unrelated. Words not seen when the vocabulary was built are silently dropped at prediction time, which can hide drift in incoming text.",
+  "f": "x_d = [count(w₁,d), count(w₂,d), …, count(w_|V|,d)]",
+  "u": [
+   "Naive Bayes spam and sentiment filters",
+   "Interpretable keyword-based text classifiers",
+   "Input features for topic modeling"
+  ],
+  "x": "An email provider's first-line spam filter uses bag-of-words counts with multinomial Naive Bayes, because it trains incrementally and scores messages in microseconds. Messages with uncertain scores are passed to a slower neural model.",
+  "c": "from sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\ntrain = [\"win a free prize now\", \"meeting moved to monday\",\n         \"free money claim now\", \"lunch on monday\"]\ny = [1, 0, 1, 0]  # 1 = spam\n\nvec = CountVectorizer()\nX = vec.fit_transform(train)          # sparse word-count matrix\nprint(vec.get_feature_names_out())\n\nnb = MultinomialNB().fit(X, y)\n# Unknown words are ignored at prediction time\nprint(nb.predict(vec.transform([\"claim your free prize\"])))"
+ },
+ "hallucination": {
+  "n": "Hallucination",
+  "d": "Hallucination is when a language model generates content that is fluent and confident but false or unsupported by its input or by known facts.\n\nIt follows from how LLMs are trained: next-token prediction rewards plausible continuations, not verified ones, so when the model lacks knowledge it still produces the most likely-sounding text, such as an invented citation, API function or statistic. Sampling with high temperature and questions about rare facts make it more likely.\n\nMitigations include retrieval-augmented generation (RAG) that grounds answers in provided documents, asking for citations, tool use for calculations and lookups, self-consistency checks, abstention training during alignment, and evaluation sets that measure factuality. A common misconception is that RAG removes hallucination. The model can still misread, combine or ignore the retrieved passages, so grounded systems also need checks that each claim is supported by the sources.",
+  "f": "",
+  "u": [
+   "Factuality evaluation of LLM answers",
+   "Citation checking in retrieval-augmented assistants",
+   "Guardrails for legal, medical and financial outputs"
+  ],
+  "x": "A legal research assistant answers only from retrieved case documents and attaches a citation to each claim. A second verification step checks that every cited passage actually contains the stated holding, and answers that fail the check are flagged rather than shown.",
+  "c": "from sentence_transformers import CrossEncoder\n\n# NLI model: does the source entail the generated claim?\nnli = CrossEncoder(\"cross-encoder/nli-deberta-v3-base\")\nsource = \"The contract term is 24 months and renews automatically.\"\nclaims = [\"The contract lasts two years.\",\n          \"The contract can be cancelled at any time.\"]\n\nscores = nli.predict([(source, c) for c in claims])\nlabels = [\"contradiction\", \"entailment\", \"neutral\"]\nfor claim, s in zip(claims, scores):\n    verdict = labels[s.argmax()]\n    print(f\"{verdict:13s} {claim}\")  # non-entailed = possible hallucination"
+ },
+ "alignment": {
+  "n": "Alignment",
+  "d": "Alignment is the work of making an AI model's behavior match the intentions and values of its developers and users: helpful, honest and harmless.\n\nA pretrained LLM only continues text, so it may ignore instructions, produce toxic content or assist with harmful requests. Alignment training reshapes this behavior after pretraining, usually through supervised fine-tuning (SFT) on demonstrations, then preference optimization such as RLHF with a reward model and PPO, DPO, or Constitutional AI and RLAIF. Red-teaming and safety evaluations test the result.\n\nAlignment also has a research side: mechanistic interpretability and scalable oversight study whether models pursue intended goals. A common pitfall is reward hacking, where the model learns to exploit flaws in the reward signal, for example by becoming overly verbose or agreeable, instead of truly improving. Over-refusal of harmless requests is the opposite failure, so alignment evaluation must measure both.",
+  "f": "",
+  "u": [
+   "Instruction following in chat assistants",
+   "Reducing harmful or toxic model outputs",
+   "Red-teaming before public model releases"
+  ],
+  "x": "An AI lab collects pairwise preference judgments from trained annotators on assistant responses and runs DPO on top of its SFT model. Before release, the aligned model is evaluated on harmful-request refusal and on a set of benign but sensitive-sounding prompts to catch over-refusal.",
+  "c": "from datasets import Dataset\nfrom transformers import AutoTokenizer, AutoModelForCausalLM\nfrom trl import DPOConfig, DPOTrainer\n\nname = \"Qwen/Qwen2.5-0.5B-Instruct\"\nmodel = AutoModelForCausalLM.from_pretrained(name)\ntok = AutoTokenizer.from_pretrained(name)\n\n# Human preferences: chosen vs rejected answers\nprefs = Dataset.from_list([{\n    \"prompt\": \"How do I reset my router?\",\n    \"chosen\": \"Hold the reset button for 10 seconds, then...\",\n    \"rejected\": \"Just buy a new one.\",\n}])\n\nargs = DPOConfig(output_dir=\"dpo-out\", beta=0.1)\ntrainer = DPOTrainer(model=model, args=args,\n                     train_dataset=prefs, processing_class=tok)\ntrainer.train()"
+ },
+ "mdp": {
+  "n": "Markov Decision Process (MDP)",
+  "d": "A Markov decision process is the mathematical model of sequential decision-making used in reinforcement learning: states, actions, transition probabilities, rewards and a discount factor.\n\nAt each step an agent observes a state, chooses an action, receives a reward and moves to a new state. The Markov property says the next state and reward depend only on the current state and action. The goal is a policy that maximizes the expected discounted sum of future rewards.\n\nMDPs underlie value iteration, Q-learning, policy gradients and PPO, and they frame RLHF, where the state is the prompt plus the text generated so far and each action is a token. A common pitfall is defining a state that is not actually Markov, for example a single video frame that hides velocity; the problem then becomes partially observable, and the state must be extended with history or a hidden state.",
+  "f": "MDP = (S, A, P(s′|s,a), R(s,a), γ)",
+  "u": [
+   "Formalizing control and robotics problems",
+   "Framing LLM text generation for RLHF",
+   "Modeling inventory and pricing decisions"
+  ],
+  "x": "An operations team models warehouse replenishment as an MDP whose state holds current stock and open orders, whose actions are order quantities and whose reward subtracts holding and stockout costs. A policy learned in a simulator of past demand is compared against the existing reorder-point rule before any rollout.",
+  "c": "import numpy as np\n\n# Tiny MDP: 3 states, 2 actions\nP = np.zeros((3, 2, 3))            # P[s, a, s'] transition probabilities\nP[0, 0, 0], P[0, 1, 1] = 1.0, 1.0\nP[1, 0, 0], P[1, 1, 2] = 1.0, 1.0\nP[2, :, 2] = 1.0                    # absorbing goal state\nR = np.array([[0, 0], [0, 1], [0, 0]], dtype=float)  # R[s, a]\ngamma = 0.9\n\n# Value iteration: V(s) = max_a [R + γ Σ P V]\nV = np.zeros(3)\nfor _ in range(100):\n    Q = R + gamma * P @ V\n    V = Q.max(axis=1)\nprint(\"V:\", V.round(3), \"greedy policy:\", Q.argmax(axis=1))"
+ },
+ "policy": {
+  "n": "Policy",
+  "d": "In reinforcement learning, a policy is the agent's rule for choosing actions: a mapping from each state to an action or to a probability distribution over actions.\n\nA deterministic policy returns one action per state; a stochastic policy π(a|s) returns probabilities, which allows exploration and is required by policy-gradient methods. A policy can be a table or a neural network, derived from a value function or learned directly.\n\nPolicy-gradient methods such as REINFORCE, PPO and GRPO adjust the policy's parameters to raise the probability of actions that led to high reward. In RLHF the LLM itself is the policy: the state is the text so far and each action is the next token. A common pitfall is optimizing the policy so hard against an imperfect reward that it drifts into odd behavior; RLHF limits this with a KL penalty that keeps the policy close to a reference model.",
+  "f": "π_θ(a|s) = P(Aₜ = a | Sₜ = s; θ)",
+  "u": [
+   "Controlling robots and game-playing agents",
+   "Fine-tuning LLMs with PPO or GRPO",
+   "Choosing actions in recommendation and bidding systems"
+  ],
+  "x": "An ad-bidding team trains a neural policy that maps auction features to a bid multiplier, starting from logged data and then refining it with limited online exploration. Every new policy runs in shadow mode against the current one before it controls real spend.",
+  "c": "import torch\nfrom torch import nn\nfrom torch.distributions import Categorical\n\n# Stochastic policy network: state -> action probabilities\npolicy = nn.Sequential(nn.Linear(4, 64), nn.Tanh(), nn.Linear(64, 2))\nopt = torch.optim.Adam(policy.parameters(), lr=1e-2)\n\nstates = torch.randn(32, 4)            # batch of observed states\ndist = Categorical(logits=policy(states))\nactions = dist.sample()                 # sample, which also explores\nreturns = torch.randn(32)               # returns observed for these actions\n\n# REINFORCE: raise log-prob of actions with high return\nloss = -(dist.log_prob(actions) * (returns - returns.mean())).mean()\nopt.zero_grad(); loss.backward(); opt.step()"
+ },
+ "reward": {
+  "n": "Reward",
+  "d": "A reward is the scalar feedback signal an environment gives a reinforcement learning agent after an action.\n\nThe agent does not maximize single rewards but the return, the discounted sum of future rewards, so it can accept a small cost now for a larger gain later. The discount factor γ sets how much the future counts. Rewards can be dense, arriving every step, or sparse, arriving only at the end of an episode, which makes learning much harder.\n\nIn LLM training, rewards come from a learned reward model in RLHF, from AI feedback in RLAIF, or from automatic checks such as unit tests and exact answers in RL with verifiable rewards. The best-known pitfall is reward hacking: the agent finds a way to score high that the designer did not intend, such as a model producing longer answers because the reward model prefers length.",
+  "f": "Gₜ = Σₖ γᵏ · rₜ₊ₖ₊₁",
+  "u": [
+   "Designing objectives for RL agents and robots",
+   "Scoring LLM outputs with reward models",
+   "Unit-test rewards for code-generation training"
+  ],
+  "x": "A team training a code-generation model with reinforcement learning gives a reward of 1 only when the generated function passes hidden unit tests. They monitor for reward hacking by sampling outputs, after finding early policies that special-cased the visible test inputs.",
+  "c": "import numpy as np\n\nrewards = np.array([0.0, 0.0, -1.0, 0.0, 10.0])  # one episode\ngamma = 0.99\n\n# Discounted return G_t for every step, computed backwards\nreturns = np.zeros_like(rewards)\nG = 0.0\nfor t in reversed(range(len(rewards))):\n    G = rewards[t] + gamma * G\n    returns[t] = G\n\nprint(returns.round(3))  # early steps still see the final reward"
+ },
+ "stateaction": {
+  "n": "State & Action",
+  "d": "In reinforcement learning, the state is the information describing the environment's current situation, and an action is a choice the agent can make in that state.\n\nIn the core loop the agent observes state sₜ, takes action aₜ, and the environment returns a reward and the next state sₜ₊₁. States can be small vectors, such as cart position and velocity, or high-dimensional observations, such as images. Action spaces are discrete, such as moving left or right, or continuous, such as joint torques for a robot arm.\n\nThe choice of state and action representation decides which algorithms apply: Q-learning and DQN need discrete actions, while continuous control uses actor-critic methods. In RLHF the state is the prompt plus the text generated so far and the action is the next token. A common mistake is leaving information the reward depends on out of the state, which makes the problem non-Markov.",
+  "f": "sₜ —aₜ→ (rₜ₊₁, sₜ₊₁)",
+  "u": [
+   "Designing observation spaces for robot control",
+   "Defining discrete action sets for game agents",
+   "Representing text generation as state and action"
+  ],
+  "x": "A data-center team building an RL controller for cooling defines the state as recent temperatures, server load and outside weather, and the actions as setpoint changes within safe limits. Restricting actions to small, bounded adjustments lets operators approve the controller for live use.",
+  "c": "import gymnasium as gym\n\nenv = gym.make(\"CartPole-v1\")\nprint(env.observation_space)  # Box(4,): position, velocity, angle, angular velocity\nprint(env.action_space)       # Discrete(2): push left or right\n\nstate, info = env.reset(seed=0)\nfor t in range(5):\n    action = env.action_space.sample()      # random action\n    state, reward, terminated, truncated, info = env.step(action)\n    print(t, action, state.round(3), reward)\n    if terminated or truncated:\n        break"
+ },
+ "valuefn": {
+  "n": "Value Function",
+  "d": "A value function estimates the expected return an agent will collect from a state, or from a state-action pair, when it follows a given policy afterwards.\n\nThe state value V(s) answers how good it is to be in a state; the action value Q(s,a) answers how good it is to take action a there. Both satisfy the Bellman equation: a value equals the immediate reward plus the discounted value of the next state, so both can be learned from experience by bootstrapping.\n\nQ-learning and DQN learn Q directly and act greedily on it. Actor-critic methods such as PPO train a value network as a critic that lowers the variance of policy gradients through the advantage A = Q − V; GRPO drops this critic and uses group averages as the baseline. Do not confuse value with reward: reward is immediate, value is the expected long-term total.",
+  "f": "V^π(s) = E_π[rₜ₊₁ + γ·V^π(sₜ₊₁) | sₜ = s]",
+  "u": [
+   "Q-learning and DQN for discrete control",
+   "Critic networks in actor-critic and PPO",
+   "Position evaluation in game-playing agents"
+  ],
+  "x": "A game studio trains agents for playtesting with an actor-critic method, where a value network predicts the expected outcome of each game position. The value estimates are also logged to highlight levels where agents are confident of winning too early, which points designers to balance problems.",
+  "c": "import numpy as np\n\nn_states, n_actions = 5, 2\nQ = np.zeros((n_states, n_actions))\nalpha, gamma = 0.1, 0.9\n\ndef step(s, a):  # toy chain: action 1 moves right, reward at the end\n    s2 = min(s + 1, 4) if a == 1 else max(s - 1, 0)\n    return s2, float(s2 == 4)\n\nrng = np.random.default_rng(0)\nfor _ in range(2000):\n    s = rng.integers(4)\n    a = rng.integers(2)\n    s2, r = step(s, a)\n    # Q-learning update toward the Bellman target\n    Q[s, a] += alpha * (r + gamma * Q[s2].max() - Q[s, a])\n\nprint(\"V(s) = max_a Q:\", Q.max(axis=1).round(2))"
+ },
+ "explore": {
+  "n": "Exploration vs Exploitation",
+  "d": "Exploration versus exploitation is the trade-off between trying actions to learn more about them and choosing the action that currently looks best.\n\nAn agent that only exploits can lock onto a mediocre option; an agent that only explores wastes reward on options it already knows are poor. Standard strategies are ε-greedy, which picks a random action with small probability ε; upper confidence bound (UCB), which adds a bonus for uncertain options; and Thompson sampling, which samples from a posterior over each option's value.\n\nThe trade-off appears in reinforcement learning, multi-armed bandits for recommendations and ads, Bayesian optimization, and sampling temperature during RL fine-tuning of LLMs. A common pitfall in production recommender systems is pure exploitation: a model trained only on items it already chose to show learns nothing about the rest of the catalog, which reinforces popularity bias and slows recovery from cold start.",
+  "f": "ε-greedy: aₜ = random with prob. ε, else argmaxₐ Q(a)",
+  "u": [
+   "Multi-armed bandits for ads and recommendations",
+   "Exploration schedules in reinforcement learning",
+   "Acquisition functions in Bayesian optimization"
+  ],
+  "x": "A news app uses Thompson sampling to pick headlines for its home screen, so new stories get some impressions even before they have click history. The share of traffic spent exploring falls automatically as each story's click-through estimate becomes more certain.",
+  "c": "import numpy as np\n\nrng = np.random.default_rng(0)\ntrue_ctr = np.array([0.04, 0.05, 0.07])   # unknown to the agent\nclicks = np.ones(3); misses = np.ones(3)  # Beta(1,1) priors\n\nfor _ in range(10_000):\n    # Thompson sampling: sample a CTR per arm, play the best sample\n    arm = rng.beta(clicks, misses).argmax()\n    reward = rng.random() < true_ctr[arm]\n    clicks[arm] += reward\n    misses[arm] += 1 - reward\n\npulls = clicks + misses - 2\nprint(\"pulls per arm:\", pulls)  # most traffic ends on the best arm"
+ },
+ "inference": {
+  "n": "Inference",
+  "d": "Inference is running a trained model on new inputs to produce predictions, as opposed to training, which updates the model's weights.\n\nDuring inference the weights are fixed, no gradients are computed, and layers such as dropout and batch normalization switch to their evaluation behavior. It can run in batch mode, scoring a whole table overnight, or online, answering individual requests within a latency budget. For LLMs, inference splits into a prefill phase that processes the prompt in parallel and a decode phase that generates one token at a time using the KV cache.\n\nInference usually dominates the lifetime cost of a deployed model, which is why quantization, knowledge distillation, pruning, continuous batching and speculative decoding exist. A classic pitfall is leaving a PyTorch model in training mode, so dropout stays active; another is preprocessing inputs differently at inference time than during training, which silently degrades accuracy.",
+  "f": "ŷ = f_θ(x), with θ fixed",
+  "u": [
+   "Real-time scoring behind web APIs",
+   "Nightly batch predictions over large tables",
+   "Text generation in LLM chat products"
+  ],
+  "x": "A retailer scores its full customer base with a churn model in a nightly batch job, while a separate low-latency service runs a product recommender for every page view. Both reuse the exact preprocessing code from training, packaged with the model artifact.",
+  "c": "import torch\nfrom torch import nn\n\nmodel = nn.Sequential(nn.Linear(20, 64), nn.ReLU(),\n                      nn.Dropout(0.2), nn.Linear(64, 1))\nmodel.load_state_dict(torch.load(\"model.pt\"))\n\nmodel.eval()                   # dropout and batchnorm in inference mode\nx_new = torch.randn(128, 20)   # new, unlabeled inputs\n\nwith torch.inference_mode():   # no gradient tracking, less memory\n    probs = torch.sigmoid(model(x_new)).squeeze(-1)\n\nprint(probs[:5])"
+ },
+ "latency": {
+  "n": "Latency & Throughput",
+  "d": "Latency is the time one request takes from arrival to response; throughput is how many requests or tokens a system completes per unit of time.\n\nThe two are linked but often pull in opposite directions. Batching many requests together uses a GPU far more efficiently and raises throughput, but each request may wait for the batch to fill, which raises latency. Latency is reported as percentiles such as p50 and p99, because averages hide slow outliers that users notice. For LLMs, practitioners track time to first token and time per output token separately, and throughput in tokens per second.\n\nThese numbers drive choices about model size, quantization, hardware, batching policy, continuous batching, the KV cache and caching of results. A frequent mistake is benchmarking latency with a single request on an idle machine; under real concurrent load, queueing can multiply tail latency, so load tests must reproduce production traffic patterns.",
+  "f": "throughput ≈ concurrency / latency (Little's law)",
+  "u": [
+   "Setting p99 latency targets for model APIs",
+   "Choosing batch sizes for GPU serving",
+   "Capacity planning for LLM token throughput"
+  ],
+  "x": "A search team must return reranked results within a fixed p99 latency budget, so they distilled their cross-encoder into a smaller model and capped the batch wait time. Throughput is then scaled by adding replicas rather than by enlarging batches.",
+  "c": "import time\nimport numpy as np\nimport torch\n\nmodel = torch.nn.Linear(512, 512).eval()\n\ndef measure(batch_size, n_iter=50):\n    x = torch.randn(batch_size, 512)\n    times = []\n    with torch.inference_mode():\n        for _ in range(n_iter):\n            t0 = time.perf_counter(); model(x)\n            times.append(time.perf_counter() - t0)\n    lat = np.array(times) * 1000\n    return np.percentile(lat, 50), np.percentile(lat, 99), batch_size / (lat.mean() / 1000)\n\nfor bs in [1, 16, 128]:\n    p50, p99, tput = measure(bs)\n    print(f\"batch {bs:4d}: p50 {p50:.3f} ms, p99 {p99:.3f} ms, {tput:,.0f} items/s\")"
+ },
+ "gpu": {
+  "n": "GPU & VRAM",
+  "d": "A GPU is a processor with thousands of parallel cores built for the dense matrix multiplication at the heart of deep learning, and VRAM is its on-board memory.\n\nTraining and inference are fast on GPUs because a layer's operations can run in parallel, especially on tensor cores that accelerate FP16, BF16 and lower-precision formats. Everything a computation touches must fit in VRAM: model weights, activations, gradients and optimizer states during training, and the KV cache during LLM inference. Memory traffic is often the real bottleneck, which FlashAttention reduces for attention.\n\nVRAM capacity usually decides what is possible: model size, batch size and context length. Mixed precision, quantization, gradient checkpointing, LoRA and data, tensor or pipeline parallelism all exist to fit within it. A common misconception is that weights alone set memory needs; with Adam, training needs roughly four times the weight memory or more, before activations are counted.",
+  "f": "weights memory ≈ parameter count × bytes per parameter",
+  "u": [
+   "Sizing hardware for LLM training and serving",
+   "Choosing batch size and precision to fit memory",
+   "Diagnosing out-of-memory errors during training"
+  ],
+  "x": "A team planning to serve a 7-billion-parameter model computes that 16-bit weights need about 14 GB before the KV cache, so they choose 4-bit quantization to fit several concurrent long-context requests on one 24 GB GPU. They load-test at peak context length to confirm the KV cache does not overflow memory.",
+  "c": "import torch\n\nn_params = 7e9\nfor name, bytes_pp in [(\"fp32\", 4), (\"bf16\", 2), (\"int8\", 1), (\"int4\", 0.5)]:\n    print(f\"{name}: {n_params * bytes_pp / 1e9:.1f} GB of weights\")\n\nif torch.cuda.is_available():\n    props = torch.cuda.get_device_properties(0)\n    print(props.name, props.total_memory / 1e9, \"GB VRAM\")\n    x = torch.randn(8192, 8192, device=\"cuda\", dtype=torch.bfloat16)\n    y = x @ x                                     # runs on tensor cores\n    print(\"allocated:\", torch.cuda.memory_allocated() / 1e9, \"GB\")\n    print(\"peak:\", torch.cuda.max_memory_allocated() / 1e9, \"GB\")"
+ },
+ "serving": {
+  "n": "Model Serving",
+  "d": "Model serving is the infrastructure that loads a trained model and answers prediction requests from applications, usually over an HTTP or gRPC API.\n\nA serving system packages the model with its preprocessing, keeps it loaded in memory, batches requests, scales replicas up and down with traffic, and exposes health checks and metrics. General-purpose servers include TorchServe, Triton Inference Server and BentoML; LLM servers such as vLLM and TGI add continuous batching, PagedAttention and streaming of generated tokens. Deployment patterns such as canary releases, shadow traffic and A/B testing let a new version prove itself safely.\n\nServing connects training to model monitoring, latency and throughput targets, and the feature store, which must provide the same features online as offline. The best-known pitfall is training-serving skew: features computed differently in the serving path than in training, which degrades predictions without raising any error.",
+  "f": "",
+  "u": [
+   "REST endpoints for real-time model predictions",
+   "LLM APIs with streaming token responses",
+   "Canary and shadow releases of new model versions"
+  ],
+  "x": "A lending platform serves its credit model behind an internal API with two replicas per region and a canary that receives a small share of traffic for each new version. Requests and predictions are logged so monitoring can compare live feature distributions with the training data.",
+  "c": "# serve.py  (run with: uvicorn serve:app --port 8000)\nimport joblib\nimport pandas as pd\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\n\napp = FastAPI()\npipeline = joblib.load(\"model.joblib\")  # preprocessing + model, loaded once\n\nclass Applicant(BaseModel):\n    income: float\n    debt_ratio: float\n    age: int\n\n@app.post(\"/predict\")\ndef predict(a: Applicant):\n    X = pd.DataFrame([a.model_dump()])\n    p = float(pipeline.predict_proba(X)[0, 1])\n    return {\"default_probability\": p, \"model_version\": \"2024-06-01\"}"
+ },
+ "monitoring": {
+  "n": "Model Monitoring",
+  "d": "Model monitoring is the continuous tracking of a deployed model's inputs, outputs, performance and system health to detect when it stops working as intended.\n\nModels degrade silently: no exception is raised when customers change behavior or an upstream pipeline starts sending nulls. Monitoring therefore watches several layers: data quality such as missing rates and schema changes, input data drift measured with statistics such as the population stability index or KL divergence, prediction distribution drift, and, once labels arrive, real metrics such as ROC-AUC, precision or calibration.\n\nAlerts from monitoring trigger investigation, rollback or retraining. A common pitfall is relying only on drift alarms: drift in an unimportant feature may not matter, while performance can fall without visible drift when the relationship between features and label changes. Label delays also matter; fraud labels may arrive weeks later, so proxy metrics are needed in the meantime.",
+  "f": "PSI = Σᵢ (aᵢ − eᵢ) · ln(aᵢ / eᵢ)",
+  "u": [
+   "Detecting data drift in production features",
+   "Tracking live accuracy once labels arrive",
+   "Alerting on broken upstream data pipelines"
+  ],
+  "x": "A fraud team monitors daily population stability index for its top features, the share of transactions above the decision threshold and, with a delay, precision on confirmed cases. A sudden rise in one card network's missing values was traced to an upstream schema change before it hurt detection rates.",
+  "c": "import numpy as np\n\ndef psi(expected, actual, bins=10):\n    # Bin edges from the training (expected) distribution\n    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))\n    edges[0], edges[-1] = -np.inf, np.inf\n    e = np.histogram(expected, edges)[0] / len(expected)\n    a = np.histogram(actual, edges)[0] / len(actual)\n    e, a = np.clip(e, 1e-6, None), np.clip(a, 1e-6, None)\n    return np.sum((a - e) * np.log(a / e))\n\nrng = np.random.default_rng(0)\ntrain_income = rng.lognormal(10, 0.5, 50_000)\nlive_income = rng.lognormal(10.2, 0.5, 5_000)   # shifted in production\nprint(\"PSI:\", round(psi(train_income, live_income), 3))  # > 0.2 often flags drift"
+ },
+ "retraining": {
+  "n": "Retraining",
+  "d": "Retraining is training a deployed model again on newer data so that it keeps up with changes in the world it predicts.\n\nBecause of data drift and concept drift, a model's accuracy usually decays after deployment. Teams retrain on a fixed schedule, such as weekly or monthly, or when model monitoring detects degraded performance or drift. The new model is trained by the same ML pipeline, evaluated on recent held-out data with time-based validation, compared with the current production model, and promoted only if it is at least as good.\n\nRetraining choices include the training window, whether to weight recent data more, and whether to warm-start from the old model or train from scratch. A frequent pitfall is feedback contamination: the model's own decisions shape the new labels, for example a fraud model that blocks transactions so their true outcome is never observed. Another is automatic promotion without guardrails.",
+  "f": "",
+  "u": [
+   "Scheduled refreshes of demand forecasting models",
+   "Drift-triggered retraining of fraud models",
+   "Champion-challenger evaluation before promotion"
+  ],
+  "x": "A food-delivery company retrains its delivery-time model every week on the most recent months of orders. The candidate model must beat the current champion on the latest week of held-out orders and pass sanity checks on each city before it replaces the production version.",
+  "c": "import pandas as pd\nfrom lightgbm import LGBMRegressor\nfrom sklearn.metrics import mean_absolute_error\n\ndf = pd.read_parquet(\"orders.parquet\")\ncutoff = df[\"date\"].max() - pd.Timedelta(days=7)\ntrain = df[(df[\"date\"] > cutoff - pd.Timedelta(days=180)) & (df[\"date\"] <= cutoff)]\nholdout = df[df[\"date\"] > cutoff]              # most recent week\nfeatures = [\"distance_km\", \"hour\", \"items\", \"restaurant_load\"]\n\nchallenger = LGBMRegressor(n_estimators=500).fit(train[features], train[\"minutes\"])\nchampion = pd.read_pickle(\"champion.pkl\")\n\nmae_new = mean_absolute_error(holdout[\"minutes\"], challenger.predict(holdout[features]))\nmae_old = mean_absolute_error(holdout[\"minutes\"], champion.predict(holdout[features]))\nif mae_new < mae_old:\n    pd.to_pickle(challenger, \"champion.pkl\")    # promote"
+ },
+ "featurestore": {
+  "n": "Feature Store",
+  "d": "A feature store is a data system that computes, stores and serves machine-learning features so that training and production use the same definitions.\n\nIt usually has two parts: an offline store holding historical feature values for building training sets, and an online store, a low-latency key-value database, that returns the latest values for an entity such as a user or card at prediction time. Definitions are written once and shared across teams. Open-source Feast and managed platforms from cloud vendors follow this pattern.\n\nFeature stores address training-serving skew and support point-in-time correct joins: for each training example, they return feature values as they were at the label's timestamp, not later values. Getting this wrong is a quiet form of data leakage that inflates offline metrics. The main cost is operational: another system to run, keep fresh and monitor, which small teams with batch-only models may not need.",
+  "f": "",
+  "u": [
+   "Serving real-time user features to fraud models",
+   "Building point-in-time correct training sets",
+   "Sharing feature definitions across ML teams"
+  ],
+  "x": "A payments company computes rolling counts of transactions per card over several windows in a streaming job and writes them to the online store. The fraud model reads them in milliseconds at authorization time, and the identical definitions generate historical training data from the offline store.",
+  "c": "import pandas as pd\nfrom feast import FeatureStore\n\nstore = FeatureStore(repo_path=\"feature_repo\")\nfeatures = [\"card_stats:txn_count_1h\", \"card_stats:avg_amount_7d\"]\n\n# Offline: point-in-time correct features for each labeled event\nlabels = pd.read_parquet(\"labels.parquet\")   # card_id, event_timestamp, is_fraud\ntrain_df = store.get_historical_features(\n    entity_df=labels, features=features).to_df()\n\n# Online: latest values for one card at prediction time\nonline = store.get_online_features(\n    features=features, entity_rows=[{\"card_id\": 1234}]).to_dict()\nprint(online)"
+ },
+ "mlpipeline": {
+  "n": "ML Pipeline",
+  "d": "An ML pipeline is an automated, ordered sequence of steps that turns raw data into a trained, evaluated and deployable model.\n\nTypical steps are data ingestion, validation, feature engineering, splitting, training, hyperparameter tuning, evaluation and registration of the model with its metrics and lineage. Orchestrators such as Airflow, Kubeflow Pipelines and similar tools run the steps, cache their outputs and rerun them on a schedule or trigger. At a smaller scale, the term also refers to a scikit-learn Pipeline that chains preprocessing and a model into one object.\n\nPipelines make results reproducible and are what retraining runs on. The scikit-learn version also prevents a classic form of data leakage: fitting scalers, imputers or target encoders on the whole dataset before cross-validation lets test-fold information leak into training. Wrapping them in a Pipeline means every transformation is fit only on the training fold and saved together with the model for inference.",
+  "f": "",
+  "u": [
+   "Reproducible end-to-end model training runs",
+   "Leak-free preprocessing inside cross-validation",
+   "Scheduled retraining and model registration"
+  ],
+  "x": "An insurance analytics team runs a nightly pipeline that validates new policy data against a schema, rebuilds features, retrains a pricing model and registers it with its evaluation report. A failed validation step stops the run, so a malformed upstream file never reaches training.",
+  "c": "from sklearn.compose import ColumnTransformer\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import Pipeline, make_pipeline\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\n\nnum = [\"age\", \"income\"]; cat = [\"region\", \"plan\"]\npre = ColumnTransformer([\n    (\"num\", make_pipeline(SimpleImputer(strategy=\"median\"), StandardScaler()), num),\n    (\"cat\", OneHotEncoder(handle_unknown=\"ignore\"), cat),\n])\npipe = Pipeline([(\"pre\", pre), (\"clf\", LogisticRegression(max_iter=1000))])\n\n# Preprocessing is refit inside each fold: no leakage\nscores = cross_val_score(pipe, X, y, cv=5, scoring=\"roc_auc\")\npipe.fit(X, y)  # one object for training and inference"
+ },
+ "benchmark": {
+  "n": "Benchmark",
+  "d": "A benchmark is a standardized dataset, task and metric used to compare models or systems under the same conditions.\n\nWell-known ML benchmarks include ImageNet for image classification, GLUE and SuperGLUE for language understanding, and MMLU, GSM8K, HumanEval and SWE-bench for LLMs; MLPerf benchmarks hardware and software speed. A benchmark fixes the data split, the evaluation procedure and the scoring rule, so a reported number can be reproduced and compared.\n\nBenchmarks drive research progress and model selection, and LLM evaluation reports usually list several of them. Their pitfalls are well documented: test-set contamination, when benchmark items appear in training data; saturation, when top models all score near the ceiling; and overfitting to the benchmark through repeated tuning on it. Benchmark scores also often fail to transfer to a specific product, so teams build their own internal evaluation sets from real user tasks.",
+  "f": "",
+  "u": [
+   "Comparing LLMs on reasoning and coding tasks",
+   "Measuring inference hardware performance",
+   "Tracking model quality across releases"
+  ],
+  "x": "An enterprise evaluating three LLM vendors uses public benchmark scores only to shortlist, then builds an internal benchmark of several hundred real, anonymized support questions with graded reference answers. The final choice is based on that internal set together with latency and cost per request.",
+  "c": "from datasets import load_dataset\nimport re\n\nds = load_dataset(\"gsm8k\", \"main\", split=\"test\")  # fixed public test split\n\ndef extract(answer):\n    nums = re.findall(r\"-?\\d+\\.?\\d*\", answer.replace(\",\", \"\"))\n    return nums[-1] if nums else None\n\ndef my_model(question):  # placeholder for the model under test\n    return \"The answer is 42\"\n\nsubset = ds.select(range(100))\ncorrect = sum(extract(my_model(ex[\"question\"])) ==\n              ex[\"answer\"].split(\"####\")[-1].strip()\n              for ex in subset)\nprint(\"accuracy:\", correct / len(subset))"
+ },
+ "anomaly": {
+  "n": "Anomaly Detection",
+  "d": "Anomaly detection is the task of finding observations that differ markedly from the normal pattern of the data, such as rare events, faults or attacks.\n\nBecause anomalies are rare and often unlabeled, most methods learn what normal looks like and score how far each point departs from it. Common approaches are statistical rules on z-scores or the interquartile range, density and distance methods such as Local Outlier Factor (LOF) and DBSCAN, isolation forest, which isolates unusual points with few random splits, and reconstruction error from an autoencoder or PCA.\n\nAnomaly detection supports fraud detection, equipment monitoring, network security and model monitoring. Its central pitfall is the threshold: the score is unitless, the contamination rate is usually unknown, and a threshold set too low floods operators with false positives. Evaluation is hard without labels, so teams review flagged cases and track precision on that sample.",
+  "f": "",
+  "u": [
+   "Equipment failure detection from sensor data",
+   "Spotting suspicious logins and network traffic",
+   "Flagging data-quality issues in pipelines"
+  ],
+  "x": "A manufacturer scores vibration sensor readings from production machines with an isolation forest trained on weeks of normal operation. Alerts go to maintenance engineers, whose confirmations are collected to tune the threshold and later to train a supervised model.",
+  "c": "import numpy as np\nfrom sklearn.ensemble import IsolationForest\n\nrng = np.random.default_rng(0)\nnormal = rng.normal(0, 1, size=(1000, 3))           # normal operation\nfaults = rng.normal(4, 1, size=(10, 3))             # rare unusual readings\nX = np.vstack([normal, faults])\n\niso = IsolationForest(n_estimators=200, contamination=0.01, random_state=0)\niso.fit(normal)                                     # learn what normal looks like\n\nscores = -iso.score_samples(X)                      # higher = more anomalous\nflags = iso.predict(X) == -1\nprint(\"flagged:\", flags.sum(), \"of which true faults:\", flags[-10:].sum())"
+ },
+ "recsys": {
+  "n": "Recommender System",
+  "d": "A recommender system predicts which items, such as products, videos, songs or articles, a user is likely to want and shows a ranked selection of them.\n\nLarge systems usually work in stages. Candidate generation retrieves a few hundred items from millions, using collaborative filtering, two-tower models that embed users and items in the same vector space, and approximate nearest-neighbor vector search. A ranking model, often gradient boosting or a deep network, then scores candidates with rich features to predict click-through rate (CTR), watch time or purchase.\n\nOffline quality is measured with ranking metrics such as NDCG and recall at k, but A/B testing on live users is the decisive test. Key pitfalls are the cold start problem for new users and items, popularity bias, and feedback loops, where the system learns only from items it already chose to show, which narrows recommendations over time unless exploration is added.",
+  "f": "score(u, i) = f(user features, item features, context)",
+  "u": [
+   "Product recommendations in online stores",
+   "Personalized video and music feeds",
+   "Ranking news articles and job postings"
+  ],
+  "x": "A streaming service retrieves candidates with a two-tower embedding model and an ANN index, then ranks them with a gradient-boosted model that predicts the probability of watching beyond a few minutes. New releases receive a small exploration boost so they collect feedback despite having no viewing history.",
+  "c": "import numpy as np\n\nrng = np.random.default_rng(0)\nn_users, n_items, dim = 1000, 5000, 32\nuser_emb = rng.normal(size=(n_users, dim))   # e.g. from a two-tower model\nitem_emb = rng.normal(size=(n_items, dim))\nseen = {7: {12, 450, 3001}}                  # items user 7 already used\n\ndef recommend(user, k=10):\n    scores = item_emb @ user_emb[user]       # dot-product relevance\n    scores[list(seen.get(user, ()))] = -np.inf\n    top = np.argpartition(-scores, k)[:k]    # candidate retrieval\n    return top[np.argsort(-scores[top])]     # final ranking\n\nprint(recommend(7))"
+ },
+ "ctr": {
+  "n": "Click-Through Rate (CTR)",
+  "d": "Click-through rate is the fraction of impressions, meaning times an item was shown, that resulted in a click.\n\nIt measures how engaging ads, search results or recommendations are. As a modeling target, predicted CTR is the probability that a specific user clicks a specific item in a specific context, learned by a binary classifier from impression logs: logistic regression, factorization machines, gradient boosting or deep models with embedding layers. In ad auctions the predicted CTR is multiplied by the bid, so the probability must be well calibrated, not just correctly ranked; log loss and probability calibration are watched alongside ROC-AUC.\n\nCTR data is highly imbalanced, often with clicks far below one percent of impressions. A common pitfall is position bias: items shown at the top get more clicks regardless of relevance, so a model trained naively on logs learns where items were placed rather than what users prefer.",
+  "f": "CTR = clicks / impressions",
+  "u": [
+   "Ranking ads in real-time auctions",
+   "Optimizing search result ordering",
+   "Comparing recommendation variants in A/B tests"
+  ],
+  "x": "An ad platform predicts CTR for every eligible ad within milliseconds and ranks ads by bid times predicted CTR. Because downsampling non-clicks distorts probabilities, the team corrects the model's predictions for the sampling rate and monitors calibration by ad category every day.",
+  "c": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import log_loss, roc_auc_score\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(200_000, 10))\np = 1 / (1 + np.exp(-(X[:, 0] - 5)))        # rare clicks\nclicks = rng.random(len(p)) < p\nprint(\"empirical CTR:\", clicks.mean())\n\nmodel = LogisticRegression(max_iter=1000).fit(X[:150_000], clicks[:150_000])\npred = model.predict_proba(X[150_000:])[:, 1]\ny = clicks[150_000:]\nprint(\"AUC:\", roc_auc_score(y, pred), \"log loss:\", log_loss(y, pred))\nprint(\"mean predicted vs actual:\", pred.mean(), y.mean())  # calibration check"
+ },
+ "coldstart": {
+  "n": "Cold Start",
+  "d": "Cold start is the problem of making good predictions for new users, new items or a new system that have little or no interaction history.\n\nIt hits hardest in recommender systems built on collaborative filtering, which learn purely from past interactions: a product nobody has bought yet has no learned embedding, and a new user has no history to match. Common remedies are content-based features such as item text, images and category, embedded with a pretrained model; demographic or context features for users; popularity-based fallbacks; onboarding questions; and explicit exploration that shows new items to some users to gather feedback quickly.\n\nHybrid models that combine collaborative signals with content features are the standard production answer. A frequent pitfall is evaluating only on users and items with long histories, which hides how poorly the system treats newcomers; cold-start performance should be reported as a separate slice.",
+  "f": "",
+  "u": [
+   "Recommending newly listed products",
+   "Personalizing first sessions of new users",
+   "Launching a recommender without interaction data"
+  ],
+  "x": "An online marketplace embeds the title and photos of each new listing with a pretrained text-image model and places it near similar established items in the recommendation index. Once the listing collects enough interactions, its collaborative embedding takes over from the content embedding.",
+  "c": "import numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nencoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\nold_titles = [\"steel water bottle 1l\", \"yoga mat non-slip\", \"running shoes men\"]\nold_cf_emb = np.random.default_rng(0).normal(size=(3, 32))  # from interactions\n\n# New item: no interactions, but it has a title\nnew_title = \"insulated steel bottle 750ml\"\nsims = encoder.encode([new_title]) @ encoder.encode(old_titles).T\nweights = np.exp(sims[0] * 10); weights /= weights.sum()\n\n# Borrow a collaborative embedding from content-similar items\nnew_cf_emb = weights @ old_cf_emb\nprint(\"nearest:\", old_titles[sims.argmax()])"
+ },
+ "collabfilter": {
+  "n": "Collaborative Filtering",
+  "d": "Collaborative filtering recommends items to a user based on the preferences of other users with similar behavior, using only the interaction data and no item content.\n\nNeighborhood methods compute similarity between users or between items, usually cosine similarity over interaction vectors, and recommend items liked by similar users or similar to items the user liked. Matrix factorization methods instead approximate the sparse user-item matrix as the product of low-rank user and item embedding matrices, trained with alternating least squares or gradient descent.\n\nCollaborative filtering powers recommender systems for products, movies and music, and its embeddings often feed candidate retrieval. Its main weaknesses are the cold start problem, sparse data and popularity bias. A subtle pitfall is treating implicit feedback such as clicks or views like explicit ratings: a missing interaction does not mean dislike, so implicit methods weight observed and unobserved entries differently.",
+  "f": "r̂ᵤᵢ = pᵤ · qᵢ",
+  "u": [
+   "Product recommendations from purchase history",
+   "Similar-item lists such as frequently bought together",
+   "Retrieving candidates for ranking models"
+  ],
+  "x": "A music service factorizes its listening matrix with implicit alternating least squares to produce user and track embeddings each night. These embeddings feed both personal playlists and a similar-tracks feature, while brand-new tracks rely on audio features until they gather plays.",
+  "c": "import torch\nfrom torch import nn\n\nn_users, n_items, k = 1000, 500, 16\nusers = torch.randint(0, n_users, (20_000,))\nitems = torch.randint(0, n_items, (20_000,))\nratings = torch.randint(1, 6, (20_000,)).float()\n\nP = nn.Embedding(n_users, k); Q = nn.Embedding(n_items, k)  # latent factors\nopt = torch.optim.Adam(list(P.parameters()) + list(Q.parameters()), lr=0.01)\n\nfor epoch in range(50):\n    pred = (P(users) * Q(items)).sum(-1)          # r̂ = p_u · q_i\n    loss = ((pred - ratings) ** 2).mean() + 1e-4 * (P.weight.norm() + Q.weight.norm())\n    opt.zero_grad(); loss.backward(); opt.step()\n\nscores = Q.weight @ P.weight[42]                   # scores for user 42\nprint(scores.topk(5).indices)"
+ },
+ "fraud": {
+  "n": "Fraud Detection",
+  "d": "Fraud detection uses machine learning to identify transactions, accounts or claims that are likely deceptive, usually in real time, before losses occur.\n\nIt is typically framed as binary classification on heavily imbalanced data, often with fraud far below one percent of events. Gradient boosting models such as XGBoost and LightGBM on engineered features, such as transaction velocity, amount relative to the user's history, device and location changes, are the industry workhorse, complemented by anomaly detection for new patterns and graph neural networks for fraud rings. Scores feed rules that approve, block or send to review.\n\nEvaluation uses precision, recall, PR-AUC and cost-based decision thresholds rather than accuracy, which is meaningless at such low base rates. Pitfalls include label delay, because chargebacks arrive weeks later; adversarial drift, as fraudsters adapt; and data leakage from features computed after the transaction, which look predictive offline but are not available at decision time.",
+  "f": "",
+  "u": [
+   "Real-time card transaction scoring",
+   "Insurance claim fraud triage",
+   "Detecting fake accounts and promotion abuse"
+  ],
+  "x": "A card issuer scores every authorization with a gradient-boosted model fed by real-time velocity features from a feature store. Scores above one threshold are declined and a middle band triggers step-up authentication, with thresholds set from the cost of fraud versus customer friction.",
+  "c": "import numpy as np\nfrom lightgbm import LGBMClassifier\nfrom sklearn.metrics import average_precision_score, precision_score, recall_score\n\n# X_train, y_train, X_test, y_test split by time (train before test)\nclf = LGBMClassifier(n_estimators=400, learning_rate=0.05,\n                     scale_pos_weight=50)       # upweight rare fraud\nclf.fit(X_train, y_train)\n\np = clf.predict_proba(X_test)[:, 1]\nprint(\"PR-AUC:\", average_precision_score(y_test, p))\n\n# Pick the threshold by business cost, not 0.5\ncost_fn, cost_fp = 200, 5\nths = np.linspace(0.01, 0.99, 99)\ncosts = [cost_fn * ((p < t) & (y_test == 1)).sum() + cost_fp * ((p >= t) & (y_test == 0)).sum() for t in ths]\nt = ths[int(np.argmin(costs))]\nprint(t, precision_score(y_test, p >= t), recall_score(y_test, p >= t))"
+ },
+ "churn": {
+  "n": "Churn Prediction",
+  "d": "Churn prediction estimates which customers are likely to stop using a product or cancel a subscription within a coming period.\n\nIt is usually a binary classification problem built from a snapshot design: features are computed from each customer's history up to a cutoff date, such as usage trends, support tickets, payment failures and tenure, and the label records whether the customer churned in the following window. Logistic regression and gradient boosting are common, and SHAP values explain which factors drive each customer's risk.\n\nScores rank customers for retention campaigns, so precision among the top-ranked customers and calibration often matter more than overall accuracy. A key pitfall is data leakage through features recorded after the cutoff,. Another is acting on risk alone: the customers most likely to churn are not necessarily the ones a discount will keep, which is why mature teams move to uplift modeling and A/B testing of interventions.",
+  "f": "",
+  "u": [
+   "Targeting retention offers for subscription services",
+   "Prioritizing account managers' outreach",
+   "Forecasting recurring revenue at risk"
+  ],
+  "x": "A telecom operator scores all postpaid customers monthly with a gradient-boosted churn model built on a fixed cutoff date and a 60-day label window. The retention team contacts the top-ranked customers, and a randomized holdout group measures whether the outreach actually reduces churn.",
+  "c": "import pandas as pd\nfrom lightgbm import LGBMClassifier\nfrom sklearn.metrics import roc_auc_score\n\ncutoff = pd.Timestamp(\"2024-03-01\")\nevents = pd.read_parquet(\"usage_events.parquet\")\nhist = events[events[\"ts\"] < cutoff]          # only data before the cutoff\nfeats = hist.groupby(\"customer_id\").agg(\n    sessions=(\"ts\", \"count\"), minutes=(\"minutes\", \"sum\"),\n    tickets=(\"is_ticket\", \"sum\"))\n\nlabels = pd.read_parquet(\"cancellations.parquet\")\nchurned = labels[(labels[\"date\"] >= cutoff) &\n                 (labels[\"date\"] < cutoff + pd.Timedelta(days=60))][\"customer_id\"]\nfeats[\"churn\"] = feats.index.isin(churned).astype(int)\n\nmodel = LGBMClassifier().fit(feats.drop(columns=\"churn\"), feats[\"churn\"])"
+ },
+ "demandfc": {
+  "n": "Demand Forecasting",
+  "d": "Demand forecasting predicts how much of a product or service will be needed in future periods, such as units per store per day.\n\nForecasts come from historical sales combined with trend, seasonality, holidays, prices, promotions and weather. Methods range from exponential smoothing, ARIMA and Prophet for individual series to global models such as gradient boosting with lag features and rolling window features, and deep models such as N-BEATS, the Temporal Fusion Transformer and time-series foundation models that learn across thousands of series. Quantile forecasts give the ranges inventory decisions need.\n\nValidation must respect time order, using time-based validation with a horizon matching the business decision. A common pitfall is that recorded sales are not true demand: when an item is out of stock, sales drop to zero even though customers wanted it, so models trained on raw sales underestimate demand unless stockouts are flagged or corrected.",
+  "f": "ŷₜ₊ₕ = f(yₜ, yₜ₋₁, …, calendar, price, promotions)",
+  "u": [
+   "Store-level inventory replenishment and ordering",
+   "Staffing call centers and warehouses",
+   "Energy load and ride-demand planning"
+  ],
+  "x": "A grocery chain trains one global gradient-boosted model across all store and product combinations, using lagged sales, promotions and holiday flags, and predicts several quantiles for the next two weeks. Days with stockouts are excluded from training targets so the model does not learn artificially low demand.",
+  "c": "import pandas as pd\nfrom lightgbm import LGBMRegressor\n\ndf = pd.read_parquet(\"sales.parquet\").sort_values([\"sku\", \"date\"])\ng = df.groupby(\"sku\")[\"units\"]\ndf[\"lag_7\"] = g.shift(7)                       # same weekday last week\ndf[\"roll_28\"] = g.transform(lambda s: s.shift(7).rolling(28).mean())\ndf[\"dow\"] = df[\"date\"].dt.dayofweek\ndf = df[~df[\"stockout\"]].dropna()              # sales != demand on stockout days\n\nfeatures = [\"lag_7\", \"roll_28\", \"dow\", \"price\", \"promo\"]\ntrain = df[df[\"date\"] < \"2024-05-01\"]\ntest = df[df[\"date\"] >= \"2024-05-01\"]          # time-based split\n\n# 90th-percentile forecast for safety stock\nq90 = LGBMRegressor(objective=\"quantile\", alpha=0.9).fit(train[features], train[\"units\"])\ntest = test.assign(p90=q90.predict(test[features]))"
+ },
+ "creditscore": {
+  "n": "Credit Scoring",
+  "d": "Credit scoring estimates the probability that a borrower will default on a loan, which lenders use to approve, price and limit credit.\n\nThe classic tool is a scorecard: numeric features are grouped with binning, each bin is encoded by its weight of evidence, and a logistic regression turns them into points that add up to a score. Modern lenders also use gradient boosting on bureau and application data, often with monotonic constraints so that a higher debt ratio never lowers predicted risk.\n\nCredit models are tightly regulated. Lenders must explain adverse decisions, which is why interpretable scorecards and SHAP explanations are common, and test for unfair treatment of protected groups. Key evaluation tools are ROC-AUC or the Gini coefficient (2·AUC − 1), calibration and stability over time. A known pitfall is reject inference: the model learns only from applicants who were approved, so outcomes for rejected applicants are never observed.",
+  "f": "log(p / (1 − p)) = β₀ + Σⱼ βⱼ·WoEⱼ(xⱼ)",
+  "u": [
+   "Approving and pricing consumer loans",
+   "Setting credit card limits",
+   "Interpretable scorecards for regulated lending"
+  ],
+  "x": "A consumer lender scores applications with a gradient-boosted model under monotonic constraints and maps the probabilities to a familiar points scale. Each declined applicant receives the top reasons from the model's explanations, and score stability is reviewed monthly against the development sample.",
+  "c": "import numpy as np\nfrom lightgbm import LGBMClassifier\nfrom sklearn.metrics import roc_auc_score\n\n# features: income, debt_ratio, late_payments, credit_age_years\nclf = LGBMClassifier(\n    n_estimators=300, learning_rate=0.05,\n    monotone_constraints=[-1, 1, 1, -1])   # risk must move in sensible directions\nclf.fit(X_train, y_train)                   # y = 1 if defaulted\n\npd_hat = clf.predict_proba(X_test)[:, 1]\nauc = roc_auc_score(y_test, pd_hat)\nprint(\"AUC:\", auc, \"Gini:\", 2 * auc - 1)\n\n# Map default probability to points: +20 points doubles the odds of repaying\nodds = (1 - pd_hat) / pd_hat\nscore = 600 + 20 / np.log(2) * np.log(odds / 50)"
+ }
+}

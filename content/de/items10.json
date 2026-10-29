@@ -1,0 +1,372 @@
+{
+ "token": {
+  "n": "Token",
+  "d": "Ein Token ist die Grundeinheit von Text, die ein Sprachmodell liest und schreibt, meist ein Wort, ein Wortteil, ein Satzzeichen oder ein Byte.\n\nEin Tokenizer zerlegt Rohtext in Tokens und ordnet jedem eine ganzzahlige ID aus einem festen Vokabular zu; das Modell sieht nie Zeichen, sondern nur diese IDs, die eine Embedding-Schicht in Vektoren umwandelt. Subword-Verfahren wie Byte-Pair Encoding (BPE) lassen häufige Wörter ganz und zerlegen seltene Wörter in kleinere Teile, sodass sich jede Zeichenkette darstellen lässt.\n\nTokens sind die Einheit fast aller Größen in der LLM-Praxis: Kontextfenster, Next-Token-Prediction, API-Preise, Generierungsgeschwindigkeit und KV-Cache werden alle in Tokens gemessen. Ein verbreiteter Irrtum ist, dass ein Token einem Wort entspricht. Englischer Text kommt im Schnitt auf etwa drei Viertel eines Wortes pro Token, während Code, Zahlen und viele nicht englische Sprachen spürbar mehr Tokens brauchen.",
+  "u": [
+   "Abschätzen von LLM-API-Kosten und Prompt-Länge",
+   "Text so budgetieren, dass er ins Kontextfenster passt",
+   "Generierungsgeschwindigkeit in Tokens pro Sekunde messen"
+  ],
+  "x": "Ein Kundensupport-Team zählt die Tokens jedes eingehenden Tickets, bevor es an ein LLM geht, und kürzt lange E-Mail-Verläufe, damit die Anfrage unter dem Kontextlimit des Modells bleibt. Dieselben Token-Zahlen fließen in das monatliche Kosten-Dashboard ein, weil der Anbieter pro Eingabe- und Ausgabe-Token abrechnet."
+ },
+ "vocab": {
+  "n": "Vokabular",
+  "d": "Das Vokabular ist die feste Menge unterschiedlicher Tokens, die ein Tokenizer und ein Modell kennen, wobei jedem Token eine ganzzahlige ID zugeordnet ist.\n\nEs wird einmalig vor dem Pretraining von einem Algorithmus wie Byte-Pair Encoding (BPE), WordPiece oder Unigram aufgebaut, der häufige Zeichenfolgen aus einem Trainingskorpus auswählt, bis eine Zielgröße erreicht ist. Typische LLM-Vokabulare umfassen etwa 30.000 bis über 200.000 Einträge, dazu Spezial-Tokens für Padding sowie Sequenzanfang und -ende.\n\nDie Größe ist ein Kompromiss. Ein größeres Vokabular macht Sequenzen kürzer, was Kontext und Rechenaufwand spart, vergrößert aber die Embedding-Schicht und den Softmax-Ausgang, und seltene Einträge erhalten nur wenige Trainingsupdates. Das Vokabular ist an das Modell gebunden: Ein vortrainiertes Modell kann den Tokenizer nicht einfach austauschen, und neue Tokens für das Fine-Tuning erfordern, die Embedding-Matrix zu vergrößern und die neuen Zeilen zu trainieren. Auch klassische NLP-Modelle auf Basis von Bag of Words oder TF-IDF beruhen auf einem Vokabular.",
+  "u": [
+   "Tokenizer-Größe vor dem Pretraining eines LLM wählen",
+   "Domänen-Tokens vor dem Fine-Tuning eines Modells hinzufügen",
+   "Features in Bag-of-Words-Textklassifikatoren begrenzen"
+  ],
+  "x": "Ein Legal-Tech-Team, das ein offenes Modell feintunt, fügt einige hundert Spezial-Tokens für Dokument-Markup und Klausel-Tags hinzu. Es vergrößert die Embedding-Matrix, initialisiert die neuen Zeilen mit dem Mittelwert der vorhandenen Embeddings und prüft vor Trainingsbeginn, dass tokenisierte Vertragstexte kürzer werden."
+ },
+ "contextwin": {
+  "n": "Kontextfenster",
+  "d": "Das Kontextfenster ist die maximale Anzahl von Tokens, die ein Sprachmodell gleichzeitig berücksichtigen kann, einschließlich des Prompts und der von ihm generierten Tokens.\n\nIn einem Transformer achtet jedes Token auf die anderen innerhalb dieses Fensters, alles außerhalb bleibt für das Modell unsichtbar. Die Grenze stammt aus dem Training: Positionskodierungen wie RoPE werden bis zu einer bestimmten Länge gelernt, und der Aufwand der Self-Attention wächst quadratisch mit der Sequenzlänge, während der Speicherbedarf des KV-Cache linear wächst. Verfahren zur Erweiterung des Kontextfensters und FlashAttention schieben die Grenze auf Hunderttausende Tokens.\n\nDas Fenster prägt das Systemdesign: Retrieval-Augmented Generation (RAG), Chunking, das Zusammenfassen alter Chat-Runden und Kürzen dienen alle dazu, Informationen hineinzubekommen. Eine häufige Falle ist die Annahme, dass ein Modell sein ganzes Fenster gleich gut nutzt. Viele Modelle rufen Fakten aus der Mitte einer langen Eingabe weniger zuverlässig ab als Fakten am Anfang oder Ende.",
+  "u": [
+   "Größe abgerufener Chunks für RAG-Prompts festlegen",
+   "Lange Chat-Verläufe kürzen oder zusammenfassen",
+   "Modell für die Analyse langer Dokumente auswählen"
+  ],
+  "x": "Ein Produkt zur Dokumentenprüfung teilt Verträge, die das Kontextfenster des Modells überschreiten, in überlappende Abschnitte, extrahiert aus jedem Abschnitt die Pflichten und führt die Ergebnisse zusammen. Kürzere Verträge sendet es als Volltext in einer einzigen Anfrage, was nach Erfahrung des Teams konsistentere Querverweise liefert."
+ },
+ "prompt": {
+  "n": "Prompt",
+  "d": "Ein Prompt ist der Eingabetext, der einem Sprachmodell gegeben wird, um zu steuern, was es als Nächstes generiert.\n\nDa ein Decoder-only-Modell eine Sequenz nur fortsetzt, definiert der Prompt die Aufgabe: Er kann Anweisungen, eine System-Nachricht, Beispiele, abgerufene Dokumente, Tool-Ergebnisse und den bisherigen Gesprächsverlauf enthalten. Chat-Modelle erhalten den Prompt in einer strukturierten Vorlage mit Rollenmarkierungen, die der Tokenizer in Spezial-Tokens umsetzt. Das Modell sagt dann die Fortsetzung Token für Token vorher.\n\nPrompts sind die wichtigste Stellschraube in Prompt Engineering, In-Context Learning, Chain-of-Thought und Retrieval-Augmented Generation (RAG), und in Produktivsystemen werden sie wie Code versioniert und evaluiert. Ein verbreiteter Irrtum ist, dass ein Prompt dem Modell dauerhaft etwas beibringt. An den Gewichten ändert sich nichts; die Anweisungen gelten nur innerhalb dieser Anfrage, und jedes Token des Prompts zählt gegen das Kontextfenster und die Kosten.",
+  "u": [
+   "Chat-Modelle mit System- und Nutzernachrichten anweisen",
+   "Few-Shot-Beispiele für In-Context Learning bereitstellen",
+   "Abgerufene Dokumente in RAG-Anfragen einfügen"
+  ],
+  "x": "Eine Marketingplattform verwaltet ihre Prompts für Produktbeschreibungen in der Versionskontrolle, jeweils mit einer System-Nachricht, zwei ausgearbeiteten Beispielen und Platzhaltern für Produktattribute. Jede Prompt-Änderung läuft vor dem Release gegen ein festes Evaluationsset, weil schon kleine Formulierungsänderungen Ton und Länge über Tausende generierter Seiten verschieben können."
+ },
+ "finetuning": {
+  "n": "Fine-Tuning",
+  "d": "Fine-Tuning ist das Weitertrainieren eines vortrainierten Modells auf einem kleineren, aufgabenspezifischen Datensatz, damit es sich an eine neue Aufgabe, Domäne oder einen neuen Stil anpasst.\n\nDas Modell startet mit den im Pretraining gelernten Gewichten, die bereits allgemeine Features kodieren, und der Gradientenabstieg aktualisiert sie mit einer niedrigeren Lernrate auf den neuen Daten. Volles Fine-Tuning aktualisiert jeden Parameter; parametereffiziente Verfahren wie LoRA, QLoRA und Adapter trainieren stattdessen eine kleine Zahl zusätzlicher Gewichte. Bei LLMs folgt auf Supervised Fine-Tuning (SFT) mit Anweisungs-Antwort-Paaren meist ein Präferenzverfahren wie RLHF oder DPO.\n\nFine-Tuning ist der Standardweg vom Foundation Model zum Produktivmodell, in der Bildverarbeitung ebenso wie bei Sprache. Die Hauptfallen sind Überanpassung auf kleinen Datensätzen und katastrophales Vergessen, bei dem das Modell zuvor vorhandene allgemeine Fähigkeiten verliert. Fine-Tuning eignet sich zudem schlecht, um sich häufig ändernde Fakten hinzuzufügen; Retrieval ist meist günstiger und leichter aktuell zu halten.",
+  "u": [
+   "LLMs an Tonfall und Format eines Unternehmens anpassen",
+   "Bildklassifikatoren auf ImageNet-Backbones trainieren",
+   "Modelle auf medizinische oder juristische Texte spezialisieren"
+  ],
+  "x": "Eine Bank feintunt ein LLM mit offenen Gewichten per LoRA auf einigen tausend geprüften Beispielen von Beschwerdezusammenfassungen, damit die Ausgaben ihrer regulatorischen Vorlage folgen. Das Team behält einen Benchmark für allgemeine Fähigkeiten in seiner Evaluationssuite, um nach jedem Trainingslauf katastrophales Vergessen zu erkennen."
+ },
+ "foundation": {
+  "n": "Foundation Model",
+  "d": "Ein Foundation Model ist ein großes Modell, das in großem Maßstab auf breit gefächerten Daten vortrainiert wurde und sich an viele nachgelagerte Aufgaben anpassen lässt.\n\nDer Begriff umfasst LLMs wie GPT und Llama, Encoder wie BERT, Bild-Text-Modelle wie CLIP sowie Zeitreihen-Foundation-Models. Sie werden mit selbstüberwachten Zielen wie Next-Token-Prediction oder Masked Language Modeling auf riesigen ungelabelten Korpora trainiert, sodass das teure Lernen nur einmal stattfindet. Nutzer erschließen dann neue Aufgaben über Prompting, In-Context Learning, Fine-Tuning, LoRA oder indem sie die Embeddings des Modells als Features verwenden.\n\nFoundation Models haben die ML-Praxis vom Training eines Modells pro Aufgabe zur Anpassung eines gemeinsamen Modells verschoben, wodurch kleine gelabelte Datensätze weit nützlicher werden. Jede Anwendung erbt die Schwächen des Basismodells: Verzerrungen in seinen Trainingsdaten, Wissen, das an einem Stichtag endet, und Fehlermuster wie Halluzination. Das Basismodell auf der tatsächlichen Zielaufgabe zu evaluieren, bleibt notwendig.",
+  "u": [
+   "Ausgangspunkt für das Fine-Tuning von Aufgabenmodellen",
+   "Zero-Shot-Klassifikation mit Prompts",
+   "Embeddings für Suche und Clustering erzeugen"
+  ],
+  "x": "Ein Versicherer baut Schadentriage, Dokumentenextraktion und das Entwerfen von Kundenantworten auf einem einzigen lizenzierten Foundation Model auf statt auf drei separat trainierten Systemen. Jeder Anwendungsfall hat eigene Prompts, ein eigenes Evaluationsset und bei Bedarf einen kleinen LoRA-Adapter, während das gemeinsame Basismodell nach einem festen Zeitplan aktualisiert wird."
+ },
+ "perplexity": {
+  "n": "Perplexity",
+  "d": "Perplexity misst, wie gut ein Sprachmodell einen Text vorhersagt: Sie ist die Exponentialfunktion der mittleren negativen Log-Wahrscheinlichkeit pro Token.\n\nAnschaulich bedeutet eine Perplexity von 20, dass das Modell im Schnitt so unsicher ist, als würde es bei jedem Schritt gleichverteilt zwischen 20 Tokens wählen. Niedriger ist besser, ein perfektes Modell erreicht 1. Da sie die Exponentialfunktion des Kreuzentropieverlusts ist, bewegt sich die Perplexity exakt mit dem Trainingsverlust der Next-Token-Prediction.\n\nPerplexity auf zurückgehaltenem Text ist die Standardmetrik für Pretraining-Läufe, Studien zu Scaling Laws, Prüfungen nach der Quantisierung und Experimente zur Domänenanpassung. Die Hauptfalle ist der Vergleich zwischen Modellen mit unterschiedlichen Tokenizern oder Vokabularen: Die Perplexity pro Token hängt davon ab, wie der Text zerlegt wird, daher sind die Zahlen nicht vergleichbar. Eine niedrige Perplexity garantiert auch nicht, dass ein Modell Anweisungen befolgt, gut schlussfolgert oder Halluzinationen vermeidet; deshalb braucht es weiterhin aufgabenbezogene Benchmarks.",
+  "u": [
+   "Fortschritt beim Pretraining von Sprachmodellen verfolgen",
+   "Qualitätsverlust nach der Quantisierung prüfen",
+   "Domänenangepasste Modelle auf zurückgehaltenem Text vergleichen"
+  ],
+  "x": "Ein Team, das ein LLM für günstigeres Serving auf 4 Bit quantisiert, misst die Perplexity vor und nach der Quantisierung auf demselben zurückgehaltenen Korpus und mit demselben Tokenizer. Ein leichter Anstieg wird akzeptiert, ein großer Sprung auf einem Datensegment schickt das Team dagegen zurück, um einen anderen Kalibrierungsdatensatz zu testen."
+ },
+ "logprob": {
+  "n": "Log-Wahrscheinlichkeit",
+  "d": "Eine Log-Wahrscheinlichkeit ist der natürliche Logarithmus einer Wahrscheinlichkeit; ihre Werte liegen zwischen minus unendlich und 0, wobei 0 Gewissheit bedeutet.\n\nModelle rechnen mit Log-Wahrscheinlichkeiten, weil Produkte vieler kleiner Wahrscheinlichkeiten in Gleitkommaarithmetik unterlaufen, während sich ihre Logarithmen einfach addieren. Ein Sprachmodell gibt Logits aus; Log-Softmax liefert daraus die Log-Wahrscheinlichkeit jedes Tokens im Vokabular, und die Log-Wahrscheinlichkeit einer ganzen Sequenz ist die Summe über ihre Tokens.\n\nLog-Wahrscheinlichkeiten sind im ML allgegenwärtig: Die Maximum-Likelihood-Schätzung maximiert sie, Kreuzentropieverlust und Log-Loss sind ihr negativer Mittelwert, die Perplexity potenziert ihren Durchschnitt, Beam Search ordnet Hypothesen nach ihrer Summe, und PPO und DPO vergleichen sie zwischen einer Policy und einem Referenzmodell. LLM-APIs liefern Token-Log-Wahrscheinlichkeiten auch zur Konfidenzbewertung. Eine häufige Falle ist der Vergleich roher Sequenz-Log-Wahrscheinlichkeiten unterschiedlicher Länge; längere Sequenzen schneiden immer schlechter ab, daher ist meist eine Längennormalisierung nötig.",
+  "u": [
+   "Kandidatenantworten nach Modell-Likelihood bewerten",
+   "Verluste beim Maximum-Likelihood-Training berechnen",
+   "LLM-Ausgaben mit geringer Konfidenz zur Prüfung markieren"
+  ],
+  "x": "Ein Dienst zur Informationsextraktion fragt bei der LLM-API zu jedem extrahierten Feld die Token-Log-Wahrscheinlichkeiten ab. Felder, deren mittlere Log-Wahrscheinlichkeit unter einem abgestimmten Schwellenwert liegt, gehen an eine menschliche Prüferin, statt direkt in die Datenbank geschrieben zu werden."
+ },
+ "ngram": {
+  "n": "N-Gramm",
+  "d": "Ein N-Gramm ist eine zusammenhängende Folge von n Elementen, meist Wörtern oder Zeichen: Unigramme sind einzelne Elemente, Bigramme Paare und Trigramme Tripel.\n\nDas Zählen von N-Grammen erfasst lokale Wortreihenfolge, die einzelnen Wörtern entgeht, etwa dass „nicht gut“ etwas anderes ist als „gut“. Ein klassisches N-Gramm-Sprachmodell schätzt die Wahrscheinlichkeit des nächsten Wortes aus den Häufigkeiten der vorangehenden n−1 Wörter, mit Glättung für Sequenzen, die im Training nie vorkamen.\n\nN-Gramme bleiben nützliche Features in Textklassifikatoren auf Basis von Bag of Words und TF-IDF, in der Rechtschreibprüfung, bei der Erkennung von Beinahe-Duplikaten und in Evaluationsmetriken wie BLEU und ROUGE, die N-Gramm-Überlappungen zählen. LLM-Teams nutzen N-Gramm-Überlappungen auch, um Benchmark-Kontamination in Trainingsdaten aufzuspüren. Die Hauptschwäche ist die Dünnbesetztheit: Die Zahl möglicher N-Gramme wächst exponentiell mit n, sodass die meisten langen N-Gramme selten oder nie vorkommen und Häufigkeiten nicht auf ungesehene, aber ähnliche Formulierungen verallgemeinern.",
+  "u": [
+   "Wortpaar-Features für Textklassifikatoren",
+   "Testset-Kontamination in Trainingskorpora erkennen",
+   "BLEU- und ROUGE-Überlappungswerte berechnen"
+  ],
+  "x": "Ein Team, das ein LLM-Trainingskorpus vorbereitet, berechnet 13-Gramm-Überlappungen zwischen dem Korpus und seinen Evaluations-Benchmarks. Dokumente, die lange N-Gramme mit Benchmark-Fragen teilen, werden entfernt, damit die berichteten Werte Generalisierung statt Auswendiglernen widerspiegeln."
+ },
+ "tfidf": {
+  "n": "TF-IDF",
+  "d": "TF-IDF (Term Frequency–Inverse Document Frequency) ist eine Gewichtung, die einem Wort in einem Dokument einen hohen Wert gibt, wenn es dort häufig, im übrigen Korpus aber selten vorkommt.\n\nDie Termfrequenz belohnt Wörter, die im Dokument prominent sind; die inverse Dokumentfrequenz, ein Logarithmus der Anzahl der Dokumente, die das Wort enthalten, drückt allgegenwärtige Wörter wie „der“ oder „Daten“ nach unten. Jedes Dokument wird zu einem dünn besetzten Vektor über das Vokabular, meist L2-normalisiert, damit die Kosinus-Ähnlichkeit Dokumente fair vergleicht.\n\nTF-IDF-Vektoren mit logistischer Regression oder einer linearen SVM sind eine starke, schnelle Baseline für Textklassifikation, und TF-IDF bildet zusammen mit BM25 nach wie vor die Grundlage von Schlüsselwortsuche und hybridem Retrieval in RAG-Systemen. Die Hauptschwäche ist, dass Bedeutung ignoriert wird: Synonyme wie „Auto“ und „Automobil“ teilen kein Gewicht, und die Wortreihenfolge geht verloren, sofern keine N-Gramme hinzugefügt werden.",
+  "u": [
+   "Schnelle Baselines für Textklassifikation",
+   "Schlüsselwort-Retrieval in hybriden Suchsystemen",
+   "Charakteristische Begriffe von Dokumentclustern finden"
+  ],
+  "x": "Eine Support-Plattform verteilt eingehende Tickets mit einem Modell aus TF-IDF und logistischer Regression an Teams, das sich in Minuten auf einer CPU neu trainieren lässt. Das Team behält es als produktive Baseline, die jeder schwerere Transformer-Klassifikator klar schlagen muss, bevor er es ersetzt."
+ },
+ "bagofwords": {
+  "n": "Bag of Words",
+  "d": "Bag of Words stellt einen Text als die Häufigkeiten der darin enthaltenen Vokabularwörter dar und ignoriert dabei Grammatik und Wortreihenfolge.\n\nEin Vectorizer baut zunächst aus dem Trainingskorpus ein Vokabular auf und wandelt dann jedes Dokument in einen Vektor mit einem Eintrag pro Wort um, der eine Häufigkeit oder ein binäres Vorkommens-Flag enthält. Da die meisten Dokumente nur einen winzigen Teil des Vokabulars nutzen, werden die Vektoren als dünn besetzte Matrizen gespeichert. N-Gramme stellen etwas lokale Reihenfolge wieder her, und TF-IDF gewichtet die Häufigkeiten neu.\n\nBag of Words ist die klassische Eingabe für Naive-Bayes-Spamfilter, Textklassifikatoren mit logistischer Regression und Topic-Modelle und dient weiterhin für schnelle, interpretierbare Baselines. Die zentrale Einschränkung: „Hund beißt Mann“ und „Mann beißt Hund“ erhalten identische Vektoren, und Synonyme stehen in keinem Zusammenhang. Wörter, die beim Aufbau des Vokabulars nicht vorkamen, fallen bei der Vorhersage stillschweigend weg, was Drift im eingehenden Text verdecken kann.",
+  "u": [
+   "Naive-Bayes-Filter für Spam und Sentiment",
+   "Interpretierbare schlüsselwortbasierte Textklassifikatoren",
+   "Eingabe-Features für Topic Modeling"
+  ],
+  "x": "Der vorgeschaltete Spamfilter eines E-Mail-Anbieters nutzt Bag-of-Words-Häufigkeiten mit multinomialem Naive Bayes, weil er inkrementell trainiert und Nachrichten in Mikrosekunden bewertet. Nachrichten mit unsicheren Scores werden an ein langsameres neuronales Modell weitergereicht."
+ },
+ "hallucination": {
+  "n": "Halluzination",
+  "d": "Eine Halluzination liegt vor, wenn ein Sprachmodell flüssige und selbstsicher formulierte Inhalte erzeugt, die falsch sind oder weder durch die Eingabe noch durch bekannte Fakten gedeckt sind.\n\nSie folgt aus der Art, wie LLMs trainiert werden: Next-Token-Prediction belohnt plausible Fortsetzungen, nicht überprüfte. Fehlt dem Modell Wissen, erzeugt es trotzdem den am wahrscheinlichsten klingenden Text, etwa ein erfundenes Zitat, eine erfundene API-Funktion oder Statistik. Sampling mit hoher Temperature und Fragen zu seltenen Fakten machen Halluzinationen wahrscheinlicher.\n\nGegenmaßnahmen sind Retrieval-Augmented Generation (RAG), die Antworten in bereitgestellten Dokumenten verankert, das Einfordern von Quellenangaben, Tool Use für Berechnungen und Nachschlagen, Self-Consistency-Prüfungen, Training zur Enthaltung im Rahmen des Alignments sowie Evaluationssets, die Faktentreue messen. Ein verbreiteter Irrtum ist, dass RAG Halluzinationen beseitigt. Das Modell kann die abgerufenen Passagen weiterhin falsch lesen, vermengen oder ignorieren, daher brauchen auch verankerte Systeme Prüfungen, ob jede Aussage durch die Quellen gestützt ist.",
+  "u": [
+   "Faktentreue von LLM-Antworten evaluieren",
+   "Quellenprüfung in retrieval-gestützten Assistenten",
+   "Guardrails für juristische, medizinische und finanzielle Ausgaben"
+  ],
+  "x": "Ein Assistent für juristische Recherche antwortet nur auf Basis abgerufener Fallakten und versieht jede Aussage mit einer Quellenangabe. Ein zweiter Prüfschritt kontrolliert, ob jede zitierte Passage die genannte Rechtsauffassung tatsächlich enthält; Antworten, die die Prüfung nicht bestehen, werden markiert statt angezeigt."
+ },
+ "alignment": {
+  "n": "Alignment",
+  "d": "Alignment bezeichnet die Arbeit daran, das Verhalten eines KI-Modells mit den Absichten und Werten seiner Entwickler und Nutzer in Einklang zu bringen: hilfreich, ehrlich und harmlos.\n\nEin vortrainiertes LLM setzt Text nur fort, kann also Anweisungen ignorieren, toxische Inhalte erzeugen oder bei schädlichen Anfragen helfen. Alignment-Training formt dieses Verhalten nach dem Pretraining um, meist durch Supervised Fine-Tuning (SFT) auf Demonstrationen und anschließende Präferenzoptimierung wie RLHF mit einem Reward Model und PPO, DPO oder Constitutional AI und RLAIF. Red-Teaming und Sicherheitsevaluationen prüfen das Ergebnis.\n\nAlignment hat auch eine Forschungsseite: Mechanistische Interpretierbarkeit und Scalable Oversight untersuchen, ob Modelle die beabsichtigten Ziele verfolgen. Eine häufige Falle ist Reward Hacking, bei dem das Modell lernt, Schwächen im Belohnungssignal auszunutzen, etwa indem es übermäßig ausführlich oder gefällig wird, statt sich wirklich zu verbessern. Das übermäßige Ablehnen harmloser Anfragen ist der entgegengesetzte Fehler, daher muss die Alignment-Evaluation beides messen.",
+  "u": [
+   "Befolgen von Anweisungen in Chat-Assistenten",
+   "Schädliche oder toxische Modellausgaben reduzieren",
+   "Red-Teaming vor öffentlichen Modell-Releases"
+  ],
+  "x": "Ein KI-Labor sammelt paarweise Präferenzurteile geschulter Annotatoren zu Assistentenantworten und führt DPO auf seinem SFT-Modell aus. Vor dem Release wird das ausgerichtete Modell auf das Ablehnen schädlicher Anfragen evaluiert sowie auf einem Set harmloser, aber heikel klingender Prompts, um übermäßiges Ablehnen zu erkennen."
+ },
+ "mdp": {
+  "n": "Markov-Entscheidungsprozess (MDP)",
+  "d": "Ein Markov-Entscheidungsprozess ist das mathematische Modell sequenzieller Entscheidungen, das im Reinforcement Learning verwendet wird: Zustände, Aktionen, Übergangswahrscheinlichkeiten, Belohnungen und ein Diskontfaktor.\n\nIn jedem Schritt beobachtet ein Agent einen Zustand, wählt eine Aktion, erhält eine Belohnung und gelangt in einen neuen Zustand. Die Markov-Eigenschaft besagt, dass der nächste Zustand und die Belohnung nur vom aktuellen Zustand und der aktuellen Aktion abhängen. Ziel ist eine Policy, die die erwartete diskontierte Summe zukünftiger Belohnungen maximiert.\n\nMDPs liegen Value Iteration, Q-Learning, Policy-Gradient-Verfahren und PPO zugrunde und bilden den Rahmen für RLHF, wo der Zustand der Prompt samt bisher generiertem Text und jede Aktion ein Token ist. Eine häufige Falle ist ein Zustand, der gar nicht Markov ist, etwa ein einzelnes Videobild, das die Geschwindigkeit verbirgt; das Problem wird dann nur teilweise beobachtbar, und der Zustand muss um Historie oder einen verborgenen Zustand erweitert werden.",
+  "u": [
+   "Steuerungs- und Robotikprobleme formalisieren",
+   "LLM-Textgenerierung für RLHF formulieren",
+   "Lager- und Preisentscheidungen modellieren"
+  ],
+  "x": "Ein Operations-Team modelliert die Lagernachschubplanung als MDP, dessen Zustand den aktuellen Bestand und offene Bestellungen enthält, dessen Aktionen Bestellmengen sind und dessen Belohnung Lager- und Fehlmengenkosten abzieht. Eine in einem Simulator vergangener Nachfrage gelernte Policy wird vor jedem Rollout mit der bestehenden Meldebestandsregel verglichen."
+ },
+ "policy": {
+  "n": "Policy",
+  "d": "Im Reinforcement Learning ist eine Policy die Regel, nach der ein Agent Aktionen wählt: eine Abbildung von jedem Zustand auf eine Aktion oder auf eine Wahrscheinlichkeitsverteilung über Aktionen.\n\nEine deterministische Policy liefert eine Aktion pro Zustand; eine stochastische Policy π(a|s) liefert Wahrscheinlichkeiten, was Exploration ermöglicht und von Policy-Gradient-Verfahren vorausgesetzt wird. Eine Policy kann eine Tabelle oder ein neuronales Netz sein, aus einer Value-Funktion abgeleitet oder direkt gelernt.\n\nPolicy-Gradient-Verfahren wie REINFORCE, PPO und GRPO passen die Parameter der Policy so an, dass Aktionen mit hoher Belohnung wahrscheinlicher werden. In RLHF ist das LLM selbst die Policy: Der Zustand ist der bisherige Text, und jede Aktion ist das nächste Token. Eine häufige Falle ist, die Policy so stark gegen eine unvollkommene Belohnung zu optimieren, dass sie in seltsames Verhalten abdriftet; RLHF begrenzt das mit einer KL-Strafe, die die Policy nahe an einem Referenzmodell hält.",
+  "u": [
+   "Roboter und spielende Agenten steuern",
+   "LLMs mit PPO oder GRPO feintunen",
+   "Aktionen in Empfehlungs- und Bietsystemen wählen"
+  ],
+  "x": "Ein Ad-Bidding-Team trainiert eine neuronale Policy, die Auktions-Features auf einen Gebotsmultiplikator abbildet, zunächst aus geloggten Daten und anschließend verfeinert durch begrenzte Online-Exploration. Jede neue Policy läuft im Shadow-Modus gegen die aktuelle, bevor sie echtes Budget steuert."
+ },
+ "reward": {
+  "n": "Belohnung (Reward)",
+  "d": "Eine Belohnung ist das skalare Feedback-Signal, das eine Umgebung einem Reinforcement-Learning-Agenten nach einer Aktion gibt.\n\nDer Agent maximiert nicht einzelne Belohnungen, sondern den Return, die diskontierte Summe zukünftiger Belohnungen; so kann er jetzt kleine Kosten für einen größeren Gewinn später in Kauf nehmen. Der Diskontfaktor γ legt fest, wie stark die Zukunft zählt. Belohnungen können dicht sein und in jedem Schritt eintreffen, oder spärlich und erst am Ende einer Episode kommen, was das Lernen deutlich erschwert.\n\nIm LLM-Training stammen Belohnungen von einem gelernten Reward Model in RLHF, aus KI-Feedback in RLAIF oder aus automatischen Prüfungen wie Unit-Tests und exakten Antworten beim RL mit verifizierbaren Belohnungen. Die bekannteste Falle ist Reward Hacking: Der Agent findet einen Weg zu hohen Werten, den der Entwickler nicht beabsichtigt hat, etwa ein Modell, das längere Antworten produziert, weil das Reward Model Länge bevorzugt.",
+  "u": [
+   "Ziele für RL-Agenten und Roboter entwerfen",
+   "LLM-Ausgaben mit Reward Models bewerten",
+   "Unit-Test-Belohnungen beim Training von Codegenerierung"
+  ],
+  "x": "Ein Team, das ein Codegenerierungsmodell mit Reinforcement Learning trainiert, vergibt eine Belohnung von 1 nur dann, wenn die generierte Funktion verborgene Unit-Tests besteht. Es überwacht Reward Hacking durch Stichproben der Ausgaben, nachdem es frühe Policies gefunden hatte, die die sichtbaren Testeingaben als Sonderfälle behandelten."
+ },
+ "stateaction": {
+  "n": "Zustand und Aktion",
+  "d": "Im Reinforcement Learning ist der Zustand die Information, die die aktuelle Situation der Umgebung beschreibt, und eine Aktion eine Entscheidung, die der Agent in diesem Zustand treffen kann.\n\nIn der Kernschleife beobachtet der Agent den Zustand sₜ, führt die Aktion aₜ aus, und die Umgebung liefert eine Belohnung und den nächsten Zustand sₜ₊₁. Zustände können kleine Vektoren sein, etwa Position und Geschwindigkeit eines Wagens, oder hochdimensionale Beobachtungen wie Bilder. Aktionsräume sind diskret, etwa nach links oder rechts bewegen, oder kontinuierlich, etwa Gelenkmomente eines Roboterarms.\n\nDie Wahl der Zustands- und Aktionsdarstellung entscheidet, welche Algorithmen infrage kommen: Q-Learning und DQN brauchen diskrete Aktionen, während kontinuierliche Steuerung Actor-Critic-Verfahren nutzt. In RLHF ist der Zustand der Prompt samt bisher generiertem Text und die Aktion das nächste Token. Ein häufiger Fehler ist, Informationen, von denen die Belohnung abhängt, aus dem Zustand wegzulassen, wodurch das Problem nicht mehr Markov ist.",
+  "u": [
+   "Beobachtungsräume für Robotersteuerung entwerfen",
+   "Diskrete Aktionsmengen für Spielagenten definieren",
+   "Textgenerierung als Zustand und Aktion darstellen"
+  ],
+  "x": "Ein Rechenzentrums-Team, das einen RL-Regler für die Kühlung baut, definiert den Zustand als jüngste Temperaturen, Serverlast und Außenwetter und die Aktionen als Sollwertänderungen innerhalb sicherer Grenzen. Die Beschränkung auf kleine, begrenzte Anpassungen ermöglicht es den Betreibern, den Regler für den Live-Betrieb freizugeben."
+ },
+ "valuefn": {
+  "n": "Value-Funktion (Wertfunktion)",
+  "d": "Eine Value-Funktion schätzt den erwarteten Return, den ein Agent ab einem Zustand oder einem Zustands-Aktions-Paar erzielt, wenn er danach einer gegebenen Policy folgt.\n\nDer Zustandswert V(s) beantwortet, wie gut es ist, sich in einem Zustand zu befinden; der Aktionswert Q(s,a), wie gut es ist, dort Aktion a auszuführen. Beide erfüllen die Bellman-Gleichung: Ein Wert ist die unmittelbare Belohnung plus der diskontierte Wert des nächsten Zustands, daher lassen sich beide per Bootstrapping aus Erfahrung lernen.\n\nQ-Learning und DQN lernen Q direkt und handeln greedy danach. Actor-Critic-Verfahren wie PPO trainieren ein Value-Netz als Critic, das die Varianz der Policy-Gradienten über den Advantage A = Q − V senkt; GRPO verzichtet auf diesen Critic und nutzt Gruppenmittelwerte als Baseline. Verwechseln Sie Wert nicht mit Belohnung: Die Belohnung ist unmittelbar, der Wert ist die erwartete langfristige Summe.",
+  "u": [
+   "Q-Learning und DQN für diskrete Steuerung",
+   "Critic-Netze in Actor-Critic und PPO",
+   "Stellungsbewertung bei spielenden Agenten"
+  ],
+  "x": "Ein Spielestudio trainiert Agenten für Playtests mit einem Actor-Critic-Verfahren, bei dem ein Value-Netz den erwarteten Ausgang jeder Spielsituation vorhersagt. Die Wertschätzungen werden zusätzlich protokolliert, um Level hervorzuheben, in denen sich Agenten zu früh ihres Sieges sicher sind, was Designer auf Balancing-Probleme hinweist."
+ },
+ "explore": {
+  "n": "Exploration vs. Exploitation",
+  "d": "Exploration vs. Exploitation ist der Zielkonflikt zwischen dem Ausprobieren von Aktionen, um mehr über sie zu lernen, und dem Wählen der Aktion, die derzeit am besten aussieht.\n\nEin Agent, der nur exploitiert, kann sich auf eine mittelmäßige Option festlegen; ein Agent, der nur exploriert, verschenkt Belohnung an Optionen, von denen er schon weiß, dass sie schlecht sind. Standardstrategien sind ε-greedy, das mit kleiner Wahrscheinlichkeit ε eine zufällige Aktion wählt; Upper Confidence Bound (UCB), das unsicheren Optionen einen Bonus gibt; und Thompson Sampling, das aus einer Posterior-Verteilung über den Wert jeder Option zieht.\n\nDer Zielkonflikt tritt im Reinforcement Learning auf, bei Multi-Armed Bandits für Empfehlungen und Werbung, in der Bayesschen Optimierung und bei der Sampling-Temperature im RL-Fine-Tuning von LLMs. Eine häufige Falle in produktiven Empfehlungssystemen ist reine Exploitation: Ein Modell, das nur auf Items trainiert wird, die es selbst zur Anzeige ausgewählt hat, lernt nichts über den Rest des Katalogs, was den Popularitäts-Bias verstärkt und die Erholung vom Kaltstart verlangsamt.",
+  "u": [
+   "Multi-Armed Bandits für Werbung und Empfehlungen",
+   "Explorationspläne im Reinforcement Learning",
+   "Akquisitionsfunktionen in der Bayesschen Optimierung"
+  ],
+  "x": "Eine Nachrichten-App wählt die Schlagzeilen für ihren Startbildschirm per Thompson Sampling aus, sodass neue Artikel einige Impressionen erhalten, noch bevor sie eine Klickhistorie haben. Der Anteil des Traffics, der in Exploration fließt, sinkt automatisch, sobald die Klickraten-Schätzung jedes Artikels sicherer wird."
+ },
+ "inference": {
+  "n": "Inferenz",
+  "d": "Inferenz ist das Ausführen eines trainierten Modells auf neuen Eingaben, um Vorhersagen zu erzeugen, im Gegensatz zum Training, das die Gewichte des Modells aktualisiert.\n\nWährend der Inferenz sind die Gewichte fest, es werden keine Gradienten berechnet, und Schichten wie Dropout und Batch Normalization wechseln in ihr Evaluationsverhalten. Inferenz kann im Batch-Modus laufen und über Nacht eine ganze Tabelle bewerten, oder online einzelne Anfragen innerhalb eines Latenzbudgets beantworten. Bei LLMs teilt sich die Inferenz in eine Prefill-Phase, die den Prompt parallel verarbeitet, und eine Decode-Phase, die mithilfe des KV-Cache ein Token nach dem anderen erzeugt.\n\nInferenz dominiert meist die Gesamtkosten eines eingesetzten Modells über seine Lebensdauer, weshalb es Quantisierung, Knowledge Distillation, Pruning, Continuous Batching und spekulatives Decoding gibt. Eine klassische Falle ist, ein PyTorch-Modell im Trainingsmodus zu belassen, sodass Dropout aktiv bleibt; eine andere, Eingaben bei der Inferenz anders vorzuverarbeiten als im Training, was die Genauigkeit stillschweigend verschlechtert.",
+  "u": [
+   "Echtzeit-Scoring hinter Web-APIs",
+   "Nächtliche Batch-Vorhersagen über große Tabellen",
+   "Textgenerierung in LLM-Chat-Produkten"
+  ],
+  "x": "Ein Händler bewertet seinen gesamten Kundenstamm mit einem Churn-Modell in einem nächtlichen Batch-Job, während ein separater Dienst mit niedriger Latenz bei jedem Seitenaufruf einen Produkt-Recommender ausführt. Beide verwenden exakt den Vorverarbeitungscode aus dem Training, der zusammen mit dem Modellartefakt paketiert ist."
+ },
+ "latency": {
+  "n": "Latenz und Durchsatz",
+  "d": "Latenz ist die Zeit, die eine einzelne Anfrage vom Eingang bis zur Antwort braucht; Durchsatz ist die Zahl der Anfragen oder Tokens, die ein System pro Zeiteinheit abarbeitet.\n\nBeide hängen zusammen, ziehen aber oft in entgegengesetzte Richtungen. Viele Anfragen zu bündeln nutzt eine GPU weit effizienter und erhöht den Durchsatz, doch jede Anfrage wartet womöglich, bis der Batch voll ist, was die Latenz erhöht. Latenz wird in Perzentilen wie p50 und p99 angegeben, weil Mittelwerte langsame Ausreißer verbergen, die Nutzer bemerken. Bei LLMs verfolgt man die Time to First Token und die Zeit pro Ausgabe-Token getrennt, den Durchsatz in Tokens pro Sekunde.\n\nDiese Kennzahlen bestimmen Entscheidungen über Modellgröße, Quantisierung, Hardware, Batching-Strategie, Continuous Batching, KV-Cache und das Caching von Ergebnissen. Ein häufiger Fehler ist, die Latenz mit einer einzelnen Anfrage auf einer unbelasteten Maschine zu messen; unter realer paralleler Last kann Queueing die Tail-Latenz vervielfachen, daher müssen Lasttests die Traffic-Muster der Produktion nachbilden.",
+  "u": [
+   "p99-Latenzziele für Modell-APIs festlegen",
+   "Batchgrößen für das GPU-Serving wählen",
+   "Kapazitätsplanung für den Token-Durchsatz von LLMs"
+  ],
+  "x": "Ein Such-Team muss neu gerankte Ergebnisse innerhalb eines festen p99-Latenzbudgets liefern; daher hat es seinen Cross-Encoder in ein kleineres Modell destilliert und die Wartezeit für Batches gedeckelt. Der Durchsatz wird anschließend durch zusätzliche Replikate skaliert statt durch größere Batches."
+ },
+ "gpu": {
+  "n": "GPU und VRAM",
+  "d": "Eine GPU ist ein Prozessor mit Tausenden paralleler Kerne, gebaut für die dichte Matrixmultiplikation, die den Kern von Deep Learning bildet; VRAM ist ihr eigener Grafikspeicher.\n\nTraining und Inferenz laufen auf GPUs schnell, weil die Operationen einer Schicht parallel ausgeführt werden können, insbesondere auf Tensor Cores, die FP16, BF16 und Formate mit noch geringerer Präzision beschleunigen. Alles, worauf eine Berechnung zugreift, muss in den VRAM passen: Modellgewichte, Aktivierungen, Gradienten und Optimierer-Zustände im Training sowie der KV-Cache bei der LLM-Inferenz. Oft ist der Speicherverkehr der eigentliche Engpass, den FlashAttention für die Attention verringert.\n\nDie VRAM-Kapazität entscheidet meist, was möglich ist: Modellgröße, Batchgröße und Kontextlänge. Mixed Precision, Quantisierung, Gradient Checkpointing, LoRA sowie Daten-, Tensor- oder Pipeline-Parallelität existieren, um innerhalb dieser Grenze zu bleiben. Ein verbreiteter Irrtum ist, dass allein die Gewichte den Speicherbedarf bestimmen; mit Adam braucht das Training grob das Vierfache des Gewichtsspeichers oder mehr, noch bevor Aktivierungen mitgezählt werden.",
+  "u": [
+   "Hardware für LLM-Training und -Serving dimensionieren",
+   "Batchgröße und Präzision passend zum Speicher wählen",
+   "Out-of-Memory-Fehler im Training diagnostizieren"
+  ],
+  "x": "Ein Team, das ein Modell mit 7 Milliarden Parametern bereitstellen will, berechnet, dass 16-Bit-Gewichte schon vor dem KV-Cache etwa 14 GB benötigen; es entscheidet sich deshalb für 4-Bit-Quantisierung, um mehrere gleichzeitige Long-Context-Anfragen auf einer einzigen 24-GB-GPU unterzubringen. Lasttests bei maximaler Kontextlänge bestätigen, dass der KV-Cache den Speicher nicht sprengt."
+ },
+ "serving": {
+  "n": "Model Serving",
+  "d": "Model Serving ist die Infrastruktur, die ein trainiertes Modell lädt und Vorhersageanfragen von Anwendungen beantwortet, meist über eine HTTP- oder gRPC-API.\n\nEin Serving-System paketiert das Modell mit seiner Vorverarbeitung, hält es im Speicher, bündelt Anfragen zu Batches, skaliert Replikate mit dem Traffic hoch und runter und stellt Health Checks und Metriken bereit. Zu den Allzweck-Servern gehören TorchServe, Triton Inference Server und BentoML; LLM-Server wie vLLM und TGI ergänzen Continuous Batching, PagedAttention und das Streaming generierter Tokens. Deployment-Muster wie Canary-Releases, Shadow-Traffic und A/B-Tests lassen eine neue Version sich gefahrlos bewähren.\n\nServing verbindet das Training mit Modell-Monitoring, Latenz- und Durchsatzzielen und dem Feature Store, der online dieselben Features liefern muss wie offline. Die bekannteste Falle ist Training-Serving-Skew: Features, die im Serving-Pfad anders berechnet werden als im Training, verschlechtern die Vorhersagen, ohne irgendeinen Fehler auszulösen.",
+  "u": [
+   "REST-Endpunkte für Echtzeit-Modellvorhersagen",
+   "LLM-APIs mit gestreamten Token-Antworten",
+   "Canary- und Shadow-Releases neuer Modellversionen"
+  ],
+  "x": "Eine Kreditplattform stellt ihr Kreditmodell hinter einer internen API mit zwei Replikaten pro Region bereit, dazu einen Canary, der bei jeder neuen Version einen kleinen Teil des Traffics erhält. Anfragen und Vorhersagen werden protokolliert, damit das Monitoring die Live-Verteilungen der Features mit den Trainingsdaten vergleichen kann."
+ },
+ "monitoring": {
+  "n": "Modell-Monitoring",
+  "d": "Modell-Monitoring ist die laufende Überwachung von Eingaben, Ausgaben, Leistung und Systemzustand eines eingesetzten Modells, um zu erkennen, wann es nicht mehr wie beabsichtigt funktioniert.\n\nModelle verschlechtern sich lautlos: Es wird keine Exception ausgelöst, wenn Kunden ihr Verhalten ändern oder eine vorgelagerte Pipeline plötzlich Nullwerte schickt. Monitoring beobachtet daher mehrere Ebenen: Datenqualität wie Fehlquoten und Schemaänderungen, Data Drift der Eingaben, gemessen mit Statistiken wie dem Population Stability Index oder der KL-Divergenz, Drift der Vorhersageverteilung und, sobald Labels eintreffen, echte Metriken wie ROC-AUC, Precision oder Kalibrierung.\n\nAlarme aus dem Monitoring lösen Untersuchung, Rollback oder Neutraining aus. Eine häufige Falle ist, sich nur auf Drift-Alarme zu verlassen: Drift in einem unwichtigen Feature kann bedeutungslos sein, während die Leistung ohne sichtbare Drift sinken kann, wenn sich der Zusammenhang zwischen Features und Label ändert. Auch Label-Verzögerungen spielen eine Rolle; Betrugslabels kommen mitunter erst Wochen später, daher braucht es in der Zwischenzeit Proxy-Metriken.",
+  "u": [
+   "Data Drift in Produktions-Features erkennen",
+   "Live-Genauigkeit verfolgen, sobald Labels eintreffen",
+   "Bei defekten vorgelagerten Datenpipelines alarmieren"
+  ],
+  "x": "Ein Betrugsteam überwacht täglich den Population Stability Index seiner wichtigsten Features, den Anteil der Transaktionen über dem Entscheidungsschwellenwert und, mit Verzögerung, die Precision auf bestätigten Fällen. Ein plötzlicher Anstieg fehlender Werte bei einem Kartennetzwerk wurde auf eine vorgelagerte Schemaänderung zurückgeführt, bevor er die Erkennungsraten beeinträchtigte."
+ },
+ "retraining": {
+  "n": "Neutraining (Retraining)",
+  "d": "Neutraining bedeutet, ein eingesetztes Modell erneut auf neueren Daten zu trainieren, damit es mit den Veränderungen in der Welt, die es vorhersagt, Schritt hält.\n\nWegen Data Drift und Concept Drift nimmt die Genauigkeit eines Modells nach dem Deployment meist ab. Teams trainieren nach festem Zeitplan neu, etwa wöchentlich oder monatlich, oder wenn das Modell-Monitoring Leistungsverlust oder Drift erkennt. Das neue Modell wird von derselben ML-Pipeline trainiert, auf aktuellen zurückgehaltenen Daten mit zeitbasierter Validierung evaluiert, mit dem aktuellen Produktivmodell verglichen und nur befördert, wenn es mindestens gleich gut ist.\n\nZu den Entscheidungen beim Neutraining gehören das Trainingsfenster, ob neuere Daten stärker gewichtet werden und ob man vom alten Modell aus warm startet oder von Grund auf trainiert. Eine häufige Falle ist Feedback-Kontamination: Die eigenen Entscheidungen des Modells prägen die neuen Labels, etwa bei einem Betrugsmodell, das Transaktionen blockiert, sodass deren tatsächlicher Ausgang nie beobachtet wird. Eine weitere ist automatische Beförderung ohne Leitplanken.",
+  "u": [
+   "Geplante Aktualisierung von Nachfrageprognosemodellen",
+   "Drift-ausgelöstes Neutraining von Betrugsmodellen",
+   "Champion-Challenger-Evaluation vor der Beförderung"
+  ],
+  "x": "Ein Lieferdienst trainiert sein Modell für Lieferzeiten jede Woche auf den Bestellungen der letzten Monate neu. Das Kandidatenmodell muss den aktuellen Champion auf der jüngsten Woche zurückgehaltener Bestellungen schlagen und Plausibilitätsprüfungen für jede Stadt bestehen, bevor es die Produktivversion ersetzt."
+ },
+ "featurestore": {
+  "n": "Feature Store",
+  "d": "Ein Feature Store ist ein Datensystem, das Machine-Learning-Features berechnet, speichert und ausliefert, damit Training und Produktion dieselben Definitionen verwenden.\n\nEr besteht meist aus zwei Teilen: einem Offline-Store mit historischen Feature-Werten zum Aufbau von Trainingssets und einem Online-Store, einer Key-Value-Datenbank mit niedriger Latenz, die zum Vorhersagezeitpunkt die neuesten Werte für eine Entität wie einen Nutzer oder eine Karte liefert. Definitionen werden einmal geschrieben und teamübergreifend geteilt. Das Open-Source-Projekt Feast und verwaltete Plattformen der Cloud-Anbieter folgen diesem Muster.\n\nFeature Stores adressieren Training-Serving-Skew und unterstützen zeitpunktkorrekte Joins: Für jedes Trainingsbeispiel liefern sie die Feature-Werte so, wie sie zum Zeitstempel des Labels waren, nicht spätere Werte. Wer das falsch macht, erzeugt eine stille Form von Data Leakage, die Offline-Metriken aufbläht. Die Hauptkosten sind betrieblicher Art: ein weiteres System, das betrieben, aktuell gehalten und überwacht werden muss, was kleine Teams mit reinen Batch-Modellen womöglich nicht brauchen.",
+  "u": [
+   "Echtzeit-Nutzer-Features für Betrugsmodelle bereitstellen",
+   "Zeitpunktkorrekte Trainingssets aufbauen",
+   "Feature-Definitionen zwischen ML-Teams teilen"
+  ],
+  "x": "Ein Zahlungsdienstleister berechnet in einem Streaming-Job rollierende Transaktionszählungen pro Karte über mehrere Zeitfenster und schreibt sie in den Online-Store. Das Betrugsmodell liest sie bei der Autorisierung in Millisekunden, und dieselben Definitionen erzeugen aus dem Offline-Store die historischen Trainingsdaten."
+ },
+ "mlpipeline": {
+  "n": "ML-Pipeline",
+  "d": "Eine ML-Pipeline ist eine automatisierte, geordnete Abfolge von Schritten, die Rohdaten in ein trainiertes, evaluiertes und einsatzbereites Modell verwandelt.\n\nTypische Schritte sind Datenaufnahme, Validierung, Feature Engineering, Aufteilung, Training, Hyperparameter-Tuning, Evaluation und die Registrierung des Modells samt Metriken und Herkunft. Orchestrierungswerkzeuge wie Airflow, Kubeflow Pipelines und ähnliche Tools führen die Schritte aus, cachen ihre Ausgaben und starten sie nach Zeitplan oder Auslöser neu. Im kleineren Maßstab bezeichnet der Begriff auch eine scikit-learn-Pipeline, die Vorverarbeitung und Modell zu einem Objekt verkettet.\n\nPipelines machen Ergebnisse reproduzierbar, und auf ihnen läuft das Neutraining. Die scikit-learn-Variante verhindert zudem eine klassische Form von Data Leakage: Werden Scaler, Imputer oder Target-Encoder vor der Kreuzvalidierung auf dem gesamten Datensatz angepasst, sickern Informationen aus den Test-Folds ins Training. In einer Pipeline wird jede Transformation nur auf dem Trainings-Fold angepasst und zusammen mit dem Modell für die Inferenz gespeichert.",
+  "u": [
+   "Reproduzierbare End-to-End-Trainingsläufe",
+   "Leckagefreie Vorverarbeitung innerhalb der Kreuzvalidierung",
+   "Geplantes Neutraining und Modellregistrierung"
+  ],
+  "x": "Ein Analytics-Team einer Versicherung betreibt eine nächtliche Pipeline, die neue Policendaten gegen ein Schema validiert, Features neu aufbaut, ein Tarifierungsmodell neu trainiert und es mit seinem Evaluationsbericht registriert. Schlägt der Validierungsschritt fehl, wird der Lauf gestoppt, sodass eine fehlerhafte vorgelagerte Datei nie ins Training gelangt."
+ },
+ "benchmark": {
+  "n": "Benchmark",
+  "d": "Ein Benchmark ist ein standardisierter Datensatz mit Aufgabe und Metrik, mit dem sich Modelle oder Systeme unter gleichen Bedingungen vergleichen lassen.\n\nBekannte ML-Benchmarks sind ImageNet für Bildklassifikation, GLUE und SuperGLUE für Sprachverständnis sowie MMLU, GSM8K, HumanEval und SWE-bench für LLMs; MLPerf misst die Geschwindigkeit von Hardware und Software. Ein Benchmark legt Datenaufteilung, Evaluationsverfahren und Bewertungsregel fest, sodass ein berichteter Wert reproduzierbar und vergleichbar ist.\n\nBenchmarks treiben den Forschungsfortschritt und die Modellauswahl, und Berichte zur LLM-Evaluation listen meist mehrere davon auf. Ihre Fallen sind gut dokumentiert: Testset-Kontamination, wenn Benchmark-Aufgaben in den Trainingsdaten auftauchen; Sättigung, wenn alle Spitzenmodelle nahe der Obergrenze liegen; und Überanpassung an den Benchmark durch wiederholtes Tuning darauf. Benchmark-Werte übertragen sich zudem oft nicht auf ein konkretes Produkt, daher bauen Teams eigene interne Evaluationssets aus echten Nutzeraufgaben.",
+  "u": [
+   "LLMs bei Reasoning- und Programmieraufgaben vergleichen",
+   "Leistung von Inferenz-Hardware messen",
+   "Modellqualität über Releases hinweg verfolgen"
+  ],
+  "x": "Ein Unternehmen, das drei LLM-Anbieter evaluiert, nutzt öffentliche Benchmark-Werte nur für die Vorauswahl und baut dann einen internen Benchmark aus einigen hundert echten, anonymisierten Support-Fragen mit bewerteten Referenzantworten. Die endgültige Wahl stützt sich auf dieses interne Set zusammen mit Latenz und Kosten pro Anfrage."
+ },
+ "anomaly": {
+  "n": "Anomalieerkennung",
+  "d": "Anomalieerkennung ist die Aufgabe, Beobachtungen zu finden, die deutlich vom normalen Muster der Daten abweichen, etwa seltene Ereignisse, Fehler oder Angriffe.\n\nWeil Anomalien selten und oft ungelabelt sind, lernen die meisten Verfahren, wie Normalität aussieht, und bewerten, wie weit jeder Punkt davon abweicht. Gängige Ansätze sind statistische Regeln auf Z-Scores oder dem Interquartilsabstand, Dichte- und Distanzverfahren wie Local Outlier Factor (LOF) und DBSCAN, der Isolation Forest, der ungewöhnliche Punkte mit wenigen zufälligen Splits isoliert, sowie der Rekonstruktionsfehler eines Autoencoders oder einer PCA.\n\nAnomalieerkennung unterstützt Betrugserkennung, Anlagenüberwachung, Netzwerksicherheit und Modell-Monitoring. Ihre zentrale Falle ist der Schwellenwert: Der Score hat keine Einheit, die Kontaminationsrate ist meist unbekannt, und ein zu niedrig gesetzter Schwellenwert überflutet das Personal mit False Positives. Ohne Labels ist die Evaluation schwierig, daher prüfen Teams die markierten Fälle und verfolgen die Precision auf dieser Stichprobe.",
+  "u": [
+   "Erkennung von Anlagenausfällen aus Sensordaten",
+   "Verdächtige Logins und Netzwerkverkehr aufspüren",
+   "Datenqualitätsprobleme in Pipelines markieren"
+  ],
+  "x": "Ein Hersteller bewertet Vibrationsmesswerte seiner Produktionsmaschinen mit einem Isolation Forest, der auf Wochen normalen Betriebs trainiert wurde. Alarme gehen an Instandhaltungsingenieure, deren Bestätigungen gesammelt werden, um den Schwellenwert abzustimmen und später ein überwachtes Modell zu trainieren."
+ },
+ "recsys": {
+  "n": "Empfehlungssystem (Recommender System)",
+  "d": "Ein Empfehlungssystem sagt vorher, welche Items, etwa Produkte, Videos, Songs oder Artikel, ein Nutzer wahrscheinlich haben möchte, und zeigt eine gerankte Auswahl davon an.\n\nGroße Systeme arbeiten meist in Stufen. Die Kandidatengenerierung holt aus Millionen von Items einige hundert heraus, mithilfe von kollaborativem Filtern, Two-Tower-Modellen, die Nutzer und Items in denselben Vektorraum einbetten, und approximativer Nearest-Neighbor-Vektorsuche. Ein Ranking-Modell, oft Gradient Boosting oder ein tiefes Netz, bewertet die Kandidaten dann mit reichhaltigen Features, um Klickrate (CTR), Wiedergabezeit oder Kauf vorherzusagen.\n\nDie Offline-Qualität wird mit Ranking-Metriken wie NDCG und Recall at k gemessen, entscheidend ist aber der A/B-Test mit echten Nutzern. Zentrale Fallen sind das Kaltstartproblem bei neuen Nutzern und Items, Popularitäts-Bias und Feedback-Schleifen, bei denen das System nur aus Items lernt, die es selbst zur Anzeige ausgewählt hat, was die Empfehlungen mit der Zeit verengt, sofern keine Exploration hinzukommt.",
+  "u": [
+   "Produktempfehlungen in Onlineshops",
+   "Personalisierte Video- und Musik-Feeds",
+   "Ranking von Nachrichtenartikeln und Stellenanzeigen"
+  ],
+  "x": "Ein Streamingdienst holt Kandidaten mit einem Two-Tower-Embedding-Modell und einem ANN-Index und rankt sie anschließend mit einem Gradient-Boosting-Modell, das die Wahrscheinlichkeit vorhersagt, länger als ein paar Minuten zuzuschauen. Neuerscheinungen erhalten einen kleinen Explorationsbonus, damit sie trotz fehlender Wiedergabehistorie Feedback sammeln."
+ },
+ "ctr": {
+  "n": "Klickrate (CTR)",
+  "d": "Die Klickrate (Click-Through Rate) ist der Anteil der Impressionen, also der Male, die ein Item angezeigt wurde, die zu einem Klick geführt haben.\n\nSie misst, wie ansprechend Anzeigen, Suchergebnisse oder Empfehlungen sind. Als Modellierungsziel ist die vorhergesagte CTR die Wahrscheinlichkeit, dass ein bestimmter Nutzer in einem bestimmten Kontext auf ein bestimmtes Item klickt, gelernt von einem binären Klassifikator aus Impressions-Logs: logistische Regression, Factorization Machines, Gradient Boosting oder tiefe Modelle mit Embedding-Schichten. In Anzeigenauktionen wird die vorhergesagte CTR mit dem Gebot multipliziert, daher muss die Wahrscheinlichkeit gut kalibriert und nicht nur richtig gerankt sein; Log-Loss und die Kalibrierung von Wahrscheinlichkeiten werden neben ROC-AUC beobachtet.\n\nCTR-Daten sind stark unausgeglichen, Klicks liegen oft weit unter einem Prozent der Impressionen. Eine häufige Falle ist der Positions-Bias: Oben angezeigte Items erhalten unabhängig von ihrer Relevanz mehr Klicks, sodass ein naiv auf Logs trainiertes Modell lernt, wo Items platziert waren, statt was Nutzer bevorzugen.",
+  "u": [
+   "Anzeigen in Echtzeit-Auktionen ranken",
+   "Reihenfolge von Suchergebnissen optimieren",
+   "Empfehlungsvarianten in A/B-Tests vergleichen"
+  ],
+  "x": "Eine Werbeplattform sagt für jede infrage kommende Anzeige innerhalb von Millisekunden die CTR vorher und rankt die Anzeigen nach Gebot mal vorhergesagter CTR. Weil das Downsampling von Nicht-Klicks die Wahrscheinlichkeiten verzerrt, korrigiert das Team die Vorhersagen um die Sampling-Rate und überwacht die Kalibrierung täglich pro Anzeigenkategorie."
+ },
+ "coldstart": {
+  "n": "Kaltstartproblem (Cold Start)",
+  "d": "Das Kaltstartproblem bezeichnet die Schwierigkeit, gute Vorhersagen für neue Nutzer, neue Items oder ein neues System zu treffen, die kaum oder gar keine Interaktionshistorie haben.\n\nAm härtesten trifft es Empfehlungssysteme auf Basis von kollaborativem Filtern, die ausschließlich aus vergangenen Interaktionen lernen: Ein Produkt, das noch niemand gekauft hat, hat kein gelerntes Embedding, und ein neuer Nutzer hat keine Historie, mit der man ihn abgleichen könnte. Übliche Abhilfen sind inhaltsbasierte Features wie Item-Text, Bilder und Kategorie, eingebettet mit einem vortrainierten Modell; demografische oder Kontext-Features für Nutzer; popularitätsbasierte Fallbacks; Onboarding-Fragen; und gezielte Exploration, die neue Items einigen Nutzern zeigt, um schnell Feedback zu sammeln.\n\nHybride Modelle, die kollaborative Signale mit Inhalts-Features kombinieren, sind die Standardlösung in der Produktion. Eine häufige Falle ist, nur auf Nutzern und Items mit langer Historie zu evaluieren, was verbirgt, wie schlecht das System Neulinge behandelt; die Kaltstart-Leistung sollte als eigenes Segment berichtet werden.",
+  "u": [
+   "Neu eingestellte Produkte empfehlen",
+   "Erste Sitzungen neuer Nutzer personalisieren",
+   "Einen Recommender ohne Interaktionsdaten starten"
+  ],
+  "x": "Ein Online-Marktplatz bettet Titel und Fotos jedes neuen Angebots mit einem vortrainierten Text-Bild-Modell ein und platziert es im Empfehlungsindex nahe ähnlichen etablierten Items. Sobald das Angebot genügend Interaktionen gesammelt hat, übernimmt sein kollaboratives Embedding die Rolle des Inhalts-Embeddings."
+ },
+ "collabfilter": {
+  "n": "Kollaboratives Filtern (Collaborative Filtering)",
+  "d": "Kollaboratives Filtern empfiehlt einem Nutzer Items auf Grundlage der Vorlieben anderer Nutzer mit ähnlichem Verhalten und verwendet dabei nur Interaktionsdaten, keinen Item-Inhalt.\n\nNachbarschaftsverfahren berechnen die Ähnlichkeit zwischen Nutzern oder zwischen Items, meist die Kosinus-Ähnlichkeit von Interaktionsvektoren, und empfehlen Items, die ähnlichen Nutzern gefallen haben oder Items ähneln, die dem Nutzer gefallen haben. Verfahren der Matrixfaktorisierung nähern dagegen die dünn besetzte Nutzer-Item-Matrix als Produkt niedrigrangiger Embedding-Matrizen für Nutzer und Items an, trainiert mit Alternating Least Squares oder Gradientenabstieg.\n\nKollaboratives Filtern treibt Empfehlungssysteme für Produkte, Filme und Musik an, und seine Embeddings speisen oft die Kandidatengenerierung. Seine Hauptschwächen sind das Kaltstartproblem, dünn besetzte Daten und Popularitäts-Bias. Eine subtile Falle ist, implizites Feedback wie Klicks oder Aufrufe wie explizite Bewertungen zu behandeln: Eine fehlende Interaktion bedeutet nicht Ablehnung, daher gewichten implizite Verfahren beobachtete und unbeobachtete Einträge unterschiedlich.",
+  "u": [
+   "Produktempfehlungen aus der Kaufhistorie",
+   "Listen ähnlicher Items wie „häufig zusammen gekauft“",
+   "Kandidaten für Ranking-Modelle abrufen"
+  ],
+  "x": "Ein Musikdienst faktorisiert jede Nacht seine Hörmatrix mit implizitem Alternating Least Squares, um Nutzer- und Track-Embeddings zu erzeugen. Diese Embeddings speisen sowohl persönliche Playlists als auch eine Funktion für ähnliche Tracks, während ganz neue Tracks auf Audio-Features angewiesen sind, bis sie Wiedergaben sammeln."
+ },
+ "fraud": {
+  "n": "Betrugserkennung",
+  "d": "Betrugserkennung nutzt Machine Learning, um Transaktionen, Konten oder Schadensfälle zu identifizieren, die wahrscheinlich betrügerisch sind, meist in Echtzeit und bevor Verluste entstehen.\n\nSie wird typischerweise als binäre Klassifikation auf stark unausgeglichenen Daten formuliert, oft mit Betrug weit unter einem Prozent der Ereignisse. Gradient-Boosting-Modelle wie XGBoost und LightGBM auf konstruierten Features wie Transaktionsgeschwindigkeit, Betrag im Verhältnis zur Historie des Nutzers sowie Geräte- und Ortswechseln sind das Arbeitspferd der Branche, ergänzt durch Anomalieerkennung für neue Muster und Graph Neural Networks für Betrugsringe. Die Scores speisen Regeln, die genehmigen, blockieren oder zur Prüfung weiterleiten.\n\nDie Evaluation nutzt Precision, Recall, PR-AUC und kostenbasierte Entscheidungsschwellenwerte statt Accuracy, die bei so niedrigen Basisraten nichtssagend ist. Zu den Fallen gehören Label-Verzögerung, weil Chargebacks erst Wochen später eintreffen; adversariale Drift, weil Betrüger sich anpassen; und Data Leakage durch Features, die erst nach der Transaktion berechnet werden, offline prädiktiv wirken, zum Entscheidungszeitpunkt aber nicht verfügbar sind.",
+  "u": [
+   "Echtzeit-Scoring von Kartentransaktionen",
+   "Betrugstriage bei Versicherungsschäden",
+   "Fake-Konten und Missbrauch von Aktionen erkennen"
+  ],
+  "x": "Ein Kartenherausgeber bewertet jede Autorisierung mit einem Gradient-Boosting-Modell, das von Echtzeit-Geschwindigkeits-Features aus einem Feature Store gespeist wird. Scores über einem Schwellenwert werden abgelehnt, ein mittleres Band löst eine zusätzliche Authentifizierung aus, wobei die Schwellenwerte aus den Kosten des Betrugs gegenüber der Belastung für Kunden abgeleitet werden."
+ },
+ "churn": {
+  "n": "Churn-Vorhersage",
+  "d": "Churn-Vorhersage schätzt, welche Kunden in einem kommenden Zeitraum ein Produkt voraussichtlich nicht mehr nutzen oder ein Abonnement kündigen.\n\nMeist ist sie ein binäres Klassifikationsproblem mit Snapshot-Design: Features werden aus der Historie jedes Kunden bis zu einem Stichtag berechnet, etwa Nutzungstrends, Support-Tickets, fehlgeschlagene Zahlungen und Kundendauer, und das Label hält fest, ob der Kunde im folgenden Zeitfenster abgewandert ist. Logistische Regression und Gradient Boosting sind verbreitet, und SHAP-Werte erklären, welche Faktoren das Risiko jedes Kunden treiben.\n\nDie Scores ranken Kunden für Kampagnen zur Kundenbindung, daher zählen Precision unter den am höchsten gerankten Kunden und Kalibrierung oft mehr als die Gesamt-Accuracy. Eine zentrale Falle ist Data Leakage durch Features, die nach dem Stichtag erfasst wurden. Eine weitere ist, allein nach dem Risiko zu handeln: Die Kunden mit der höchsten Abwanderungswahrscheinlichkeit sind nicht unbedingt diejenigen, die ein Rabatt hält, weshalb erfahrene Teams zu Uplift-Modellierung und A/B-Tests der Maßnahmen übergehen.",
+  "u": [
+   "Bindungsangebote für Abodienste gezielt ausspielen",
+   "Kontaktaufnahme durch Account Manager priorisieren",
+   "Gefährdete wiederkehrende Umsätze prognostizieren"
+  ],
+  "x": "Ein Telekommunikationsanbieter bewertet monatlich alle Vertragskunden mit einem Gradient-Boosting-Churn-Modell, das auf einem festen Stichtag und einem 60-tägigen Label-Fenster aufbaut. Das Kundenbindungsteam kontaktiert die am höchsten gerankten Kunden, und eine randomisierte Holdout-Gruppe misst, ob die Ansprache den Churn tatsächlich senkt."
+ },
+ "demandfc": {
+  "n": "Nachfrageprognose",
+  "d": "Nachfrageprognose sagt vorher, wie viel von einem Produkt oder einer Dienstleistung in künftigen Perioden benötigt wird, etwa Stückzahlen pro Filiale und Tag.\n\nPrognosen entstehen aus historischen Verkäufen in Verbindung mit Trend, Saisonalität, Feiertagen, Preisen, Aktionen und Wetter. Die Methoden reichen von exponentieller Glättung, ARIMA und Prophet für einzelne Reihen über globale Modelle wie Gradient Boosting mit Lag-Features und Rolling-Window-Features bis zu tiefen Modellen wie N-BEATS, dem Temporal Fusion Transformer und Zeitreihen-Foundation-Models, die über Tausende Reihen hinweg lernen. Quantilprognosen liefern die Spannweiten, die Bestandsentscheidungen brauchen.\n\nDie Validierung muss die zeitliche Reihenfolge respektieren und eine zeitbasierte Validierung mit einem zur Geschäftsentscheidung passenden Horizont verwenden. Eine häufige Falle ist, dass erfasste Verkäufe nicht der wahren Nachfrage entsprechen: Ist ein Artikel ausverkauft, fallen die Verkäufe auf null, obwohl Kunden ihn wollten; Modelle, die auf rohen Verkaufszahlen trainiert werden, unterschätzen die Nachfrage daher, solange Fehlbestände nicht markiert oder korrigiert werden.",
+  "u": [
+   "Nachschub und Bestellungen auf Filialebene",
+   "Personalplanung für Callcenter und Lager",
+   "Planung von Energielast und Fahrtnachfrage"
+  ],
+  "x": "Eine Supermarktkette trainiert ein globales Gradient-Boosting-Modell über alle Kombinationen aus Filiale und Produkt, mit verzögerten Verkäufen, Aktionen und Feiertags-Flags, und sagt mehrere Quantile für die nächsten zwei Wochen vorher. Tage mit Fehlbeständen werden aus den Trainingszielen ausgeschlossen, damit das Modell keine künstlich niedrige Nachfrage lernt."
+ },
+ "creditscore": {
+  "n": "Kreditscoring",
+  "d": "Kreditscoring schätzt die Wahrscheinlichkeit, dass ein Kreditnehmer mit einem Darlehen ausfällt; Kreditgeber nutzen sie, um Kredite zu genehmigen, zu bepreisen und zu begrenzen.\n\nDas klassische Werkzeug ist die Scorecard: Numerische Features werden per Binning gruppiert, jedes Bin wird mit seinem Weight of Evidence kodiert, und eine logistische Regression wandelt sie in Punkte um, die sich zu einem Score addieren. Moderne Kreditgeber nutzen auch Gradient Boosting auf Auskunftei- und Antragsdaten, oft mit monotonen Nebenbedingungen, damit eine höhere Verschuldungsquote das vorhergesagte Risiko nie senkt.\n\nKreditmodelle sind streng reguliert. Kreditgeber müssen ablehnende Entscheidungen begründen, weshalb interpretierbare Scorecards und SHAP-Erklärungen verbreitet sind, und auf unfaire Behandlung geschützter Gruppen testen. Wichtige Evaluationswerkzeuge sind ROC-AUC oder der Gini-Koeffizient (2·AUC − 1), Kalibrierung und Stabilität über die Zeit. Eine bekannte Falle ist die Reject Inference: Das Modell lernt nur von genehmigten Antragstellern, sodass die Ausgänge abgelehnter Anträge nie beobachtet werden.",
+  "u": [
+   "Verbraucherkredite genehmigen und bepreisen",
+   "Kreditkartenlimits festlegen",
+   "Interpretierbare Scorecards für regulierte Kreditvergabe"
+  ],
+  "x": "Ein Verbraucherkreditgeber bewertet Anträge mit einem Gradient-Boosting-Modell unter monotonen Nebenbedingungen und bildet die Wahrscheinlichkeiten auf eine vertraute Punkteskala ab. Jeder abgelehnte Antragsteller erhält die wichtigsten Gründe aus den Erklärungen des Modells, und die Score-Stabilität wird monatlich mit der Entwicklungsstichprobe abgeglichen."
+ }
+}

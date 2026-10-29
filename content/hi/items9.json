@@ -1,0 +1,382 @@
+{
+ "lossfn": {
+  "n": "Loss Function (हानि फलन)",
+  "d": "Loss function एक सूत्र है जो किसी एक उदाहरण पर मॉडल की prediction कितनी गलत है, उसे एक अकेली संख्या में बदल देता है। Training parameters को इस तरह बदलती है कि पूरे data पर औसत loss जितना हो सके उतना छोटा हो जाए, इसलिए loss ही तय करता है कि मॉडल को किस चीज़ को सही करने की ओर धकेला जाए। Gradient descent इसी के gradient के पीछे चलता है।\n\nअलग-अलग कामों के लिए अलग-अलग losses चाहिए: regression के लिए mean squared error, classification और language modeling के लिए cross-entropy, support vector machines के लिए hinge loss, और targets में outliers होने पर Huber loss। यह चुनाव कुछ मान्यताएँ साथ लाता है; उदाहरण के लिए squared error Gaussian noise के अनुरूप है और बड़ी गलतियों को भारी दंड देता है। एक आम भ्रम loss को ही evaluation metric मान लेना है। Optimization के लिए loss का differentiable और सुव्यवहारी होना ज़रूरी है, जबकि accuracy या F1 जैसे business metrics अक्सर ऐसे नहीं होते, इसलिए मॉडल का loss सुधर सकता है जबकि असल में मायने रखने वाला metric नहीं सुधरता।",
+  "u": [
+   "किसी भी supervised मॉडल का training लक्ष्य तय करना",
+   "Validation और early stopping के दौरान मॉडलों की तुलना करना",
+   "किसी business समस्या में गलतियों की असमान लागत को दर्शाना"
+  ],
+  "x": "एक demand forecasting टीम अपने gradient-boosted मॉडल को squared error से quantile loss पर ले जाती है, क्योंकि stock-out की लागत ज़रूरत से ज़्यादा inventory से अधिक है। मॉडल की निगरानी अब भी planners के accuracy metric से होती है, लेकिन loss अब predictions को उस ऊँचे quantile की ओर धकेलता है जिसकी business को वाकई ज़रूरत है।"
+ },
+ "objective": {
+  "n": "Objective Function (उद्देश्य फलन)",
+  "d": "Objective function वह पूरी राशि है जिसे optimizer न्यूनतम या अधिकतम करता है, आमतौर पर training data पर औसत loss और साथ में कोई भी penalty terms। Loss एक अकेली prediction को अंक देता है; objective उन सबको regularization, penalties के रूप में लिखी गई constraints या सहायक terms के साथ जोड़कर एक scalar बनाता है जो optimization समस्या को परिभाषित करता है।\n\nRidge regression में objective squared error और λ गुणा weights का squared norm होता है। XGBoost में इसमें leaves की संख्या और leaf weights पर penalties जुड़ती हैं। RLHF में objective अपेक्षित reward में से एक KL penalty घटाकर बनता है, जो policy को reference मॉडल के पास रखती है। किसी भी term को बदलने से हल बदल जाता है, इसलिए λ को tune करना असल में objective को tune करना है। एक आम गलती objective के मान को मॉडल की गुणवत्ता के रूप में बताना है: इसमें penalty terms और training data शामिल होते हैं, इसलिए यह अलग-अलग settings के बीच तुलनीय नहीं है और generalization के बारे में कुछ नहीं बताता।",
+  "u": [
+   "Training loss में regularization penalties जोड़ना",
+   "Multi-task training में कई लक्ष्यों को संतुलित करना",
+   "RLHF में reward और KL terms को सूत्रबद्ध करना"
+  ],
+  "x": "एक recommendation टीम ऐसा मॉडल train करती है जिसके objective में click loss, एक weighted watch-time loss और एक L2 penalty जुड़े हैं। जब watch time पर नया weight आज़माया जाता है, तो टीम runs की तुलना objective के मान पर नहीं बल्कि held-out business metrics पर करती है, क्योंकि हर weighting के साथ objective खुद बदल जाता है।"
+ },
+ "paramhyper": {
+  "n": "Parameters बनाम Hyperparameters",
+  "d": "Parameters वे मान हैं जो मॉडल training के दौरान data से सीखता है, जबकि hyperparameters training से पहले चुनी गई वे settings हैं जो तय करती हैं कि सीखना कैसे होगा। Neural network के weights, logistic regression के coefficients और decision tree के split thresholds parameters हैं। Learning rate, batch size, depth, regularization की ताकत और epochs की संख्या hyperparameters हैं।\n\nParameters training algorithm द्वारा fit किए जाते हैं, जैसे loss पर gradient descent से। Hyperparameters एक बाहरी search से चुने जाते हैं, जैसे grid search, random search या Bayesian optimization, जिनका आकलन validation set पर या cross-validation से होता है। इस चुनाव के लिए test set का उपयोग नहीं होना चाहिए, वरना बताया गया score ज़रूरत से ज़्यादा आशावादी होगा। इससे जुड़ा एक भ्रम यह है कि ज़्यादा tuning हमेशा फ़ायदेमंद है: छोटे validation set पर सैकड़ों configurations खोजने से validation data पर ही overfitting हो सकता है, जिससे चुनी गई setting असल से बेहतर दिखती है।",
+  "u": [
+   "Training के लिए learning rate और batch size चुनना",
+   "Boosting में tree की depth और leaves को tune करना",
+   "Experiments में सीखे गए weights को configuration से अलग रखना"
+  ],
+  "x": "एक ML platform टीम अपने LightGBM churn मॉडल के लिए हर रात learning rate, leaves की संख्या और feature fraction पर Bayesian optimization चलाती है। हर trial मॉडल के parameters को training folds पर fit करता है, और केवल सबसे अच्छी configuration को पूरे data पर दोबारा train करके एक held-out महीने पर एक बार evaluate किया जाता है।"
+ },
+ "weightsbias": {
+  "n": "Weights और Bias",
+  "d": "Weights और biases किसी मॉडल के भीतर सीखी जाने वाली संख्याएँ हैं: हर weight एक input को scale करता है, और bias उसके बाद जोड़ा जाने वाला एक स्थिरांक है। एक अकेला neuron z = w·x + b की गणना करता है, इसलिए weights तय करते हैं कि हर input output को कितनी ज़ोर से धकेलता है और bias परिणाम को inputs से स्वतंत्र रूप से खिसकाता है।\n\nज्यामितीय रूप से weights decision boundary की दिशा तय करते हैं और bias उसे origin से दूर ले जाता है; bias के बिना linear मॉडल की हर boundary को शून्य से होकर गुज़रना पड़ता। Neural network में हर layer की एक weight matrix और एक bias vector होता है, और backpropagation दोनों के gradients निकालता है। Weight decay आमतौर पर weights पर लगाया जाता है, पर अक्सर biases पर नहीं। ध्यान दें कि यह bias, bias–variance tradeoff वाले सांख्यिकीय bias और data में सामाजिक bias से अलग है; एक ही शब्द तीन अलग विचारों का नाम है।",
+  "u": [
+   "हर dense और convolutional layer में neurons को परिभाषित करना",
+   "Optimizers में biases को weight decay से बाहर रखना",
+   "Linear और logistic मॉडलों के coefficients पढ़ना"
+  ],
+  "x": "एक vision मॉडल को fine-tune कर रही टीम दो optimizer parameter groups बनाती है: weight matrices पर weight decay लगाती है, जबकि biases और normalization scales को बिना decay छोड़ देती है। यह transformer training recipes की आम प्रथा है और उन parameters को सिकुड़ने से बचाती है जो उसी तरह overfitting में योगदान नहीं देते।"
+ },
+ "epoch": {
+  "n": "Epoch, Batch और Iteration",
+  "d": "Epoch training data पर एक पूरा pass है, batch उदाहरणों का वह उपसमूह है जो एक अकेले update के लिए उपयोग होता है, और iteration ऐसा एक update step है। 10,000 उदाहरणों और 100 के batch size के साथ एक epoch में 100 iterations लगते हैं।\n\nMini-batch training, जो stochastic gradient descent और Adam में default है, एक batch पर gradient निकालती है, weights update करती है और आगे बढ़ती है; data आमतौर पर हर epoch में फिर से shuffle किया जाता है ताकि batches अलग हों। Learning rate schedules, warmup, checkpointing और early stopping को epochs में या steps में configure किया जाता है, और दोनों को मिला देना bugs का एक आम स्रोत है। Large language models अक्सर लगभग एक epoch या उससे कम train होते हैं, इसलिए प्रगति tokens या steps में गिनी जाती है। एक आम भ्रम यह है कि ज़्यादा epochs हमेशा मदद करते हैं; एक बिंदु के बाद मॉडल training set को रट लेता है और validation loss बढ़ने लगता है, इसीलिए early stopping उसी पर नज़र रखता है।",
+  "u": [
+   "Data loaders और training की अवधि configure करना",
+   "हर step पर learning rate decay का schedule तय करना",
+   "कब evaluate और checkpoint करना है, यह चुनना"
+  ],
+  "x": "एक speech टीम ऐसे dataset पर train करती है जो इतना बड़ा है कि उसे बार-बार दोहराया नहीं जा सकता, इसलिए वह प्रगति optimizer steps में मापती है और हर epoch की बजाय हर 2,000 steps पर evaluate करती है। बाद में बड़े cluster के लिए batch size बढ़ाने पर वह warmup और decay schedules को फिर से scale करती है ताकि वे अब भी उतने ही data को कवर करें।"
+ },
+ "convergence": {
+  "n": "Convergence (अभिसरण)",
+  "d": "Convergence का अर्थ है कि कोई iterative training प्रक्रिया स्थिर हो गई है: आगे के updates अब parameters को या objective को सार्थक रूप से नहीं बदलते। व्यवहार में इसे तब घोषित किया जाता है जब loss में सुधार, gradient norm या parameters में बदलाव एक tolerance से नीचे गिर जाए, या iterations की अधिकतम संख्या पूरी हो जाए।\n\nLogistic regression जैसी convex समस्याओं में उपयुक्त learning rate के साथ gradient descent global minimum तक converge करता है, और scikit-learn के solvers tolerance पर रुकते हैं तथा पहले max_iter पहुँचने पर चेतावनी देते हैं। Neural networks में convergence का अर्थ आमतौर पर loss landscape के किसी सपाट क्षेत्र तक पहुँचना है, कोई गारंटीशुदा optimum नहीं। Learning rate रास्ता नियंत्रित करता है: बहुत ऊँचा होने पर oscillation या divergence होता है, बहुत नीचा होने पर प्रगति बहुत धीमी होती है। एक आम गलती ConvergenceWarning को अनदेखा करना या सपाट training loss को अच्छी खबर मान लेना है; यह चेतावनी अक्सर unscaled features से आती है, और plateau एक saddle point भी हो सकता है।",
+  "u": [
+   "Solvers के लिए tolerance और max_iter तय करना",
+   "बहुत ऊँचे learning rate से हुए divergence का निदान",
+   "यह तय करना कि लंबे training runs कब रोके जा सकते हैं"
+  ],
+  "x": "एक analytics टीम को कच्ची transaction राशियों पर logistic regression से ConvergenceWarning मिलती है। Features को standardize करने के बाद solver iterations के एक छोटे हिस्से में converge हो जाता है और coefficients हर retrain में स्थिर रहते हैं, जिससे वे मासिक report में उपयोग लायक बन जाते हैं।"
+ },
+ "localmin": {
+  "n": "Local बनाम Global Minimum",
+  "d": "Global minimum सभी संभव parameters पर loss function का सबसे निचला बिंदु है, जबकि local minimum अपने तात्कालिक आस-पास से नीचा होता है पर ज़रूरी नहीं कि कुल मिलाकर सबसे नीचा हो। Gradient descent केवल स्थानीय ढलान की जानकारी उपयोग करता है, इसलिए जहाँ gradient शून्य हो जाए वहीं रुक जाता है, और वह कोई local minimum हो सकता है।\n\nLinear regression, logistic regression और SVMs जैसी convex समस्याओं में कोई खराब local minima नहीं होते: हर local minimum global होता है। Neural network के losses non-convex होते हैं, फिर भी शोध बताता है कि बहुत ऊँचे आयामों में ऊँचे loss वाले ज़्यादातर critical points खराब local minima नहीं बल्कि saddle points होते हैं, और कई local minima लगभग समान loss तक पहुँचते हैं। Stochastic gradient का noise, momentum, अच्छा initialization और random restarts मदद करते हैं; इसी कारण k-means कई initializations उपयोग करता है। एक भ्रम यह है कि training loss का global minimum ढूँढ़ना वांछनीय है; वह केवल overfit कर सकता है, और flat minima अक्सर बेहतर generalize करते हैं।",
+  "u": [
+   "कई random initializations के साथ k-means चलाना",
+   "यह समझाना कि convex मॉडलों का हल अद्वितीय क्यों होता है",
+   "Non-convex fits को अलग-अलग seeds से दोबारा शुरू करना"
+  ],
+  "x": "एक customer segmentation टीम दस initializations के साथ k-means चलाती है और सबसे कम inertia वाला हल रखती है, क्योंकि एक अकेला run कभी-कभी ऐसे local minimum में पहुँच जाता है जो दो असली segments को मिला देता है। वही seeds log किए जाते हैं ताकि अगले refresh पर चुनी गई clustering दोहराई जा सके।"
+ },
+ "closedform": {
+  "n": "Closed-Form Solution (बंद-रूप हल)",
+  "d": "Closed-form solution किसी optimization समस्या का सटीक उत्तर है जो एक सीमित सूत्र के रूप में लिखा जाता है और iterative updates की बजाय सीधे गणना से मिलता है। Ordinary least squares इसका क्लासिक उदाहरण है: linear regression के सबसे अच्छे weights w = (XᵀX)⁻¹Xᵀy हैं, जो linear algebra के एक ही चरण में मिल जाते हैं।\n\nRidge regression और PCA (eigendecomposition या SVD के ज़रिए) का भी closed form होता है। Logistic regression, lasso और neural networks का कोई closed form नहीं है, इसलिए उन्हें gradient descent या दूसरे iterative solvers चाहिए। Closed form सटीक होता है और इसमें tune करने के लिए कोई learning rate नहीं होता, लेकिन यह महँगा हो सकता है: d × d matrix का inverse निकालने की लागत लगभग O(d³) है। व्यवहार में libraries कभी स्पष्ट inverse नहीं बनातीं; वे linear system को QR, Cholesky या SVD से हल करती हैं, जो तेज़ है और features के लगभग collinear होने पर संख्यात्मक रूप से अधिक स्थिर भी।",
+  "u": [
+   "Ordinary least squares और ridge regression को fit करना",
+   "Eigendecomposition या SVD से PCA की गणना करना",
+   "Iterative मॉडल training से पहले तेज़ baselines बनाना"
+  ],
+  "x": "एक pricing टीम कुछ सौ features पर ridge regression को हर घंटे Cholesky solve के ज़रिए closed-form solution से दोबारा fit करती है। हर refit एक सेकंड से काफ़ी कम समय लेता है और इसमें निगरानी के लिए कोई learning rate या convergence जाँच नहीं होती, जिससे pipeline सरल बनी रहती है।"
+ },
+ "stochastic": {
+  "n": "Stochastic बनाम Deterministic",
+  "d": "Deterministic प्रक्रिया एक ही input से हमेशा एक ही output देती है, जबकि stochastic प्रक्रिया में randomness शामिल होती है, इसलिए बार-बार चलाने पर परिणाम अलग हो सकते हैं। Machine learning में algorithms और training runs दोनों इनमें से किसी भी प्रकार के हो सकते हैं।\n\nStochastic gradient descent पूरे dataset की बजाय एक random mini-batch से gradient का अनुमान लगाता है, जो ज़्यादा noisy है पर हर step पर कहीं सस्ता है, और यह noise saddle points से बाहर निकलने में मदद कर सकता है। Random forest, bagging, dropout, data augmentation, random weight initialization और temperature के साथ sampling-आधारित text decoding भी stochastic हैं। Closed-form linear regression और greedy decoding deterministic हैं। Random seed तय करने से runs दोहराने योग्य बनते हैं, लेकिन GPUs पर पूर्ण determinism के लिए deterministic kernels भी चाहिए, क्योंकि कुछ parallel operations floating-point संख्याओं को बदलते क्रम में जोड़ते हैं। एक आम गलती एक-एक run से दो मॉडलों की तुलना करना है: seed-दर-seed बदलाव से छोटे अंतर इस बात का प्रमाण नहीं हैं कि एक मॉडल बेहतर है।",
+  "u": [
+   "SGD और Adam में mini-batch से gradient का अनुमान",
+   "तय random seeds से दोहराने योग्य experiments",
+   "Text generation में sampling बनाम greedy decoding"
+  ],
+  "x": "एक research टीम यह देखने के बाद कि एक अकेले seed पर मिला सुधार दोबारा चलाने पर गायब हो गया, हर मॉडल configuration को पाँच seeds के औसत और फैलाव के रूप में report करती है। Serving stack के regression tests के लिए वह deterministic GPU algorithms चालू करती है, और bit-identical outputs के बदले धीमे kernels स्वीकार करती है।"
+ },
+ "lagrange": {
+  "n": "Lagrange Multipliers और Constraints",
+  "d": "Lagrange multipliers किसी constrained optimization समस्या को unconstrained समस्या में बदल देते हैं: हर constraint को objective में जोड़ा जाता है, एक नए variable से weighted, जिसे multiplier कहते हैं। Optimum पर objective का gradient constraints के gradients का एक संयोजन होता है, और हर multiplier यह मापता है कि उसकी constraint को ढीला करने पर इष्टतम मान कितना बदलेगा।\n\nInequality constraints होने पर ये शर्तें Karush–Kuhn–Tucker (KKT) conditions बन जाती हैं। Support vector machine इसी तरह निकाला जाता है: classification constraints के अधीन margin को अधिकतम करने से एक dual समस्या बनती है जिसमें केवल nonzero multipliers वाले उदाहरण, यानी support vectors, boundary तय करते हैं। यही विचार समझाता है कि lasso और ridge penalties weight norm पर constraint लगाने के समतुल्य क्यों हैं। एक आम भ्रम penalized objective के λ को एक तय constraint मान लेना है; हर λ किसी constraint radius के अनुरूप होता है, लेकिन यह संबंध data पर निर्भर करता है।",
+  "u": [
+   "SVM का dual और support vectors निकालना",
+   "Regularization penalties को norm constraints से जोड़ना",
+   "Fairness या budget सीमाओं के साथ constrained optimization"
+  ],
+  "x": "एक advertising टीम कुल खर्च की constraint के अधीन अनुमानित conversions को अधिकतम करके campaigns में दैनिक budget बाँटती है। Solver budget constraint के लिए एक multiplier लौटाता है, जिसे टीम खर्च बढ़ाने का निर्णय लेते समय budget की हर अतिरिक्त इकाई पर मिलने वाले सीमांत conversions के रूप में पढ़ती है।"
+ },
+ "generalization": {
+  "n": "Generalization (सामान्यीकरण)",
+  "d": "Generalization किसी मॉडल की वह क्षमता है जिससे वह केवल उन उदाहरणों पर नहीं जिन पर उसे fit किया गया, बल्कि training data जैसे ही distribution से आए नए data पर भी अच्छा प्रदर्शन करे। Training error और held-out data पर error के बीच का अंतर, जिसे generalization gap कहते हैं, यह मापता है कि मॉडल ने दोबारा उपयोग होने वाले patterns सीखने की बजाय कितना रटा है।\n\nइसका अनुमान train / validation / test split या cross-validation से लगाया जाता है, और इसे ज़्यादा या बेहतर data, weight decay और dropout जैसे regularization, data augmentation, early stopping और उपयुक्त capacity वाला मॉडल चुनकर सुधारा जाता है। Overfitting इसकी विफलता का रूप है। Deep networks अपने data को रटने लायक पर्याप्त parameters होने के बावजूद अच्छा generalize कर सकते हैं, एक तथ्य जिसे शास्त्रीय सिद्धांत पूरी तरह नहीं समझाता। उसी distribution पर generalization, robustness नहीं है: data drift होने पर बेहतरीन held-out scores वाला मॉडल भी production में विफल हो सकता है।",
+  "u": [
+   "Held-out data से वास्तविक दुनिया के प्रदर्शन का अनुमान",
+   "Regularization की ताकत और मॉडल का आकार चुनना",
+   "नए users या नई समय-अवधियों पर robustness जाँचना"
+  ],
+  "x": "एक fraud टीम अपने मॉडल को random split की बजाय बाद की समय-खिड़की पर validate करती है, क्योंकि random split में लगभग duplicate transactions दोनों sets में आ गए थे और generalization को बढ़ा-चढ़ाकर दिखा रहे थे। समय-आधारित अनुमान कम है, लेकिन deployment के बाद दिखे प्रदर्शन से कहीं ज़्यादा मेल खाता है।"
+ },
+ "capacity": {
+  "n": "Model Capacity (मॉडल क्षमता)",
+  "d": "Model capacity उन functions का दायरा है जिन्हें मॉडल दर्शा सकता है, मोटे तौर पर यह कि वह कितना जटिल pattern fit कर सकता है। Linear मॉडल की capacity कम होती है; गहरे decision tree, ऊँची degree वाले polynomial या बड़े neural network की capacity ऊँची होती है।\n\nCapacity parameters, layers, tree depth, polynomial degree या boosting rounds की संख्या के साथ बढ़ती है, और regularization, dropout या early stopping से घटती है, जो व्यवहार में training की पहुँच वाले functions को सीमित करते हैं। बहुत कम capacity से underfitting होता है; data की मात्रा की तुलना में बहुत ज़्यादा capacity overfitting को बुलावा देती है, यही शास्त्रीय bias–variance tradeoff है। औपचारिक मापों में VC dimension और Rademacher complexity शामिल हैं। केवल parameter count एक अधूरा पैमाना है: बड़े neural networks अच्छा generalize कर सकते हैं, कभी-कभी data रटने के बिंदु से आगे आकार बढ़ने पर और भी बेहतर, जिसे double descent कहते हैं। Language models के scaling laws बताते हैं कि capacity और data साथ बढ़ने पर loss कैसे घटता है।",
+  "u": [
+   "Tree की depth या network की चौड़ाई चुनना",
+   "Learning curves से underfitting बनाम overfitting का निदान",
+   "Scaling laws से language models का आकार तय करना"
+  ],
+  "x": "एक tabular churn मॉडल बना रही टीम कई अधिकतम depths और trees की संख्याओं पर gradient boosting की तुलना करती है और हर एक के लिए validation loss plot करती है। सबसे उथला मॉडल मौसमी प्रभावों पर underfit करता है और सबसे गहरा दुर्लभ customer segments पर overfit, इसलिए बीच की setting चुनी जाती है और dataset के काफ़ी बढ़ने पर हर बार दोबारा जाँची जाती है।"
+ },
+ "inductivebias": {
+  "n": "Inductive Bias (आगमनात्मक पूर्वाग्रह)",
+  "d": "Inductive bias उन मान्यताओं का समूह है जिनके सहारे कोई learning algorithm data की कुछ व्याख्याओं को दूसरों पर तरजीह देता है, और यह उसे उन inputs पर prediction करने के लिए चाहिए जिन्हें उसने कभी नहीं देखा। सीमित data अनगिनत functions से मेल खाता है, इसलिए हर learner को किसी न किसी को प्राथमिकता देनी पड़ती है।\n\nउदाहरण हर जगह हैं। Linear regression मानता है कि target features का weighted योग है। k-nearest neighbors मानता है कि पास-पास के points के labels समान होते हैं। Decision trees axis-aligned splits पसंद करते हैं। Convolutional neural network छोटे kernels और weight sharing के ज़रिए locality और translation equivariance मानता है। Transformer में built-in संरचना कमज़ोर होती है, इसीलिए Vision Transformer को CNN की बराबरी के लिए आमतौर पर ज़्यादा data या augmentation चाहिए। मज़बूत inductive bias सबसे ज़्यादा तब मदद करता है जब data कम हो और मान्यता सही हो; जब मान्यता गलत हो, तो यह प्रदर्शन को सीमित कर देता है, चाहे कितना भी data जोड़ा जाए।",
+  "u": [
+   "Images और कम data के लिए CNNs चुनना",
+   "Vision Transformers की data ज़रूरतों को समझाना",
+   "Domain की symmetries का सम्मान करने वाले architectures बनाना"
+  ],
+  "x": "कुछ हज़ार labeled scans वाला एक medical imaging समूह scratch से train किए गए Vision Transformer की बजाय convolutional backbone चुनता है, क्योंकि convolutions का locality bias सीमित data की भरपाई करता है। जब एक बड़ा pretrained transformer उपलब्ध होता है, तो वह यह चुनाव दोबारा देखता है, क्योंकि pretraining वह कमी पूरी कर देती है जो architecture में है।"
+ },
+ "trainloop": {
+  "n": "Training Loop",
+  "d": "Training loop वह दोहराया जाने वाला चक्र है जो मॉडल को fit करता है: एक batch लें, forward pass चलाएँ, loss निकालें, gradients पाने के लिए backpropagation चलाएँ, optimizer से parameters update करें, और दोहराएँ। PyTorch में इसका मूल पाँच पंक्तियों का है: gradients को zero करें, predict करें, loss निकालें, backward बुलाएँ, step बुलाएँ।\n\nइस मूल के चारों ओर व्यावहारिक हिस्से होते हैं: data loading और shuffling, tensors को GPU पर ले जाना, learning rate schedule और warmup, gradient clipping, mixed precision, gradient accumulation, समय-समय पर validation, logging, early stopping और checkpoints सहेजना। PyTorch Lightning, Keras fit और Hugging Face Trainer जैसी libraries इस loop को पैकेज करती हैं। आम bugs इन चरणों के क्रम से आते हैं: gradients को zero करना भूल जाना जिससे वे batches के पार जमा होते रहें, validation के दौरान मॉडल को training mode में छोड़ देना जिससे dropout और batch normalization अलग व्यवहार करें, या torch.no_grad के बिना validation चलाकर memory बर्बाद करना।",
+  "u": [
+   "Research मॉडलों के लिए custom PyTorch training लिखना",
+   "Clipping, schedules और mixed precision जोड़ना",
+   "Divergence या चुपचाप होने वाले training bugs को debug करना"
+  ],
+  "x": "एक computer vision टीम हाथ से लिखे loop को एक साझा trainer module से बदल देती है, जब दो projects ऐसे मॉडल ship कर चुके थे जिनमें validation के दौरान गलती से dropout सक्रिय था। साझा loop train और eval modes को लागू करता है, हर step पर learning rate और gradient norm log करता है और एक तय schedule पर checkpoints सहेजता है।"
+ },
+ "checkpoint": {
+  "n": "Model Checkpoint",
+  "d": "Model checkpoint किसी समय-बिंदु पर training की स्थिति का सहेजा गया snapshot है, ताकि रुकावट के बाद training फिर से शुरू की जा सके या बाद में सबसे अच्छा संस्करण वापस लाया जा सके। एक न्यूनतम checkpoint मॉडल के weights सहेजता है; एक पूर्ण checkpoint optimizer की स्थिति, जैसे Adam के moment अनुमान, learning rate scheduler, step या epoch counter और random number generator की स्थितियाँ भी सहेजता है।\n\nलंबे runs के दौरान, preemptible cloud machines पर, और जब भी validation सुधरे, checkpoints समय-समय पर लिखे जाते हैं, जो स्वाभाविक रूप से early stopping के साथ जुड़ता है। Hugging Face ecosystem में checkpoint एक directory होती है जिसमें weights के साथ configuration और tokenizer files होती हैं, और LoRA adapters भी इसी तरह साझा किए जाते हैं। एक आम गलती केवल weights सहेजकर training फिर से शुरू करना है: optimizer खाली moment अनुमानों के साथ और schedule शुरुआत से फिर शुरू होता है, जिससे loss में अचानक उछाल आ सकता है।",
+  "u": [
+   "Preemptible GPU instances पर training फिर से शुरू करना",
+   "Validation score के आधार पर सबसे अच्छा मॉडल रखना",
+   "Fine-tuned weights और adapters वितरित करना"
+  ],
+  "x": "Spot instances पर एक language model को pretrain कर रही टीम हर घंटे optimizer, scheduler और data loader की स्थिति सहित एक पूर्ण checkpoint object storage में सहेजती है। जब कोई node वापस ले लिया जाता है, तो job सबसे नए checkpoint से फिर शुरू होता है और loss curve उछाल की बजाय सहज रूप से आगे बढ़ती है।"
+ },
+ "hingeloss": {
+  "n": "Hinge Loss",
+  "d": "Hinge loss किसी classifier को तब दंड देता है जब कोई उदाहरण decision boundary के गलत तरफ़ हो या margin के भीतर हो, और जब उदाहरण कम से कम एक के margin के साथ सही classify हो जाए तो loss शून्य देता है। Labels y ∈ {−1, +1} और कच्चे score f(x) के साथ loss max(0, 1 − y·f(x)) है।\n\nयह linear support vector machine के पीछे का loss है: L2 penalty के साथ मिलाकर hinge loss को न्यूनतम करना margin को अधिकतम करने के समतुल्य है। चूँकि आत्मविश्वास से सही उदाहरण कुछ योगदान नहीं देते, हल केवल boundary के पास के support vectors पर निर्भर करता है। इसके रूपों में squared hinge और multiclass hinge शामिल हैं। Hinge loss convex है लेकिन margin पर differentiable नहीं, इसलिए solvers subgradients उपयोग करते हैं। एक आम भ्रम यह है कि SVM scores probabilities हैं: hinge loss उनका अनुमान नहीं लगाता, इसलिए logistic regression में उपयोग होने वाले log loss के विपरीत, probabilities चाहिए होने पर outputs को probability calibration की ज़रूरत होती है।",
+  "u": [
+   "Text classification के लिए linear SVMs को train करना",
+   "GAN discriminators के लिए margin-आधारित losses",
+   "Pairwise margin objectives से ranking"
+  ],
+  "x": "एक support टीम आने वाले tickets को TF-IDF features पर train किए गए linear SVM से queues में classify करती है, जिसे लाखों छोटे texts पर रोज़ दोबारा train करना तेज़ है। चूँकि routing नियमों को confidence thresholds चाहिए, टीम hinge से train किए गए scores को calibrated probabilities में बदलने के लिए एक held-out set पर Platt scaling जोड़ती है।"
+ },
+ "huberloss": {
+  "n": "Huber Loss",
+  "d": "Huber loss एक regression loss है जो छोटे residuals के लिए squared error की तरह और बड़े residuals के लिए absolute error की तरह व्यवहार करता है, और एक threshold δ तय करता है कि यह बदलाव कहाँ होगा। यह target के पास MSE के सहज gradients को MAE की outliers के प्रति robustness के साथ जोड़ता है।\n\n|r| ≤ δ के लिए loss ½r² है, और उसके आगे यह δ(|r| − ½δ) के रूप में रैखिक रूप से बढ़ता है, इसलिए एक अकेला बेतहाशा outlier fit पर हावी होने की बजाय एक सीमित gradient देता है। इसका उपयोग robust linear regression में, gradient boosting libraries में objective के रूप में, object detection boxes के लिए smooth L1 loss के रूप में और deep Q-learning में होता है। Threshold δ target की इकाइयों में होता है और उसके scale के सापेक्ष चुना जाना चाहिए; सामान्य errors से बहुत बड़ा δ Huber को MSE बना देता है, और बहुत छोटा δ इसे लगभग MAE बना देता है।",
+  "u": [
+   "Outliers वाले targets पर robust regression",
+   "Object detection में bounding box regression",
+   "Deep Q-learning में value targets को स्थिर करना"
+  ],
+  "x": "एक delivery कंपनी trip की अवधि का अनुमान लगाती है, जहाँ trips के एक छोटे हिस्से में लंबे बिना दर्ज ठहराव शामिल होते हैं। Huber loss से training उन trips को औसत prediction को ऊपर खींचने से रोकती है, जबकि सामान्य trips अब भी squared error की सटीकता के साथ fit होती हैं।"
+ },
+ "focalloss": {
+  "n": "Focal Loss",
+  "d": "Focal loss एक संशोधित cross-entropy loss है जो उन उदाहरणों का weight घटा देता है जिन्हें मॉडल पहले ही आसानी से classify कर लेता है, ताकि training कठिन, गलत classify हुए उदाहरणों पर ध्यान दे। यह cross-entropy term को (1 − p_t)^γ से गुणा करता है, जहाँ p_t सही class की अनुमानित probability है और γ ≥ 0 तय करता है कि आसान उदाहरण कितनी ज़ोर से दबाए जाएँ।\n\nγ = 0 पर यह सामान्य cross-entropy के बराबर है। γ = 2 पर, सही class के लिए 0.9 पर predict किए गए उदाहरण का loss 0.01 से scale हो जाता है। इसे RetinaNet में dense object detection के लिए पेश किया गया था, जहाँ हज़ारों आसान background anchors मुट्ठी भर objects पर हावी हो जाते हैं, और इसका उपयोग segmentation और tabular समस्याओं में class imbalance के लिए एक weighting term α के साथ भी होता है। एक सावधानी यह है कि focal loss मॉडल द्वारा सीखी जाने वाली probabilities को बदल देता है, इसलिए outputs कम calibrated होते हैं और thresholding से पहले probability calibration की ज़रूरत पड़ सकती है।",
+  "u": [
+   "कई background anchors वाला dense object detection",
+   "छोटी या दुर्लभ संरचनाओं का segmentation",
+   "Resampling के बिना अत्यधिक imbalanced classification"
+  ],
+  "x": "एक manufacturing inspection टीम सतह के बहुत छोटे दोषों का पता लगाती है जो हर image का नगण्य हिस्सा घेरते हैं। Detector को cross-entropy से focal loss पर ले जाने से प्रचुर आसान background क्षेत्र gradient पर हावी होना बंद कर देते हैं, और टीम alarm threshold तय करने से पहले एक validation set पर scores को फिर से calibrate करती है।"
+ },
+ "mape": {
+  "n": "MAPE (Mean Absolute Percentage Error)",
+  "d": "Mean absolute percentage error (MAPE) वास्तविक मानों के सापेक्ष forecast errors के औसत आकार को प्रतिशत में मापता है। हर error |y − ŷ| को |y| से भाग दिया जाता है और इन अनुपातों का औसत लिया जाता है, इसलिए 100 के वास्तविक मान पर 10 का error 10 प्रतिशत गिना जाता है।\n\nइसका आकर्षण scale से स्वतंत्रता है: business users बहुत अलग volumes वाले products या stores के बीच accuracy की तुलना कर सकते हैं, इसीलिए Prophet या ARIMA के साथ demand forecasting में यह आम है। कमज़ोरियाँ गंभीर हैं। जब कोई वास्तविक मान शून्य हो तो MAPE अपरिभाषित है और छोटे वास्तविक मानों पर बेतहाशा बढ़ जाता है, इसलिए रुक-रुक कर आने वाली demand series इसे तोड़ देती हैं। यह असममित भी है: over-forecast 100 प्रतिशत से कहीं ऊपर error दे सकता है, जबकि under-forecast कभी 100 प्रतिशत से ज़्यादा नहीं हो सकता, इसलिए MAPE को optimize करना नीचे की ओर biased forecasts को तरजीह देता है। Weighted MAPE (कुल absolute error बटा कुल वास्तविक मान), sMAPE या MASE आम विकल्प हैं।",
+  "u": [
+   "Business टीमों को demand forecast की accuracy बताना",
+   "अलग-अलग scale की series के बीच accuracy की तुलना",
+   "Sales planning में forecast की गुणवत्ता पर नज़र रखना"
+  ],
+  "x": "एक grocery chain store managers को forecast accuracy प्रतिशत में बताती है, लेकिन item-स्तर का MAPE धीमी बिक्री वाले उन products के लिए अर्थहीन हो जाता है जिनमें कई दिन शून्य बिक्री होती है। Analytics टीम मुख्य metric को store के सभी items पर weighted MAPE में बदल देती है, जो परिभाषित रहता है और उन products से प्रभावित होता है जो volume के लिए सबसे ज़्यादा मायने रखते हैं।"
+ },
+ "rankmetrics": {
+  "n": "Ranking Metrics (NDCG, MRR)",
+  "d": "Ranking metrics परिणामों की क्रमबद्ध सूची को इस आधार पर अंक देते हैं कि प्रासंगिक items कितनी अच्छी तरह ऊपर के पास रखे गए हैं, न कि हर item को स्वतंत्र रूप से classify करके। इनमें दो सबसे आम NDCG और MRR हैं।\n\nDiscounted cumulative gain हर परिणाम की प्रासंगिकता को उसकी स्थिति के logarithm से भाग देकर जोड़ता है, इसलिए rank 1 पर प्रासंगिक item, rank 10 पर उसी item से ज़्यादा गिना जाता है। आदर्श क्रम के DCG से normalize करने पर 0 और 1 के बीच NDCG मिलता है। Mean reciprocal rank सभी queries पर पहले प्रासंगिक परिणाम के 1/rank का औसत लेता है, इसलिए यह उन कामों के लिए उपयुक्त है जहाँ एक अच्छा उत्तर काफ़ी है। दोनों की गणना आमतौर पर एक cutoff k पर होती है, जैसे NDCG@10। ये search, reranking और RAG retrieval का मूल्यांकन करते हैं। एक जोखिम बिना आँके documents को अनदेखा करना है: offline labels कुछ ही परिणामों को कवर करते हैं, इसलिए बिना label वाले प्रासंगिक items सामने लाने वाला नया ranker खराब दिख सकता है।",
+  "u": [
+   "Search और recommendation rankers का offline मूल्यांकन",
+   "RAG pipelines में retrieval की गुणवत्ता मापना",
+   "LambdaRank से learning-to-rank मॉडल train करना"
+  ],
+  "x": "एक e-commerce search टीम online A/B test चलाने से पहले हर नए ranking मॉडल का मूल्यांकन graded मानवीय relevance labels वाली queries के एक set पर NDCG@10 से करती है। अपनी question-answering retrieval सेवा के लिए, जहाँ केवल पहला सही passage मायने रखता है, वह इसकी बजाय MRR पर नज़र रखती है।"
+ },
+ "iou": {
+  "n": "Intersection over Union (IoU)",
+  "d": "Intersection over union मापता है कि दो क्षेत्र कितना overlap करते हैं: उनके साझा क्षेत्रफल को उनके मिलकर घेरे गए क्षेत्रफल से भाग दिया जाता है। इसका मान अलग-अलग क्षेत्रों के लिए 0 से लेकर एक जैसे क्षेत्रों के लिए 1 तक होता है।\n\nObject detection में यह predicted bounding box की तुलना ground-truth box से करता है; IoU कम से कम 0.5 होने पर prediction को आमतौर पर true positive गिना जाता है, और COCO-शैली का mean average precision 0.5 से 0.95 तक के thresholds पर औसत लेता है। Non-maximum suppression duplicate boxes हटाने के लिए predictions के बीच IoU का उपयोग करता है। Semantic segmentation में यही अनुपात हर class के pixel masks पर निकाला जाता है और mean IoU, यानी Jaccard index, के रूप में औसत लिया जाता है। एक जोखिम यह है कि IoU छोटे objects पर कठोर है: कुछ pixels का खिसकाव बड़े box को मुश्किल से प्रभावित करता है लेकिन छोटे box को threshold से नीचे धकेल सकता है, इसलिए औसत छोटे objects पर खराब प्रदर्शन को छिपा देते हैं।",
+  "u": [
+   "Detection में predicted और ground-truth boxes का मिलान",
+   "Duplicate detections का non-maximum suppression",
+   "Semantic segmentation की गुणवत्ता के लिए mean IoU"
+  ],
+  "x": "एक retail shelf-monitoring टीम अपने product detector का मूल्यांकन IoU thresholds पर mean average precision से करती है, और छोटे objects के लिए अलग से भी। यह विभाजन दिखाता है कि ज़्यादातर errors छोटे price tags से आते हैं, जिससे टीम पूरा मॉडल दोबारा train करने की बजाय input resolution बढ़ाती है।"
+ },
+ "baserate": {
+  "n": "Base Rate (आधार दर)",
+  "d": "Base rate यह है कि किसी भी सबूत पर विचार करने से पहले जनसंख्या में कोई class या घटना कितनी आम है, जैसे fraudulent transactions का हिस्सा या किसी बीमारी वाले मरीज़ों का हिस्सा। यह Bayes' theorem में prior probability है।\n\nBase rate तय करता है कि एक positive prediction का कितना अर्थ है। 99 प्रतिशत sensitive और 99 प्रतिशत specific एक test, जब 0.1 प्रतिशत base rate वाली स्थिति पर लगाया जाता है, तो हर true positive के लिए लगभग दस false positives देता है, इसलिए ज़्यादातर alarms गलत होते हैं। इसे अनदेखा करना base rate fallacy है। Machine learning में base rate accuracy के लिए तुच्छ baseline तय करता है (हमेशा बहुमत class predict करना) और PR-AUC के random baseline के बराबर होता है। SMOTE या undersampling से resample किए गए data पर train हुआ मॉडल एक अलग base rate सीखता है, इसलिए risk अनुमानों के रूप में उपयोग से पहले उसकी probabilities को असली दर पर फिर से calibrate करना ज़रूरी है।",
+  "u": [
+   "दुर्लभ घटनाओं पर alerts की precision की व्याख्या",
+   "Classification metrics के लिए साधारण baselines तय करना",
+   "Training data को resample करने के बाद probabilities फिर से calibrate करना"
+  ],
+  "x": "एक अस्पताल एक sepsis alert लागू करता है जिसका validation एक balanced sample पर हुआ था, और जल्द ही clinicians शिकायत करते हैं कि ज़्यादातर alerts झूठे हैं। Data science टीम ward की असली prevalence पर precision का फिर से अनुमान लगाती है, scores को फिर से calibrate करती है और threshold बढ़ाती है ताकि alerts की संख्या उतनी हो जितनी staff जाँच सके।"
+ },
+ "activation": {
+  "n": "Activation Function",
+  "d": "Activation function वह nonlinear function है जिसे कोई neuron अपने weighted योग पर लगाकर परिणाम आगे भेजता है। इसके बिना linear layers का कोई भी ढेर एक अकेले linear transformation में सिमट जाता है, इसलिए यही nonlinearity multilayer perceptron को घुमावदार decision boundaries और जटिल functions दर्शाने देती है।\n\nआम विकल्प हैं ReLU, जो सस्ता है और positive inputs पर saturate नहीं होता; GELU और SwiGLU, जो transformer की feed-forward layers में उपयोग होते हैं; sigmoid और tanh, जो LSTM और GRU cells में gates के लिए और सीमित outputs के लिए उपयोग होते हैं; और softmax, जो output पर logits के vector को probability distribution में बदलता है। यह चुनाव gradient flow को प्रभावित करता है: sigmoid जैसे saturate होने वाले functions गहरे networks में vanishing gradients में योगदान देते हैं, और weight initialization योजनाएँ activation के अनुसार मिलाई जाती हैं। एक आम गलती PyTorch के CrossEntropyLoss जैसे loss से पहले softmax या sigmoid लगा देना है, जो पहले से ही कच्चे logits की अपेक्षा करता है।",
+  "u": [
+   "Dense और convolutional layers के बीच nonlinearity जोड़ना",
+   "LSTM, GRU और SwiGLU blocks में gating",
+   "Outputs को probabilities या सीमित दायरों में बदलना"
+  ],
+  "x": "एक पुराने text classifier को आधुनिक बना रही टीम tanh वाली hidden layers को GELU से बदलती है और He initialization अपनाती है। गहरा संस्करण अब सावधान learning rate tuning के बिना स्थिर रूप से train होता है, और टीम multi-label probabilities के लिए केवल output पर sigmoid रखती है।"
+ },
+ "hiddenlayer": {
+  "n": "Hidden Layer",
+  "d": "Hidden layer किसी neural network में input और output के बीच की कोई भी layer है, जिसे यह नाम इसलिए मिला क्योंकि इसके मान data या predictions में सीधे दिखाई नहीं देते। हर hidden layer एक linear transformation और उसके बाद एक activation function लगाती है।\n\nHidden layers की संख्या network की depth है और हर layer में units की संख्या उसकी width; दोनों मिलकर मॉडल की capacity का बड़ा हिस्सा तय करते हैं। Universal approximation theorem दिखाता है कि पर्याप्त चौड़ी एक hidden layer किसी भी continuous function का सन्निकटन कर सकती है, लेकिन गहरे networks आमतौर पर वही functions कहीं कम units से दर्शाते हैं। Transformer में हर feed-forward network की hidden layer मॉडल की width से लगभग चार गुना होती है। ज़्यादा hidden layers अपने-आप बेहतर नहीं होतीं: residual connections और normalization के बिना depth अक्सर खराब train होती है।",
+  "u": [
+   "MLPs की depth और width का आकार तय करना",
+   "Downstream कामों के लिए बीच के features निकालना",
+   "Transformer की feed-forward hidden dimension तय करना"
+  ],
+  "x": "Tabular और embedding features पर click-through मॉडल बना रही एक टीम अपने MLP tower में hidden layers की संख्या और width को tune करती है। तीन layers के बाद validation loss सुधरना बंद हो जाता है और latency बढ़ती है, इसलिए production मॉडल तीन hidden layers और उनके बीच dropout का उपयोग करता है।"
+ },
+ "hiddenstate": {
+  "n": "Hidden State",
+  "d": "Hidden state वह vector है जिसे network अब तक संसाधित चीज़ों का सार रखने के लिए भीतर रखता है, या तो sequence मॉडल में time steps के पार या किसी एक token के लिए layers के पार। यह मॉडल की working memory है।\n\nRecurrent neural network में hidden state hₜ हर step पर पिछली state और वर्तमान input से update होती है, इसलिए इसे पूरे अतीत को एक तय आकार के vector में संकुचित करना पड़ता है; LSTM और GRU cells यह नियंत्रित करने के लिए gates जोड़ते हैं कि क्या रखा जाए और क्या भुलाया जाए। Transformer में \"hidden states\" का अर्थ आमतौर पर हर layer से निकलने वाले प्रति-token vectors होता है, और अंतिम layer की hidden states language-model head को जाती हैं या embeddings के रूप में काम आती हैं। Mechanistic interpretability इनका अध्ययन करती है। एक आम भ्रम transformer की hidden states को RNN memory के बराबर मानना है: transformers कोई तय आकार की state आगे नहीं ले जाते, बल्कि KV cache के ज़रिए सभी पिछले tokens पर attend करते हैं।",
+  "u": [
+   "RNN और LSTM sequences में context आगे ले जाना",
+   "Transformer layers के outputs को embeddings के रूप में निकालना",
+   "Interpretability के लिए आंतरिक representations की जाँच"
+  ],
+  "x": "एक search टीम BERT-शैली के encoder की अंतिम layer की hidden states निकालती है और उन्हें mean-pool करके retrieval index के लिए document embeddings बनाती है। Layers की तुलना के बाद वह पाती है कि एक छोटे-text काम के लिए बीच की layer बेहतर परिणाम देती है, और यह layer चुनाव model card में दर्ज करती है।"
+ },
+ "logits": {
+  "n": "Logits",
+  "d": "Logits वे कच्चे, unnormalized scores हैं जो classification मॉडल probabilities में बदले जाने से पहले output करता है। Binary classifier के लिए logit log-odds, log(p / (1 − p)), होता है और sigmoid उसे probability में बदलता है; कई classes के लिए softmax logits के vector को distribution में बदलता है।\n\nLogits कोई भी वास्तविक संख्या हो सकते हैं, और softmax के लिए केवल उनके अंतर मायने रखते हैं: हर logit में एक ही स्थिरांक जोड़ने से probabilities नहीं बदलतीं। PyTorch के cross_entropy और binary_cross_entropy_with_logits जैसे loss functions संख्यात्मक स्थिरता के लिए सीधे logits लेते हैं। Language models में अंतिम layer vocabulary के हर token के लिए एक logit देती है, और decoding विधियाँ उन्हीं पर काम करती हैं: temperature logits को भाग देता है, top-k और top-p sampling उन्हें mask करते हैं, और greedy decoding argmax लेता है। एक आम bug मॉडल में softmax लगाकर फिर वे probabilities ऐसे loss को देना है जो logits की अपेक्षा करता है, जिससे gradients चुपचाप कमज़ोर हो जाते हैं।",
+  "u": [
+   "संख्यात्मक रूप से स्थिर cross-entropy losses को input देना",
+   "Text generation के दौरान temperature और top-p लगाना",
+   "Knowledge distillation में teacher logits से मिलान करना"
+  ],
+  "x": "एक language model serve कर रही टीम प्रति-token logits को एक आंतरिक tool के लिए उपलब्ध कराती है, जो sampling से पहले कुछ tokens के logits को negative infinity पर सेट करके उन्हें प्रतिबंधित करता है। चूँकि masking softmax से पहले होती है, बची हुई probabilities अपने-आप renormalize हो जाती हैं और decoding settings अपरिवर्तित रहती हैं।"
+ },
+ "featuremap": {
+  "n": "Feature Map",
+  "d": "Feature map वह output grid है जो किसी एक convolutional filter को input पर लगाने से बनता है, और दर्ज करता है कि उस filter का pattern हर spatial स्थिति पर कितनी ज़ोर से दिखता है। 64 filters वाली convolutional layer 64 feature maps बनाती है, जो उसके output tensor के channels के रूप में एक के ऊपर एक रखे जाते हैं।\n\nCNN की शुरुआती layers ऐसे feature maps बनाती हैं जो edges, रंगों और सरल textures पर प्रतिक्रिया देते हैं; गहरी layers हिस्सों और पूरे objects पर प्रतिक्रिया देती हैं, क्योंकि हर layer अपने नीचे के maps को जोड़ती है और उसका receptive field बढ़ता जाता है। Stride और pooling feature maps का spatial आकार घटाते हैं, जबकि channels की संख्या आमतौर पर बढ़ती है। U-Net के skip connections और Grad-CAM feature maps का दोबारा उपयोग करते हैं। एक आम भ्रम feature map को tabular learning के feature के बराबर मानना है; feature map प्रतिक्रियाओं का एक पूरा spatial array है।",
+  "u": [
+   "Detection और segmentation के लिए multi-scale features",
+   "मॉडल के ध्यान के Grad-CAM visualizations",
+   "Pretrained CNN backbones से transfer learning"
+  ],
+  "x": "एक medical imaging टीम pretrained ResNet के बीच के feature maps को segmentation मॉडल के encoder के रूप में दोबारा उपयोग करती है। वह अंतिम convolutional feature maps से निकाले गए Grad-CAM heatmaps भी ऊपर दिखाती है ताकि radiologists जाँच सकें कि predictions प्रासंगिक ऊतक पर आधारित हैं।"
+ },
+ "kernelfilter": {
+  "n": "Kernel (Filter)",
+  "d": "Convolutional neural network में kernel या filter सीखे जाने वाले weights का एक छोटा array है जो input पर खिसकता है और हर स्थिति पर weighted योग निकालता है। RGB image पर 3×3 kernel का आकार असल में 3×3×3 होता है, जो सभी input channels को कवर करता है।\n\nKernel एक pattern detector की तरह काम करता है: जिन स्थितियों पर स्थानीय input उसके weights से मेल खाता है, वहाँ बड़े outputs आते हैं। चूँकि हर स्थिति पर वही kernel उपयोग होता है, convolution में dense layer से कहीं कम parameters होते हैं और वह pattern जहाँ भी दिखे वहाँ प्रतिक्रिया देता है। Kernel का आकार स्थानीय window तय करता है; 3×3 kernels के ढेर मानक हैं क्योंकि उनमें से दो कम weights के साथ 5×5 receptive field कवर कर लेते हैं। CNNs हाथ से बनाए Sobel filters के विपरीत kernels को backpropagation से सीखते हैं। यह kernel SVMs के kernel trick या kernel PCA वाले kernel से अलग है, जो data points के बीच similarity function है।",
+  "u": [
+   "Images और audio में स्थानीय patterns पहचानना",
+   "Preprocessing में हाथ से बनाए edge और blur filters",
+   "CNN backbones बनाते समय kernel का आकार चुनना"
+  ],
+  "x": "एक audio टीम छोटे दो-आयामी kernels वाले CNN से spectrograms पर मशीनों की आवाज़ें classify करती है। पहली layer के सीखे गए kernels का visualization कई ऐसे kernels दिखाता है जो harmonic धारियों पर प्रतिक्रिया देते हैं, जिससे engineers को भरोसा होता है कि मॉडल उन्हीं vibration patterns पर प्रतिक्रिया दे रहा है जिनकी उन्हें अपेक्षा थी।"
+ },
+ "stridepad": {
+  "n": "Stride और Padding",
+  "d": "Stride यह है कि convolution या pooling window हर output के बीच कितनी स्थितियाँ खिसकती है, और padding अतिरिक्त मानों (आमतौर पर शून्य) की वह सीमा है जो window खिसकने से पहले input के चारों ओर जोड़ी जाती है। Kernel के आकार के साथ मिलकर ये हर feature map का spatial आकार तय करते हैं।\n\nStride 1 पर output का resolution लगभग input जितना होता है; stride 2 हर आयाम को लगभग आधा कर देता है और CNN में अक्सर pooling की जगह लेता है। Padding किनारे के pixels को पूरे kernel से कवर होने देती है और आकार बनाए रखती है: padding 1 और stride 1 के साथ 3×3 kernel ऊँचाई और चौड़ाई अपरिवर्तित रखता है, जिसे अक्सर \"same\" padding कहते हैं, जबकि बिना padding को \"valid\" कहते हैं और वह output को छोटा कर देती है। एक आम bug तब आकार का बेमेल है जब stride-2 layer किसी विषम input आकार से मिलती है, जो padding या cropping समायोजित किए बिना U-Net या residual networks के skip connections को तोड़ देता है।",
+  "u": [
+   "CNN backbones में feature maps को downsample करना",
+   "U-Net skip connections के लिए spatial आकार बनाए रखना",
+   "Vision Transformers में patch embedding"
+  ],
+  "x": "एक segmentation टीम का U-Net उन images पर विफल होता है जिनकी भुजाएँ 32 के गुणज नहीं हैं, क्योंकि decoder के outputs अब encoder के skip connections से मेल नहीं खाते। समाधान inference से पहले हर input को 32 के अगले गुणज तक pad करता है और predicted mask को वापस मूल आकार में crop कर देता है।"
+ },
+ "receptive": {
+  "n": "Receptive Field",
+  "d": "Neural network में किसी unit का receptive field input का वह क्षेत्र है जो उसके मान को प्रभावित कर सकता है। 3×3 kernel वाले CNN की पहली layer की unit एक 3×3 patch देखती है; हर अगली layer पड़ोसी units को जोड़ती है, इसलिए depth के साथ क्षेत्र बढ़ता जाता है।\n\nStride 1 वाली layers को एक के ऊपर एक रखने से हर layer पर kernel आकार घटा एक जुड़ता है, जबकि strides, pooling और dilated convolutions इस वृद्धि को गुणा कर देते हैं, और इसी तरह गहरे CNNs अंततः पूरी image को कवर करते हैं। Design में receptive field मायने रखता है: बड़े objects पहचानने के लिए detector को पर्याप्त context देखना चाहिए, और किसी pixel को सही label देने के लिए segmentation मॉडल को आस-पास देखना चाहिए। Self-attention एक ही layer में हर token को global receptive field देता है। एक आम भ्रम यह है कि सैद्धांतिक receptive field पूरा उपयोग होता है; प्रभावी receptive field उसके केंद्र के पास केंद्रित होता है और कहीं छोटा होता है।",
+  "u": [
+   "यह सुनिश्चित करना कि detectors बड़े objects के लिए पर्याप्त context देखें",
+   "Audio और time series के लिए dilated convolutions बनाना",
+   "CNN की locality की तुलना global self-attention से करना"
+  ],
+  "x": "एक satellite imaging टीम पाती है कि उसका CNN बड़े खेतों को गलत classify करता है क्योंकि सबसे गहरी units हर खेत का केवल हिस्सा कवर करती हैं। अंतिम चरणों में dilated convolutions जोड़ने से resolution घटाए बिना receptive field बड़ा हो जाता है, और boundary errors कम हो जाते हैं।"
+ },
+ "channels": {
+  "n": "Channels",
+  "d": "Channels किसी tensor की हर spatial स्थिति पर मानों की अलग-अलग, एक के ऊपर एक रखी परतें हैं, जैसे रंगीन image के लाल, हरे और नीले तल या convolutional layer से बने कई feature maps। PyTorch के default image layout में tensor का आकार (batch, channels, height, width) होता है।\n\nInput image 3 channels से शुरू होती है, और हर convolution C_in channels को C_out channels में बदलता है, हर filter के लिए एक; हर filter सभी input channels को कवर करता है। CNNs आमतौर पर गहराई में जाते हुए spatial resolution के बदले channels बढ़ाते हैं। 1×1 convolution पड़ोसियों को देखे बिना channels को मिलाता है और उनकी संख्या सस्ते में बदलने के लिए उपयोग होता है। Batch normalization हर channel के लिए अलग statistics रखता है। Bugs का एक आम स्रोत layout है: PyTorch channels-first (NCHW) उपयोग करता है, जबकि TensorFlow, PIL और OpenCV images default रूप से channels-last (NHWC या HWC) होती हैं, और OpenCV रंग channels को BGR क्रम में रखता है।",
+  "u": [
+   "Image tensors को layouts और रंग-क्रमों के बीच बदलना",
+   "CNNs बनाते समय channel width को scale करना",
+   "1×1 convolutions से channels को सस्ते में मिलाना"
+  ],
+  "x": "एक image मॉडल को training से edge device पर ले जा रही टीम देखती है कि accuracy ढह गई है, क्योंकि camera pipeline BGR, channels-last frames देती है। Input पर एक स्पष्ट channel reorder और transpose जोड़ने से यह ठीक हो जाता है, और अब एक unit test हर preprocessed frame का layout जाँचता है।"
+ },
+ "latentspace": {
+  "n": "Latent Space",
+  "d": "Latent space वह आंतरिक vector space है जिसमें मॉडल अपने inputs को दर्शाता है, आमतौर पर कम आयामों वाला और इस तरह व्यवस्थित कि समान inputs एक-दूसरे के पास हों।\n\nAutoencoder inputs को एक latent code में संकुचित करता है और उसी से उन्हें फिर से बनाता है। Variational autoencoder इसके अलावा latent space को एक सरल distribution का पालन करने के लिए आकार देता है, ताकि उससे sample किए गए points decode होकर यथार्थवादी outputs बनें और codes के बीच interpolation सहज हो। Stable Diffusion जैसे latent diffusion models diffusion प्रक्रिया को pixel space की बजाय autoencoder के latent space में चलाते हैं, जो कहीं सस्ता है। Embedding models, word2vec और CLIP text या images को ऐसे latent spaces में ले जाते हैं जहाँ दूरी अर्थ को दर्शाती है, और vector search तथा RAG इसी पर निर्भर हैं। एक आम भ्रम यह है कि latent आयाम अलग-अलग सार्थक होते हैं; ज़्यादातर कारकों के उलझे हुए मिश्रण होते हैं, और व्याख्या योग्य गुण अक्सर अकेले axes नहीं बल्कि दिशाएँ धारण करती हैं।",
+  "u": [
+   "Latent diffusion models में images बनाना",
+   "Embedding vectors पर semantic search",
+   "Latent space में reconstruction से anomaly detection"
+  ],
+  "x": "एक product photo टीम background के रूपांतर बनाने के लिए latent diffusion model का उपयोग करती है और संकुचित latent space में काम करती है, ताकि हर image एक ही GPU पर जल्दी render हो। Deduplication के लिए वह अलग से हर catalog image को embed करती है और उन जोड़ों को flag करती है जिनके latent vectors लगभग एक जैसे हैं।"
+ },
+ "representation": {
+  "n": "Representation Learning",
+  "d": "Representation learning मॉडलों को इस तरह train करने का अभ्यास है कि वे हाथ से बनाए features पर निर्भर रहने की बजाय data के उपयोगी features अपने-आप खोजें। सीखा गया representation classification या retrieval जैसे downstream कामों को आसान बनाना चाहिए, अक्सर ऊपर एक सरल linear मॉडल के साथ।\n\nDeep networks supervised training के उप-परिणाम के रूप में representations सीखते हैं: image classifier की अंतिम से पहली layer एक मज़बूत सामान्य-उद्देश्य feature extractor है। Self-supervised learning इन्हें labels के बिना सीखता है, BERT में masked language modeling, GPT में next-token prediction और SimCLR तथा CLIP में contrastive learning जैसे कामों के ज़रिए। एक बार representation को pretrain करके fine-tuning, adapters या embeddings के ज़रिए दोबारा उपयोग करना transfer learning और foundation models का आधार है। Frozen features पर linear probes गुणवत्ता मापते हैं। एक जोखिम यह मान लेना है कि representation हर जगह transfer होता है; प्राकृतिक तस्वीरों पर सीखे features में medical scans या satellite images के लिए मायने रखने वाली बहुत कम जानकारी हो सकती है।",
+  "u": [
+   "छोटे कामों में transfer के लिए encoders को pretrain करना",
+   "Search के लिए text और image embeddings बनाना",
+   "Self-supervised मॉडलों की तुलना के लिए linear probing"
+  ],
+  "x": "एक legal tech कंपनी एक pretrained text encoder को contrastive objective के साथ अपने documents पर fine-tune करती है, फिर clause classification के लिए केवल छोटे linear heads train करती है। साझा representation के कारण हर नया clause प्रकार पूरे मॉडल की बजाय कुछ सौ labels से जोड़ा जा सकता है।"
+ },
+ "weightshare": {
+  "n": "Weight Sharing",
+  "d": "Weight sharing का अर्थ है network में कई जगहों पर एक ही parameters का उपयोग करना, ताकि weights का एक set उन सभी उपयोगों से मिलकर सीखा जाए। यह parameters घटाता है और मानता है कि एक ही operation हर जगह उपयुक्त है।\n\nConvolution एक kernel को सभी spatial स्थितियों पर साझा करता है, जिससे CNN को translation equivariance मिलती है। Recurrent neural network हर time step पर वही weights लगाता है, इसलिए वह किसी भी लंबाई के sequences संभाल लेता है। Transformers feed-forward और attention weights को सभी token स्थितियों पर साझा करते हैं, और कई language models input embedding matrix को output projection से बाँध देते हैं। Siamese networks दोनों inputs के लिए एक ही encoder उपयोग करते हैं ताकि उनके embeddings तुलनीय हों। Backpropagation के दौरान साझा weight का gradient उन सभी जगहों के gradients का योग होता है जहाँ वह उपयोग हुआ है। एक भ्रम यह है कि sharing compute घटाता है: यह parameters और memory घटाता है, लेकिन हर उपयोग की लागत अब भी उतने ही FLOPs है।",
+  "u": [
+   "स्थितियों और समय पर convolutions और recurrences",
+   "Language models में input और output embeddings को बाँधना",
+   "Similarity और verification के लिए Siamese encoders"
+  ],
+  "x": "एक face verification system enrollment photo और live camera frame दोनों को एक ही network से encode करता है, ताकि दोनों embeddings एक ही space में रहें और cosine similarity से उनकी तुलना हो सके। Weights साझा करने से mobile devices पर भेजे जाने वाले मॉडल का आकार भी आधा हो जाता है।"
+ },
+ "paramcount": {
+  "n": "Parameter Count",
+  "d": "Parameter count किसी मॉडल में सीखे जाने वाले मानों की कुल संख्या है, यानी वे weights और biases जिन्हें training समायोजित करती है। यह मॉडल के आकार का सबसे आम संक्षिप्त रूप है, जैसे लगभग सात अरब parameters वाला 7B language model।\n\nDense layer के लिए यह inputs × outputs और हर output के लिए एक bias है; transformer के लिए यह लगभग 12 × layers × d_model² और embedding matrix है। Parameter count memory तय करता है: हर parameter BF16 में 2 bytes और FP32 में 4 bytes लेता है, और Adam training को gradients और optimizer states के लिए कई गुना ज़्यादा चाहिए। यह आँकड़ा compute या गति के समान नहीं है: Mixture of Experts मॉडल में कुल parameters बहुत होते हैं लेकिन हर token के लिए केवल कुछ experts उपयोग होते हैं, इसलिए उसके active parameters कहीं कम होते हैं, और weight sharing FLOPs घटाए बिना संख्या घटाता है।",
+  "u": [
+   "Training और inference के लिए GPU memory का अनुमान",
+   "Scaling-law अध्ययनों में मॉडल आकारों की तुलना",
+   "MoE में कुल और active parameters को अलग करना"
+  ],
+  "x": "एक खुले 8B-parameter मॉडल को fine-tune करने से पहले एक engineering टीम अनुमान लगाती है कि केवल BF16 weights को लगभग 16 GB GPU memory चाहिए और Adam के साथ full fine-tuning को कई गुना ज़्यादा चाहिए होगी। वह LoRA चुनती है, जो parameters का केवल एक छोटा हिस्सा train करता है, ताकि job एक ही accelerator पर समा जाए।"
+ },
+ "flops": {
+  "n": "FLOPs",
+  "d": "FLOPs floating-point operations की गिनतियाँ हैं, यानी मॉडल द्वारा किए जाने वाले जोड़ और गुणा, और यह मापने का मानक तरीका हैं कि किसी forward pass या training run को कितना compute चाहिए। बड़े S वाला FLOPS, या FLOP/s, एक अलग इकाई है: प्रति सेकंड operations, जो hardware की गति का माप है।\n\nm × k matrix को k × n matrix से गुणा करने की लागत लगभग 2mkn FLOPs है, क्योंकि हर multiply-add दो गिना जाता है। Transformer के लिए forward pass की लागत लगभग प्रति parameter प्रति token 2 FLOPs है, और training की लगभग 6, जिससे N parameters और D tokens के लिए C ≈ 6ND मिलता है, जो scaling laws और Chinchilla-optimal training के पीछे का अनुमान है। Attention एक ऐसा term जोड़ता है जो sequence length के वर्ग के साथ बढ़ता है। एक जोखिम FLOPs को latency के बराबर मानना है: memory bandwidth, kernel efficiency और batch size अक्सर हावी होते हैं, इसलिए KV cache के साथ decoding आमतौर पर compute-bound नहीं बल्कि memory-bound होती है।",
+  "u": [
+   "Pretraining runs के लिए compute का budget बनाना",
+   "Model architectures की efficiency की तुलना",
+   "Accelerators पर model FLOPs utilization मापना"
+  ],
+  "x": "एक pretraining run की योजना बना रही टीम कुल training FLOPs का अनुमान लगाने के लिए मॉडल के parameter count को नियोजित token budget से और छह से गुणा करती है। इसे cluster के peak की बजाय उसके यथार्थवादी sustained throughput से भाग देने पर run की अपेक्षित अवधि मिलती है, जिसे टीम अपने साझा cluster पर book करती है।"
+ },
+ "floatfmt": {
+  "n": "Floating-Point Formats",
+  "d": "Floating-point formats वास्तविक संख्याओं को एक sign, एक exponent और एक mantissa के रूप में संग्रहीत करते हैं, और हर एक को दिए गए bits की संख्या range और precision तय करती है। FP32 में 8 exponent और 23 mantissa bits होते हैं; FP16 में 5 और 10; BF16 में 8 और 7; E4M3 और E5M2 जैसे FP8 रूप कुल 8 bits उपयोग करते हैं।\n\nExponent range नियंत्रित करता है और mantissa precision। BF16 कम precision के साथ FP32 की range बनाए रखता है, इसलिए यह शायद ही कभी overflow होता है और mixed precision training का सामान्य विकल्प है, जबकि FP16 की precision बारीक है लेकिन range संकरी है, और छोटे gradients को underflow होकर शून्य बनने से रोकने के लिए loss scaling चाहिए। Quantization में उपयोग होने वाले INT8 और INT4 जैसे integer formats floating point नहीं हैं। एक आम जोखिम कम precision में योग जमा करना है: rounding errors जमा होते जाते हैं, इसलिए matrix multiply units FP32 में accumulate करती हैं और optimizers अक्सर FP32 master weights रखते हैं।",
+  "u": [
+   "BF16 या FP16 के साथ mixed precision training",
+   "हाल के GPUs पर FP8 matrix multiplication",
+   "Overflow, underflow और NaN losses का निदान"
+  ],
+  "x": "एक training job को FP16 से BF16 पर ले जा रही टीम अपना dynamic loss scaler हटा देती है, क्योंकि BF16 की exponent range FP32 जितनी है। Overflow होती activations से कभी-कभार आने वाले NaN losses बंद हो जाते हैं, और टीम स्थिर updates के लिए optimizer states को FP32 में रखती है।"
+ },
+ "sparsity": {
+  "n": "Sparsity (विरलता)",
+  "d": "Sparsity का अर्थ है कि किसी vector, matrix या activations के समूह की ज़्यादातर entries शून्य हैं, इसलिए केवल एक छोटा हिस्सा जानकारी रखता है या उसे compute की ज़रूरत होती है। यह data में, मॉडल के weights में और activations में दिखती है।\n\nSparse data में one-hot encodings, bag-of-words और TF-IDF matrices शामिल हैं, जिन्हें memory बचाने के लिए CSR जैसे संकुचित formats में रखा जाता है। Sparse weights L1 regularization से आते हैं, जो कई lasso coefficients को ठीक शून्य कर देता है, या pruning से। Sparse activations ReLU से आती हैं, जो negative inputs को शून्य कर देता है, व्याख्या योग्य features सीखने वाले sparse autoencoders से, और Mixture of Experts routing से, जहाँ हर token केवल कुछ experts को सक्रिय करता है। एक आम भ्रम यह है कि शून्य अपने-आप मॉडलों को तेज़ बना देते हैं: unstructured sparsity शायद ही कभी dense GPU kernels को तेज़ करती है, इसलिए व्यावहारिक speedups के लिए structured patterns चाहिए, जैसे पूरे channels हटाना, block sparsity, या वह 2:4 pattern जिसे कुछ GPUs तेज़ करते हैं।",
+  "u": [
+   "One-hot और text features को sparse matrices के रूप में रखना",
+   "L1 regularization के ज़रिए feature selection",
+   "Mixture of Experts के साथ conditional computation"
+  ],
+  "x": "एक search टीम लाखों TF-IDF document vectors को SciPy sparse matrix के रूप में रखती है, जो memory में समा जाती है जबकि dense array नहीं समाता। वह सीधे sparse input पर logistic regression train करती है, और एक L1 penalty अंतिम मॉडल को इतना छोटा रखती है कि उसे एक हल्की सेवा से serve किया जा सके।"
+ }
+}

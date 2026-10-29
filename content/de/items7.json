@@ -1,0 +1,372 @@
+{
+ "mean": {
+  "n": "Mittelwert (Durchschnitt)",
+  "d": "Der Mittelwert ist die Summe einer Menge von Werten geteilt durch ihre Anzahl. Er ist der Schwerpunkt einer Verteilung: Die positiven und negativen Abweichungen vom Mittelwert heben sich exakt auf, und er ist die einzige Konstante, die die Summe der quadrierten Fehler minimiert.\n\nMittelwerte begegnen einem im Machine Learning überall. Die Standardisierung zieht den Feature-Mittelwert ab, die Mittelwertimputation füllt fehlende Werte damit auf, MSE und Log-Loss sind Mittelwerte von Verlusten pro Beispiel, und der Mini-Batch-Gradientenabstieg mittelt die Gradienten über einen Batch. Batch Normalization und Layer Normalization berechnen beide laufende Mittelwerte bzw. Mittelwerte pro Beispiel.\n\nDie größte Falle ist die Empfindlichkeit gegenüber Ausreißern. Ein einziger Extremwert kann den Mittelwert weit von dem Bereich wegziehen, in dem die meisten Daten liegen. Bei schiefen Größen wie Einkommen, Latenz oder Transaktionsbetrag beschreibt der Median einen typischen Fall daher oft besser.",
+  "u": [
+   "Zentrieren von Features vor Standardisierung oder PCA",
+   "Mitteln der Verluste pro Beispiel zur Trainingszielfunktion",
+   "Imputation fehlender numerischer Werte mit dem Spaltenmittelwert"
+  ],
+  "x": "Ein Payment-Team verfolgt den mittleren Transaktionsbetrag pro Händler als Basis-Feature für ein Betrugsmodell. Weil einige sehr große Firmeneinkäufe ihn verzerren, protokolliert es zusätzlich einen getrimmten Mittelwert und den Median, und das Modell nutzt alle drei."
+ },
+ "median": {
+  "n": "Median",
+  "d": "Der Median ist der mittlere Wert eines sortierten Datensatzes: Die Hälfte der Beobachtungen liegt darunter, die Hälfte darüber. Bei einer geraden Anzahl von Werten nimmt man üblicherweise den Durchschnitt der beiden mittleren.\n\nDa er nur von der Reihenfolge abhängt, nicht von den Beträgen, ist der Median robust: Selbst wenn man den größten Wert gegen unendlich verschiebt, ändert er sich nicht. Er ist die Konstante, die die Summe der absoluten Fehler minimiert. Deshalb sagen mit MAE trainierte Modelle einen bedingten Median statt eines Mittelwerts vorher. In der Praxis dient er zur Median-Imputation, zur robusten Skalierung (die den Median abzieht und durch den IQR teilt) und zur Zusammenfassung schiefer Kennzahlen wie Latenz oder Immobilienpreisen.\n\nEin verbreiteter Irrtum ist, der Median sei immer die bessere Zusammenfassung. Bei symmetrischen Daten ohne Ausreißer ist der Mittelwert statistisch effizienter, und der Median einer kleinen Stichprobe kann zwischen Stichproben merklich springen.",
+  "u": [
+   "Robuste Imputation schiefer numerischer Features",
+   "Angabe typischer Latenz- oder Preisniveaus",
+   "Zentrieren von Features bei der robusten Skalierung"
+  ],
+  "x": "Eine Immobilienplattform gibt pro Stadtviertel den Median des Verkaufspreises statt des Mittelwerts an, weil sonst eine Handvoll Luxusverkäufe die Zusammenfassung dominieren würde. Derselbe Median dient dazu, fehlende Preise in den Trainingsdaten ihres Bewertungsmodells zu imputieren."
+ },
+ "variance": {
+  "n": "Varianz",
+  "d": "Die Varianz misst, wie stark Werte um ihren Mittelwert streuen: Sie ist die mittlere quadrierte Abweichung vom Mittelwert. Durch das Quadrieren wird jede Abweichung positiv und große Abweichungen werden stark gewichtet, sodass wenige weit entfernte Punkte sie dominieren können.\n\nDie Populationsvarianz teilt durch n, die Stichprobenvarianz durch n − 1 (Bessel-Korrektur), um eine erwartungstreue Schätzung zu erhalten, wenn der Mittelwert selbst aus denselben Daten geschätzt wurde. Die Varianz steckt hinter der Standardisierung, der PCA (die Richtungen maximaler Varianz sucht), dem Bias-Varianz-Dilemma, Schemata der Gewichtsinitialisierung, die die Varianz der Aktivierungen über die Schichten konstant halten, und der Schätzung des zweiten Moments in Adam.\n\nHäufige Quelle von Verwirrung: numpys var teilt standardmäßig durch n (ddof=0), pandas dagegen durch n − 1 (ddof=1), sodass beide Bibliotheken für dieselbe kleine Stichprobe unterschiedliche Zahlen liefern. Außerdem hat die Varianz quadrierte Einheiten, weshalb meist die Standardabweichung angegeben wird.",
+  "u": [
+   "Auswahl von Hauptkomponenten nach erklärter Varianz",
+   "Entfernen nahezu konstanter Features per Varianzschwelle",
+   "Überwachung der Stabilität von Modellvorhersagen über die Zeit"
+  ],
+  "x": "Ein Analytics-Team in der Fertigung entfernt Sensorkanäle, deren Varianz im Trainingsfenster nahe null liegt, da konstante Signale dem Ausfallklassifikator keine Information liefern. Die Varianzen werden wöchentlich neu berechnet, um Sensoren zu erkennen, die im Feld eingefroren sind."
+ },
+ "stddev": {
+  "n": "Standardabweichung",
+  "d": "Die Standardabweichung ist die Quadratwurzel der Varianz und damit ein Streuungsmaß in denselben Einheiten wie die Daten. Sie beschreibt, wie weit ein typischer Wert vom Mittelwert entfernt liegt.\n\nBei annähernd normalverteilten Daten liegen etwa 68 % der Werte innerhalb einer Standardabweichung um den Mittelwert und etwa 95 % innerhalb von zwei, was sie zu einem praktischen Maßstab zum Erkennen ungewöhnlicher Werte macht. Die Standardisierung (Z-Scores) teilt zentrierte Features durch ihre Standardabweichung, damit Features auf unterschiedlichen Skalen vergleichbar zu Gradientenabstieg, k-nächsten Nachbarn, SVMs und regularisierten Modellen beitragen. Schemata der Gewichtsinitialisierung wie Xavier und He legen die Standardabweichung der Anfangsgewichte anhand der Schichtbreite fest.\n\nDie Standardabweichung darf nicht mit dem Standardfehler verwechselt werden, der die Unsicherheit einer Schätzung wie des Mittelwerts beschreibt und mit wachsender Stichprobengröße schrumpft. Auch die 68-95-Regel versagt bei schiefen Daten oder Daten mit Heavy Tails.",
+  "u": [
+   "Berechnung von Z-Scores zur Standardisierung von Features",
+   "Markieren von Anomalien jenseits von drei Standardabweichungen",
+   "Festlegen der Skala bei der Gewichtsinitialisierung"
+  ],
+  "x": "Ein Operations-Team überwacht das tägliche Bestellvolumen jedes Lagers und löst einen Alarm aus, wenn ein Tag mehr als drei rollierende Standardabweichungen vom rollierenden Mittelwert abweicht. Da das Volumen am Wochenende höher ist, werden die Statistiken pro Wochentag getrennt berechnet."
+ },
+ "covariance": {
+  "n": "Kovarianz",
+  "d": "Die Kovarianz misst, wie zwei Variablen gemeinsam variieren: Sie ist das mittlere Produkt ihrer Abweichungen von den jeweiligen Mittelwerten. Ein positiver Wert bedeutet, dass beide tendenziell gleichzeitig über ihrem Mittelwert liegen; ein negativer, dass die eine eher hoch ist, wenn die andere niedrig ist.\n\nBei vielen Features bilden die paarweisen Kovarianzen die Kovarianzmatrix, die symmetrisch und positiv semidefinit ist und auf der Diagonalen die Varianzen enthält. PCA ist die Eigenzerlegung dieser Matrix, Gaußsche Mischmodelle und die multivariate Normalverteilung werden durch sie parametrisiert, und die Mahalanobis-Distanz verwendet ihre Inverse.\n\nDie zentrale Einschränkung: Die Kovarianz hängt von den Einheiten beider Variablen ab, ihr Betrag ist daher schwer zu interpretieren. Misst man die Körpergröße in Zentimetern statt in Metern, wird sie mit 100 multipliziert. Teilt man durch beide Standardabweichungen, erhält man den einheitenfreien Korrelationskoeffizienten. Zudem erfasst die Kovarianz nur lineare Zusammenhänge.",
+  "u": [
+   "Aufbau von Kovarianzmatrizen für die PCA",
+   "Parametrisierung multivariater Gauß-Modelle",
+   "Schätzung des Portfoliorisikos aus gemeinsamen Assetbewegungen"
+  ],
+  "x": "Ein Quant-Finance-Team schätzt die Kovarianzmatrix täglicher Assetrenditen, um Positionen in einem Portfolio zu dimensionieren. Weil die Stichprobenkovarianz bei Hunderten von Assets und begrenzter Historie verrauscht ist, verwendet es einen Shrinkage-Schätzer wie Ledoit-Wolf."
+ },
+ "correlation": {
+  "n": "Korrelationskoeffizient",
+  "d": "Der Korrelationskoeffizient misst Stärke und Richtung eines linearen Zusammenhangs zwischen zwei Variablen auf einer festen Skala von −1 bis +1. Der Pearson-Koeffizient ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen und damit einheitenfrei.\n\nEin Wert nahe +1 bedeutet, dass die Punkte nahe an einer steigenden Geraden liegen, nahe −1 an einer fallenden, und nahe 0, dass es keinen linearen Trend gibt. Die Rangkorrelation nach Spearman wendet dieselbe Formel auf Ränge an und erfasst jeden monotonen Zusammenhang. In der Praxis nutzt man Korrelation in der EDA, zum Screening von Features gegen die Zielgröße, zum Aufspüren von Multikollinearität und zum Vergleich von Modellscores mit menschlichen Bewertungen.\n\nDer klassische Irrtum: Korrelation null bedeute Unabhängigkeit. y = x² auf einem symmetrischen Bereich hat eine Pearson-Korrelation nahe null, obwohl eine perfekte Abhängigkeit besteht. Korrelation ist zudem empfindlich gegenüber Ausreißern und sagt nichts über Kausalität aus.",
+  "u": [
+   "Screening von Feature-Kandidaten gegen die Zielgröße",
+   "Erkennen redundanter, stark korrelierter Feature-Paare",
+   "Vergleich automatischer Metriken mit menschlichen Urteilen"
+  ],
+  "x": "Ein LLM-Evaluationsteam berechnet die Spearman-Korrelation zwischen den Scores eines automatischen Judge-Modells und menschlichen Präferenzbewertungen auf einem gemeinsamen Satz von Antworten. Ein Judge wird nur übernommen, wenn seine Rangkorrelation mit Menschen über alle Aufgabenkategorien hinweg durchgehend hoch ist."
+ },
+ "corrmatrix": {
+  "n": "Korrelationsmatrix",
+  "d": "Eine Korrelationsmatrix ist eine quadratische Tabelle mit dem Korrelationskoeffizienten zwischen jedem Variablenpaar eines Datensatzes. Die Diagonale ist immer 1, die Matrix ist symmetrisch, und sie ist die Kovarianzmatrix der standardisierten Variablen.\n\nIn der explorativen Datenanalyse wird sie meist als Heatmap dargestellt, um Gruppen verwandter Features, Features mit Bezug zur Zielgröße und nahezu doppelte Spalten zu erkennen. Große Werte außerhalb der Diagonalen deuten auf Multikollinearität hin, die in der linearen Regression die Varianz der Koeffizienten aufbläht und in Baummodellen die Wichtigkeit auf mehrere Features verteilt. PCA auf standardisierten Daten ist die Eigenzerlegung der Korrelationsmatrix.\n\nEine Falle ist, sie als vollständige Landkarte der Abhängigkeiten zu lesen. Paarweise Korrelationen übersehen nichtlineare Zusammenhänge und Wechselwirkungen zwischen drei oder mehr Variablen, und Multikollinearität kann auch bestehen, wenn kein einzelnes Paar stark korreliert ist. Deshalb prüft man zusätzlich den Varianzinflationsfaktor (VIF).",
+  "u": [
+   "Heatmaps von Feature-Beziehungen in der EDA",
+   "Aufspüren redundanter Features vor linearer Modellierung",
+   "PCA auf Features mit unterschiedlichen Einheiten"
+  ],
+  "x": "Ein Kreditrisiko-Team stellt vor dem Fitten eines Scorecard-Modells die Korrelationsmatrix von rund hundert Auskunftei-Features dar. Gruppen von Features mit Korrelationen über einem gewählten Schwellenwert werden auf je einen Repräsentanten reduziert, damit die Koeffizienten der logistischen Regression stabil und gegenüber Aufsichtsbehörden erklärbar bleiben."
+ },
+ "quantile": {
+  "n": "Quantile und Perzentile",
+  "d": "Ein Quantil ist ein Schnittpunkt, unterhalb dessen ein bestimmter Anteil der Daten liegt; ein Perzentil drückt dieselbe Idee in Hundertsteln aus. Das 0,9-Quantil bzw. 90. Perzentil ist der Wert, den 90 % der Beobachtungen nicht überschreiten. Der Median ist das 0,5-Quantil, die Quartile sind die 0,25-, 0,5- und 0,75-Quantile.\n\nQuantile beschreiben eine Verteilung, ohne ihre Form vorauszusetzen, und sind robust gegenüber Ausreißern. Auf ihnen beruhen der IQR und Boxplots, Quantil-Binning, Quantiltransformationen, die Features auf eine Gleich- oder Normalverteilung abbilden, sowie Service-Metriken wie p95- und p99-Latenz. Quantilregression und Pinball-Loss trainieren Modelle darauf, ein gewähltes Quantil vorherzusagen, was Vorhersageintervalle liefert.\n\nEine praktische Falle: Für Stichprobenquantile gibt es mehrere Interpolationsdefinitionen, sodass Bibliotheken bei kleinen Stichproben leicht unterschiedliche Werte liefern können, und extreme Perzentile wie p99,9 brauchen sehr viele Beobachtungen, um zuverlässig geschätzt zu werden.",
+  "u": [
+   "Angabe der p95- und p99-Serving-Latenz",
+   "Quantil-Binning und Quantiltransformationen von Features",
+   "Vorhersageintervalle mit Quantilregression"
+  ],
+  "x": "Ein Team für eine Inferenzplattform legt sein Service-Level-Objective auf die p99-Latenz statt auf die mittlere Latenz fest, weil Nutzer vor allem den kleinen Anteil sehr langsamer Anfragen bemerken. Die Perzentile werden über gleitende Fenster aus Latenzhistogrammen berechnet, die auf jedem Server gesammelt werden."
+ },
+ "iqr": {
+  "n": "Interquartilsabstand (IQR)",
+  "d": "Der Interquartilsabstand ist die Distanz zwischen dem ersten Quartil (25. Perzentil) und dem dritten Quartil (75. Perzentil) und umfasst damit die mittlere Hälfte der Daten. Da er das unterste und oberste Viertel ignoriert, beeinflussen ihn Extremwerte nicht.\n\nDer IQR ist das robuste Gegenstück zur Standardabweichung. Er bestimmt die Box in einem Boxplot, und die Tukey-Regel markiert Punkte unterhalb von Q1 − 1,5·IQR oder oberhalb von Q3 + 1,5·IQR als mögliche Ausreißer. Die robuste Skalierung zieht den Median ab und teilt durch den IQR; anders als bei der Standardisierung stauchen so wenige Extremwerte nicht alle übrigen Werte zusammen.\n\nEin häufiger Fehler ist, alles außerhalb der 1,5·IQR-Grenzen als zu löschenden Fehler zu behandeln. Bei schiefen Variablen wie Einkommen oder Sitzungsdauer liegen viele legitime Werte außerhalb der Grenzen; die Regel ist daher ein Anlass zur Prüfung, kein automatischer Filter.",
+  "u": [
+   "Markieren von Ausreißern mit Tukey-Grenzen",
+   "Robuste Skalierung von Features mit Extremwerten",
+   "Zusammenfassen der Streuung schiefer Kennzahlen"
+  ],
+  "x": "Ein Logistikunternehmen nutzt IQR-Grenzen auf den Lieferzeiten pro Route, um Sendungen zur manuellen Prüfung zu markieren. Die Analysten stellten fest, dass Routen mit langschwänzigen, aber gültigen Verzögerungen viele Markierungen erzeugten, und stellten diese Routen auf Grenzen um, die auf log-transformierten Zeiten berechnet werden."
+ },
+ "skewness": {
+  "n": "Schiefe",
+  "d": "Die Schiefe misst die Asymmetrie einer Verteilung um ihren Mittelwert. Eine rechtsschiefe (positiv schiefe) Verteilung hat einen langen Ausläufer zu großen Werten, eine linksschiefe einen langen Ausläufer zu kleinen Werten, und eine symmetrische Verteilung wie die Normalverteilung hat Schiefe null.\n\nSie wird als mittlere dritte Potenz der standardisierten Abweichungen berechnet, sodass Werte weit draußen im Ausläufer dominieren. Bei rechtsschiefen Daten liegt der Mittelwert meist über dem Median. Viele reale Features sind stark rechtsschief: Preise, Zählwerte, Dauern, Einkommen. In der explorativen Datenanalyse prüft man die Schiefe und wendet oft eine Log-Transformation oder Box-Cox-Transformation an, bevor man lineare Regression, k-Means oder neuronale Netze einsetzt, die mit annähernd symmetrischen Eingaben besser funktionieren. Baumbasierte Modelle sind weitgehend unempfindlich dagegen.\n\nEin Irrtum ist, dass schiefe Features immer transformiert werden müssen. Für die lineare Regression kommt es auf die Residuen an, nicht auf die Verteilungen der rohen Features.",
+  "u": [
+   "Entscheiden, wann ein Feature log-transformiert wird",
+   "Median statt Mittelwert für Zusammenfassungen wählen",
+   "Diagnose asymmetrischer Residuen in der Regression"
+  ],
+  "x": "Ein Marktplatz-Analytics-Team stellt fest, dass der Bestellwert stark rechtsschief ist und ein lineares Nachfragemodell darauf schlecht passt. Die Modellierung des Logarithmus des Bestellwerts liefert annähernd symmetrische Residuen, und die Vorhersagen werden mit einer Bias-Korrektur auf die ursprüngliche Skala zurücktransformiert."
+ },
+ "kurtosis": {
+  "n": "Kurtosis und Heavy Tails",
+  "d": "Die Kurtosis misst, welcher Anteil der Varianz einer Verteilung von seltenen Extremwerten stammt, also wie schwer ihre Ränder (Tails) sind. Die Normalverteilung hat Kurtosis 3; die Exzess-Kurtosis zieht 3 ab, eine positive Exzess-Kurtosis bedeutet also schwerere Ränder als bei der Normalverteilung.\n\nSie ist die mittlere vierte Potenz der standardisierten Abweichungen, sodass wenige sehr große Abweichungen sie dominieren. Daten mit Heavy Tails treten bei Finanzrenditen, Netzwerklatenz, Versicherungsschäden und den Aktivierungen großer Sprachmodelle auf, wo Ausreißerkanäle die Quantisierung erschweren. Für solche Daten sind quadratische Verlustfunktionen und Ausreißerregeln auf Basis der Standardabweichung fragil; man bevorzugt robuste Verluste wie Huber-Verlust oder MAE, robuste Skalierung und quantilbasierte Metriken.\n\nEin verbreiteter Irrtum ist, die Kurtosis messe, wie spitz das Zentrum einer Verteilung ist. Sie wird vor allem von den Rändern bestimmt, und zwei Verteilungen mit gleicher Gipfelform können sehr unterschiedliche Kurtosis haben.",
+  "u": [
+   "Erkennen von Features und Residuen mit Heavy Tails",
+   "Ausreißerrisiko bewerten, bevor ein Verlust gewählt wird",
+   "Analyse von Ausreißer-Aktivierungen vor der LLM-Quantisierung"
+  ],
+  "x": "Ein Team, das ein LLM auf 8 Bit quantisiert, untersucht die Kurtosis der Aktivierungen pro Kanal und findet einige Kanäle mit extrem schweren Rändern. Diese Kanäle werden gesondert behandelt; genau das ist die Motivation hinter ausreißerbewussten Verfahren wie LLM.int8() und SmoothQuant."
+ },
+ "probdist": {
+  "n": "Wahrscheinlichkeitsverteilung",
+  "d": "Eine Wahrscheinlichkeitsverteilung beschreibt, wie wahrscheinlich jeder mögliche Wert einer Zufallsvariable ist. Für diskrete Variablen ist sie eine Wahrscheinlichkeitsfunktion, die jedem Wert eine Wahrscheinlichkeit zuordnet; für stetige Variablen eine Wahrscheinlichkeitsdichte, deren Integral über ein Intervall die Wahrscheinlichkeit dieses Intervalls ergibt.\n\nJede Verteilung hat eine Verteilungsfunktion F(x) = P(X ≤ x), und Wahrscheinlichkeiten bzw. Dichten müssen sich zu 1 summieren bzw. integrieren. Machine Learning dreht sich größtenteils um Verteilungen: Ein Klassifikator mit Softmax-Ausgabe sagt eine kategoriale Verteilung über Klassen vorher, ein Sprachmodell eine Verteilung über das nächste Token, generative Modelle wie VAEs und Diffusionsmodelle lernen eine Datenverteilung, und Verluste wie Kreuzentropie und KL-Divergenz vergleichen Verteilungen.\n\nEine häufige Verwechslung ist, einen Dichtewert als Wahrscheinlichkeit zu lesen. Eine Dichte kann größer als 1 sein; nur ihre Fläche über einem Intervall ist eine Wahrscheinlichkeit.",
+  "u": [
+   "Modellierung der Vorhersageunsicherheit von Klassifikatoren",
+   "Sampling von Tokens aus der Ausgabe eines Sprachmodells",
+   "Anpassen parametrischer Modelle an beobachtete Daten"
+  ],
+  "x": "Ein Team für Nachfrageprognosen sagt für jedes Produkt eine vollständige Verteilung der Verkäufe der nächsten Woche vorher statt einer einzelnen Zahl. Die Lagerbestände werden dann aus einem gewählten Quantil dieser Verteilung festgelegt, wobei die Kosten von Fehlbeständen gegen die Kosten von Überbeständen abgewogen werden."
+ },
+ "normaldist": {
+  "n": "Normalverteilung (Gauß-Verteilung)",
+  "d": "Die Normal- oder Gauß-Verteilung ist die symmetrische, glockenförmige stetige Verteilung, die durch ihren Mittelwert μ und ihre Standardabweichung σ vollständig beschrieben wird. Etwa 68 % ihrer Masse liegen innerhalb eines σ um den Mittelwert, 95 % innerhalb von zwei und 99,7 % innerhalb von drei.\n\nSie taucht so oft auf wegen des zentralen Grenzwertsatzes: Summen und Mittelwerte vieler kleiner unabhängiger Effekte sind annähernd normalverteilt. Lineare Regression mit quadratischem Fehler ist Maximum-Likelihood-Schätzung unter Gaußschem Rauschen, Gewichte werden häufig aus einer Normalverteilung initialisiert, Gaußsche Mischmodelle und Gauß-Prozesse bauen auf ihr auf, VAEs verwenden einen Gaußschen Prior im latenten Raum, und Diffusionsmodelle fügen Schritt für Schritt Gaußsches Rauschen hinzu.\n\nDie größte Falle ist, Normalität anzunehmen, wo sie nicht gilt. Viele reale Größen sind schief oder haben Heavy Tails, und Drei-Sigma-Regeln oder Konfidenzaussagen auf Basis der Normalverteilung können massiv unterschätzen, wie oft Extremwerte auftreten.",
+  "u": [
+   "Gaußsche Rauschmodelle hinter der Kleinste-Quadrate-Regression",
+   "Zufällige Gewichtsinitialisierung in neuronalen Netzen",
+   "Noise Schedules in Diffusionsmodellen"
+  ],
+  "x": "Ein Diffusionsmodell-Team trainiert einen Bildgenerator, indem es Bilder mit Gaußschem Rauschen wachsender Varianz verfälscht und einem Netz beibringt, dieses Rauschen vorherzusagen. Beim Sampling startet das Modell von reinem standardnormalverteiltem Rauschen und entfernt es Schritt für Schritt."
+ },
+ "binomial": {
+  "n": "Bernoulli- und Binomialverteilung",
+  "d": "Eine Bernoulli-Verteilung modelliert ein einzelnes Ja-Nein-Experiment, das mit Wahrscheinlichkeit p erfolgreich ist. Die Binomialverteilung zählt die Anzahl der Erfolge in n unabhängigen Bernoulli-Versuchen mit demselben p.\n\nDer Mittelwert der Bernoulli-Verteilung ist p, ihre Varianz p(1 − p); die Binomialverteilung hat Mittelwert np und Varianz np(1 − p). Binäre Klassifikation baut auf der Bernoulli-Verteilung auf: Die logistische Regression gibt p aus, und die binäre Kreuzentropie (Log-Loss) ist ihre negative Log-Likelihood. Die Binomialverteilung beschreibt Konversionszahlen in A/B-Tests, die Anzahl richtiger Antworten in einem Benchmark und die Anzahl der durch Dropout in einer Schicht abgeschalteten Einheiten.\n\nEin häufiger Fehler ist, die Binomialverteilung anzuwenden, wenn Versuche nicht unabhängig sind oder kein gemeinsames p haben. Nach Nutzer gruppierte Klicks oder Benchmark-Fragen aus wenigen Vorlagen sind korreliert, sodass die wahre Varianz größer als np(1 − p) ist und naive Konfidenzintervalle zu schmal ausfallen.",
+  "u": [
+   "Modellierung binärer Labels mit logistischer Regression",
+   "Zählen von Konversionen in A/B-Experimenten",
+   "Fehlerbalken für die Accuracy in Benchmarks"
+  ],
+  "x": "Ein LLM-Evaluationsteam gibt die Benchmark-Accuracy mit einem binomialen Konfidenzintervall an und behandelt jede der mehreren hundert Fragen als Bernoulli-Versuch. Beim Vergleich zweier Modelle auf denselben Fragen verwendet es stattdessen einen gepaarten Test, weil die Ergebnisse beider Modelle pro Frage korreliert sind."
+ },
+ "poisson": {
+  "n": "Poisson-Verteilung",
+  "d": "Die Poisson-Verteilung modelliert die Anzahl von Ereignissen in einem festen Zeit- oder Raumintervall, wenn Ereignisse unabhängig mit einer konstanten mittleren Rate λ auftreten. Ihr Mittelwert und ihre Varianz sind beide gleich λ.\n\nSie entsteht als Grenzfall einer Binomialverteilung mit vielen Versuchen und kleiner Erfolgswahrscheinlichkeit und passt deshalb zu Zählwerten seltener Ereignisse: Anfragen pro Sekunde, Schäden pro Police, Defekte pro Charge, Käufe pro Kunde. Die Poisson-Regression, ein verallgemeinertes lineares Modell mit Log-Link, sagt solche Zählwerte aus Features vorher, und Gradient-Boosting-Bibliotheken bieten eine Poisson-Zielfunktion für Zählziele an.\n\nDie übliche Falle ist Überdispersion. Reale Zählwerte haben oft eine viel größere Varianz als ihr Mittelwert, weil die Rate zwischen Einheiten schwankt oder Ereignisse gehäuft auftreten; ein Poisson-Modell unterschätzt dann die Unsicherheit. Die gängige Alternative ist ein negativ-binomiales Modell, und überzählige Nullen sprechen für ein Zero-Inflated-Modell.",
+  "u": [
+   "Prognose der Ankunftszahlen von Anfragen oder Anrufen",
+   "Poisson-Regression für die Schadenhäufigkeit in Versicherungen",
+   "Zählzielfunktionen in Gradient-Boosting-Modellen"
+  ],
+  "x": "Ein Versicherer modelliert die jährliche Anzahl der Schäden pro Police mit Poisson-Regression und nutzt die Policenlaufzeit als Exposure-Offset. Als sich die Varianz der Schadenzahlen als viel größer als der Mittelwert herausstellt, vergleicht das Team ein negativ-binomiales Modell, bevor es das finale Tarifmodell wählt."
+ },
+ "uniformdist": {
+  "n": "Gleichverteilung",
+  "d": "Die Gleichverteilung gibt jedem Wert eines Bereichs dieselbe Wahrscheinlichkeit. Die stetige Gleichverteilung auf [a, b] hat die konstante Dichte 1/(b − a); die diskrete Gleichverteilung weist jedem Ergebnis einer endlichen Menge dieselbe Wahrscheinlichkeit zu, etwa den Seiten eines fairen Würfels.\n\nIhr Mittelwert ist (a + b)/2, ihre Varianz (b − a)²/12. Zufallszahlengeneratoren erzeugen zuerst gleichverteilte Werte und transformieren sie dann in andere Verteilungen, zum Beispiel per Inversionsmethode. Im Machine Learning tritt sie bei der gleichverteilten Gewichtsinitialisierung nach Xavier und He auf, bei der Zufallssuche über Hyperparameterbereiche, beim zufälligen Mischen und bei Train/Test-Splits, bei Dropout-Masken und als Prior maximaler Entropie, wenn nur ein Bereich bekannt ist.\n\nEine Falle ist, skalenartige Hyperparameter wie die Lernrate gleichverteilt auf einem linearen Bereich zu ziehen. Die meisten Samples landen dann am oberen Ende; eine log-uniforme Verteilung verteilt sie gleichmäßig über die Größenordnungen.",
+  "u": [
+   "Gleichverteilte Schemata der Gewichtsinitialisierung",
+   "Zufallssuche über Hyperparameterbereiche",
+   "Inversionsmethode zum Sampling anderer Verteilungen"
+  ],
+  "x": "Ein Team für Modell-Tuning zieht Dropout-Raten gleichverteilt zwischen 0 und 0,5, Lernraten aber log-uniform zwischen 1e-5 und 1e-2. Mit einem einfachen gleichverteilten Bereich hätten fast keine Versuche Lernraten unter 1e-3 getestet."
+ },
+ "expectation": {
+  "n": "Erwartungswert",
+  "d": "Der Erwartungswert einer Zufallsvariable ist ihr wahrscheinlichkeitsgewichteter Durchschnitt: der langfristige Mittelwert, den man beobachten würde, wenn man das Zufallsexperiment beliebig oft wiederholen könnte. Für eine diskrete Variable ist er die Summe aus jedem Wert mal seiner Wahrscheinlichkeit, für eine stetige Variable das entsprechende Integral über die Dichte.\n\nDer Erwartungswert ist linear, also gilt E[aX + bY] = aE[X] + bE[Y], selbst wenn X und Y abhängig sind. Zielfunktionen im Machine Learning sind Erwartungswerte: Das Training minimiert den erwarteten Verlust über die Datenverteilung, angenähert durch den mittleren Verlust auf einem Mini-Batch, weshalb stochastischer Gradientenabstieg funktioniert. Reinforcement Learning maximiert den erwarteten Return, der EM-Algorithmus bildet einen Erwartungswert über latente Variablen, und Monte-Carlo-Schätzung nähert Erwartungswerte durch Stichprobenmittelwerte an.\n\nEin häufiger Fehler ist die Annahme E[f(X)] = f(E[X]). Für nichtlineares f gilt das nicht; nach der Jensen-Ungleichung ist für konvexes f der Erwartungswert von f mindestens f des Erwartungswerts.",
+  "u": [
+   "Erwarteter Verlust als Trainingszielfunktion",
+   "Erwarteter Return im Reinforcement Learning",
+   "Erwartete Kosten bei der Wahl von Entscheidungsschwellenwerten"
+  ],
+  "x": "Ein Betrugsteam legt den Entscheidungsschwellenwert fest, indem es die erwarteten Kosten minimiert und jede vorhergesagte Wahrscheinlichkeit mit den Kosten eines übersehenen Betrugs und eines Fehlalarms gewichtet. Der Schwellenwert wird neu berechnet, sobald sich die Kostenschätzungen des Operations-Teams ändern."
+ },
+ "condprob": {
+  "n": "Bedingte Wahrscheinlichkeit",
+  "d": "Die bedingte Wahrscheinlichkeit ist die Wahrscheinlichkeit eines Ereignisses A unter der Bedingung, dass ein anderes Ereignis B bekanntermaßen eingetreten ist, geschrieben P(A|B). Man beschränkt sich auf die Fälle, in denen B zutrifft, und fragt, welcher Anteil davon auch A aufweist.\n\nFormal ist sie die gemeinsame Wahrscheinlichkeit von A und B geteilt durch die Wahrscheinlichkeit von B. Zwei Ereignisse sind genau dann unabhängig, wenn P(A|B) = P(A). Die meisten überwachten Modelle schätzen eine bedingte Wahrscheinlichkeit: Ein Klassifikator gibt P(y | x) aus, ein Sprachmodell P(nächstes Token | vorherige Tokens), und Naive Bayes multipliziert bedingte Wahrscheinlichkeiten der Features gegeben die Klasse. Precision und Recall sind beides bedingte Wahrscheinlichkeiten, bedingt auf unterschiedliche Ereignisse.\n\nDer klassische Fehler ist die Verwechslung von P(A|B) mit P(B|A). Ein Test, der eine Krankheit in 99 % der Fälle erkennt, P(positiv | krank), kann bei einer seltenen Krankheit trotzdem überwiegend falsch positive Ergebnisse liefern, also ein niedriges P(krank | positiv).",
+  "u": [
+   "Klassifikatorausgaben als P(y gegeben x) interpretieren",
+   "Next-Token-Wahrscheinlichkeiten in Sprachmodellen",
+   "Berechnung von Precision und Recall aus Zählwerten"
+  ],
+  "x": "Ein Team für medizinisches Screening gibt für ein neues Bildgebungsmodell sowohl die Sensitivität, P(positiver Test | krank), als auch den positiven prädiktiven Wert, P(krank | positiver Test), an. Weil sich die Prävalenz zwischen Klinik und Allgemeinbevölkerung unterscheidet, wird der prädiktive Wert für jedes Umfeld getrennt berechnet."
+ },
+ "bayesthm": {
+  "n": "Satz von Bayes",
+  "d": "Der Satz von Bayes sagt, wie man eine bedingte Wahrscheinlichkeit umkehrt: Er berechnet P(A|B) aus P(B|A), der A-priori-Wahrscheinlichkeit P(A) und der Gesamtwahrscheinlichkeit P(B). Er ist die Regel, mit der man eine Annahme über A nach Beobachtung der Evidenz B aktualisiert.\n\nDer Prior P(A) wird mit der Likelihood P(B|A) multipliziert und durch die Evidenz P(B) renormiert, die sich als Summe über alle Hypothesen ausschreiben lässt. Der Naive-Bayes-Klassifikator wendet ihn direkt an, mit der zusätzlichen Annahme, dass die Features gegeben die Klasse bedingt unabhängig sind. Er ist die Grundlage der Bayesschen Inferenz, der MAP-Schätzung, der Bayesschen Optimierung und von Spamfiltern und erklärt, warum Basisraten bei der Interpretation jedes Detektors zählen.\n\nDer häufigste Fehler ist, den Prior zu ignorieren, bekannt als Basisratenfehler. Wenn Positive selten sind, erzeugt selbst ein genauer Test überwiegend Fehlalarme; ein hohes P(B|A) impliziert also kein hohes P(A|B).",
+  "u": [
+   "Naive-Bayes-Text- und Spamklassifikation",
+   "Aktualisieren von Annahmen in der Bayesschen Inferenz",
+   "Interpretation von Alarmen aus Detektoren für seltene Ereignisse"
+  ],
+  "x": "Ein Security-Operations-Team kalibriert einen Einbruchsalarm, indem es die Richtig- und Falsch-positiv-Raten des Detektors mit der niedrigen Basisrate echter Angriffe kombiniert. Der Satz von Bayes zeigt, dass die meisten Alarme falsch sind; daher leitet das Team sie zunächst durch einen automatisierten Triage-Schritt, bevor ein Analyst benachrichtigt wird."
+ },
+ "priorpost": {
+  "n": "Prior und Posterior",
+  "d": "Der Prior (A-priori-Verteilung) ist eine Wahrscheinlichkeitsverteilung, die ausdrückt, was man vor dem Blick auf die Daten über eine unbekannte Größe annimmt; der Posterior (A-posteriori-Verteilung) ist die aktualisierte Verteilung, nachdem die Daten berücksichtigt wurden. Der Satz von Bayes verbindet beide: Der Posterior ist proportional zur Likelihood mal dem Prior.\n\nBei wenigen Daten hat der Prior starken Einfluss; je mehr Daten hinzukommen, desto mehr dominiert die Likelihood, und Posteriors aus verschiedenen vernünftigen Priors konvergieren. Konjugierte Priors wie der Beta-Prior für eine Bernoulli-Rate halten den Posterior in derselben Familie und liefern geschlossene Aktualisierungen. Im Machine Learning erscheinen Priors als Regularisierung (ein Gauß-Prior auf den Gewichten entspricht L2, ein Laplace-Prior L1), in Bayesschen A/B-Tests, im Thompson Sampling für Banditen und in der Bayesschen Optimierung.\n\nEin Irrtum ist, ein flacher Prior sei immer neutral. Er ist nur in einer Parametrisierung flach und wird auf einer transformierten Skala informativ.",
+  "u": [
+   "Bayessche A/B-Tests von Konversionsraten",
+   "Thompson Sampling für Multi-Armed Bandits",
+   "Schrumpfen von Schätzungen für Items mit wenigen Daten"
+  ],
+  "x": "Ein Recommendation-Team schätzt Klickraten neuer Items mit einem Beta-Prior, der an historische Items angepasst wurde. Ein neues Item mit drei Klicks bei fünf Impressionen erhält eine Posterior-Schätzung, die zur typischen Rate hingezogen wird, statt roher 60 %, sodass es nicht wegen Rauschen auf Platz eins landet."
+ },
+ "likelihood": {
+  "n": "Likelihood",
+  "d": "Die Likelihood ist die Wahrscheinlichkeit (oder Dichte) der beobachteten Daten, betrachtet als Funktion der Modellparameter bei festgehaltenen Daten. Sie beantwortet, wie gut jeder Kandidatenwert eines Parameters das tatsächlich Beobachtete erklärt.\n\nFür unabhängige Beobachtungen ist die Likelihood das Produkt der Wahrscheinlichkeiten pro Beispiel; in der Praxis arbeitet man daher mit der Log-Likelihood, einer Summe, die numerisch stabil und leichter abzuleiten ist. Ihre Maximierung ergibt die Maximum-Likelihood-Schätzung, und die meisten Trainingsverluste sind negative Log-Likelihoods: Kreuzentropie für Klassifikatoren und Sprachmodelle, quadratischer Fehler unter Gaußschem Rauschen. Perplexity ist die exponenzierte mittlere negative Log-Likelihood pro Token, und Likelihood-Quotienten stecken hinter vielen statistischen Tests und Modellvergleichen.\n\nDer zentrale Irrtum ist, die Likelihood als Wahrscheinlichkeitsverteilung über Parameter zu behandeln. Sie integriert über θ nicht zu 1 und sagt nicht, wie wahrscheinlich ein Parameter ist; dafür braucht es einen Prior und den Satz von Bayes.",
+  "u": [
+   "Negative Log-Likelihood als Trainingsverlust",
+   "Perplexity von Sprachmodellen auf zurückgehaltenem Text",
+   "Vergleich verschachtelter Modelle mit Likelihood-Quotienten-Tests"
+  ],
+  "x": "Ein Sprachmodell-Team verfolgt nach jedem Checkpoint die mittlere negative Log-Likelihood pro Token auf einem zurückgehaltenen Korpus. Eine steigende Likelihood auf diesen Daten bestätigt, dass das Pretraining noch Fortschritte macht, und dieselbe Metrik als Perplexity wird nur dann zum Vergleich von Tokenizer-Varianten genutzt, wenn die Vokabulare übereinstimmen."
+ },
+ "mle": {
+  "n": "Maximum-Likelihood-Schätzung (MLE)",
+  "d": "Die Maximum-Likelihood-Schätzung wählt die Parameterwerte, unter denen die beobachteten Daten nach dem Modell am wahrscheinlichsten sind. In der Praxis maximiert man die Log-Likelihood oder minimiert äquivalent die negative Log-Likelihood.\n\nFür manche Modelle hat das Maximum eine geschlossene Form: Die MLE des Mittelwerts einer Gauß-Verteilung ist der Stichprobenmittelwert, die einer Bernoulli-Rate der beobachtete Erfolgsanteil. Viele Standard-Trainingsverfahren sind verkappte MLE: lineare Regression mit kleinsten Quadraten unter Gaußschem Rauschen, logistische Regression mit Log-Loss, neuronale Klassifikatoren und Sprachmodelle, die mit Kreuzentropie trainiert werden, und der EM-Algorithmus für Gaußsche Mischmodelle. Unter milden Bedingungen ist die MLE konsistent und asymptotisch effizient.\n\nIhre Schwäche ist Overfitting bei wenigen Daten oder vielen Parametern. Eine Münze, die dreimal von dreimal Kopf zeigte, erhält eine geschätzte Kopfwahrscheinlichkeit von 1, und die MLE der Gauß-Varianz teilt durch n und ist nach unten verzerrt. Regularisierung oder MAP-Schätzung wirken dem entgegen.",
+  "u": [
+   "Fitten logistischer Regression und verallgemeinerter linearer Modelle",
+   "Training von Sprachmodellen mit Kreuzentropie",
+   "Schätzen der Parameter statistischer Verteilungen"
+  ],
+  "x": "Ein Zuverlässigkeitsteam passt per Maximum Likelihood eine Weibull-Verteilung an Ausfallzeitdaten von Geräten im Feld an. Die angepassten Parameter fließen in die Ersatzteilplanung ein, und zensierte Datensätze von noch funktionierenden Geräten gehen über ihre Überlebenswahrscheinlichkeit in die Likelihood ein."
+ },
+ "mapest": {
+  "n": "MAP-Schätzung",
+  "d": "Die Maximum-a-posteriori-Schätzung (MAP) wählt den Parameterwert mit der höchsten A-posteriori-Wahrscheinlichkeit und kombiniert dazu die Likelihood der Daten mit einem Prior über die Parameter. Sie ist Maximum-Likelihood-Schätzung plus ein Log-Prior-Term.\n\nDurch das Logarithmieren wird der Prior zu einem additiven Strafterm. Ein Gauß-Prior mit Mittelwert null auf den Gewichten ergibt genau eine L2-Strafe (Ridge), ein Laplace-Prior eine L1-Strafe (Lasso); regularisierte Regression und Weight Decay lassen sich also als MAP-Schätzung lesen. Mit einem Beta-Prior wird die Schätzung einer Bernoulli-Rate zu einem geglätteten Anteil, die Idee hinter der additiven (Laplace-)Glättung bei Naive Bayes. Mit wachsendem Datensatz dominiert die Likelihood, und MAP nähert sich der MLE.\n\nMAP liefert einen einzelnen Punkt, den Modus des Posteriors, nicht den vollständigen Posterior, und gibt daher keine Unsicherheitsschätzung. Der Modus kann den Posterior zudem schlecht repräsentieren und ändert sich, anders als der vollständige Posterior, bei einer Umparametrisierung.",
+  "u": [
+   "L2- und L1-Strafen als Priors interpretieren",
+   "Glätten von Wahrscheinlichkeitsschätzungen seltener Kategorien",
+   "Stabilisieren von Schätzungen bei kleinen Datensätzen"
+  ],
+  "x": "Ein Suchteam schätzt die Klickrate jedes Query-Dokument-Paars, von denen viele nur eine Handvoll Impressionen haben. Eine MAP-Schätzung mit einem an alle Paare angepassten Beta-Prior vermeidet extreme Raten von 0 oder 1, die sonst die Ranking-Features destabilisieren würden."
+ },
+ "iid": {
+  "n": "i.i.d.-Annahme",
+  "d": "Unabhängig und identisch verteilt (i.i.d.) bedeutet, dass jede Beobachtung aus derselben Wahrscheinlichkeitsverteilung gezogen wird und keine Beobachtung Information über eine andere trägt. Es ist die Standardannahme hinter dem Großteil der Statistik und des überwachten Lernens.\n\nSie rechtfertigt, den mittleren Trainingsverlust als Schätzung des erwarteten Verlusts zu behandeln, zufällige Train/Test-Splits und k-fache Kreuzvalidierung, den zentralen Grenzwertsatz hinter Standardfehlern und die Produktform der Likelihood bei der Maximum-Likelihood-Schätzung. Auch der Mini-Batch-Gradientenabstieg setzt gemischte, annähernd i.i.d. Batches für erwartungstreue Gradientenschätzungen voraus.\n\nDie Annahme wird öfter verletzt, als man bemerkt. Zeitreihen sind nicht unabhängig, mehrere Zeilen desselben Patienten oder Nutzers sind korreliert, und Produktionsdaten driften von der Trainingsverteilung weg. Zufällige Splits auf solchen Daten erzeugen Leakage und zu optimistische Scores; zeitbasierte Validierung und Group-k-Fold berücksichtigen die tatsächliche Struktur.",
+  "u": [
+   "Begründung zufälliger Splits und k-facher Kreuzvalidierung",
+   "Herleitung von Likelihoods und Standardfehlern",
+   "Gruppen- oder zeitbasierte Validierung bei Verletzung wählen"
+  ],
+  "x": "Ein Health-Tech-Team, das Wiederaufnahmen vorhersagt, stellte fest, dass ein zufälliger Split Besuche desselben Patienten sowohl ins Trainings- als auch ins Testset legte und die Validierungsscores aufblähte. Der Wechsel zu Group-k-Fold nach Patienten-ID lieferte eine niedrigere, aber realistische Schätzung, die zur späteren Produktionsleistung passte."
+ },
+ "clt": {
+  "n": "Zentraler Grenzwertsatz",
+  "d": "Der zentrale Grenzwertsatz besagt, dass der Mittelwert vieler unabhängiger Zufallsvariablen mit endlicher Varianz annähernd normalverteilt ist, unabhängig von der Form der ursprünglichen Verteilung. Die Näherung wird mit wachsender Stichprobengröße n besser, und die Streuung des Mittelwerts schrumpft wie σ/√n.\n\nDeshalb taucht die Normalverteilung so häufig auf, und deshalb funktionieren normalbasierte Werkzeuge auch auf nicht normalverteilten Daten. Konfidenzintervalle für einen Mittelwert, die z- und t-Tests in A/B-Tests, Standardfehler der Accuracy auf einem Testset und Fehlerbalken über Random Seeds hinweg beruhen alle auf ihm. Er erklärt auch, warum Mini-Batch-Gradienten um den vollen Gradienten herum annähernd gaußförmig aussehen.\n\nDer Satz handelt von der Verteilung des Stichprobenmittelwerts, nicht der Daten: Einzelne Beobachtungen bleiben schief. Die Konvergenz kann bei Daten mit Heavy Tails oder stark schiefen Daten, etwa dem Umsatz pro Nutzer, langsam sein und versagt ganz, wenn die Varianz unendlich ist.",
+  "u": [
+   "Konfidenzintervalle für Mittelwerte von Metriken",
+   "Normalapproximationen in A/B-Test-Statistiken",
+   "Fehlerbalken für die Accuracy auf dem Testset"
+  ],
+  "x": "Eine Experimentierplattform berechnet z-Test-Konfidenzintervalle für den durchschnittlichen Umsatz pro Nutzer, der auf Nutzerebene extrem schief ist. Weil die Normalapproximation des Mittelwerts bei solchen Daten langsam greift, prüft das Team sie mit Bootstrap-Intervallen an vergangenen Experimenten und kappt Extremwerte vor dem Testen."
+ },
+ "stderr": {
+  "n": "Standardfehler",
+  "d": "Der Standardfehler ist die Standardabweichung einer Schätzung über hypothetisch wiederholte Stichproben. Er misst, wie präzise eine Statistik, meist ein Mittelwert oder ein Anteil, aus den vorliegenden Daten geschätzt wurde.\n\nFür einen Stichprobenmittelwert ist er die Standardabweichung der Daten geteilt durch √n; eine viermal so große Stichprobe halbiert also die Unsicherheit. Für einen Anteil p, etwa die Accuracy auf einem Testset, beträgt er √(p(1 − p)/n). Standardfehler sind der Baustein von Konfidenzintervallen, der z- und t-Statistiken in Hypothesentests und A/B-Tests sowie der Koeffiziententabellen für lineare und logistische Regression. Gibt es keine Formel, schätzt der Bootstrap ihn per Resampling.\n\nHäufig wird er mit der Standardabweichung verwechselt. Die Standardabweichung beschreibt die Streuung der Daten und schrumpft nicht mit mehr Stichproben; der Standardfehler beschreibt die Unsicherheit der Schätzung und schrumpft sehr wohl.",
+  "u": [
+   "Fehlerbalken für die Benchmark-Accuracy",
+   "Signifikanz von Regressionskoeffizienten",
+   "Stichprobenumfang für eine Zielpräzision bestimmen"
+  ],
+  "x": "Ein Evaluationsteam gibt die Modell-Accuracy auf einem Benchmark mit 1.000 Fragen zusammen mit ihrem Standardfehler an. Unterscheiden sich zwei Modelle um weniger als etwa zwei Standardfehler, beschreiben die Release Notes sie als vergleichbar, statt eine Verbesserung zu behaupten."
+ },
+ "confint": {
+  "n": "Konfidenzintervall",
+  "d": "Ein Konfidenzintervall ist ein aus den Daten berechneter Bereich, der bei wiederholter Stichprobenziehung den wahren Wert eines Parameters in einem angegebenen Anteil der Fälle enthalten würde, etwa 95 %. Es drückt die Unsicherheit einer Schätzung aus, statt nur einen einzelnen Punkt anzugeben.\n\nDie übliche Form ist Schätzung ± kritischer Wert × Standardfehler, mit kritischem Wert 1,96 für ein 95-%-Normalintervall. Wilson-Intervalle eignen sich für Anteile nahe 0 oder 1; Bootstrap-Perzentilintervalle funktionieren für Statistiken ohne einfache Formel, etwa AUC oder F1. Konfidenzintervalle werden für Ergebnisse von A/B-Tests, Benchmark-Scores, Regressionskoeffizienten und Modellvergleiche verwendet.\n\nDie übliche Fehldeutung ist, dass ein konkret berechnetes 95-%-Intervall den wahren Wert mit 95 % Wahrscheinlichkeit enthält. Die 95 % beziehen sich auf das Verfahren über viele Stichproben; eine Wahrscheinlichkeitsaussage über den Parameter selbst erfordert ein Bayessches Kredibilitätsintervall.",
+  "u": [
+   "Angabe der Unsicherheit von Uplifts in A/B-Tests",
+   "Bootstrap-Intervalle für AUC und F1",
+   "Fehlerbereiche für Leaderboard-Scores"
+  ],
+  "x": "Ein Team für Modellevaluation veröffentlicht 95-%-Bootstrap-Konfidenzintervalle für die ROC-AUC in jedem Kundensegment. Segmente mit wenigen positiven Fällen erhalten breite Intervalle, was verhindert, dass Produktmanager kleine Unterschiede zwischen Modellversionen dort überinterpretieren."
+ },
+ "hyptest": {
+  "n": "Hypothesentest und p-Wert",
+  "d": "Ein Hypothesentest ist ein Verfahren, um zu entscheiden, ob Daten genug Evidenz gegen eine Standardbehauptung liefern, die Nullhypothese, etwa „die beiden Modelle haben die gleiche Accuracy“. Der p-Wert ist die Wahrscheinlichkeit, unter Annahme der Nullhypothese ein Ergebnis zu sehen, das mindestens so extrem ist wie das beobachtete.\n\nAus den Daten wird eine Teststatistik (t, z, Chi-Quadrat) berechnet und mit ihrer Verteilung unter der Nullhypothese verglichen; liegt der p-Wert unter einem vorab gewählten Signifikanzniveau α, oft 0,05, wird die Nullhypothese verworfen. In der Praxis nutzt man t- und z-Tests in A/B-Tests, den McNemar-Test zum Vergleich zweier Klassifikatoren auf demselben Testset, Chi-Quadrat-Tests auf Unabhängigkeit von Feature und Zielgröße und Kolmogorov-Smirnov-Tests für Data Drift.\n\nDer p-Wert ist nicht die Wahrscheinlichkeit, dass die Nullhypothese wahr ist, und ein kleiner p-Wert bedeutet keinen großen oder wichtigen Effekt. Viele Tests ohne Korrektur erhöhen zudem die Zahl falsch positiver Ergebnisse.",
+  "u": [
+   "Entscheidung über Ergebnisse von A/B-Tests",
+   "Vergleich zweier Klassifikatoren mit dem McNemar-Test",
+   "Erkennen von Feature-Drift mit KS-Tests"
+  ],
+  "x": "Eine ML-Plattform führt für jedes Eingabe-Feature einen Zwei-Stichproben-Kolmogorov-Smirnov-Test durch und vergleicht den Traffic von gestern mit den Trainingsdaten. Da täglich Hunderte von Features getestet werden, wendet das Team eine Korrektur der False Discovery Rate an und verlangt zusätzlich eine Mindesteffektgröße, bevor ein Drift-Alarm ausgelöst wird."
+ },
+ "abtest": {
+  "n": "A/B-Test",
+  "d": "Ein A/B-Test ist ein randomisiertes kontrolliertes Experiment, bei dem Nutzer zufällig einer Kontrollversion (A) oder einer Testversion (B) zugeteilt werden und eine vorab gewählte Metrik zwischen den Gruppen verglichen wird. Die Randomisierung macht die Gruppen vergleichbar, sodass ein signifikanter Unterschied der Änderung selbst zugeschrieben werden kann.\n\nDas Team legt vor dem Start die primäre Metrik, den minimal nachweisbaren Effekt, das Signifikanzniveau und den Stichprobenumfang fest, lässt den Test über volle Wochenzyklen laufen und wendet dann einen Hypothesentest und ein Konfidenzintervall auf die Differenz an. A/B-Tests sind der Standardweg, um ein neues Ranking-Modell, einen Empfehlungsalgorithmus, eine Preisregel oder einen LLM-Prompt in Produktion zu validieren, weil Offline-Metriken die Online-Wirkung oft schlecht vorhersagen.\n\nDie klassische Falle ist Peeking: Wer Ergebnisse wiederholt prüft und stoppt, sobald p < 0,05 ist, erhöht die Rate falsch positiver Ergebnisse stark, sofern kein sequenzielles Testverfahren verwendet wird. Neuheitseffekte, Sample Ratio Mismatch und Interferenz zwischen Nutzern sind weitere häufige Fallstricke.",
+  "u": [
+   "Online-Validierung neuer Ranking- oder Empfehlungsmodelle",
+   "Testen von Preis-, UI- und Prompt-Änderungen",
+   "Messen der echten Wirkung jenseits von Offline-Metriken"
+  ],
+  "x": "Ein Streamingdienst rollt ein neues Empfehlungsmodell erst nach einem A/B-Test aus, in dem ein zufälliger Anteil der Nutzer es erhält. Das Team prüft am ersten Tag auf Sample Ratio Mismatch und wertet die Sehdauer über zwei volle Wochen aus, um Neuheitseffekte zu vermeiden."
+ },
+ "kldiv": {
+  "n": "KL-Divergenz",
+  "d": "Die Kullback-Leibler-Divergenz (KL-Divergenz) misst, wie stark sich eine Wahrscheinlichkeitsverteilung P von einer Referenzverteilung Q unterscheidet. Sie ist die erwartete zusätzliche Anzahl von Bits (oder Nats), die nötig ist, um Stichproben aus P mit einem für Q optimierten Code zu kodieren.\n\nSie ist stets nichtnegativ und genau dann null, wenn P gleich Q ist, aber sie ist nicht symmetrisch und keine echte Distanz. Die Kreuzentropie ist gleich der Entropie von P plus KL(P‖Q); wer also den Kreuzentropieverlust gegen feste Labels minimiert, minimiert die KL-Divergenz. Sie erscheint im VAE-Verlust als Regularisierer in Richtung des Priors, in RLHF als Strafterm, der die Policy nahe am Referenzmodell hält, in der Knowledge Distillation zwischen Ausgaben von Lehrer und Schüler und im Drift-Monitoring.\n\nDie Richtung zählt. Die Vorwärts-KL(P‖Q) ist massenabdeckend und bestraft Q dafür, irgendeinen Modus von P zu verfehlen, während die Rückwärts-KL(Q‖P) modussuchend ist. Außerdem ist die KL-Divergenz unendlich, wenn Q dort Wahrscheinlichkeit null vergibt, wo P das nicht tut.",
+  "u": [
+   "KL-Strafterm zum Referenzmodell in RLHF",
+   "Regularisierung des latenten Raums von VAEs",
+   "Destillation der Ausgabeverteilung eines Lehrermodells"
+  ],
+  "x": "Ein Team, das ein Chatmodell mit PPO feinjustiert, addiert zur Belohnung einen KL-Strafterm pro Token zwischen der Policy und dem eingefrorenen SFT-Modell. Das Monitoring der mittleren KL-Divergenz während des Trainings zeigt, wann die Policy so weit abdriftet, dass sie Schwächen des Reward Models ausnutzt."
+ },
+ "mutualinfo": {
+  "n": "Transinformation (Mutual Information)",
+  "d": "Die Transinformation misst, wie stark die Kenntnis einer Variable die Unsicherheit über eine andere verringert. Sie ist die KL-Divergenz zwischen der gemeinsamen Verteilung von X und Y und dem Produkt ihrer Randverteilungen und ist daher genau dann null, wenn beide unabhängig sind.\n\nAnders als der Korrelationskoeffizient erfasst die Transinformation jede Art von Abhängigkeit, linear oder nicht, und funktioniert auch für kategoriale Variablen. Sie ist gleich der Entropie von Y minus der bedingten Entropie von Y gegeben X, also genau die Größe, die der Informationsgewinn zur Wahl von Splits in Entscheidungsbäumen verwendet. In der Praxis nutzt man sie für die Feature-Selektion, zum Aufspüren nichtlinearer Zusammenhänge in der EDA, in Zielfunktionen des kontrastiven Lernens wie InfoNCE, die sie nach unten abschätzen, und bei der Evaluation von Clustering.\n\nDie Transinformation für stetige Variablen zu schätzen ist schwierig. Histogrammschätzungen hängen von der Wahl der Bins ab, Nächste-Nachbarn-Schätzer sind in hohen Dimensionen verrauscht, und Rohwerte sind zwischen Features mit unterschiedlicher Entropie nicht vergleichbar.",
+  "u": [
+   "Feature-Selektion bei nichtlinearen Abhängigkeiten",
+   "Informationsgewinn für Splits in Entscheidungsbäumen",
+   "Vergleich von Clusterings mit normalisierter Transinformation"
+  ],
+  "x": "Ein Betrugsteam rangiert vor dem Training Hunderte von Feature-Kandidaten nach ihrer geschätzten Transinformation mit dem Betrugslabel. Mehrere Features mit Korrelation nahe null, aber hoher Transinformation erweisen sich als schwellenwertartige Effekte, die ein Gradient-Boosting-Modell ausnutzt."
+ },
+ "montecarlo": {
+  "n": "Monte-Carlo-Schätzung",
+  "d": "Die Monte-Carlo-Schätzung nähert einen Erwartungswert, ein Integral oder eine Wahrscheinlichkeit an, indem sie über Zufallsstichproben mittelt. Statt ein Integral analytisch zu lösen, zieht man Stichproben aus der relevanten Verteilung, wertet die Größe für jede aus und bildet den Mittelwert.\n\nNach dem Gesetz der großen Zahlen konvergiert die Schätzung gegen den wahren Wert, und ihr Standardfehler schrumpft unabhängig von der Dimension wie 1/√N. Das macht die Methode praktikabel für hochdimensionale Probleme, bei denen Gitter unmöglich sind. Im Machine Learning sind Mini-Batch-Gradienten Monte-Carlo-Schätzungen des vollen Gradienten, Monte-Carlo-Dropout mittelt Vorhersagen über zufällige Dropout-Masken, um Unsicherheit abzuschätzen, Reinforcement Learning schätzt Returns aus gesampelten Episoden, VAEs verwenden gesampelte latente Variablen, und der Bootstrap ist Monte-Carlo-Resampling.\n\nDie Falle ist die langsame Konvergenz: Um den Fehler zu halbieren, braucht man viermal so viele Stichproben. Wahrscheinlichkeiten seltener Ereignisse erfordern enorme Stichprobenzahlen; deshalb gibt es Techniken zur Varianzreduktion wie Importance Sampling.",
+  "u": [
+   "Monte-Carlo-Dropout für Vorhersageunsicherheit",
+   "Schätzen von Returns im Reinforcement Learning",
+   "Simulation von Risiko- und Nachfrageszenarien"
+  ],
+  "x": "Ein Supply-Chain-Team simuliert Tausende Nachfrageszenarien aus der prädiktiven Verteilung eines Prognosemodells, um für jede Nachbestellstrategie die Wahrscheinlichkeit eines Fehlbestands zu schätzen. Die Zahl der Simulationen wird erhöht, bis sich die geschätzten Fehlbestandswahrscheinlichkeiten zwischen Läufen nicht mehr nennenswert ändern."
+ },
+ "markovchain": {
+  "n": "Markov-Kette",
+  "d": "Eine Markov-Kette ist ein Zufallsprozess, der zwischen Zuständen wechselt, wobei die Wahrscheinlichkeit des nächsten Zustands nur vom aktuellen Zustand abhängt, nicht davon, wie der Prozess dorthin gelangt ist. Sie wird vollständig durch ihre Übergangswahrscheinlichkeiten beschrieben, zusammengefasst in einer Übergangsmatrix, deren Zeilen sich zu 1 summieren.\n\nUnter milden Bedingungen konvergiert eine Kette gegen eine stationäre Verteilung, die sich von Schritt zu Schritt nicht mehr ändert. PageRank ist die stationäre Verteilung eines Random Walks im Web, MCMC-Verfahren wie Metropolis-Hastings und Gibbs-Sampling konstruieren Ketten, deren stationäre Verteilung ein Ziel-Posterior ist, Reinforcement Learning modelliert Umgebungen als Markov-Entscheidungsprozesse, und n-Gramm-Modelle sowie Hidden-Markov-Modelle sind Markov-Ketten.\n\nDie Markov-Eigenschaft ist eine Annahme, keine Tatsache über die Daten. Reale Sequenzen haben oft weitreichende Abhängigkeiten; deshalb konditionieren Transformer auf den gesamten Kontext statt nur auf das vorherige Token.",
+  "u": [
+   "MCMC-Sampling aus Bayesschen Posteriors",
+   "Ranking von Seiten oder Nutzern mit Random Walks",
+   "Modellierung von Nutzernavigation und Churn-Zuständen"
+  ],
+  "x": "Ein Abo-Unternehmen modelliert den monatlichen Status jedes Kunden als Markov-Kette über Zustände wie aktiv, pausiert und gekündigt und schätzt die Übergangswahrscheinlichkeiten aus der Historie. Die stationäre Verteilung und mehrstufige Übergangswahrscheinlichkeiten liefern Prognosen des langfristigen Churns unter verschiedenen Halteangeboten."
+ },
+ "causation": {
+  "n": "Korrelation vs. Kausalität",
+  "d": "Korrelation bedeutet, dass sich zwei Variablen gemeinsam bewegen; Kausalität bedeutet, dass eine Änderung der einen die andere verändern würde. Eine Korrelation kann ohne jeden kausalen Zusammenhang entstehen, durch eine gemeinsame Ursache, umgekehrte Kausalität, Selektionseffekte oder Zufall. Ein beobachteter Zusammenhang allein zeigt also nicht, was eine Intervention bewirken würde.\n\nDiese Unterscheidung entscheidet darüber, wie Modelle genutzt werden können. Ein prädiktives Modell, das auf Beobachtungsdaten trainiert wurde, lernt Korrelationen; das genügt für Prognosen, nicht aber für Handlungsentscheidungen: Ein Feature, das Churn vorhersagt, senkt den Churn nicht unbedingt, wenn man es verändert. Randomisierte A/B-Tests weisen kausale Effekte direkt nach; sind Experimente unmöglich, schätzen Methoden der kausalen Inferenz wie Propensity Score Matching, Instrumentvariablen, Difference-in-Differences oder Uplift-Modellierung sie unter expliziten Annahmen. SHAP-Werte beschreiben das Modell, nicht die Welt.\n\nDie verbreitete Falle ist, einen deutlichen Partial Dependence Plot oder Regressionskoeffizienten als Wirkung einer Intervention zu lesen. Das ist nur gültig, wenn Confounding ausgeschlossen ist.",
+  "u": [
+   "Entscheiden, wann ein A/B-Test nötig ist",
+   "Uplift-Modellierung für gezielte Interventionen",
+   "Verantwortungsvolle Interpretation von SHAP und Feature-Wichtigkeit"
+  ],
+  "x": "Das Churn-Modell eines Händlers zeigte, dass Kunden, die den Support kontaktiert hatten, eher kündigten, woraufhin vorgeschlagen wurde, Supportkontakte zu erschweren. Ein randomisierter Test proaktiver Supportansprache zeigte den gegenteiligen Effekt, denn unzufriedene Kunden kontaktieren den Support und kündigen zugleich."
+ },
+ "confounder": {
+  "n": "Störvariable (Confounder)",
+  "d": "Eine Störvariable ist ein dritter Faktor, der sowohl eine vermutete Ursache als auch ein Ergebnis beeinflusst und so einen Zusammenhang zwischen beiden erzeugt, der kein kausaler Effekt ist. Das Alter beispielsweise beeinflusst sowohl die Medikamenteneinnahme als auch den Gesundheitszustand.\n\nBleibt ein Confounder in einer Analyse unberücksichtigt, absorbiert der geschätzte Effekt der interessierenden Variable seinen Einfluss, eine Form von Omitted-Variable-Bias. Im Extremfall kann sich die Richtung eines Zusammenhangs umkehren, wenn man für die Störvariable kontrolliert, bekannt als Simpson-Paradoxon. Randomisierte Experimente wie A/B-Tests brechen Confounding durch ihr Design; Beobachtungsstudien adjustieren für gemessene Störvariablen durch Stratifizierung, Regression oder Propensity Score Matching. Im Machine Learning verursachen Confounder auch Shortcut Learning, etwa wenn ein Klassifikator sich auf eine Scannermarkierung stützt, die mit einer Krankheit korreliert.\n\nAdjustierung erfasst nur gemessene Störvariablen, und die Adjustierung für eine Folge der Behandlung fügt Verzerrung hinzu, statt sie zu beseitigen.",
+  "u": [
+   "Adjustierung von Beobachtungsanalysen mit Propensity Scores",
+   "Erklärung des Simpson-Paradoxons in aggregierten Berichten",
+   "Erkennen von Shortcut-Features in Klassifikatoren"
+  ],
+  "x": "Ein Team für medizinische Bildgebung stellte fest, dass sein Pneumonie-Klassifikator sich auf Markierungen tragbarer Scanner stützte, die vor allem bei kränkeren stationären Patienten eingesetzt wurden. Der Scannertyp war eine Störvariable; das Team stratifizierte die Evaluation daher nach Scanner und ergänzte Trainingsdaten, die über die Geräte ausgewogen sind."
+ },
+ "samplingbias": {
+  "n": "Stichprobenverzerrung (Sampling Bias)",
+  "d": "Eine Stichprobenverzerrung liegt vor, wenn die erhobenen Daten nicht repräsentativ für die Population sind, die das Modell oder die Analyse beschreiben soll, weil manche Mitglieder mit größerer Wahrscheinlichkeit aufgenommen wurden als andere. Schätzungen und Modelle spiegeln dann die Eigenheiten der Stichprobe statt der Realität wider.\n\nZu den Formen gehören Selektionsverzerrung (nur bewilligte Kreditanträge haben Rückzahlungslabels), Survivorship Bias (nur noch verkaufte Produkte werden analysiert), Non-Response-Bias in Umfragen und Gelegenheitsstichproben, etwa Daten aus nur einer Region oder einem Gerätetyp. Im Machine Learning führt sie zu Modellen, die auf gleich gezogenen Validierungsdaten gut abschneiden, in Produktion aber versagen, und zu Fairnessproblemen, wenn Gruppen unterrepräsentiert sind. Abhilfen sind stratifizierte Stichproben, Umgewichtung mit der inversen Aufnahmewahrscheinlichkeit und das gezielte Erheben von Daten aus den fehlenden Segmenten.\n\nEin größerer Datensatz behebt keine Stichprobenverzerrung. Mehr Daten aus demselben verzerrten Prozess machen eine falsche Schätzung nur selbstsicherer.",
+  "u": [
+   "Kreditmodelle, die nur auf bewilligten Anträgen trainiert sind",
+   "Umgewichtung von Umfragen und Logdaten auf die Population",
+   "Prüfung der Datensatzabdeckung über Nutzergruppen hinweg"
+  ],
+  "x": "Ein Spracherkennungsteam bemerkte in Produktion bei einigen Akzenten deutlich höhere Fehlerraten als in der Validierung. Die Trainings- und Validierungsaufnahmen stammten von Freiwilligen aus wenigen Regionen, daher ergänzte das Team eine gezielte Datenerhebung und berichtet Fehlerraten nun pro Akzentgruppe."
+ },
+ "heterosked": {
+  "n": "Heteroskedastizität",
+  "d": "Heteroskedastizität bedeutet, dass die Varianz der Fehler eines Modells nicht konstant ist, sondern sich mit den Eingaben oder dem vorhergesagten Wert ändert. Das Gegenteil, konstante Fehlervarianz, heißt Homoskedastizität.\n\nSie ist typisch, wenn die Skala der Zielgröße variiert: Fehler bei der Vorhersage von Immobilienpreisen oder Umsätzen sind bei teuren Häusern und großen Kunden größer. Ein trichterförmiger Plot der Residuen gegen die angepassten Werte ist das klassische Anzeichen, und der Breusch-Pagan- sowie der White-Test prüfen formal darauf. In der linearen Regression bleiben die Koeffizienten der Kleinste-Quadrate-Schätzung erwartungstreu, doch die üblichen Standardfehler, Konfidenzintervalle und p-Werte werden falsch. Gängige Abhilfen sind heteroskedastizitätsrobuste (Sandwich-)Standardfehler, gewichtete kleinste Quadrate, die Modellierung einer log-transformierten Zielgröße oder die explizite Vorhersage der Varianz, etwa mit einer Gaußschen negativen Log-Likelihood oder Quantilregression.\n\nEin Irrtum ist, Heteroskedastizität verzerre die Vorhersagen selbst. Sie macht vor allem Unsicherheitsschätzungen und Vorhersageintervalle konstanter Breite irreführend.",
+  "u": [
+   "Diagnose von Residuenplots in der Regression",
+   "Robuste Standardfehler für die Inferenz auf Koeffizienten",
+   "Eingabeabhängige Vorhersageintervalle für Prognosen erstellen"
+  ],
+  "x": "Ein Team für Immobilienbewertung stellte fest, dass ein Vorhersageintervall konstanter Breite für Luxusimmobilien zu schmal und für kleine Wohnungen zu breit war. Es stellte die Intervallgrenzen auf Quantilregression um, sodass die Breite mit dem vorhergesagten Preis wächst."
+ }
+}

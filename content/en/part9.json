@@ -1,0 +1,458 @@
+{
+ "lossfn": {
+  "n": "Loss Function",
+  "d": "A loss function is a formula that assigns a single number to how wrong a model's prediction is for one example. Training adjusts the parameters to make the average loss over the data as small as possible, so the loss defines what the model is pushed to get right. Gradient descent follows its gradient.\n\nDifferent tasks call for different losses: mean squared error for regression, cross-entropy for classification and language modeling, hinge loss for support vector machines, Huber loss when targets contain outliers. The choice encodes assumptions; squared error, for example, corresponds to Gaussian noise and punishes large errors heavily. A common confusion is treating the loss as the evaluation metric. The loss must be differentiable and well behaved for optimization, while business metrics such as accuracy or F1 often are not, so a model can improve its loss without improving the metric that matters.",
+  "f": "L(θ) = (1/n) Σᵢ ℓ(f_θ(xᵢ), yᵢ)",
+  "u": [
+   "Defining the training target of any supervised model",
+   "Comparing models during validation and early stopping",
+   "Encoding error asymmetry for a business problem"
+  ],
+  "x": "A demand forecasting team switches its gradient-boosted model from squared error to a quantile loss because stock-outs cost more than excess inventory. The model is still monitored with the planners' accuracy metric, but the loss now pushes predictions toward the higher quantile the business actually needs.",
+  "c": "import torch\nimport torch.nn.functional as F\n\npred = torch.tensor([2.5, 0.0, 2.1])\ntarget = torch.tensor([3.0, -0.5, 2.0])\n\nmse = F.mse_loss(pred, target)          # regression loss\nmae = F.l1_loss(pred, target)           # robust to outliers\n\nlogits = torch.tensor([[2.0, 0.5, -1.0]])\nlabel = torch.tensor([0])\nce = F.cross_entropy(logits, label)     # classification loss\n\nprint(mse.item(), mae.item(), ce.item())"
+ },
+ "objective": {
+  "n": "Objective Function",
+  "d": "An objective function is the complete quantity an optimizer minimizes or maximizes, usually the average loss over the training data plus any penalty terms. The loss scores a single prediction; the objective combines all of them with regularization, constraints rewritten as penalties, or auxiliary terms into one scalar that defines the optimization problem.\n\nIn ridge regression the objective is squared error plus λ times the squared weight norm. In XGBoost it adds penalties on the number of leaves and leaf weights. In RLHF the objective is expected reward minus a KL penalty that keeps the policy near the reference model. Changing any term changes the solution, so tuning λ is really tuning the objective. A frequent mistake is reporting the objective value as model quality: it includes penalty terms and training data, so it is not comparable across settings and says nothing about generalization.",
+  "f": "J(θ) = (1/n) Σᵢ ℓ(f_θ(xᵢ), yᵢ) + λ·R(θ)",
+  "u": [
+   "Adding regularization penalties to a training loss",
+   "Balancing multiple goals in multi-task training",
+   "Formulating reward and KL terms in RLHF"
+  ],
+  "x": "A recommendation team trains a model whose objective adds click loss, a weighted watch-time loss and an L2 penalty. When a new weight on watch time is tried, the team compares runs on held-out business metrics rather than on the objective value, because the objective itself changes with every weighting.",
+  "c": "import torch\nimport torch.nn as nn\n\nmodel = nn.Linear(10, 1)\nX, y = torch.randn(64, 10), torch.randn(64, 1)\nlam = 1e-2\n\ndef objective(model):\n    data_loss = nn.functional.mse_loss(model(X), y)        # average loss\n    penalty = sum((p ** 2).sum() for p in model.parameters())  # L2 term\n    return data_loss + lam * penalty                         # what we minimize\n\nopt = torch.optim.SGD(model.parameters(), lr=0.1)\nfor _ in range(100):\n    opt.zero_grad()\n    J = objective(model)\n    J.backward()\n    opt.step()"
+ },
+ "paramhyper": {
+  "n": "Parameters vs Hyperparameters",
+  "d": "Parameters are the values a model learns from data during training, while hyperparameters are the settings chosen before training that control how learning happens. The weights of a neural network, the coefficients of logistic regression and the split thresholds of a decision tree are parameters. Learning rate, batch size, depth, regularization strength and epoch count are hyperparameters.\n\nParameters are fitted by the training algorithm, for example by gradient descent on the loss. Hyperparameters are chosen by an outer search, such as grid search, random search or Bayesian optimization, scored on a validation set or by cross-validation. The test set must not be used for this choice, otherwise the reported score is optimistic. A related misconception is that more tuning always helps: searching hundreds of configurations on a small validation set can overfit the validation data itself, so the selected setting looks better than it really is.",
+  "f": "θ* = argmin_θ L_train(θ; λ),  λ* = argmin_λ L_val(θ*(λ))",
+  "u": [
+   "Choosing learning rate and batch size for training",
+   "Tuning tree depth and leaves in boosting",
+   "Separating learned weights from configuration in experiments"
+  ],
+  "x": "An ML platform team runs nightly Bayesian optimization over learning rate, number of leaves and feature fraction for its LightGBM churn model. Each trial fits the model's parameters on the training folds, and only the best configuration is retrained on all data and evaluated once on a held-out month.",
+  "c": "from sklearn.datasets import make_classification\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import GridSearchCV\n\nX, y = make_classification(n_samples=500, random_state=0)\n\n# C is a hyperparameter: chosen by the outer search\nsearch = GridSearchCV(LogisticRegression(max_iter=1000),\n                      param_grid={\"C\": [0.01, 0.1, 1, 10]}, cv=5)\nsearch.fit(X, y)\n\nbest = search.best_estimator_\nprint(\"hyperparameter C:\", search.best_params_)\n# coef_ and intercept_ are parameters: learned from data\nprint(\"parameters:\", best.coef_.shape, best.intercept_)"
+ },
+ "weightsbias": {
+  "n": "Weights & Bias",
+  "d": "Weights and biases are the learnable numbers inside a model: each weight scales one input, and the bias is a constant added afterward. A single neuron computes z = w·x + b, so the weights decide how strongly each input pushes the output and the bias shifts the result independently of the inputs.\n\nGeometrically, the weights set the orientation of a decision boundary and the bias moves it away from the origin; without a bias, every boundary of a linear model would have to pass through zero. In a neural network each layer has a weight matrix and a bias vector, and backpropagation computes gradients for both. Weight decay is usually applied to weights but often not to biases. Note that this bias is unrelated to statistical bias in the bias–variance tradeoff and to social bias in data; the same word names three different ideas.",
+  "f": "z = w·x + b = Σᵢ wᵢxᵢ + b",
+  "u": [
+   "Defining neurons in every dense and convolutional layer",
+   "Excluding biases from weight decay in optimizers",
+   "Reading coefficients of linear and logistic models"
+  ],
+  "x": "A team fine-tuning a vision model builds two optimizer parameter groups, applying weight decay to weight matrices while leaving biases and normalization scales undecayed. This follows common practice from transformer training recipes and avoids shrinking parameters that do not contribute to overfitting in the same way.",
+  "c": "import torch\nimport torch.nn as nn\n\nlayer = nn.Linear(3, 2)               # weight: (2, 3), bias: (2,)\nx = torch.tensor([[1.0, 2.0, -1.0]])\nz = x @ layer.weight.T + layer.bias   # same as layer(x)\nassert torch.allclose(z, layer(x))\n\n# Apply weight decay to weights only, not biases\ndecay = [p for n, p in layer.named_parameters() if n.endswith(\"weight\")]\nno_decay = [p for n, p in layer.named_parameters() if n.endswith(\"bias\")]\nopt = torch.optim.AdamW([\n    {\"params\": decay, \"weight_decay\": 0.01},\n    {\"params\": no_decay, \"weight_decay\": 0.0},\n], lr=1e-3)"
+ },
+ "epoch": {
+  "n": "Epoch, Batch & Iteration",
+  "d": "An epoch is one full pass over the training data, a batch is the subset of examples used for a single update, and an iteration is one such update step. With 10,000 examples and a batch size of 100, one epoch takes 100 iterations.\n\nMini-batch training, the default in stochastic gradient descent and Adam, computes the gradient on one batch, updates the weights, and moves on; data is usually reshuffled every epoch so batches differ. Learning rate schedules, warmup, checkpointing and early stopping are configured in epochs or in steps, and mixing the two is a common source of bugs. Large language models are often trained for about one epoch or less, so progress is counted in tokens or steps. A frequent misconception is that more epochs always help; past a point the model memorizes the training set and validation loss rises, which is why early stopping monitors it.",
+  "f": "iterations per epoch = ⌈N / B⌉",
+  "u": [
+   "Configuring data loaders and training duration",
+   "Scheduling learning rate decay per step",
+   "Choosing when to evaluate and checkpoint"
+  ],
+  "x": "A speech team trains on a dataset too large to revisit often, so it measures progress in optimizer steps and evaluates every 2,000 steps instead of every epoch. When it later increases the batch size for a larger cluster, it rescales the warmup and decay schedules so they still span the same amount of data.",
+  "c": "import math\nimport torch\nfrom torch.utils.data import DataLoader, TensorDataset\n\nN, B, epochs = 10_000, 100, 3\nds = TensorDataset(torch.randn(N, 8), torch.randn(N, 1))\nloader = DataLoader(ds, batch_size=B, shuffle=True)  # reshuffle each epoch\n\nsteps_per_epoch = math.ceil(N / B)   # 100 iterations per epoch\nstep = 0\nfor epoch in range(epochs):\n    for xb, yb in loader:            # one batch = one iteration\n        step += 1\nprint(steps_per_epoch, step)         # 100, 300"
+ },
+ "convergence": {
+  "n": "Convergence",
+  "d": "Convergence means an iterative training procedure has settled: further updates no longer meaningfully change the parameters or reduce the objective. In practice it is declared when the loss improvement, the gradient norm or the parameter change falls below a tolerance, or when a maximum number of iterations is reached.\n\nFor convex problems such as logistic regression, gradient descent with a suitable learning rate converges to the global minimum, and solvers in scikit-learn stop on a tolerance and warn when max_iter is hit first. For neural networks, convergence usually means reaching a flat region of the loss landscape, not a guaranteed optimum. The learning rate controls the path: too high causes oscillation or divergence, too low causes very slow progress. A common pitfall is ignoring a ConvergenceWarning or assuming a flat training loss is good news; unscaled features often cause the warning, and a plateau can also be a saddle point.",
+  "f": "stop when |L(θₜ₊₁) − L(θₜ)| < ε  or  ‖∇L(θₜ)‖ < ε",
+  "u": [
+   "Setting tolerance and max_iter for solvers",
+   "Diagnosing divergence from a too-high learning rate",
+   "Deciding when long training runs can stop"
+  ],
+  "x": "An analytics team sees a ConvergenceWarning from logistic regression on raw transaction amounts. After standardizing the features, the solver converges in a fraction of the iterations and the coefficients become stable across retrains, which makes them usable in a monthly report.",
+  "c": "import warnings\nfrom sklearn.datasets import make_classification\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.exceptions import ConvergenceWarning\n\nX, y = make_classification(n_samples=2000, random_state=0)\nX[:, 0] *= 1e4                        # one badly scaled feature\n\nwith warnings.catch_warnings(record=True) as w:\n    warnings.simplefilter(\"always\")\n    LogisticRegression(max_iter=50).fit(X, y)\n    print(any(issubclass(i.category, ConvergenceWarning) for i in w))\n\nclf = LogisticRegression(max_iter=50, tol=1e-4).fit(StandardScaler().fit_transform(X), y)\nprint(\"iterations used:\", clf.n_iter_)"
+ },
+ "localmin": {
+  "n": "Local vs Global Minimum",
+  "d": "A global minimum is the lowest point of a loss function over all possible parameters, while a local minimum is lower than its immediate neighborhood but not necessarily the lowest overall. Gradient descent only uses local slope information, so it stops wherever the gradient vanishes, which may be a local minimum.\n\nConvex problems such as linear regression, logistic regression and SVMs have no bad local minima: any local minimum is global. Neural network losses are non-convex, yet research suggests that in very high dimensions most critical points with high loss are saddle points rather than poor local minima, and many local minima reach similar loss. Stochastic gradient noise, momentum, good initialization and random restarts help; k-means uses multiple initializations for the same reason. A misconception is that finding the global minimum of training loss is desirable; it may simply overfit, and flat minima often generalize better.",
+  "f": "global: L(θ*) ≤ L(θ) ∀θ;  local: L(θ*) ≤ L(θ) for ‖θ − θ*‖ < r",
+  "u": [
+   "Running k-means with multiple random initializations",
+   "Explaining why convex models have unique solutions",
+   "Restarting non-convex fits from different seeds"
+  ],
+  "x": "A customer segmentation team runs k-means with ten initializations and keeps the solution with the lowest inertia, because a single run sometimes lands in a local minimum that merges two real segments. The same seeds are logged so the chosen clustering can be reproduced at the next refresh.",
+  "c": "import numpy as np\nfrom scipy.optimize import minimize\n\nf = lambda x: np.sin(3 * x[0]) + 0.1 * x[0] ** 2  # non-convex 1-D loss\n\nresults = []\nfor start in np.linspace(-4, 4, 9):          # multiple restarts\n    r = minimize(f, x0=[start])               # local optimizer\n    results.append((r.fun, r.x[0]))\n\nfor val, x in sorted(results)[:3]:\n    print(f\"x={x:+.3f}  loss={val:.3f}\")      # best is the global candidate"
+ },
+ "closedform": {
+  "n": "Closed-Form Solution",
+  "d": "A closed-form solution is an exact answer to an optimization problem written as a finite formula, computed directly instead of by iterative updates. Ordinary least squares is the classic case: the best linear regression weights are w = (XᵀX)⁻¹Xᵀy, obtained in one linear algebra step.\n\nRidge regression and PCA (through an eigendecomposition or SVD) also have one. Logistic regression, lasso and neural networks have none, so they need gradient descent or other iterative solvers. A closed form is precise and has no learning rate to tune, but it can be expensive: inverting a d × d matrix costs about O(d³). In practice libraries never form the explicit inverse; they solve the linear system with QR, Cholesky or SVD, which is faster and numerically more stable when features are nearly collinear.",
+  "f": "ŵ = (XᵀX)⁻¹ Xᵀy",
+  "u": [
+   "Fitting ordinary least squares and ridge regression",
+   "Computing PCA by eigendecomposition or SVD",
+   "Fast baselines before iterative model training"
+  ],
+  "x": "A pricing team refits a ridge regression on a few hundred features every hour using the closed-form solution through a Cholesky solve. Each refit takes well under a second with no learning rate or convergence checks to monitor, which keeps the pipeline simple.",
+  "c": "import numpy as np\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(200, 5))\nw_true = np.array([1.0, -2.0, 0.5, 0.0, 3.0])\ny = X @ w_true + 0.1 * rng.normal(size=200)\n\n# OLS: solve (X^T X) w = X^T y instead of inverting\nw_ols = np.linalg.solve(X.T @ X, X.T @ y)\n\n# Ridge closed form\nlam = 1.0\nw_ridge = np.linalg.solve(X.T @ X + lam * np.eye(5), X.T @ y)\n\n# lstsq uses SVD and handles rank deficiency\nw_lstsq, *_ = np.linalg.lstsq(X, y, rcond=None)\nprint(np.round(w_ols, 2), np.round(w_ridge, 2))"
+ },
+ "stochastic": {
+  "n": "Stochastic vs Deterministic",
+  "d": "A deterministic process always produces the same output from the same input, while a stochastic process involves randomness, so repeated runs can differ. In machine learning both the algorithms and the training runs can be either.\n\nStochastic gradient descent estimates the gradient from a random mini-batch instead of the full dataset, which is noisier but far cheaper per step, and the noise can help escape saddle points. Random forest, bagging, dropout, data augmentation, random weight initialization and sampling-based text decoding with a temperature are also stochastic. Closed-form linear regression and greedy decoding are deterministic. Fixing a random seed makes runs repeatable, but full determinism on GPUs also requires deterministic kernels, because some parallel operations sum floating-point numbers in varying order. A common pitfall is comparing two models from single runs: differences smaller than the seed-to-seed variation are not evidence that one model is better.",
+  "f": "",
+  "u": [
+   "Mini-batch gradient estimates in SGD and Adam",
+   "Reproducible experiments through fixed random seeds",
+   "Sampling versus greedy decoding in text generation"
+  ],
+  "x": "A research team reports each model configuration as the mean and spread over five seeds after noticing that a single-seed improvement disappeared on rerun. For regression tests of the serving stack it enables deterministic GPU algorithms, accepting slower kernels in exchange for bit-identical outputs.",
+  "c": "import random\nimport numpy as np\nimport torch\n\ndef set_seed(seed: int):\n    random.seed(seed)\n    np.random.seed(seed)\n    torch.manual_seed(seed)\n\nset_seed(0)\na = torch.randn(3)\nset_seed(0)\nb = torch.randn(3)\nprint(torch.equal(a, b))                    # True: same seed, same draws\n\ntorch.use_deterministic_algorithms(True)    # force deterministic GPU kernels\nX = torch.randn(1000, 4)\nidx = torch.randint(0, 1000, (32,))         # stochastic mini-batch\nbatch = X[idx]"
+ },
+ "lagrange": {
+  "n": "Lagrange Multipliers & Constraints",
+  "d": "Lagrange multipliers turn a constrained optimization problem into an unconstrained one by adding each constraint to the objective, weighted by a new variable called the multiplier. At the optimum, the gradient of the objective is a combination of the constraint gradients, and each multiplier measures how much the optimal value would change if its constraint were relaxed.\n\nWith inequality constraints the conditions become the Karush–Kuhn–Tucker (KKT) conditions. The support vector machine is derived this way: maximizing the margin subject to classification constraints yields a dual problem in which only examples with nonzero multipliers, the support vectors, determine the boundary. The same idea explains why lasso and ridge penalties are equivalent to constraining the weight norm. A common confusion is treating λ in a penalized objective as a fixed constraint; each λ corresponds to some constraint radius, but the mapping depends on the data.",
+  "f": "ℒ(x, λ) = f(x) + Σᵢ λᵢ gᵢ(x),  ∇f(x*) + Σᵢ λᵢ∇gᵢ(x*) = 0",
+  "u": [
+   "Deriving the SVM dual and support vectors",
+   "Linking regularization penalties to norm constraints",
+   "Constrained optimization with fairness or budget limits"
+  ],
+  "x": "An advertising team allocates daily budget across campaigns by maximizing predicted conversions subject to a total spend constraint. The solver returns a multiplier for the budget constraint, which the team reads as the marginal conversions gained per extra unit of budget when deciding whether to raise spend.",
+  "c": "import numpy as np\nfrom scipy.optimize import minimize\n\n# minimize f(x, y) = x^2 + y^2  subject to  x + y = 1\nf = lambda v: v[0] ** 2 + v[1] ** 2\ncons = {\"type\": \"eq\", \"fun\": lambda v: v[0] + v[1] - 1}\nres = minimize(f, x0=[0.0, 0.0], constraints=[cons], method=\"SLSQP\")\nprint(np.round(res.x, 3))  # [0.5, 0.5]\n\n# Check stationarity: grad f = -lam * grad g  ->  2x = -lam\nx_opt = res.x\nlam = -2 * x_opt[0]\nprint(\"multiplier:\", round(lam, 3))  # -1.0 (sign depends on convention)"
+ },
+ "generalization": {
+  "n": "Generalization",
+  "d": "Generalization is a model's ability to perform well on new data drawn from the same distribution as its training data, not just on the examples it was fitted to. The gap between training error and error on held-out data, called the generalization gap, measures how much the model has memorized rather than learned reusable patterns.\n\nIt is estimated with a train / validation / test split or cross-validation, and improved by more or better data, regularization such as weight decay and dropout, data augmentation, early stopping and choosing a model with suitable capacity. Overfitting is the failure case. Deep networks can generalize well despite having enough parameters to memorize their data, a fact classical theory does not fully explain. Generalization to the same distribution is not robustness: under data drift a model with excellent held-out scores can still fail in production.",
+  "f": "generalization gap = E_test[ℓ] − E_train[ℓ]",
+  "u": [
+   "Estimating real-world performance with held-out data",
+   "Choosing regularization strength and model size",
+   "Checking robustness to new users or time periods"
+  ],
+  "x": "A fraud team validates its model on a later time window rather than a random split, because a random split let near-duplicate transactions appear in both sets and overstated generalization. The time-based estimate is lower but matches the performance seen after deployment much more closely.",
+  "c": "from sklearn.datasets import make_classification\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX, y = make_classification(n_samples=2000, n_informative=5, flip_y=0.1, random_state=0)\nX_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)\n\nfor depth in [2, 5, None]:\n    m = DecisionTreeClassifier(max_depth=depth, random_state=0).fit(X_tr, y_tr)\n    tr, te = m.score(X_tr, y_tr), m.score(X_te, y_te)\n    print(f\"depth={depth}: train={tr:.2f} test={te:.2f} gap={tr - te:.2f}\")"
+ },
+ "capacity": {
+  "n": "Model Capacity",
+  "d": "Model capacity is the range of functions a model can represent, roughly how complex a pattern it is able to fit. A linear model has low capacity; a deep decision tree, a high-degree polynomial or a large neural network has high capacity.\n\nCapacity grows with the number of parameters, layers, tree depth, polynomial degree or number of boosting rounds, and is reduced by regularization, dropout or early stopping, which limit the functions training can reach in practice. Too little capacity causes underfitting; too much relative to the amount of data invites overfitting, the classical bias–variance tradeoff. Formal measures include VC dimension and Rademacher complexity. Parameter count alone is an imperfect proxy: large neural networks can generalize well, sometimes better as size grows beyond the point of memorizing the data, a pattern called double descent. Scaling laws for language models describe how loss falls as capacity and data grow together.",
+  "f": "",
+  "u": [
+   "Choosing tree depth or network width",
+   "Diagnosing underfitting versus overfitting from learning curves",
+   "Sizing language models with scaling laws"
+  ],
+  "x": "A team building a tabular churn model compares gradient boosting at several maximum depths and numbers of trees, plotting validation loss against each. The shallowest model underfits seasonal effects and the deepest overfits rare customer segments, so a middle setting is chosen and rechecked whenever the dataset grows substantially.",
+  "c": "import numpy as np\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import cross_val_score\n\nrng = np.random.default_rng(0)\nX = rng.uniform(-3, 3, size=(60, 1))\ny = np.sin(X).ravel() + 0.3 * rng.normal(size=60)\n\nfor degree in [1, 3, 15]:        # higher degree = more capacity\n    model = make_pipeline(PolynomialFeatures(degree), LinearRegression())\n    score = cross_val_score(model, X, y, cv=5, scoring=\"neg_mean_squared_error\")\n    print(degree, round(-score.mean(), 3))"
+ },
+ "inductivebias": {
+  "n": "Inductive Bias",
+  "d": "Inductive bias is the set of assumptions a learning algorithm uses to prefer some explanations of the data over others, which it needs in order to predict on inputs it has never seen. Finite data is consistent with infinitely many functions, so every learner must favor some.\n\nExamples are everywhere. Linear regression assumes the target is a weighted sum of features. k-nearest neighbors assumes nearby points share labels. Decision trees prefer axis-aligned splits. A convolutional neural network assumes locality and translation equivariance through small kernels and weight sharing. The transformer has weaker built-in structure, which is why a Vision Transformer usually needs more data or augmentation than a CNN to match it. Strong inductive bias helps most when data is scarce and the assumption is correct; when the assumption is wrong, it caps performance no matter how much data is added.",
+  "f": "",
+  "u": [
+   "Choosing CNNs for images and small data",
+   "Explaining data needs of Vision Transformers",
+   "Designing architectures that respect domain symmetries"
+  ],
+  "x": "A medical imaging group with a few thousand labeled scans chooses a convolutional backbone over a Vision Transformer trained from scratch, because the locality bias of convolutions compensates for limited data. When a large pretrained transformer becomes available, it revisits the choice, since pretraining supplies what the architecture lacks.",
+  "c": "import torch\nimport torch.nn as nn\n\nx = torch.randn(1, 3, 32, 32)\n\n# CNN: locality + weight sharing built in\nconv = nn.Conv2d(3, 16, kernel_size=3, padding=1)\n\n# MLP: no spatial assumptions, every pixel connects to every unit\nmlp = nn.Linear(3 * 32 * 32, 16 * 32 * 32)\n\nprint(sum(p.numel() for p in conv.parameters()))  # 448\nprint(sum(p.numel() for p in mlp.parameters()))   # about 50 million\n\n# Translation equivariance: shifting the input shifts the output\nshifted = torch.roll(x, shifts=4, dims=3)\na, b = conv(x), conv(shifted)\nprint(torch.allclose(torch.roll(a, 4, 3)[..., 5:-5], b[..., 5:-5], atol=1e-5))"
+ },
+ "trainloop": {
+  "n": "Training Loop",
+  "d": "The training loop is the repeated cycle that fits a model: take a batch, run the forward pass, compute the loss, run backpropagation to get gradients, update the parameters with the optimizer, and repeat. In PyTorch the core is five lines: zero the gradients, predict, compute the loss, call backward, call step.\n\nAround that core sit the practical pieces: data loading and shuffling, moving tensors to the GPU, a learning rate schedule and warmup, gradient clipping, mixed precision, gradient accumulation, periodic validation, logging, early stopping and saving checkpoints. Libraries such as PyTorch Lightning, Keras fit and the Hugging Face Trainer package this loop. Common bugs come from the order of these steps: forgetting to zero gradients so they accumulate across batches, leaving the model in training mode during validation so dropout and batch normalization behave differently, or computing validation without torch.no_grad and wasting memory.",
+  "f": "θ ← θ − η · ∇_θ (1/|B|) Σ_{i∈B} ℓ(f_θ(xᵢ), yᵢ)",
+  "u": [
+   "Writing custom PyTorch training for research models",
+   "Adding clipping, schedules and mixed precision",
+   "Debugging divergence or silent training bugs"
+  ],
+  "x": "A computer vision team replaces a hand-written loop with a shared trainer module after two projects shipped models with dropout accidentally active during validation. The shared loop enforces train and eval modes, logs the learning rate and gradient norm every step and saves checkpoints on a fixed schedule.",
+  "c": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(nn.Linear(10, 32), nn.ReLU(), nn.Linear(32, 1))\nopt = torch.optim.AdamW(model.parameters(), lr=1e-3)\nloss_fn = nn.MSELoss()\nX, y = torch.randn(512, 10), torch.randn(512, 1)\n\nfor epoch in range(5):\n    model.train()\n    for i in range(0, 512, 64):\n        xb, yb = X[i:i + 64], y[i:i + 64]\n        opt.zero_grad()                      # 1. clear old gradients\n        loss = loss_fn(model(xb), yb)        # 2. forward + loss\n        loss.backward()                      # 3. backpropagation\n        nn.utils.clip_grad_norm_(model.parameters(), 1.0)\n        opt.step()                           # 4. update parameters\n    model.eval()\n    with torch.no_grad():                    # validation without gradients\n        val = loss_fn(model(X[:64]), y[:64]).item()"
+ },
+ "checkpoint": {
+  "n": "Model Checkpoint",
+  "d": "A model checkpoint is a saved snapshot of training state at a point in time, so training can resume after an interruption or the best version can be restored later. A minimal checkpoint stores the model weights; a full one also stores the optimizer state such as Adam's moment estimates, the learning rate scheduler, the step or epoch counter and random number generator states.\n\nCheckpoints are written periodically during long runs, on preemptible cloud machines, and whenever validation improves, which pairs naturally with early stopping. In the Hugging Face ecosystem a checkpoint is a directory with weights plus configuration and tokenizer files, and LoRA adapters are shared the same way. A common mistake is saving only the weights and then resuming: the optimizer restarts with empty moment estimates and the schedule restarts from the beginning, which can cause a loss spike.",
+  "f": "",
+  "u": [
+   "Resuming training on preemptible GPU instances",
+   "Keeping the best model by validation score",
+   "Distributing fine-tuned weights and adapters"
+  ],
+  "x": "A team pretraining a language model on spot instances saves a full checkpoint every hour, including optimizer, scheduler and data loader position, to object storage. When a node is reclaimed, the job restarts from the latest checkpoint and the loss curve continues smoothly instead of spiking.",
+  "c": "import torch\nimport torch.nn as nn\n\nmodel = nn.Linear(10, 1)\nopt = torch.optim.Adam(model.parameters(), lr=1e-3)\nstep = 1200\n\ntorch.save({  # full state, not just weights\n    \"model\": model.state_dict(),\n    \"optimizer\": opt.state_dict(),\n    \"step\": step,\n}, \"ckpt.pt\")\n\n# Resume\nckpt = torch.load(\"ckpt.pt\", weights_only=True)\nmodel.load_state_dict(ckpt[\"model\"])\nopt.load_state_dict(ckpt[\"optimizer\"])\nstep = ckpt[\"step\"]"
+ },
+ "hingeloss": {
+  "n": "Hinge Loss",
+  "d": "Hinge loss penalizes a classifier when an example is on the wrong side of the decision boundary or inside the margin, and gives zero loss once the example is correctly classified with a margin of at least one. With labels y in {−1, +1} and raw score f(x), the loss is max(0, 1 − y·f(x)).\n\nIt is the loss behind the linear support vector machine: combined with an L2 penalty, minimizing hinge loss is equivalent to maximizing the margin. Because confidently correct examples contribute nothing, the solution depends only on the support vectors near the boundary. Variants include squared hinge, multiclass hinge. Hinge loss is convex but not differentiable at the margin, so solvers use subgradients. A common misconception is that SVM scores are probabilities: hinge loss does not estimate them, so outputs need probability calibration when probabilities are required, unlike log loss used in logistic regression.",
+  "f": "ℓ(y, f(x)) = max(0, 1 − y·f(x)),  y ∈ {−1, +1}",
+  "u": [
+   "Training linear SVMs for text classification",
+   "Margin-based losses for GAN discriminators",
+   "Ranking with pairwise margin objectives"
+  ],
+  "x": "A support team classifies incoming tickets into queues with a linear SVM trained on TF-IDF features, which is fast to retrain daily on millions of short texts. Since routing rules need confidence thresholds, the team adds Platt scaling on a held-out set to turn the hinge-trained scores into calibrated probabilities.",
+  "c": "import numpy as np\nfrom sklearn.svm import LinearSVC\nfrom sklearn.datasets import make_classification\n\ndef hinge(y, score):\n    return np.maximum(0, 1 - y * score)     # y in {-1, +1}\n\ny = np.array([1, 1, -1, -1])\nscore = np.array([2.0, 0.3, -0.5, 1.2])\nprint(hinge(y, score))                     # [0.  0.7 0.5 2.2]\n\nX, y01 = make_classification(n_samples=500, random_state=0)\nsvm = LinearSVC(loss=\"hinge\", C=1.0, max_iter=5000).fit(X, y01)\nmargins = svm.decision_function(X)          # raw scores, not probabilities"
+ },
+ "huberloss": {
+  "n": "Huber Loss",
+  "d": "Huber loss is a regression loss that behaves like squared error for small residuals and like absolute error for large ones, with a threshold δ deciding where the switch happens. It combines the smooth gradients of MSE near the target with the outlier robustness of MAE.\n\nFor |r| ≤ δ the loss is ½r², and beyond that it grows linearly as δ(|r| − ½δ), so a single wild outlier contributes a bounded gradient instead of dominating the fit. It is used in robust linear regression, in gradient boosting libraries as an objective, as smooth L1 loss for object detection boxes, and in deep Q-learning. The threshold δ is in the units of the target and must be chosen relative to its scale; a δ far larger than typical errors reduces Huber to MSE, and a very small δ makes it nearly MAE.",
+  "f": "L_δ(r) = ½r² if |r| ≤ δ,  δ(|r| − ½δ) otherwise",
+  "u": [
+   "Robust regression on targets with outliers",
+   "Bounding box regression in object detection",
+   "Stabilizing value targets in deep Q-learning"
+  ],
+  "x": "A delivery company predicts trip durations where a small share of trips include long unrecorded stops. Training with Huber loss keeps those trips from pulling the average prediction upward, while ordinary trips are still fitted with the precision of squared error.",
+  "c": "import numpy as np\nimport torch\nimport torch.nn.functional as F\nfrom sklearn.linear_model import HuberRegressor, LinearRegression\n\npred = torch.tensor([1.0, 2.0, 10.0])\ntarget = torch.tensor([1.5, 2.0, 2.0])\nprint(F.huber_loss(pred, target, delta=1.0, reduction=\"none\"))  # [0.125, 0, 7.5]\n\nrng = np.random.default_rng(0)\nX = rng.normal(size=(200, 1))\ny = 3 * X.ravel() + rng.normal(scale=0.5, size=200)\ny[:10] += 30                                   # outliers\nprint(LinearRegression().fit(X, y).coef_)      # pulled by outliers\nprint(HuberRegressor(epsilon=1.35).fit(X, y).coef_)  # close to 3"
+ },
+ "focalloss": {
+  "n": "Focal Loss",
+  "d": "Focal loss is a modified cross-entropy loss that down-weights examples the model already classifies easily, so training focuses on hard, misclassified ones. It multiplies the cross-entropy term by (1 − p_t)^γ, where p_t is the predicted probability of the true class and γ ≥ 0 sets how strongly easy examples are suppressed.\n\nWith γ = 0 it equals ordinary cross-entropy. With γ = 2, an example predicted at 0.9 for the correct class has its loss scaled by 0.01. It was introduced for dense object detection in RetinaNet, where tens of thousands of easy background anchors overwhelm a handful of objects, and is also used for class imbalance in segmentation and tabular problems with a weighting term α. A caveat is that focal loss changes the probabilities the model learns, so outputs tend to be less calibrated and may need probability calibration before thresholding.",
+  "f": "FL(p_t) = −α_t (1 − p_t)^γ log(p_t)",
+  "u": [
+   "Dense object detection with many background anchors",
+   "Segmentation of small or rare structures",
+   "Highly imbalanced classification without resampling"
+  ],
+  "x": "A manufacturing inspection team detects tiny surface defects that occupy a minute fraction of each image. Switching the detector from cross-entropy to focal loss stops the abundant easy background regions from dominating the gradient, and the team recalibrates scores on a validation set before setting the alarm threshold.",
+  "c": "import torch\nimport torch.nn.functional as F\n\ndef focal_loss(logits, targets, gamma=2.0, alpha=0.25):\n    # binary focal loss; targets are 0/1 floats\n    bce = F.binary_cross_entropy_with_logits(logits, targets, reduction=\"none\")\n    p = torch.sigmoid(logits)\n    p_t = p * targets + (1 - p) * (1 - targets)   # prob of the true class\n    alpha_t = alpha * targets + (1 - alpha) * (1 - targets)\n    return (alpha_t * (1 - p_t) ** gamma * bce).mean()\n\nlogits = torch.tensor([3.0, -2.0, 0.1, -0.2])\ntargets = torch.tensor([1.0, 0.0, 1.0, 1.0])\nprint(focal_loss(logits, targets))\n# torchvision.ops.sigmoid_focal_loss implements the same formula"
+ },
+ "mape": {
+  "n": "MAPE",
+  "d": "Mean absolute percentage error (MAPE) measures the average size of forecast errors relative to the actual values, expressed as a percentage. Each error |y − ŷ| is divided by |y|, and the ratios are averaged, so an error of 10 on an actual of 100 counts as 10 percent.\n\nIts appeal is scale independence: business users can compare accuracy across products or stores with very different volumes, which is why it is common in demand forecasting with Prophet or ARIMA. The weaknesses are serious. MAPE is undefined when an actual value is zero and explodes when actuals are small, so intermittent demand series break it. It is also asymmetric: an over-forecast can produce an error far above 100 percent, while an under-forecast can never exceed 100 percent, so optimizing MAPE favors forecasts that are biased low. Weighted MAPE (total absolute error over total actuals), sMAPE or MASE are common alternatives.",
+  "f": "MAPE = (100% / n) Σᵢ |yᵢ − ŷᵢ| / |yᵢ|",
+  "u": [
+   "Reporting demand forecast accuracy to business teams",
+   "Comparing accuracy across series of different scale",
+   "Tracking forecast quality in sales planning"
+  ],
+  "x": "A grocery chain reports forecast accuracy to store managers as a percentage, but item-level MAPE becomes meaningless for slow-moving products with many zero-sale days. The analytics team switches the headline metric to weighted MAPE across all items in a store, which stays defined and is dominated by the products that matter most for volume.",
+  "c": "import numpy as np\nfrom sklearn.metrics import mean_absolute_percentage_error\n\ny_true = np.array([100, 50, 200, 10])\ny_pred = np.array([110, 45, 180, 20])\n\nmape = mean_absolute_percentage_error(y_true, y_pred)  # returns a fraction\nprint(f\"MAPE: {mape:.1%}\")       # the small actual (10) dominates\n\n# Weighted MAPE: robust to small actuals\nwmape = np.abs(y_true - y_pred).sum() / np.abs(y_true).sum()\nprint(f\"WMAPE: {wmape:.1%}\")"
+ },
+ "rankmetrics": {
+  "n": "Ranking Metrics (NDCG, MRR)",
+  "d": "Ranking metrics score an ordered list of results by how well relevant items are placed near the top, rather than by classifying each item independently. Two of the most common are NDCG and MRR.\n\nDiscounted cumulative gain sums the relevance of each result divided by a logarithm of its position, so a relevant item at rank 1 counts more than the same item at rank 10. Normalizing by the DCG of the ideal ordering gives NDCG between 0 and 1. Mean reciprocal rank averages 1/rank of the first relevant result across queries, so it fits tasks where one good answer is enough. Both are usually computed at a cutoff k, such as NDCG@10. They evaluate search, reranking and RAG retrieval. A pitfall is ignoring unjudged documents: offline labels cover few results, so a new ranker that surfaces unlabeled relevant items can appear worse.",
+  "f": "NDCG@k = DCG@k / IDCG@k,  DCG@k = Σᵢ₌₁ᵏ (2^{relᵢ} − 1) / log₂(i + 1);  MRR = (1/|Q|) Σ_q 1/rank_q",
+  "u": [
+   "Offline evaluation of search and recommendation rankers",
+   "Measuring retrieval quality in RAG pipelines",
+   "Training learning-to-rank models with LambdaRank"
+  ],
+  "x": "An e-commerce search team evaluates every new ranking model on NDCG@10 over a set of queries with graded human relevance labels before running an online A/B test. For its question-answering retrieval service, where only the first correct passage matters, it tracks MRR instead.",
+  "c": "import numpy as np\nfrom sklearn.metrics import ndcg_score\n\n# graded relevance of 5 documents and the model's scores, for 2 queries\ntrue_rel = np.array([[3, 2, 0, 0, 1], [0, 1, 0, 2, 0]])\nscores = np.array([[0.9, 0.3, 0.5, 0.1, 0.2], [0.8, 0.7, 0.1, 0.4, 0.2]])\nprint(\"NDCG@3:\", ndcg_score(true_rel, scores, k=3))\n\ndef mrr(true_rel, scores):\n    rr = []\n    for rel, s in zip(true_rel, scores):\n        ranked = rel[np.argsort(-s)]                # relevance in ranked order\n        hits = np.flatnonzero(ranked > 0)\n        rr.append(1 / (hits[0] + 1) if len(hits) else 0.0)\n    return np.mean(rr)\n\nprint(\"MRR:\", mrr(true_rel, scores))"
+ },
+ "iou": {
+  "n": "Intersection over Union (IoU)",
+  "d": "Intersection over union measures how much two regions overlap, as the area they share divided by the area they cover together. It ranges from 0 for disjoint regions to 1 for identical ones.\n\nIn object detection it compares a predicted bounding box with the ground-truth box; a prediction usually counts as a true positive when IoU is at least 0.5, and COCO-style mean average precision averages over thresholds from 0.5 to 0.95. Non-maximum suppression uses IoU between predictions to remove duplicate boxes. In semantic segmentation the same ratio is computed on pixel masks per class and averaged as mean IoU, the Jaccard index. A pitfall is that IoU is harsh on small objects: a shift of a few pixels barely affects a large box but can push a small box below the threshold, so averages hide poor performance on small objects.",
+  "f": "IoU(A, B) = |A ∩ B| / |A ∪ B|",
+  "u": [
+   "Matching predicted and ground-truth boxes in detection",
+   "Non-maximum suppression of duplicate detections",
+   "Mean IoU for semantic segmentation quality"
+  ],
+  "x": "A retail shelf-monitoring team evaluates its product detector with mean average precision across IoU thresholds and separately for small objects. The breakdown shows that most errors come from small price tags, which leads the team to raise input resolution rather than retrain the whole model.",
+  "c": "import torch\nfrom torchvision.ops import box_iou, nms\n\ndef iou(a, b):  # boxes as (x1, y1, x2, y2)\n    ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])\n    ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])\n    inter = max(0, ix2 - ix1) * max(0, iy2 - iy1)\n    area = lambda r: (r[2] - r[0]) * (r[3] - r[1])\n    return inter / (area(a) + area(b) - inter)\n\nprint(iou((0, 0, 10, 10), (5, 5, 15, 15)))   # 25 / 175 = 0.143\n\nboxes = torch.tensor([[0, 0, 10, 10], [1, 1, 11, 11], [20, 20, 30, 30]], dtype=torch.float)\nscores = torch.tensor([0.9, 0.8, 0.7])\nprint(box_iou(boxes, boxes))\nprint(nms(boxes, scores, iou_threshold=0.5))   # keeps boxes 0 and 2"
+ },
+ "baserate": {
+  "n": "Base Rate",
+  "d": "The base rate is how common a class or event is in the population before considering any evidence, such as the share of transactions that are fraudulent or of patients who have a disease. It is the prior probability in Bayes' theorem.\n\nThe base rate decides how much a positive prediction means. A test that is 99 percent sensitive and 99 percent specific, applied to a condition with a 0.1 percent base rate, produces about ten false positives for every true positive, so most alarms are wrong. Ignoring this is the base rate fallacy. In machine learning, the base rate sets the trivial baseline for accuracy (always predict the majority class) and equals the random baseline of PR-AUC. A model trained on resampled data with SMOTE or undersampling learns a different base rate, so its probabilities must be recalibrated to the true rate before they are used as risk estimates.",
+  "f": "P(y=1 | +) = P(+ | y=1)·π / [P(+ | y=1)·π + P(+ | y=0)·(1 − π)],  π = base rate",
+  "u": [
+   "Interpreting precision of alerts on rare events",
+   "Setting naive baselines for classification metrics",
+   "Recalibrating probabilities after resampling the training data"
+  ],
+  "x": "A hospital deploys a sepsis alert whose validation was done on a balanced sample, and clinicians soon complain that most alerts are false. The data science team re-estimates precision at the real ward prevalence, recalibrates the scores and raises the threshold so the alert volume matches what staff can review.",
+  "c": "def posterior(sens, spec, base_rate):\n    tp = sens * base_rate\n    fp = (1 - spec) * (1 - base_rate)\n    return tp / (tp + fp)              # P(disease | positive test)\n\nfor pi in [0.5, 0.05, 0.001]:\n    print(f\"base rate {pi:.3f}: precision {posterior(0.99, 0.99, pi):.3f}\")\n\n# Correct probabilities after undersampling negatives\ndef correct_prob(p, train_rate, true_rate):\n    odds = p / (1 - p) * (true_rate / (1 - true_rate)) / (train_rate / (1 - train_rate))\n    return odds / (1 + odds)\n\nprint(correct_prob(0.8, train_rate=0.5, true_rate=0.01))"
+ },
+ "activation": {
+  "n": "Activation Function",
+  "d": "An activation function is the nonlinear function a neuron applies to its weighted sum before passing the result on. Without it, any stack of linear layers collapses into a single linear transformation, so the nonlinearity is what lets a multilayer perceptron represent curved decision boundaries and complex functions.\n\nCommon choices are ReLU, cheap and non-saturating for positive inputs; GELU and SwiGLU, used in transformer feed-forward layers; sigmoid and tanh, used for gates in LSTM and GRU cells and for bounded outputs; and softmax, which turns a vector of logits into a probability distribution at the output. The choice affects gradient flow: saturating functions such as sigmoid contribute to vanishing gradients in deep networks, and weight initialization schemes are matched to the activation. A frequent mistake is applying softmax or sigmoid before a loss such as PyTorch's CrossEntropyLoss that already expects raw logits.",
+  "f": "a = φ(w·x + b),  e.g. ReLU(z) = max(0, z)",
+  "u": [
+   "Adding nonlinearity between dense and convolutional layers",
+   "Gating in LSTM, GRU and SwiGLU blocks",
+   "Mapping outputs to probabilities or bounded ranges"
+  ],
+  "x": "A team modernizing an older text classifier replaces tanh hidden layers with GELU and switches to He initialization. The deeper version now trains stably without careful learning rate tuning, and the team keeps a sigmoid only at the output for the multi-label probabilities.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nz = torch.linspace(-3, 3, 7)\nprint(F.relu(z))\nprint(F.gelu(z))\nprint(torch.sigmoid(z), torch.tanh(z))\n\n# Without an activation, two linear layers equal one linear layer\nmlp = nn.Sequential(nn.Linear(16, 64), nn.GELU(), nn.Linear(64, 3))\nlogits = mlp(torch.randn(8, 16))\nloss = F.cross_entropy(logits, torch.randint(0, 3, (8,)))  # expects raw logits"
+ },
+ "hiddenlayer": {
+  "n": "Hidden Layer",
+  "d": "A hidden layer is any layer of a neural network between the input and the output, so called because its values are not directly observed in the data or the predictions. Each hidden layer applies a linear transformation followed by an activation function.\n\nThe number of hidden layers is the depth of the network and the number of units per layer is its width; together they set much of the model's capacity. The universal approximation theorem shows that one wide enough hidden layer can approximate any continuous function, but deeper networks usually represent the same functions with far fewer units. In a transformer, each feed-forward network has a hidden layer about four times the model width. More hidden layers are not automatically better: depth without residual connections and normalization often trains poorly.",
+  "f": "h⁽ˡ⁾ = φ(W⁽ˡ⁾ h⁽ˡ⁻¹⁾ + b⁽ˡ⁾)",
+  "u": [
+   "Sizing depth and width of MLPs",
+   "Extracting intermediate features for downstream tasks",
+   "Setting transformer feed-forward hidden dimension"
+  ],
+  "x": "A team building a click-through model over tabular and embedding features tunes the number and width of hidden layers in its MLP tower. Beyond three layers validation loss stops improving and latency grows, so the production model uses three hidden layers with dropout between them.",
+  "c": "import torch\nimport torch.nn as nn\n\nmodel = nn.Sequential(\n    nn.Linear(20, 128), nn.ReLU(),   # hidden layer 1\n    nn.Linear(128, 64), nn.ReLU(),   # hidden layer 2\n    nn.Linear(64, 1),                # output layer\n)\n\n# Capture a hidden layer's activations with a forward hook\nacts = {}\nmodel[3].register_forward_hook(lambda m, i, o: acts.__setitem__(\"h2\", o))\ny = model(torch.randn(5, 20))\nprint(acts[\"h2\"].shape)   # torch.Size([5, 64])"
+ },
+ "hiddenstate": {
+  "n": "Hidden State",
+  "d": "A hidden state is the vector a network keeps internally to summarize what it has processed so far, either across time steps in a sequence model or across layers for a single token. It is the model's working memory.\n\nIn a recurrent neural network the hidden state hₜ is updated at each step from the previous state and the current input, so it must compress the entire past into a fixed-size vector; LSTM and GRU cells add gates to control what is kept or forgotten. In a transformer, \"hidden states\" usually means the per-token vectors output by each layer, and the final layer's hidden states feed the language-model head or serve as embeddings. Mechanistic interpretability studies them. A common confusion is equating transformer hidden states with RNN memory: transformers do not carry a fixed-size state forward but attend to all previous tokens through the KV cache.",
+  "f": "hₜ = tanh(W_h hₜ₋₁ + W_x xₜ + b)",
+  "u": [
+   "Carrying context through RNN and LSTM sequences",
+   "Extracting transformer layer outputs as embeddings",
+   "Probing internal representations for interpretability"
+  ],
+  "x": "A search team extracts the final-layer hidden states of a BERT-style encoder and mean-pools them into document embeddings for a retrieval index. After comparing layers, it finds that a middle layer gives better results for one short-text task and records the layer choice in the model card.",
+  "c": "import torch\nimport torch.nn as nn\nfrom transformers import AutoTokenizer, AutoModel\n\n# RNN: one hidden state carried across time steps\nrnn = nn.GRU(input_size=8, hidden_size=16, batch_first=True)\nout, h_n = rnn(torch.randn(2, 10, 8))\nprint(out.shape, h_n.shape)    # (2, 10, 16), (1, 2, 16)\n\n# Transformer: hidden states per layer and per token\ntok = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = AutoModel.from_pretrained(\"bert-base-uncased\", output_hidden_states=True)\nbatch = tok([\"hidden states hold context\"], return_tensors=\"pt\")\nwith torch.no_grad():\n    hs = model(**batch).hidden_states       # embeddings + one per layer\nprint(len(hs), hs[-1].shape)                # 13, (1, seq_len, 768)"
+ },
+ "logits": {
+  "n": "Logits",
+  "d": "Logits are the raw, unnormalized scores a classification model outputs before they are turned into probabilities. For a binary classifier the logit is the log-odds, log(p / (1 − p)), and the sigmoid maps it to a probability; for multiple classes the softmax converts a vector of logits into a distribution.\n\nLogits can be any real number, and only their differences matter for softmax: adding the same constant to every logit leaves the probabilities unchanged. Loss functions such as PyTorch's cross_entropy and binary_cross_entropy_with_logits take logits directly for numerical stability. In language models the final layer produces one logit per vocabulary token, and decoding methods act on them: temperature divides the logits, top-k and top-p sampling mask them, and greedy decoding takes the argmax. A common bug is applying softmax in the model and then passing those probabilities to a loss that expects logits, which silently weakens gradients.",
+  "f": "pᵢ = softmax(z)ᵢ = e^{zᵢ} / Σⱼ e^{zⱼ},  logit(p) = log(p / (1 − p))",
+  "u": [
+   "Feeding numerically stable cross-entropy losses",
+   "Applying temperature and top-p during text generation",
+   "Matching teacher logits in knowledge distillation"
+  ],
+  "x": "A team serving a language model exposes per-token logits to an internal tool that bans certain tokens by setting their logits to negative infinity before sampling. Because the masking happens before softmax, the remaining probabilities renormalize automatically and the decoding settings stay unchanged.",
+  "c": "import torch\nimport torch.nn.functional as F\n\nlogits = torch.tensor([2.0, 1.0, -1.0])\nprobs = F.softmax(logits, dim=-1)\nprint(probs, F.softmax(logits + 5, dim=-1))   # shift-invariant\n\n# Losses take logits directly (stable log-softmax inside)\nloss = F.cross_entropy(logits.unsqueeze(0), torch.tensor([0]))\n\n# Temperature and masking act on logits before sampling\nT = 0.7\nmasked = logits.clone()\nmasked[2] = float(\"-inf\")                      # ban token 2\nnext_token = torch.multinomial(F.softmax(masked / T, dim=-1), 1)"
+ },
+ "featuremap": {
+  "n": "Feature Map",
+  "d": "A feature map is the output grid produced when one convolutional filter is applied across an input, recording how strongly that filter's pattern appears at each spatial position. A convolutional layer with 64 filters produces 64 feature maps, stacked as the channels of its output tensor.\n\nEarly layers of a CNN produce feature maps that respond to edges, colors and simple textures; deeper layers respond to parts and whole objects, because each layer combines the maps below it and its receptive field grows. Stride and pooling shrink the spatial size of feature maps while the number of channels typically grows. U-Net skip connections and Grad-CAM reuse feature maps. A common confusion is equating a feature map with a feature in tabular learning; a feature map is a whole spatial array of responses.",
+  "f": "Y_k[i, j] = Σ_c Σ_{u,v} W_k[c, u, v] · X[c, i·s + u, j·s + v] + b_k",
+  "u": [
+   "Multi-scale features for detection and segmentation",
+   "Grad-CAM visualizations of model attention",
+   "Transfer learning from pretrained CNN backbones"
+  ],
+  "x": "A medical imaging team reuses the intermediate feature maps of a pretrained ResNet as the encoder of a segmentation model. It also overlays Grad-CAM heatmaps computed from the last convolutional feature maps so radiologists can check that predictions rely on the relevant tissue.",
+  "c": "import torch\nimport torchvision\n\nmodel = torchvision.models.resnet18(weights=None).eval()\nfeats = {}\nmodel.layer1.register_forward_hook(lambda m, i, o: feats.__setitem__(\"layer1\", o))\nmodel.layer4.register_forward_hook(lambda m, i, o: feats.__setitem__(\"layer4\", o))\n\nwith torch.no_grad():\n    model(torch.randn(1, 3, 224, 224))\n\nprint(feats[\"layer1\"].shape)  # (1, 64, 56, 56): 64 maps, high resolution\nprint(feats[\"layer4\"].shape)  # (1, 512, 7, 7): 512 maps, coarse grid"
+ },
+ "kernelfilter": {
+  "n": "Kernel (Filter)",
+  "d": "In a convolutional neural network, a kernel or filter is a small array of learnable weights that slides over the input and computes a weighted sum at each position. A 3×3 kernel on an RGB image actually has shape 3×3×3, spanning all input channels.\n\nThe kernel acts as a pattern detector: positions where the local input matches its weights produce large outputs. Because the same kernel is used at every position, convolution has far fewer parameters than a dense layer and responds to a pattern wherever it appears. Kernel size sets the local window; stacks of 3×3 kernels are standard because two of them cover a 5×5 receptive field with fewer weights. CNNs learn kernels by backpropagation, unlike hand-designed Sobel filters. This kernel is unrelated to the kernel of the kernel trick in SVMs or kernel PCA, which is a similarity function between data points.",
+  "f": "params per conv layer = C_out · (C_in · k_h · k_w + 1)",
+  "u": [
+   "Detecting local patterns in images and audio",
+   "Hand-designed edge and blur filters in preprocessing",
+   "Choosing kernel sizes when designing CNN backbones"
+  ],
+  "x": "An audio team classifies machine sounds from spectrograms using a CNN with small two-dimensional kernels. Visualizing the learned first-layer kernels shows several that respond to harmonic stripes, which helps engineers trust that the model reacts to the vibration patterns they expected.",
+  "c": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nconv = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3)\nprint(conv.weight.shape)   # (16, 3, 3, 3): 16 filters, each 3x3 over 3 channels\n\n# A hand-made Sobel kernel detects vertical edges\nsobel = torch.tensor([[-1., 0., 1.], [-2., 0., 2.], [-1., 0., 1.]]).view(1, 1, 3, 3)\nimg = torch.zeros(1, 1, 8, 8)\nimg[..., 4:] = 1.0                      # step edge\nedges = F.conv2d(img, sobel, padding=1)\nprint(edges[0, 0, 4])                   # strong response at the edge"
+ },
+ "stridepad": {
+  "n": "Stride & Padding",
+  "d": "Stride is how many positions a convolution or pooling window moves between outputs, and padding is the border of extra values, usually zeros, added around the input before the window slides. Together with kernel size they determine the spatial size of each feature map.\n\nWith stride 1 the output has nearly the input's resolution; stride 2 roughly halves each dimension and often replaces pooling in a CNN. Padding lets edge pixels be covered by the full kernel and preserves size: a 3×3 kernel with padding 1 and stride 1 keeps height and width unchanged, often called \"same\" padding, while no padding is called \"valid\" and shrinks the output. A frequent bug is a size mismatch when a stride-2 layer meets an odd input size, which breaks skip connections in U-Net or residual networks unless padding or cropping is adjusted.",
+  "f": "out = ⌊(n + 2p − k) / s⌋ + 1",
+  "u": [
+   "Downsampling feature maps in CNN backbones",
+   "Keeping spatial size for U-Net skip connections",
+   "Patch embedding in Vision Transformers"
+  ],
+  "x": "A segmentation team's U-Net fails on images whose sides are not multiples of 32 because the decoder outputs no longer match the encoder skip connections. The fix pads every input to the next multiple of 32 before inference and crops the predicted mask back to the original size.",
+  "c": "import torch\nimport torch.nn as nn\n\ndef out_size(n, k, s, p):\n    return (n + 2 * p - k) // s + 1\n\nx = torch.randn(1, 3, 32, 32)\nsame = nn.Conv2d(3, 8, kernel_size=3, stride=1, padding=1)\ndown = nn.Conv2d(3, 8, kernel_size=3, stride=2, padding=1)\nvalid = nn.Conv2d(3, 8, kernel_size=3, stride=1, padding=0)\npatch = nn.Conv2d(3, 8, kernel_size=8, stride=8)          # ViT-style patches\n\nfor name, layer in [(\"same\", same), (\"down\", down), (\"valid\", valid), (\"patch\", patch)]:\n    print(name, tuple(layer(x).shape[-2:]))   # 32, 16, 30, 4\nprint(out_size(32, 3, 2, 1))                  # 16"
+ },
+ "receptive": {
+  "n": "Receptive Field",
+  "d": "The receptive field of a unit in a neural network is the region of the input that can influence its value. A unit in the first layer of a CNN with a 3×3 kernel sees a 3×3 patch; each further layer combines neighboring units, so the region grows with depth.\n\nStacking layers with stride 1 adds kernel size minus one per layer, while strides, pooling and dilated convolutions multiply the growth, which is how deep CNNs eventually cover the whole image. Receptive field matters for design: a detector must see enough context to recognize large objects, and a segmentation model must see surroundings to label a pixel correctly. Self-attention gives every token a global receptive field in one layer. A common misconception is that the theoretical receptive field is fully used; the effective receptive field is concentrated near its center and is much smaller.",
+  "f": "r_l = r_{l−1} + (k_l − 1) · Π_{i<l} s_i,  r_0 = 1",
+  "u": [
+   "Ensuring detectors see enough context for large objects",
+   "Designing dilated convolutions for audio and time series",
+   "Comparing CNN locality with global self-attention"
+  ],
+  "x": "A satellite imaging team finds that its CNN misclassifies large fields because the deepest units cover only part of each field. Adding dilated convolutions in the last stages enlarges the receptive field without lowering resolution, and the boundary errors drop.",
+  "c": "def receptive_field(layers):\n    r, jump = 1, 1                    # jump = product of strides so far\n    for k, s, d in layers:            # kernel, stride, dilation\n        r += (k - 1) * d * jump\n        jump *= s\n    return r\n\nplain = [(3, 1, 1)] * 4\nstrided = [(3, 2, 1)] * 4\ndilated = [(3, 1, 1), (3, 1, 2), (3, 1, 4), (3, 1, 8)]\nprint(receptive_field(plain))     # 9\nprint(receptive_field(strided))   # 31\nprint(receptive_field(dilated))   # 31"
+ },
+ "channels": {
+  "n": "Channels",
+  "d": "Channels are the separate stacked layers of values at each spatial position of a tensor, such as the red, green and blue planes of a color image or the many feature maps produced by a convolutional layer. A tensor in PyTorch's default image layout has shape (batch, channels, height, width).\n\nAn input image starts with 3 channels, and each convolution maps C_in channels to C_out channels, one per filter; every filter spans all input channels. CNNs usually trade spatial resolution for channels as they go deeper. A 1×1 convolution mixes channels without looking at neighbors and is used to change their number cheaply. Batch normalization keeps statistics per channel. A frequent source of bugs is layout: PyTorch uses channels-first (NCHW), while TensorFlow, PIL and OpenCV images default to channels-last (NHWC or HWC), and OpenCV orders color channels as BGR.",
+  "f": "",
+  "u": [
+   "Converting image tensors between layouts and color orders",
+   "Scaling channel width when designing CNNs",
+   "Mixing channels cheaply with 1×1 convolutions"
+  ],
+  "x": "A team porting an image model from training to an edge device sees accuracy collapse because the camera pipeline delivers BGR, channels-last frames. Adding an explicit channel reorder and transpose at the input fixes it, and a unit test now checks the layout of every preprocessed frame.",
+  "c": "import numpy as np\nimport torch\nimport torch.nn as nn\n\nimg_hwc = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)  # e.g. from OpenCV\nimg_rgb = img_hwc[..., ::-1]                                       # BGR -> RGB\nx = torch.from_numpy(img_rgb.copy()).permute(2, 0, 1).float() / 255  # HWC -> CHW\nx = x.unsqueeze(0)                                                 # (1, 3, 224, 224)\n\nconv = nn.Conv2d(3, 64, kernel_size=3, padding=1)    # 3 -> 64 channels\npoint = nn.Conv2d(64, 16, kernel_size=1)             # 1x1: mix channels only\nprint(point(conv(x)).shape)                          # (1, 16, 224, 224)"
+ },
+ "latentspace": {
+  "n": "Latent Space",
+  "d": "A latent space is the internal vector space in which a model represents its inputs, usually lower dimensional and organized so that similar inputs lie close together.\n\nAn autoencoder compresses inputs into a latent code and reconstructs them from it. A variational autoencoder additionally shapes the latent space to follow a simple distribution, so points sampled from it decode into realistic outputs and interpolation between codes is smooth. Latent diffusion models such as Stable Diffusion run the diffusion process in an autoencoder's latent space instead of pixel space, which is far cheaper. Embedding models, word2vec and CLIP map text or images into latent spaces where distance reflects meaning, which is what vector search and RAG rely on. A common misconception is that latent dimensions are individually meaningful; most are entangled mixtures of factors, and directions, not single axes, often carry interpretable properties.",
+  "f": "z = encoder(x),  x̂ = decoder(z),  z ∈ ℝᵈ with d ≪ dim(x)",
+  "u": [
+   "Generating images in latent diffusion models",
+   "Semantic search over embedding vectors",
+   "Anomaly detection from reconstruction in latent space"
+  ],
+  "x": "A product photo team uses a latent diffusion model to generate background variations, working in the compressed latent space so each image renders quickly on a single GPU. For deduplication it separately embeds every catalog image and flags pairs whose latent vectors are nearly identical.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass AE(nn.Module):\n    def __init__(self, d_in=784, d_latent=8):\n        super().__init__()\n        self.enc = nn.Sequential(nn.Linear(d_in, 128), nn.ReLU(), nn.Linear(128, d_latent))\n        self.dec = nn.Sequential(nn.Linear(d_latent, 128), nn.ReLU(), nn.Linear(128, d_in))\n    def forward(self, x):\n        z = self.enc(x)              # point in latent space\n        return self.dec(z), z\n\nmodel = AE()\nx = torch.rand(2, 784)\n_, z = model(x)\n# Interpolate between two latent codes and decode\nalphas = torch.linspace(0, 1, 5).unsqueeze(1)\npath = (1 - alphas) * z[0] + alphas * z[1]\nimages = model.dec(path)             # (5, 784)"
+ },
+ "representation": {
+  "n": "Representation Learning",
+  "d": "Representation learning is the practice of training models to discover useful features of the data automatically, instead of relying on hand-engineered ones. The learned representation should make downstream tasks such as classification or retrieval easy, often with a simple linear model on top.\n\nDeep networks learn representations as a side effect of supervised training: the penultimate layer of an image classifier is a strong general-purpose feature extractor. Self-supervised learning learns them without labels through tasks such as masked language modeling in BERT, next-token prediction in GPT and contrastive learning in SimCLR and CLIP. Pretraining a representation once and reusing it through fine-tuning, adapters or embeddings is the basis of transfer learning and foundation models. Linear probes on frozen features measure quality. A pitfall is assuming a representation transfers everywhere; features learned on natural photos may encode little that matters for medical scans or satellite images.",
+  "f": "z = f_θ(x),  ŷ = g(z) with g simple (e.g. linear probe)",
+  "u": [
+   "Pretraining encoders for transfer to small tasks",
+   "Building text and image embeddings for search",
+   "Linear probing to compare self-supervised models"
+  ],
+  "x": "A legal tech company fine-tunes a pretrained text encoder on its own documents with a contrastive objective, then trains only small linear heads for clause classification. The shared representation lets each new clause type be added with a few hundred labels instead of a full model.",
+  "c": "import torch\nimport torchvision\nfrom sklearn.linear_model import LogisticRegression\n\n# Frozen pretrained encoder as a representation\nbackbone = torchvision.models.resnet18(weights=\"IMAGENET1K_V1\")\nbackbone.fc = torch.nn.Identity()          # drop the classifier head\nbackbone.eval()\n\nimages = torch.randn(64, 3, 224, 224)      # stand-in for a small labeled set\nlabels = torch.randint(0, 2, (64,))\nwith torch.no_grad():\n    feats = backbone(images).numpy()       # (64, 512) learned features\n\n# Linear probe: a simple model on top of the representation\nprobe = LogisticRegression(max_iter=1000).fit(feats, labels.numpy())"
+ },
+ "weightshare": {
+  "n": "Weight Sharing",
+  "d": "Weight sharing means using the same parameters in several places of a network, so one set of weights is learned from all of those uses together. It cuts parameters and assumes the same operation fits everywhere.\n\nConvolution shares one kernel across all spatial positions, which gives a CNN translation equivariance. A recurrent neural network applies the same weights at every time step, so it handles sequences of any length. Transformers share the feed-forward and attention weights across all token positions, and many language models tie the input embedding matrix to the output projection. Siamese networks use one encoder for both inputs so their embeddings are comparable. During backpropagation, the gradient for a shared weight is the sum of gradients from every place it is used. A misconception is that sharing reduces compute: it reduces parameters and memory, but each use still costs the same FLOPs.",
+  "f": "∂L/∂w = Σ_{uses u} ∂L/∂w⁽ᵘ⁾",
+  "u": [
+   "Convolutions and recurrences over positions and time",
+   "Tying input and output embeddings in language models",
+   "Siamese encoders for similarity and verification"
+  ],
+  "x": "A face verification system encodes both the enrollment photo and the live camera frame with the same network, so the two embeddings live in one space and can be compared by cosine similarity. Sharing weights also halves the model size shipped to mobile devices.",
+  "c": "import torch\nimport torch.nn as nn\n\nclass TinyLM(nn.Module):\n    def __init__(self, vocab=1000, d=64):\n        super().__init__()\n        self.embed = nn.Embedding(vocab, d)\n        self.body = nn.Linear(d, d)\n        self.head = nn.Linear(d, vocab, bias=False)\n        self.head.weight = self.embed.weight      # tie embedding and output weights\n\n    def forward(self, ids):\n        return self.head(torch.tanh(self.body(self.embed(ids))))\n\nm = TinyLM()\nprint(sum(p.numel() for p in m.parameters()))     # shared tensor counted once\nm(torch.randint(0, 1000, (2, 5))).sum().backward()\n# the shared weight's gradient sums both uses\nprint(m.embed.weight.grad is m.head.weight.grad)  # True"
+ },
+ "paramcount": {
+  "n": "Parameter Count",
+  "d": "The parameter count is the total number of learnable values in a model, the weights and biases that training adjusts. It is the most common shorthand for model size, as in a 7B language model with about seven billion parameters.\n\nFor a dense layer it is inputs × outputs plus one bias per output; for a transformer it is roughly 12 × layers × d_model² plus the embedding matrix. Parameter count determines memory: each parameter takes 2 bytes in BF16 and 4 in FP32, and Adam training needs several times more for gradients and optimizer states. The figure is not the same as compute or speed: a Mixture of Experts model has many total parameters but uses only a few experts per token, so its active parameters are much fewer, and weight sharing lowers count without lowering FLOPs.",
+  "f": "dense: d_in·d_out + d_out;  conv: C_out·C_in·k_h·k_w + C_out",
+  "u": [
+   "Estimating GPU memory for training and inference",
+   "Comparing model sizes in scaling-law studies",
+   "Separating total and active parameters in MoE"
+  ],
+  "x": "Before fine-tuning an open 8B-parameter model, an engineering team estimates that BF16 weights alone need about 16 GB of GPU memory and that full fine-tuning with Adam would need several times more. It chooses LoRA, which trains only a small fraction of the parameters, so the job fits on a single accelerator.",
+  "c": "import torch.nn as nn\n\nmodel = nn.Sequential(\n    nn.Conv2d(3, 32, 3), nn.ReLU(),\n    nn.Flatten(), nn.Linear(32 * 30 * 30, 10),\n)\ntotal = sum(p.numel() for p in model.parameters())\ntrainable = sum(p.numel() for p in model.parameters() if p.requires_grad)\nprint(total, trainable)                # conv: 32*3*3*3+32 = 896\n\n# Memory rule of thumb for weights only\nn_params = 8e9\nprint(\"BF16 weights (GB):\", n_params * 2 / 1e9)   # 16\nprint(\"FP32 weights (GB):\", n_params * 4 / 1e9)   # 32"
+ },
+ "flops": {
+  "n": "FLOPs",
+  "d": "FLOPs are counts of floating-point operations, the additions and multiplications a model performs, and are the standard measure of how much compute a forward pass or a training run requires. FLOPS with a capital S, or FLOP/s, is a different unit: operations per second, a measure of hardware speed.\n\nA matrix multiplication of an m × k matrix by a k × n matrix costs about 2mkn FLOPs, since each multiply-add counts as two. For a transformer, a forward pass costs roughly 2 FLOPs per parameter per token, and training costs about 6, giving C ≈ 6ND for N parameters and D tokens, the estimate behind scaling laws and Chinchilla-optimal training. Attention adds a term that grows with the square of sequence length. A pitfall is equating FLOPs with latency: memory bandwidth, kernel efficiency and batch size often dominate, so decoding with a KV cache is usually memory-bound, not compute-bound.",
+  "f": "C_train ≈ 6·N·D,  matmul (m×k)(k×n) ≈ 2mkn FLOPs",
+  "u": [
+   "Budgeting compute for pretraining runs",
+   "Comparing efficiency of model architectures",
+   "Measuring model FLOPs utilization on accelerators"
+  ],
+  "x": "A team planning a pretraining run multiplies the model's parameter count by the planned token budget and by six to estimate total training FLOPs. Dividing by the cluster's realistic sustained throughput, not its peak, gives the expected run length that the team books on its shared cluster.",
+  "c": "import torch\nfrom torch.utils.flop_counter import FlopCounterMode\n\nm, k, n = 512, 1024, 256\nprint(\"matmul FLOPs:\", 2 * m * k * n)\n\nmodel = torch.nn.Sequential(torch.nn.Linear(1024, 4096), torch.nn.GELU(),\n                            torch.nn.Linear(4096, 1024))\nx = torch.randn(8, 1024)\nwith FlopCounterMode(display=False) as fc:\n    model(x)\nprint(\"forward FLOPs:\", fc.get_total_flops())\n\n# Training compute estimate for a language model\nN, D = 7e9, 2e12                  # parameters, tokens\nprint(f\"training FLOPs: {6 * N * D:.2e}\")"
+ },
+ "floatfmt": {
+  "n": "Floating-Point Formats",
+  "d": "Floating-point formats store real numbers as a sign, an exponent and a mantissa, and the number of bits given to each sets the range and precision. FP32 uses 8 exponent and 23 mantissa bits; FP16 uses 5 and 10; BF16 uses 8 and 7; FP8 variants such as E4M3 and E5M2 use 8 bits in total.\n\nThe exponent controls range and the mantissa controls precision. BF16 keeps FP32's range with less precision, so it rarely overflows and is the usual choice for mixed precision training, while FP16 has finer precision but a narrow range and needs loss scaling to keep small gradients from underflowing to zero. Integer formats such as INT8 and INT4 used in quantization are not floating point. A frequent pitfall is accumulating sums in low precision: rounding errors pile up, so matrix multiply units accumulate in FP32 and optimizers often keep FP32 master weights.",
+  "f": "value = (−1)ˢ · 2^{e − bias} · (1 + m / 2^{M})",
+  "u": [
+   "Mixed precision training with BF16 or FP16",
+   "FP8 matrix multiplication on recent GPUs",
+   "Diagnosing overflow, underflow and NaN losses"
+  ],
+  "x": "A team moving a training job from FP16 to BF16 removes its dynamic loss scaler because BF16 has the same exponent range as FP32. The occasional NaN losses caused by overflowing activations stop, and the team keeps optimizer states in FP32 for stable updates.",
+  "c": "import torch\n\nfor dt in [torch.float32, torch.float16, torch.bfloat16]:\n    fi = torch.finfo(dt)\n    print(dt, \"max\", fi.max, \"eps\", fi.eps, \"tiny\", fi.tiny)\n\nx = torch.tensor(70000.0)\nprint(x.to(torch.float16))        # inf: beyond FP16 range\nprint(x.to(torch.bfloat16))       # 70144: in range, coarse precision\n\n# Small updates vanish in low precision\nw = torch.tensor(1.0, dtype=torch.bfloat16)\nprint(w + 1e-3)                   # stays 1.0 in BF16\n\n# Mixed precision forward pass\nwith torch.autocast(device_type=\"cpu\", dtype=torch.bfloat16):\n    y = torch.nn.Linear(16, 16)(torch.randn(4, 16))"
+ },
+ "sparsity": {
+  "n": "Sparsity",
+  "d": "Sparsity means that most entries of a vector, matrix or set of activations are zero, so only a small fraction carry information or need computation. It appears in data, in model weights and in activations.\n\nSparse data includes one-hot encodings, bag-of-words and TF-IDF matrices, which are stored in compressed formats such as CSR to save memory. Sparse weights come from L1 regularization, which drives many lasso coefficients exactly to zero, or from pruning. Sparse activations come from ReLU, which zeroes negative inputs, from sparse autoencoders that learn interpretable features, and from Mixture of Experts routing, where each token activates only a few experts. A common misconception is that zeros automatically make models faster: unstructured sparsity rarely speeds up dense GPU kernels, so practical speedups need structured patterns such as removing whole channels, block sparsity, or the 2:4 pattern that some GPUs accelerate.",
+  "f": "sparsity = (number of zero entries) / (total entries)",
+  "u": [
+   "Storing one-hot and text features as sparse matrices",
+   "Feature selection through L1 regularization",
+   "Conditional computation with Mixture of Experts"
+  ],
+  "x": "A search team stores millions of TF-IDF document vectors as a SciPy sparse matrix, which fits in memory where a dense array would not. It trains a logistic regression directly on the sparse input, and an L1 penalty keeps the final model small enough to serve from a lightweight service.",
+  "c": "import numpy as np\nimport scipy.sparse as sp\nfrom sklearn.feature_extraction.text import TfidfVectorizer\nfrom sklearn.linear_model import Lasso\n\ndocs = [\"sparse data saves memory\", \"dense vectors use more memory\", \"zeros everywhere\"]\nX = TfidfVectorizer().fit_transform(docs)            # CSR sparse matrix\nprint(type(X).__name__, 1 - X.nnz / np.prod(X.shape))  # fraction of zeros\n\n# L1 regularization produces sparse weights\nrng = np.random.default_rng(0)\nA = rng.normal(size=(100, 50))\ny = A[:, :3] @ np.array([2.0, -1.0, 0.5]) + 0.1 * rng.normal(size=100)\ncoef = Lasso(alpha=0.1).fit(A, y).coef_\nprint(\"nonzero weights:\", np.count_nonzero(coef), \"of\", coef.size)"
+ }
+}

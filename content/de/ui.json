@@ -37,7 +37,8 @@
     "darkMode": "Dunkelmodus",
     "zoom": "Zoom",
     "zoomIn": "Vergrößern",
-    "zoomOut": "Verkleinern"
+    "zoomOut": "Verkleinern",
+    "appendix": "Anhang"
   },
   "cats": {
     "found": "Grundlagen",
@@ -57,6 +58,13 @@
     "llm": "LLM-Training & Alignment",
     "inf": "Inferenz & Effizienz",
     "app": "LLM-Systeme & Reasoning",
-    "front": "Aktuelle Forschungstrends"
+    "front": "Aktuelle Forschungstrends",
+    "zstat": "Statistik und Wahrscheinlichkeit",
+    "zdata": "Daten und Visualisierung",
+    "zmath": "Lineare Algebra und Analysis",
+    "ztrain": "Training und Optimierung",
+    "znn": "Bausteine neuronaler Netze",
+    "zlang": "Sprachmodelle und RL",
+    "zprod": "ML in der Produktion"
   }
 }

@@ -1,0 +1,462 @@
+{
+ "histogram": {
+  "n": "Histogram (आयतचित्र)",
+  "d": "Histogram किसी numeric variable का distribution दिखाता है: उसकी range को bins में बाँटा जाता है और हर bin के लिए एक bar खींचा जाता है जिसकी ऊँचाई उस bin में पड़ने वाले मानों की संख्या (या हिस्सा) होती है। आकृति पढ़कर पता चलता है कि मान कहाँ केंद्रित हैं, distribution सममित है या skewed, उसमें एक शिखर है या कई, और क्या कुछ चरम मान बाकी से बहुत दूर बैठे हैं।\n\nExploratory data analysis में histogram हर numeric feature की पहली जाँच है: ये वह skewness दिखाते हैं जिसके लिए linear regression से पहले log transform चाहिए, 0 या 999 जैसे default मानों पर spikes, और clipped ranges भी। Training और production के histograms की तुलना data drift पकड़ने का एक सरल तरीका है। मुख्य जोखिम bin की चौड़ाई है: बहुत कम bins bimodality जैसी संरचना छिपा देते हैं, बहुत ज़्यादा bins plot को शोर बना देते हैं, इसलिए कई चौड़ाइयाँ आज़माएँ या Freedman–Diaconis जैसा कोई नियम अपनाएँ।",
+  "u": [
+   "Transform चुनने से पहले feature का skew जाँचना",
+   "Training और production के feature distributions की तुलना करना",
+   "Default मानों और data-entry spikes को पकड़ना"
+  ],
+  "x": "एक payments टीम हर हफ़्ते training set और live traffic दोनों के लिए transaction राशियों के histograms बनाती है। जब एक नई merchant श्रेणी आती है, तो live histogram में एक दूसरा शिखर उभर आता है, जिससे यह समीक्षा शुरू होती है कि क्या fraud मॉडल को retraining की ज़रूरत है।"
+ },
+ "boxplot": {
+  "n": "Box Plot",
+  "d": "Box plot किसी numeric variable को पाँच संख्याओं में सारांशित करता है: median, पहला और तीसरा quartile जो box बनाते हैं, और whiskers जो box से 1.5 गुना interquartile range (IQR) के भीतर के सबसे चरम मानों तक जाते हैं। Whiskers से बाहर के बिंदु संभावित outliers के रूप में अलग-अलग दिखाए जाते हैं।\n\nकम जगह लेने के कारण box plot एक variable की कई समूहों में तुलना का मानक तरीका है, जैसे प्रति region मॉडल error या प्रति server latency। Machine learning में यह outlier screening, यह जाँचने में कि कोई feature classes को अलग करता है या नहीं, और मॉडलों के cross-validation scores की तुलना में मदद करता है। एक आम गलतफ़हमी यह है कि whiskers से बाहर का हर बिंदु हटाने लायक त्रुटि है। 1.5×IQR नियम skewed या heavy-tailed डेटा में कई वैध मानों को चिह्नित कर देता है, और box plot bimodality भी छिपा देता है, इसलिए इसे histogram के साथ देखें।",
+  "u": [
+   "Candidate मॉडलों के cross-validation scores की तुलना करना",
+   "Numeric features में चरम मानों की screening करना",
+   "समूहों या segments में किसी metric की तुलना करना"
+  ],
+  "x": "एक MLOps टीम demand forecasting मॉडल के लिए प्रति store prediction error के box plots बनाती है। कुछ stores जिनके boxes काफ़ी चौड़े हैं, उनकी जाँच होती है और पता चलता है कि उनकी reporting अनियमित है, इसलिए उन्हें एक अलग मॉडल दिया जाता है।"
+ },
+ "scatterplot": {
+  "n": "Scatter Plot (प्रकीर्ण आरेख)",
+  "d": "Scatter plot हर observation के लिए दो numeric variables द्वारा दिए गए निर्देशांकों पर एक बिंदु खींचता है, ताकि बिंदुओं के बादल की आकृति दिखाए कि variables आपस में कैसे संबंधित हैं। झुका हुआ, संकरा बादल मज़बूत linear संबंध का संकेत है; घुमावदार पट्टी nonlinear संबंध का; अलग-अलग गुच्छे clusters का; और अकेले पड़े बिंदु outliers होते हैं।\n\nPractitioners scatter plots का उपयोग linear regression से पहले किसी feature को target के सामने जाँचने, predicted बनाम actual मान plot करने, residuals में patterns देखने, और PCA, t-SNE या UMAP से मिले 2D embeddings को class के अनुसार रंगकर देखने के लिए करते हैं। एक आम समस्या overplotting है: लाखों बिंदुओं के साथ बादल एक ठोस धब्बा बन जाता है और density छिप जाती है। Transparency, छोटे markers, sampling या 2D histogram का उपयोग करें। यह भी याद रखें कि scatter plot में साफ़ pattern association दिखाता है, causation नहीं।",
+  "u": [
+   "Regression के बाद predicted बनाम actual मान plot करना",
+   "Residuals में वक्रता या बदलते फैलाव की जाँच करना",
+   "Class के अनुसार रंगे 2D embeddings देखना"
+  ],
+  "x": "एक real-estate pricing टीम हर validation fold के लिए predicted और actual बिक्री कीमतों को plot करती है। ऊँची कीमतों पर बिंदुओं का फैलना दिखाता है कि error कीमत के साथ बढ़ता है, इसलिए टीम इसके बजाय कीमत के logarithm को model करती है।"
+ },
+ "heatmap": {
+  "n": "Heatmap",
+  "d": "Heatmap संख्याओं के एक matrix को रंगीन cells के grid के रूप में दिखाता है, जिसमें हर cell का रंग उसका मान दर्शाता है। यह एक बड़ी table को ऐसी तस्वीर में बदल देता है जिसमें blocks, gradients और outliers तुरंत उभर आते हैं।\n\nMachine learning में सबसे आम heatmaps हैं features के correlation matrices, classifiers के confusion matrices, किसी transformer layer के attention weights, hyperparameter grid-search scores, और missing-value maps जिनमें हर cell बताता है कि मान अनुपस्थित है या नहीं। Plot करने से पहले rows और columns को cluster करने से समान variables एक साथ आ जाते हैं और block संरचना दिखने लगती है। मुख्य जोखिम color scale है। Diverging colormap का मध्यबिंदु किसी सार्थक मान पर स्थिर होना चाहिए, जैसे correlations के लिए शून्य, और auto-scaled range छोटे अंतरों को भी नाटकीय दिखा सकती है। जब सटीक संख्याएँ मायने रखती हों तो cell मान annotate करें।",
+  "u": [
+   "EDA के दौरान feature correlation matrices को visualize करना",
+   "किसी classifier का confusion matrix पढ़ना",
+   "Attention weights या grid-search scores की जाँच करना"
+  ],
+  "x": "एक credit-risk टीम logistic regression train करने से पहले feature correlations का clustered heatmap बनाती है। कई चमकीले blocks लगभग एक जैसे balance features के समूह दिखाते हैं, और multicollinearity कम करने के लिए टीम हर block से एक ही feature रखती है।"
+ },
+ "qqplot": {
+  "n": "Q-Q Plot (Quantile-Quantile Plot)",
+  "d": "Q-Q plot किसी sample के quantiles की तुलना एक reference distribution, आम तौर पर normal distribution, के quantiles से करता है, दोनों को एक-दूसरे के सामने plot करके। अगर डेटा reference distribution का पालन करता है, तो बिंदु एक सीधी रेखा पर पड़ते हैं; व्यवस्थित मोड़ बताते हैं कि वे किस तरह अलग हैं।\n\nएक बार सीखने के बाद आकृति पढ़ना आसान है। S-आकृति, जिसमें दोनों सिरे रेखा से दूर मुड़ते हैं, heavy tails का संकेत है; एक तरफ़ मुड़ता वक्र skewness का; और सिरों पर रेखा से हटे कुछ बिंदु outliers हैं। Practitioners Q-Q plots से linear regression में residuals की normality धारणा जाँचते हैं, तय करते हैं कि log या Box-Cox transform चाहिए या नहीं, और दो samples की सीधी तुलना करते हैं। एक आम गलती इसके बजाय किसी औपचारिक normality test पर निर्भर रहना है: बड़े samples में ऐसे tests छोटे, हानिरहित विचलनों को भी reject कर देते हैं, जबकि Q-Q plot दिखाता है कि विचलन वास्तव में कितना बड़ा है।",
+  "u": [
+   "Linear regression residuals की normality जाँचना",
+   "तय करना कि किसी feature को transform की ज़रूरत है या नहीं",
+   "दो samples के tail व्यवहार की तुलना करना"
+  ],
+  "x": "एक quantitative analytics टीम दैनिक returns पर एक linear मॉडल fit करती है और residuals का Q-Q plot देखती है। सिरे रेखा से तेज़ी से दूर मुड़ते हैं, जो heavy tails दिखाता है, इसलिए टीम risk अनुमानों के लिए Student-t error मॉडल पर चली जाती है।"
+ },
+ "feature": {
+  "n": "Feature",
+  "d": "Feature एक मापने योग्य input variable है जिसका उपयोग मॉडल prediction करने के लिए करता है, जैसे किसी ग्राहक की उम्र, किसी email में शब्दों की संख्या, या किसी pixel की तीव्रता। Dataset आम तौर पर एक matrix के रूप में व्यवस्थित होता है जिसमें हर example की एक row और हर feature का एक column होता है, और मॉडल सीखता है कि target इन columns पर कैसे निर्भर है।\n\nFeatures numeric, categorical, text, या embeddings जैसे सीखे गए representations हो सकते हैं। Classical machine learning का बड़ा हिस्सा feature engineering है: सूचनाप्रद features बनाना, categories को encode करना, scaling करना और missing values संभालना। Feature importance और SHAP values बताते हैं कि कौन-से features predictions को चलाते हैं। एक मुख्य जोखिम ऐसा feature उपयोग करना है जो prediction के समय उपलब्ध नहीं होगा, या जो target का उपयोग करके निकाला गया है; यह data leakage है और ऐसे मॉडल बनाता है जो validation में शानदार दिखते हैं पर production में विफल होते हैं।",
+  "u": [
+   "Gradient-boosted tree मॉडलों के लिए inputs बनाना",
+   "Raw logs से सूचनाप्रद columns चुनना",
+   "Feature importance के ज़रिए predictions समझाना"
+  ],
+  "x": "एक subscription business अपने churn मॉडल के लिए पिछले login से बीते दिन, पिछले महीने के support tickets की संख्या, और plan का प्रकार जैसे features बनाता है। हर feature केवल prediction की तारीख़ तक के डेटा से निकाला जाता है, ताकि मॉडल ठीक वही देखे जो production में उपलब्ध होगा।"
+ },
+ "label": {
+  "n": "Label (Target)",
+  "d": "Label, जिसे target भी कहते हैं, वह ज्ञात उत्तर है जिसे supervised मॉडल हर example के लिए predict करना सीखता है: spam या not spam जैसी कोई class, या बिक्री कीमत जैसी कोई संख्या। मॉडल को इस तरह train किया जाता है कि उसके outputs labels से मेल खाएँ, इसलिए label ही तय करता है कि मॉडल वास्तव में किस चीज़ के लिए optimize कर रहा है।\n\nLabels मानव annotators से, बाद की खरीद या default जैसी business घटनाओं से, या स्वचालित नियमों से आते हैं। Classification में उन्हें अक्सर integers या one-hot vectors के रूप में encode किया जाता है; regression में वे continuous मान होते हैं। Label का चुनाव आगे की हर चीज़ को आकार देता है, जिसमें loss function, evaluation metric और class imbalance शामिल हैं। एक आम जोखिम ऐसा label है जो असली लक्ष्य से मेल नहीं खाता, जैसे clicks predict करना जबकि business को खरीद की परवाह है। दूसरा है label leakage, जिसमें कोई feature label से या उसके बाद दर्ज जानकारी से निकाला जाता है।",
+  "u": [
+   "Supervised learning के लिए prediction target परिभाषित करना",
+   "Classification कार्यों के लिए मानव annotations इकट्ठा करना",
+   "Business event logs से outcome labels निकालना"
+  ],
+  "x": "एक lending platform अपना label इस रूप में परिभाषित करता है कि loan जारी होने के 12 महीनों के भीतर 90 दिनों से अधिक बकाया हुआ या नहीं। क्योंकि यह परिणाम देखने में एक साल लगता है, टीम केवल उन loans पर train करती है जो अंतिम label पाने लायक पुराने हो चुके हैं।"
+ },
+ "tabular": {
+  "n": "Tabular Data (सारणीबद्ध डेटा)",
+  "d": "Tabular data वह डेटा है जो एक table के रूप में व्यवस्थित होता है, जिसमें हर example की एक row और हर variable का एक column होता है, और columns में numeric, categorical, date और text प्रकार मिले-जुले हो सकते हैं। Spreadsheets, relational database tables और CSV exports इसका रोज़मर्रा का रूप हैं, और अधिकांश business prediction समस्याएँ यहीं से शुरू होती हैं।\n\nImages या text के विपरीत, table के columns का कोई spatial या sequential क्रम नहीं होता और हर column का अपना पैमाना और अर्थ होता है। इससे वे मॉडल फ़ायदे में रहते हैं जो विषम columns को अच्छी तरह संभालते हैं: XGBoost, LightGBM और CatBoost जैसे gradient-boosted trees अधिकांश tabular benchmarks पर सबसे मज़बूत default बने हुए हैं, और logistic regression तथा random forests ठोस baselines हैं। Tabular data तैयार करने में joins, aggregation, categorical features की encoding, missing values संभालना और सावधानीपूर्ण समय-आधारित splitting शामिल है। एक आम गलतफ़हमी यह है कि deep neural network tables पर default रूप से boosted trees को हरा देगा; उसे आम तौर पर कहीं अधिक tuning चाहिए और अक्सर वह फिर भी हार जाता है।",
+  "u": [
+   "ग्राहक account tables से credit scoring",
+   "CRM और usage डेटा से churn prediction",
+   "बिक्री transaction records से demand forecasting"
+  ],
+  "x": "एक बीमा कंपनी policy, claims और ग्राहक tables को जोड़कर प्रति policy एक row बनाती है और claim की संभावना predict करने के लिए LightGBM मॉडल train करती है। टीम boosted trees को पसंद करती है क्योंकि वे मिश्रित column प्रकारों और missing values को कम preprocessing के साथ संभाल लेते हैं।"
+ },
+ "numcat": {
+  "n": "Numerical बनाम Categorical Features",
+  "d": "Numerical features ऐसी मात्राएँ हैं जिन पर अंकगणित सार्थक है, जैसे आय या तापमान, जबकि categorical features labels के एक समूह से मान लेते हैं, जैसे देश या product का प्रकार, जहाँ मानों का कोई संख्यात्मक अर्थ नहीं होता। यही भेद तय करता है कि मॉडल के उपयोग से पहले feature को कैसे encode करना होगा।\n\nNumerical features को linear models, SVMs, k-NN और neural networks के लिए scaling की, और कभी-कभी skew के लिए log transform की ज़रूरत हो सकती है। Categorical features को संख्याओं में बदलना पड़ता है: कम categories के लिए one-hot encoding, बहुत सारी के लिए target encoding या embeddings, या CatBoost और LightGBM का native categorical support। संख्याएँ भेष बदले categorical भी हो सकती हैं। ZIP codes, user IDs और product codes integers के रूप में संग्रहीत होते हैं, पर उन्हें मात्राएँ मानने से ऐसा क्रम और दूरियाँ गढ़ ली जाती हैं जो मौजूद ही नहीं। इसके उलट, केवल कुछ मानों वाला numeric feature category के रूप में बेहतर काम कर सकता है।",
+  "u": [
+   "Preprocessing pipeline में encoders चुनना",
+   "Integers के रूप में संग्रहीत ID columns पहचानना",
+   "तय करना कि किन columns को scaling चाहिए"
+  ],
+  "x": "एक travel booking साइट scikit-learn का ColumnTransformer बनाती है जो कीमत और यात्रा की अवधि को scale करता है पर destination region और device प्रकार को one-hot encode करता है। एक शुरुआती संस्करण integers के रूप में संग्रहीत airport codes को numeric मान रहा था, और उन्हें categorical करने से मॉडल बेहतर हुआ।"
+ },
+ "ordinal": {
+  "n": "Ordinal बनाम Nominal Variables",
+  "d": "Nominal variables ऐसी categories हैं जिनका कोई स्वाभाविक क्रम नहीं, जैसे रंग या देश, जबकि ordinal variables ऐसी categories हैं जिनका सार्थक क्रम है पर कोई निश्चित अंतराल नहीं, जैसे शिक्षा का स्तर या low, medium, high जैसी rating। दोनों categorical हैं, पर क्रम यह बदल देता है कि उन्हें कैसे encode किया जाए।\n\nOrdinal variable के लिए categories को बढ़ते integers में map करना (low=0, medium=1, high=2) क्रम बनाए रखता है और tree को उस पर split करने या linear मॉडल को monotone प्रभाव fit करने देता है। Nominal variable के लिए integer codes ऐसा क्रम और अंतराल गढ़ देंगे जो डेटा में नहीं है, इसलिए उसकी जगह one-hot encoding, target encoding या embeddings उपयोग होते हैं। एक आम गलती किसी सच में ordinal variable पर scikit-learn का OrdinalEncoder उसके default वर्णानुक्रम के साथ लगाना है: तब \"high\" \"low\" से पहले आ जाता है, इसलिए categories का क्रम स्पष्ट रूप से देना पड़ता है।",
+  "u": [
+   "Survey उत्तरों और satisfaction ratings को encode करना",
+   "Product sizes या ग्राहक tiers को encode करना",
+   "One-hot और integer encoding के बीच चुनाव करना"
+  ],
+  "x": "कर्मचारी attrition predict करने वाली एक HR analytics टीम job level को क्रमबद्ध integer के रूप में encode करती है क्योंकि ऊँचे levels अधिक वरिष्ठता दर्शाते हैं। Department, जिसका कोई क्रम नहीं है, उसकी जगह one-hot encode किया जाता है।"
+ },
+ "cardinality": {
+  "n": "Cardinality",
+  "d": "किसी categorical feature की cardinality उसके अलग-अलग मानों की संख्या है। लिंग या device प्रकार जैसे feature की cardinality कम होती है, जबकि user ID, ZIP code या product SKU के हज़ारों या लाखों मान हो सकते हैं और इन्हें high-cardinality कहा जाता है।\n\nCardinality तय करती है कि feature को कैसे encode किया जा सकता है। One-hot encoding कुछ मानों के लिए काम करती है पर high-cardinality features के लिए विशाल sparse matrices बना देती है। विकल्पों में दुर्लभ मानों को एक \"other\" bucket में समूहित करना, smoothing और out-of-fold fitting के साथ target encoding, frequency encoding, hashing trick, और neural networks में सीखे गए embeddings शामिल हैं। CatBoost ठीक इसी स्थिति के लिए ordered target statistics का उपयोग करता है। एक जोखिम यह है कि high-cardinality features tree मॉडलों को याद करने देते हैं: केवल कुछ बार दिखी category को उसके labels से पूरी तरह मिलाया जा सकता है, जिससे training scores बढ़-चढ़कर दिखते हैं, और उन्हीं rows पर निकाली गई naive target encoding label को leak कर देती है।",
+  "u": [
+   "हर categorical column के लिए encoder चुनना",
+   "Data profiling के दौरान ID जैसे columns पहचानना",
+   "One-hot encoding से पहले दुर्लभ categories को bucket में डालना"
+  ],
+  "x": "एक ad-tech टीम के पास publisher domain का एक feature है जिसके लाखों मान हैं। वह अपने logistic regression मॉडल के लिए domain को निश्चित संख्या के buckets में hash करती है और अपने neural ranking मॉडल में उसके लिए एक embedding सीखती है।"
+ },
+ "missingval": {
+  "n": "Missing Values (MCAR, MAR, MNAR)",
+  "d": "Missing values वे प्रविष्टियाँ हैं जिनका कोई मान दर्ज नहीं है, और वे क्यों गायब हैं यही तय करता है कि उन्हें कैसे संभाला जा सकता है। डेटा missing completely at random (MCAR) होता है जब गायब होना किसी भी डेटा से असंबंधित हो, missing at random (MAR) जब यह केवल अन्य देखे गए variables पर निर्भर हो, और missing not at random (MNAR) जब यह स्वयं अनदेखे मान पर निर्भर हो, जैसे ऊँची आय वाले लोग आय का प्रश्न छोड़ दें।\n\nMCAR में rows हटाने से डेटा तो घटता है पर अनुमान biased नहीं होते। MAR में अन्य columns का उपयोग करने वाली imputation, जैसे iterative या k-NN imputation, unbiased अनुमान वापस दिला सकती है। MNAR में अतिरिक्त धारणाओं के बिना कोई भी तरीका bias को पूरी तरह ठीक नहीं करता। Predictive modeling में एक binary \"was missing\" indicator जोड़ना अक्सर मदद करता है क्योंकि गायब होना ख़ुद एक signal रखता है। एक आम गलती split करने से पहले पूरे dataset पर imputer fit करना है, जिससे test statistics training में leak हो जाते हैं।",
+  "u": [
+   "Sensor और चिकित्सा records में खाली जगहें impute करना",
+   "Tabular मॉडलों में missingness indicators जोड़ना",
+   "Nonresponse bias के लिए survey डेटा का audit करना"
+  ],
+  "x": "एक hospital readmission मॉडल पाता है कि lab मान अक्सर उन मरीज़ों के लिए missing होते हैं जिन्हें test करवाने लायक बीमार नहीं माना गया था। टीम हर lab के लिए एक missingness indicator जोड़ती है, क्योंकि test का न होना अपने-आप में predictive है।"
+ },
+ "duplicates": {
+  "n": "Duplicate Records",
+  "d": "Duplicate records वे rows हैं जो एक ही वास्तविक इकाई या घटना का एक से अधिक बार वर्णन करती हैं, या तो हूबहू प्रतियों के रूप में या ऐसे near-duplicates के रूप में जो formatting, timestamps या छोटे संपादनों में भिन्न होते हैं। ये बार-बार के data loads, rows को गुणा करने वाले joins, event logging में retries, और scrape किए गए web text से पैदा होते हैं।\n\nDuplicates statistics को दोहराए गए items की ओर झुका देते हैं और, इससे भी गंभीर, evaluation को बिगाड़ देते हैं: अगर एक ही example training और test split दोनों में पहुँच जाए, तो मॉडल को उस डेटा पर आँका जाता है जिसे उसने याद कर रखा है, इसलिए validation metrics ज़रूरत से ज़्यादा आशावादी हो जाते हैं। हूबहू duplicates rows या key columns को hash करके मिलते हैं; near-duplicates के लिए fuzzy matching, MinHash या embedding similarity चाहिए। Large language model pretraining deduplication पर बहुत निर्भर है। एक जोखिम grouping के बारे में सोचे बिना deduplicate करना है: एक ही ग्राहक के कई records duplicates नहीं हैं, पर उन्हें फिर भी GroupKFold जैसे group-aware split की ज़रूरत होती है।",
+  "u": [
+   "Data pipeline joins के बाद दोहराई गई rows हटाना",
+   "Language model pretraining के लिए web text deduplicate करना",
+   "Training और test sets के बीच overlap रोकना"
+  ],
+  "x": "Code-completion मॉडल बना रही एक टीम पाती है कि उसके evaluation set की कई files छोटे संपादनों के साथ training corpus में भी मौजूद हैं। वह दोनों sets पर MinHash near-duplicate detection चलाती है और परिणाम report करने से पहले overlap वाली files हटा देती है।"
+ },
+ "labelnoise": {
+  "n": "Label Noise",
+  "d": "Label noise का अर्थ है कि कुछ training labels गलत हैं: बिल्ली की image को कुत्ता tag किया गया, किसी वैध transaction को fraud चिह्नित किया गया, या किसी review पर गलत sentiment annotate किया गया। यह annotators की गलतियों, अस्पष्ट examples, स्वचालित labeling नियमों, और परिणाम अंतिम होने से पहले दर्ज किए गए labels से आता है।\n\nNoise random हो सकता है, जिसमें labels समान रूप से पलटते हैं, या systematic, जिसमें कुछ classes या annotators लगातार भ्रमित होते हैं; systematic noise कहीं अधिक हानिकारक है क्योंकि मॉडल उस bias को सीख लेता है। Deep neural networks जैसे बड़े लचीले मॉडल noisy labels को याद कर सकते हैं, जो generalization को नुकसान पहुँचाता है। उपायों में सहमति जाँच के साथ कई annotators, संभावित गलत-labeled examples खोजने के लिए confident learning, label smoothing, robust losses और early stopping शामिल हैं। एक आम गलती test set के noise को अनदेखा करना है: अगर evaluation labels गलत हैं, तो मॉडल तुलनाएँ और accuracy अनुमान अविश्वसनीय हो जाते हैं, चाहे training डेटा कितना भी साफ़ हो।",
+  "u": [
+   "Training से पहले crowdsourced annotations का audit करना",
+   "Out-of-fold predictions से गलत-labeled examples खोजना",
+   "Weakly labeled डेटा पर robust classifiers train करना"
+  ],
+  "x": "एक content moderation टीम उन training examples को चिह्नित करती है जहाँ एक cross-validated classifier मानव label से आत्मविश्वास के साथ असहमत है। Reviewers उन items को फिर से annotate करते हैं, और उनमें से कई पुरानी पड़ चुकी policy guideline के कारण हुई वास्तविक labeling गलतियाँ निकलती हैं।"
+ },
+ "sparsedata": {
+  "n": "Sparse Data (विरल डेटा)",
+  "d": "Sparse data वह डेटा है जिसकी अधिकांश प्रविष्टियाँ शून्य या अनुपस्थित होती हैं, जैसे bag-of-words matrix जिसमें हर document vocabulary का बहुत छोटा अंश उपयोग करता है, user-item rating matrix, या one-hot encoded categories। CSR या COO formats की तरह केवल nonzero मानों और उनकी स्थितियों को संग्रहीत करने से memory और computation में कई गुना बचत होती है।\n\nकई तरीके sparsity का सीधा लाभ उठाते हैं: TF-IDF features पर linear models, logistic regression और linear SVMs, recommendation के लिए factorization machines और matrix factorization, और शून्य को छोड़ देने वाले gradient-boosted trees। एक आम गलती अनजाने में sparse matrix को dense में बदल देना है, उदाहरण के लिए StandardScaler से उसे center करके, जो mean घटाता है और हर शून्य को एक nonzero मान से भर देता है; इसकी जगह centering के बिना scaling या MaxAbsScaler उपयोग करें। Sparse data को regularization की भी ज़रूरत होती है, क्योंकि कई features केवल कुछ ही बार आते हैं।",
+  "u": [
+   "TF-IDF features के साथ text classification",
+   "User-item interaction matrices से recommendation",
+   "One-hot encoded high-cardinality categorical features"
+  ],
+  "x": "एक support ticket router हर ticket को लाखों terms वाली vocabulary पर एक TF-IDF vector के रूप में दर्शाता है। Sparse format में रखने पर पूरा matrix memory में समा जाता है और एक linear classifier कुछ ही मिनटों में train हो जाता है।"
+ },
+ "interaction": {
+  "n": "Feature Interaction",
+  "d": "Feature interaction तब होता है जब target पर एक feature का प्रभाव किसी दूसरे feature के मान पर निर्भर करता है। उदाहरण के लिए, discount नए ग्राहकों की खरीद को बहुत बढ़ा सकता है पर वफ़ादार ग्राहकों की लगभग नहीं; कोई भी feature अकेले यह pattern नहीं पकड़ता।\n\nसाधारण linear regression अलग-अलग प्रभावों को जोड़ता है और interactions को तब तक नहीं दर्शा सकता जब तक उन्हें x₁·x₂ जैसे product terms के रूप में या polynomial features के ज़रिए स्पष्ट रूप से न जोड़ा जाए। Decision trees, gradient-boosted trees और neural networks interactions अपने-आप सीखते हैं, क्योंकि एक feature पर split अगले split के व्यवहार को बदल देता है। Factorization machines sparse डेटा के लिए pairwise interactions को कुशलता से model करती हैं। SHAP interaction values और partial dependence plots इन्हें पहचानने में मदद करते हैं। एक जोखिम हाथ से सभी pairwise products जोड़ना है: features की संख्या द्विघाती रूप से बढ़ती है, जो overfitting और multicollinearity को न्योता देती है, इसलिए केवल स्पष्ट domain कारण वाले interactions जोड़ें या ऐसा मॉडल उपयोग करें जो उन्हें ख़ुद खोज ले।",
+  "u": [
+   "Linear pricing मॉडलों में product terms जोड़ना",
+   "SHAP interaction values से interactions पहचानना",
+   "Factorization machines के साथ click prediction"
+  ],
+  "x": "एक marketing analytics टीम पाती है कि एक linear uplift मॉडल यह नहीं पकड़ पाता कि email campaigns केवल mobile devices वाले ग्राहकों पर काम करते हैं। Campaign flag और device प्रकार के बीच एक product term जोड़ने से यह pattern पकड़ में आ जाता है और coefficient सीधे व्याख्या योग्य बन जाता है।"
+ },
+ "baseline": {
+  "n": "Baseline Model",
+  "d": "Baseline model जानबूझकर सरल रखा गया एक reference मॉडल है जिसका score किसी भी प्रस्तावित मॉडल को अपनी जटिलता को सही ठहराने के लिए हराना होता है। आम baselines हैं majority class predict करना, training mean, time series में अंतिम देखा गया मान, या एक साधारण logistic regression या linear regression।\n\nBaselines metric मानों को अर्थ देते हैं। 95% accuracy तब तक मज़बूत लगती है जब तक imbalanced dataset पर majority-class baseline भी 95% न ले आए; forecast error तभी उपयोगी है जब उसकी तुलना naive seasonal forecast से की जाए। पहले baseline बनाने से tuning पर समय लगाने से पहले data loading से evaluation तक पूरी pipeline की जाँच भी हो जाती है। एक आम गलती ऐसा कमज़ोर baseline चुनना है जिससे कोई भी मॉडल अच्छा दिखे। एक trivial baseline और एक मज़बूत सरल baseline, जैसे tuned linear model या default settings वाले gradient-boosted trees, दोनों report करें और दोनों को एक ही split पर evaluate करें।",
+  "u": [
+   "Imbalanced classification कार्यों पर metrics की sanity check",
+   "Time series के लिए naive और seasonal-naive forecasts",
+   "Deep मॉडलों को linear मॉडलों के सामने benchmark करना"
+  ],
+  "x": "Ticket classification के लिए transformer मॉडल प्रस्तावित करने वाली एक टीम पहले TF-IDF और logistic regression का baseline train करती है। Transformer को तभी अपनाया जाता है जब वह उसी held-out set पर baseline को साफ़ तौर पर हरा देता है, जो उसकी अतिरिक्त serving लागत को सही ठहराता है।"
+ },
+ "timeseries": {
+  "n": "Time Series Data (काल श्रेणी डेटा)",
+  "d": "Time series data समय के क्रम में दर्ज observations का एक अनुक्रम है, आम तौर पर नियमित अंतरालों पर, जैसे प्रति घंटा बिजली load, दैनिक बिक्री या प्रति सेकंड sensor readings। इसकी परिभाषित विशेषता यह है कि पड़ोसी observations एक-दूसरे पर निर्भर होते हैं, इसलिए rows का क्रम भी जानकारी रखता है।\n\nTime series को अक्सर trend, seasonality और noise के संयोजन के रूप में वर्णित किया जाता है, और कई तरीके इन हिस्सों को स्पष्ट रूप से model करते हैं: ARIMA, exponential smoothing, Prophet, lag features पर gradient-boosted trees, साथ ही recurrent और transformer forecasting मॉडल। उपयोगी उपकरणों में autocorrelation plots, differencing और stationarity tests शामिल हैं। सबसे महत्वपूर्ण जोखिम evaluation है: random K-fold cross-validation भविष्य की rows को training set में मिला देता है और जानकारी leak करता है, इसलिए validation को हमेशा अतीत पर train और भविष्य पर test करना चाहिए, उदाहरण के लिए expanding-window या rolling-origin split के साथ।",
+  "u": [
+   "Product demand और inventory ज़रूरतों का forecasting",
+   "Server और sensor metrics में anomalies पहचानना",
+   "Grid planning के लिए energy load predict करना"
+  ],
+  "x": "एक grocery chain lag features और gradient-boosted मॉडल से प्रति product और store दैनिक demand का forecast करती है। Validation rolling-origin splits उपयोग करता है जो हमेशा पहले के हफ़्तों पर train और उसके बाद के हफ़्तों पर test करते हैं, ठीक वैसे ही जैसे production में forecasts बनते हैं।"
+ },
+ "trend": {
+  "n": "Trend (प्रवृत्ति)",
+  "d": "Trend किसी time series की दीर्घकालिक दिशा है: एक टिकाऊ वृद्धि, गिरावट या level में बदलाव जो seasonal चक्रों और अल्पकालिक noise से परे बना रहता है। कई वर्षों में बढ़ती subscribers की संख्या या sensor की संवेदनशीलता में धीरे-धीरे गिरावट trends हैं।\n\nTrends का अनुमान smoothing से लगाया जाता है, जैसे moving average या LOESS, समय पर कोई रेखा या वक्र fit करके, या STL जैसे decomposition के एक घटक के रूप में। Forecasting तरीके trend को स्पष्ट रूप से संभालते हैं: Holt का exponential smoothing एक trend term जोड़ता है, ARIMA differencing से उसे हटाता है, और Prophet changepoints के साथ piecewise linear trend fit करता है। Trend किसी series को non-stationary बनाता है, इसलिए कई मॉडलों के लिए पहले उसे हटाना पड़ता है। एक उल्लेखनीय जोखिम random forests और gradient-boosted trees जैसे tree-based मॉडलों से जुड़ा है: वे extrapolate नहीं कर सकते, इसलिए trend वाली series पर वे training में देखे गए मानों से ऊँचे मान predict नहीं करते। पहले detrend करें या trend को अलग से model करें।",
+  "u": [
+   "Seasonal विश्लेषण से पहले दीर्घकालिक वृद्धि हटाना",
+   "Capacity planning के लिए user वृद्धि का अनुमान",
+   "Sensor readings में धीमी गिरावट पहचानना"
+  ],
+  "x": "एक cloud provider hardware ख़रीद की योजना के लिए मासिक storage उपयोग पर trend fit करता है। क्योंकि उसका gradient-boosted forecasting मॉडल पिछले levels से आगे extrapolate नहीं कर सकता, टीम trend को एक linear term से model करती है और trees को केवल बची हुई variation सीखने देती है।"
+ },
+ "seasonality": {
+  "n": "Seasonality (मौसमीपन)",
+  "d": "Seasonality किसी time series में एक ऐसा pattern है जो एक निश्चित, ज्ञात अवधि के साथ दोहराता है, जैसे हर दिसंबर में ऊँची retail बिक्री, हर दिन उन्हीं घंटों पर traffic के शिखर, या सप्ताहांत पर कम गतिविधि। अवधि calendar या प्रक्रिया से तय होती है, डेटा के random उतार-चढ़ाव से नहीं।\n\nSeasonality autocorrelation plot में उस अवधि और उसके गुणजों पर नियमित शिखरों के रूप में दिखती है। इसे seasonal decomposition (STL), seasonal differencing, SARIMA और Holt-Winters मॉडलों, Prophet की तरह Fourier terms, या gradient-boosted trees के लिए घंटा, सप्ताह का दिन और महीना जैसे calendar features से संभाला जाता है। कई series में एक साथ कई seasonalities होती हैं, जैसे प्रति घंटा डेटा में दैनिक और साप्ताहिक चक्र। एक जोखिम seasonality को cycles समझ लेना है: business cycles भी उठते-गिरते हैं पर अनियमित अवधि के साथ, इसलिए निश्चित-अवधि वाला मॉडल उनका गलत prediction करेगा। तारीख़ बदलने वाली छुट्टियों के लिए भी स्पष्ट features चाहिए।",
+  "u": [
+   "Demand forecasting मॉडलों में calendar features जोड़ना",
+   "Anomaly detection से पहले साप्ताहिक चक्र हटाना",
+   "दैनिक और साप्ताहिक शिखरों के अनुसार staffing की योजना"
+  ],
+  "x": "एक call center दैनिक और साप्ताहिक दोनों seasonal terms तथा holiday indicators के साथ प्रति घंटा call volume का forecast करता है। Seasonal pattern हटाने से टीम उन असामान्य spikes को भी चिह्नित कर पाती है जो कंपनी में कहीं और outage का संकेत देते हैं।"
+ },
+ "whitenoise": {
+  "n": "White Noise (श्वेत रव)",
+  "d": "White noise random मानों का एक अनुक्रम है जिसका mean शून्य, variance स्थिर, और किन्हीं भी दो समय बिंदुओं के बीच कोई correlation नहीं होता। पिछले मान जानने से अगले मान के बारे में कोई जानकारी नहीं मिलती, इसलिए white noise अप्रत्याशित series की परिभाषा ही है।\n\nTime series modeling में यह residuals की लक्ष्य अवस्था है: अगर ARIMA जैसे किसी forecasting मॉडल ने सारी संरचना पकड़ ली है, तो उसके residuals white noise जैसे दिखने चाहिए, autocorrelation plot में कोई महत्वपूर्ण spike नहीं। Ljung-Box test इसे औपचारिक रूप से जाँचता है। White noise अन्य प्रक्रियाओं की बुनियादी इकाई भी है: random walk white noise का संचयी योग है, और ARMA मॉडल filter किया हुआ white noise हैं। एक आम गलतफ़हमी यह है कि white noise का normally distributed होना ज़रूरी है; Gaussian white noise केवल एक स्थिति है, और परिभाषा को केवल शून्य autocorrelation चाहिए, independence या normality नहीं।",
+  "u": [
+   "Forecast residuals में बची संरचना की जाँच करना",
+   "Ljung-Box test से autocorrelation परखना",
+   "Synthetic time series के लिए noise simulate करना"
+  ],
+  "x": "एक utility कंपनी हर महीने residuals पर Ljung-Box test चलाकर अपने load forecasting मॉडल को validate करती है। जब test 24 घंटे के lag पर white noise को reject करने लगता है, तो टीम पाती है कि metering time zone में बदलाव ने दैनिक pattern को खिसका दिया है।"
+ },
+ "randomwalk": {
+  "n": "Random Walk (यादृच्छिक भ्रमण)",
+  "d": "Random walk एक ऐसी time series है जिसमें हर मान पिछले मान और एक random कदम के योग के बराबर होता है, इसलिए series किसी निश्चित level पर लौटे बिना भटकती रहती है। यह white noise का संचयी योग है, और कल के मान का सबसे अच्छा forecast बस आज का मान है।\n\nक्योंकि झटके कभी फीके नहीं पड़ते, random walk का variance समय के साथ बढ़ता है और series non-stationary होती है; उसका autocorrelation बहुत धीरे घटता है। Asset कीमतों को अक्सर random walks के रूप में अनुमानित किया जाता है, इसीलिए finance में naive last-value forecast को हराना कठिन baseline है। Random walk को एक बार difference करने पर white-noise कदम वापस मिल जाते हैं, और यही ARIMA के integrated (I) हिस्से के पीछे का विचार है। एक बड़ा जोखिम spurious regression है: दो स्वतंत्र random walks को एक-दूसरे पर regress करने पर अक्सर ऊँचा R² और significant coefficients दिखते हैं, इसलिए trend वाली series को regress करने से पहले augmented Dickey-Fuller test से stationarity जाँचें।",
+  "u": [
+   "Price forecasting के लिए naive last-value baseline",
+   "Regression से पहले unit roots का परीक्षण",
+   "Price paths और sensor drift simulate करना"
+  ],
+  "x": "एक trading research टीम हर संभावित signal को अगले दिन की कीमत के random-walk forecast से परखती है। जो signals out of sample last-value forecast को नहीं हरा पाते, उन्हें हटा दिया जाता है, भले ही वे training अवधि पर मज़बूत दिखें।"
+ },
+ "differencing": {
+  "n": "Differencing (अंतरण)",
+  "d": "Differencing किसी time series को लगातार observations के बीच के बदलावों में बदल देता है, हर मान की जगह उसमें से पिछला मान घटाकर। यह stochastic trend या level shifts हटाता है और अक्सर non-stationary series को stationary बना देता है।\n\nFirst differencing linear trend या random walk हटाता है; दो बार differencing quadratic trend हटाता है। Seasonal differencing एक season पहले का मान घटाता है, y_t − y_{t−m}, ताकि दोहराता pattern हट जाए। Differencing ARIMA का \"I\" है, जहाँ d गिनता है कि इसे कितनी बार लगाया गया, और trend वाली series पर regression या gradient-boosted trees fit करने से पहले यह आम है। Differenced पैमाने पर बने forecasts को संचित करके मूल level पर वापस लाना पड़ता है। एक जोखिम over-differencing है: पहले से stationary series पर इसे लगाने से negative autocorrelation जुड़ता है और variance बढ़ता है, इसलिए augmented Dickey-Fuller या KPSS test से जाँचें और केवल उतना ही difference करें जितना ज़रूरी हो।",
+  "u": [
+   "ARIMA से पहले series को stationary बनाना",
+   "Lag-12 differences से वार्षिक seasonality हटाना",
+   "Trees के लिए levels की जगह बदलावों को model करना"
+  ],
+  "x": "एक retailer का gradient-boosted forecaster बिक्री के level की जगह सप्ताह-दर-सप्ताह बदलाव predict करता है, जिससे वह दीर्घकालिक वृद्धि हट जाती है जिसे trees extrapolate नहीं कर सकते। अंतिम forecast बनाने के लिए predicted बदलावों को अंतिम देखे गए सप्ताह में वापस जोड़ा जाता है।"
+ },
+ "horizon": {
+  "n": "Forecast Horizon (पूर्वानुमान क्षितिज)",
+  "d": "Forecast horizon यह है कि forecast भविष्य में कितनी दूर तक बनाया जाता है, जिसे अंतिम देखे गए बिंदु से time steps में मापा जाता है, जैसे एक दिन आगे या 13 सप्ताह आगे। इसे वह निर्णय तय करता है जिसमें forecast मदद करता है: grid dispatch के लिए अगले घंटे का load, ख़रीद के लिए अगली तिमाही की demand।\n\nError लगभग हमेशा horizon के साथ बढ़ता है, क्योंकि अनिश्चितता जमा होती जाती है और कम हालिया inputs सूचनाप्रद रह जाते हैं, इसलिए accuracy को एक औसत के बजाय हर horizon step के लिए report करना चाहिए। Multi-step forecasts recursive तरीके से बनाए जा सकते हैं, जिसमें हर prediction को फिर से input के रूप में दिया जाता है और errors जुड़ते जाते हैं; direct तरीके से, हर horizon के लिए अलग मॉडल train करके; या sequence-to-sequence networks जैसे multi-output मॉडलों से। एक आम गलती production से अलग horizon पर validate करना है, जैसे lag-1 features के साथ one-step-ahead forecasts को evaluate करना जबकि वास्तविक निर्णयों के लिए चार सप्ताह आगे के forecasts चाहिए, जहाँ वे हालिया lags अभी ज्ञात ही नहीं।",
+  "u": [
+   "Inventory planning में ख़रीद lead times तय करना",
+   "हर horizon step के लिए forecast error report करना",
+   "Recursive बनाम direct multi-step रणनीतियों में चुनाव"
+  ],
+  "x": "एक fashion retailer को stock पहुँचने से आठ सप्ताह पहले order करना पड़ता है, इसलिए उसके demand मॉडल को केवल आठ सप्ताह के horizon पर evaluate किया जाता है। Features को उसी जानकारी तक सीमित रखा जाता है जो हर target सप्ताह से आठ सप्ताह पहले उपलब्ध हो।"
+ },
+ "vector": {
+  "n": "Vector (सदिश)",
+  "d": "Vector संख्याओं की एक क्रमबद्ध सूची है, जैसे (3.2, −1.0, 0.5), जिसे ऐसे space में एक बिंदु या तीर के रूप में पढ़ा जा सकता है जिसमें हर प्रविष्टि का एक अक्ष हो। प्रविष्टियों की संख्या उसका dimension है, और vectors को प्रविष्टि-दर-प्रविष्टि जोड़ा और किसी scalar से गुणा किया जा सकता है।\n\nमॉडल जो कुछ भी process करता है, उसमें लगभग सब vector है: features की एक row, linear regression के weights, किसी शब्द या वाक्य का embedding, gradient, classifier की output probabilities। Vectors की ज्यामिति machine learning के मूल operations देती है, जिनमें dot product, vector norms, Euclidean distance और cosine similarity शामिल हैं, जो k-nearest neighbors, k-means और vector search को चलाते हैं। Bugs का एक आम स्रोत shapes का भ्रम है: NumPy में shape (d,) वाला 1D array न row vector है न column vector, और उसे shape (d, 1) वाले arrays के साथ मिलाने पर वह चुपचाप broadcast होकर d×d matrix बन जाता है।",
+  "u": [
+   "एक example को feature vector के रूप में दर्शाना",
+   "Search के लिए text और image embeddings संग्रहीत करना",
+   "मॉडल weights और gradients रखना"
+  ],
+  "x": "एक music streaming सेवा हर track को listening sessions से सीखे गए 128-dimensional embedding vector के रूप में दर्शाती है। Recommendations उन track vectors को खोजकर बनती हैं जो user की हालिया listening history के vector के सबसे क़रीब हैं।"
+ },
+ "matrix": {
+  "n": "Matrix (आव्यूह)",
+  "d": "Matrix rows और columns में व्यवस्थित संख्याओं की एक आयताकार सारणी है; m×n matrix में m rows और n columns होते हैं। इसे या तो डेटा की table के रूप में पढ़ा जा सकता है या एक linear map के रूप में जो matrix-vector multiplication से n-dimensional vectors को m-dimensional vectors में बदलता है।\n\nMachine learning में दोनों अर्थ हर जगह हैं। Dataset एक design matrix X है जिसमें हर example की एक row और हर feature का एक column होता है। Linear layer के weights एक matrix W हैं, इसलिए dense layer Wx + b निकालती है। Covariance matrices, confusion matrices, attention score matrices और user-item rating matrices अन्य उदाहरण हैं। मुख्य operations में transpose, matrix multiplication, inverse और eigendecomposition तथा SVD जैसे decompositions शामिल हैं, जो PCA और LoRA जैसे low-rank तरीकों की नींव हैं। एक जोखिम linear systems हल करने के लिए matrices को स्पष्ट रूप से invert करना है; np.linalg.solve या least squares जैसे solvers तेज़ और संख्यात्मक रूप से अधिक स्थिर हैं।",
+  "u": [
+   "Dataset को design matrix के रूप में संग्रहीत करना",
+   "Fully connected neural network layers के weights",
+   "Recommendation के लिए user-item rating matrices"
+  ],
+  "x": "एक e-commerce कंपनी implicit feedback को sparse user-by-product matrix के रूप में संग्रहीत करती है और उसे user और product factors के दो पतले matrices में factorize करती है। इनका गुणनफल मूल matrix का सन्निकटन देता है और उन products के scores भर देता है जो user ने नहीं देखे।"
+ },
+ "tensor": {
+  "n": "Tensor (टेंसर)",
+  "d": "Machine learning में tensor संख्याओं का एक बहु-आयामी array है: scalar के 0 अक्ष होते हैं, vector का 1, matrix के 2, और उच्च-क्रम tensors के 3 या अधिक। Shape हर अक्ष का आकार बताती है, जैसे images के batch के लिए (batch, channels, height, width)।\n\nPyTorch, TensorFlow और JAX जैसे deep learning frameworks tensors के इर्द-गिर्द बने हैं। Tensor के साथ एक shape, float32 या bfloat16 जैसा data type, और CPU या GPU जैसा device जुड़ा होता है, और उस पर होने वाले operations को स्वचालित रूप से differentiate किया जा सकता है। Transformer activations के लिए आम shape (batch, sequence, hidden) और attention scores के लिए (batch, heads, seq, seq) है। Broadcasting संगत shapes वाले tensors को बिना copies के जुड़ने देता है। एक आम गलती किसी ख़ास अक्ष क्रम को मान लेना है: frameworks और libraries अलग-अलग होते हैं, जैसे channels-first बनाम channels-last images, और चुपचाप हुई अदला-बदली बिना errors के train हो सकती है पर बेतुकी चीज़ें सीख लेती है।",
+  "u": [
+   "Convolutional networks में images के batches",
+   "Transformer layers से गुज़रते activations",
+   "स्वचालित differentiation के साथ GPU computation"
+  ],
+  "x": "एक computer vision टीम किसी मॉडल को channels-last image pipeline से PyTorch में लाती है, जो channels-first tensors की अपेक्षा करता है। मॉडल input पर जोड़ा गया एक shape assertion एक transposed batch पकड़ लेता है जो वरना बिना किसी error के train हो रहा था।"
+ },
+ "dotproduct": {
+  "n": "Dot Product (बिंदु गुणनफल)",
+  "d": "समान लंबाई के दो vectors का dot product उनकी संगत प्रविष्टियों के गुणनफलों का योग है, जो एक अकेली संख्या देता है। ज्यामितीय रूप से यह दोनों लंबाइयों और उनके बीच के कोण के cosine के गुणनफल के बराबर है, इसलिए यह बड़ा और धनात्मक होता है जब vectors एक ही दिशा में हों, शून्य जब वे orthogonal हों, और ऋणात्मक जब वे विपरीत दिशाओं में हों।\n\nDot product machine learning का सबसे मेहनती operation है। Linear मॉडल का score dot product w·x और bias का योग है; हर neuron एक dot product निकालता है; matrix multiplication dot products का एक grid है; transformer के attention scores queries और keys के बीच dot products हैं। एक जोखिम vector लंबाइयाँ बदलने पर raw dot product को similarity के रूप में उपयोग करना है: लंबे vectors दिशा की परवाह किए बिना ऊँचा score पाते हैं, इसलिए अगर केवल दिशा मायने रखती है तो पहले normalize करें, जिससे cosine similarity मिलती है।",
+  "u": [
+   "Linear और logistic मॉडलों में examples को score करना",
+   "Transformers में query-key attention scores निकालना",
+   "Embedding similarity से items को rank करना"
+  ],
+  "x": "एक recommendation टीम candidate items को user embedding और हर item embedding के dot product से score करती है, जिसे एक vector index लाखों items के लिए तेज़ी से निकालता है। टीम cosine similarity की जगह raw dot product रखती है क्योंकि item vector की लंबाई को लोकप्रियता दर्शाने के लिए train किया गया था।"
+ },
+ "matmul": {
+  "n": "Matrix Multiplication (आव्यूह गुणन)",
+  "d": "Matrix multiplication एक m×k matrix A और एक k×n matrix B को मिलाकर एक m×n matrix C बनाता है, जिसमें हर प्रविष्टि Cᵢⱼ, A की row i और B के column j का dot product है। भीतरी dimensions का मेल खाना ज़रूरी है, और परिणाम पहले linear map B और फिर A लगाने को दर्शाता है।\n\nयह deep learning का computational केंद्र है। किसी batch पर लगी dense layer, input batch और weight matrix का एक matrix multiplication है; attention QKᵀ निकालता है और फिर V से गुणा करता है। GPUs और TPUs इसी के इर्द-गिर्द बने हैं, और इसकी लगभग 2·m·k·n floating-point operations की लागत training compute पर हावी रहती है। एक आम गलतफ़हमी यह है कि यह commutative है: AB सामान्यतः BA से अलग होता है, और BA परिभाषित भी न हो। एक अन्य जोखिम इसे elementwise product से भ्रमित करना है, जिसे NumPy और PyTorch में * लिखा जाता है, जबकि matrix multiplication के लिए @ है।",
+  "u": [
+   "Dense neural network layers का forward pass",
+   "Transformer मॉडलों में attention निकालना",
+   "FLOPs में training compute का अनुमान लगाना"
+  ],
+  "x": "एक inference टीम किसी language model को profile करती है और पाती है कि अधिकांश GPU समय attention और MLP blocks के कुछ बड़े matrix multiplications में जाता है। उन्हें bfloat16 पर ले जाने और छोटे multiplications को बड़े batched multiplications में fuse करने से मॉडल बदले बिना throughput बढ़ जाता है।"
+ },
+ "vecnorm": {
+  "n": "Vector Norm (L1, L2)",
+  "d": "Vector norm किसी vector को एक अऋणात्मक लंबाई देता है। L2 norm परिचित सीधी-रेखा लंबाई है, यानी प्रविष्टियों के वर्गों के योग का वर्गमूल; L1 norm निरपेक्ष मानों का योग है; L∞ norm सबसे बड़ी निरपेक्ष प्रविष्टि है। ये सभी Lp norm की विशेष स्थितियाँ हैं।\n\nNorms पूरे machine learning में दिखते हैं। Weights पर L2 और L1 penalties से ridge regression और lasso मिलते हैं; L1 penalty कुछ weights को ठीक शून्य पर ले जाती है, जो feature selection करता है, जबकि L2 सभी weights को सहजता से सिकोड़ता है। Gradient clipping उन gradients को फिर से scale करता है जिनका L2 norm किसी threshold से अधिक हो। Cosine similarity search से पहले embeddings को L2-normalize किया जाता है, और अंतरों के norms Euclidean और Manhattan distance परिभाषित करते हैं। एक आम भ्रम L2 norm और उसके वर्ग के बीच है: ridge regression squared norm ‖w‖₂² को penalize करता है, जिसका gradient सरल होता है, जबकि clipping और normalization स्वयं norm का उपयोग करते हैं।",
+  "u": [
+   "मॉडल weights का L1 और L2 regularization",
+   "Network training के दौरान gradient norm clipping",
+   "Similarity search से पहले embeddings को normalize करना"
+  ],
+  "x": "एक बड़ा transformer train कर रही टीम हर step पर gradients के global L2 norm को 1.0 पर clip करती है। Clipping से पहले gradient norm को log करना उन्हें शुरुआती चेतावनी संकेत भी देता है, क्योंकि अचानक spikes अक्सर loss divergence से पहले आते हैं।"
+ },
+ "euclidean": {
+  "n": "Euclidean Distance (यूक्लिडीय दूरी)",
+  "d": "Euclidean distance दो बिंदुओं के बीच की सीधी-रेखा दूरी है, जिसे सभी निर्देशांकों पर अंतरों के वर्गों के योग के वर्गमूल के रूप में निकाला जाता है। यह अंतर vector का L2 norm है और दो या तीन dimensions में सामान्य ज्यामितीय दूरी से मेल खाती है।\n\nकई algorithms सीधे इस पर निर्भर हैं: k-nearest neighbors सबसे निकट training बिंदु खोजता है, k-means हर बिंदु को निकटतम centroid को सौंपता है और squared Euclidean distance को न्यूनतम करता है, SVMs में RBF kernels इसके साथ घटते हैं, और vector databases अक्सर इसे search metric के रूप में देते हैं। क्योंकि हर निर्देशांक अपने पैमाने पर योगदान देता है, features को पहले standardize करना चाहिए; वरना डॉलर में मापा गया feature वर्षों में मापे गए feature पर हावी हो जाता है। High-dimensional space में दूरियाँ सिमट जाती हैं, इसलिए निकटतम और दूरतम पड़ोसी लगभग बराबर दूर हो जाते हैं। L2-normalized vectors के लिए squared Euclidean distance 2 − 2·cos θ के बराबर है, इसलिए यह पड़ोसियों को ठीक cosine similarity की तरह rank करती है।",
+  "u": [
+   "k-NN मॉडलों में nearest-neighbor search",
+   "k-means में बिंदुओं को clusters में सौंपना",
+   "Normalized embeddings पर vector search"
+  ],
+  "x": "एक real-estate platform आकार, उम्र, स्थान और कीमत पर k-nearest neighbors से तुलनीय घरों की सिफ़ारिश करता है। क्योंकि raw features के पैमाने बहुत अलग थे, टीम Euclidean distances निकालने से पहले उन्हें standardize करती है ताकि परिणाम पर कीमत हावी न रहे।"
+ },
+ "cosine": {
+  "n": "Cosine Similarity (कोसाइन समानता)",
+  "d": "Cosine similarity मापती है कि दो vectors कितनी हद तक एक ही दिशा में इंगित करते हैं, और इसे उनके dot product को उनकी लंबाइयों के गुणनफल से भाग देकर निकाला जाता है। इसकी range विपरीत दिशाओं के लिए −1 से, orthogonal vectors के लिए 0 होते हुए, समान दिशाओं के लिए 1 तक है, और यह vector की लंबाई को पूरी तरह अनदेखा करती है।\n\nText और embeddings के लिए यह मानक similarity है, क्योंकि embedding की दिशा अर्थ दर्शाती है जबकि उसकी लंबाई अक्सर आवृत्ति या document के आकार को दर्शाती है। Semantic search, RAG के लिए retrieval, duplicate detection और recommendation वाक्य या item embeddings की तुलना cosine similarity से करते हैं; vector indexes आम तौर पर इसे L2-normalized vectors पर dot product के रूप में लागू करते हैं। Cosine distance को 1 − cosine similarity के रूप में परिभाषित किया जाता है। एक जोखिम score को calibrated probability की तरह पढ़ना या मॉडलों के बीच thresholds की तुलना करना है: हर embedding मॉडल की अपनी सामान्य range होती है, और कुछ ऐसे scores देते हैं जो सभी ऊँचे हों, इसलिए thresholds को हर मॉडल के लिए tune करना चाहिए।",
+  "u": [
+   "Sentence embeddings पर semantic search",
+   "RAG systems के लिए context passages retrieve करना",
+   "Near-duplicate documents और प्रश्न पहचानना"
+  ],
+  "x": "एक customer-support platform हर आने वाले प्रश्न को embed करता है और पहले से उत्तर दिए गए प्रश्नों से cosine similarity द्वारा तुलना करता है। Labeled pairs पर tune किए गए threshold से ऊपर के matches agents को सुझाए जाते हैं, और embedding मॉडल बदलने पर threshold को फिर से tune किया जाता है।"
+ },
+ "distmetric": {
+  "n": "Distance Metric (दूरी मापक)",
+  "d": "Distance metric एक function है जो मापता है कि दो वस्तुएँ एक-दूसरे से कितनी दूर हैं और चार नियमों का पालन करता है: दूरियाँ अऋणात्मक हों, केवल समान वस्तुओं के लिए शून्य हों, सममित हों, और triangle inequality d(x, z) ≤ d(x, y) + d(y, z) का पालन करें। Euclidean, Manhattan, Chebyshev, Hamming और Jaccard distance आम metrics हैं।\n\nMetric का चुनाव तय करता है कि k-nearest neighbors, k-means, hierarchical clustering, DBSCAN और vector search के लिए \"समान\" का क्या अर्थ है। Manhattan distance पर Euclidean की तुलना में अकेले बड़े अंतर कम हावी होते हैं; Hamming binary codes के लिए उपयुक्त है; Jaccard sets की तुलना करता है; Mahalanobis distance correlated features का ध्यान रखती है। कुछ लोकप्रिय माप सच्चे metrics नहीं हैं: cosine distance और squared Euclidean distance triangle inequality का उल्लंघन करते हैं, और KL divergence सममित भी नहीं है। यह इसलिए मायने रखता है क्योंकि ball trees जैसी index संरचनाएँ और कुछ clustering गारंटियाँ सच्चा metric मानकर चलती हैं, और बेमेल चुनाव चुपचाप गलत पड़ोसी लौटा सकता है।",
+  "u": [
+   "k-NN और clustering के लिए metric चुनना",
+   "Hamming distance से binary fingerprints की तुलना",
+   "Jaccard distance से sets का overlap मापना"
+  ],
+  "x": "एक chemistry research समूह हर अणु को binary fingerprint के रूप में encode करके और fingerprints की तुलना Jaccard (Tanimoto) distance से करके compound library में search करता है। यह metric साझा substructures को उन्हीं bits पर Euclidean distance की तुलना में कहीं बेहतर दर्शाता है।"
+ },
+ "projection": {
+  "n": "Projection (प्रक्षेपण)",
+  "d": "Projection किसी vector को एक रेखा, समतल या अन्य subspace पर map करता है, उस subspace के भीतर निकटतम बिंदु खोजकर। किसी दिशा u पर x का projection, u के अनुदिश x का घटक है; जो बचता है, यानी x में से उसका projection घटाकर, वह subspace के orthogonal होता है।\n\nProjection कई मूल तरीकों के पीछे की ज्यामिति है। Least squares द्वारा linear regression target vector को feature columns से फैले space पर project करता है, और residual हर feature के orthogonal होता है। PCA dimension घटाने के लिए डेटा को सबसे अधिक variance वाली कुछ दिशाओं पर project करता है। Johnson-Lindenstrauss lemma से उचित ठहराए गए random projections dimension घटाते हुए दूरियों को लगभग बनाए रखते हैं। Neural networks में query, key और value projections बस सीखी गई linear layers हैं। एक जोखिम ऐसी दिशा पर project करना है जिसकी लंबाई इकाई नहीं है, और उसके squared norm से भाग न देना, जिससे परिणाम गलत तरह से scale हो जाता है।",
+  "u": [
+   "Modeling से पहले PCA से dimension घटाना",
+   "Linear regression में least squares fitting",
+   "High-dimensional features को सिकोड़ने के लिए random projection"
+  ],
+  "x": "एक search टीम 768-dimensional document embeddings संग्रहीत करती है पर corpus के एक sample पर fit किए गए PCA से उन्हें 128 dimensions पर project करती है। छोटे vectors index memory को काफ़ी घटा देते हैं, और rollout से पहले एक labeled query set पर recall जाँचा जाता है।"
+ },
+ "orthogonal": {
+  "n": "Orthogonality (लांबिकता)",
+  "d": "दो vectors orthogonal होते हैं जब उनका dot product शून्य हो, यानी वे समकोण पर हैं और एक-दूसरे का कोई घटक नहीं रखते। परस्पर orthogonal इकाई vectors का समूह orthonormal कहलाता है, और जिस square matrix के columns orthonormal हों वह orthogonal matrix है: यह vectors की लंबाई बदले बिना उन्हें घुमाता या परावर्तित करता है, और उसका inverse बस उसका transpose है।\n\nOrthogonality पूरे machine learning में दिखती है। PCA में principal components orthogonal दिशाएँ हैं, इसलिए रूपांतरित features uncorrelated होते हैं। Least squares residuals हर feature column के orthogonal होते हैं। Orthogonal initialization deep और recurrent networks में signal norms को स्थिर रखता है, और QR decomposition स्थिर संख्यात्मक solvers के लिए orthonormal bases बनाता है। High-dimensional space में random vectors लगभग orthogonal होते हैं, इसीलिए असंबंधित embeddings की cosine similarity शून्य के क़रीब होती है। एक आम भ्रम orthogonal को independent के बराबर मानना है: centered डेटा के लिए orthogonality का अर्थ शून्य correlation है, जो nonlinear निर्भरता को ख़ारिज नहीं करता।",
+  "u": [
+   "PCA द्वारा बनाए गए uncorrelated components",
+   "Recurrent network weights का orthogonal initialization",
+   "QR decomposition के ज़रिए स्थिर least squares हल"
+  ],
+  "x": "Sensor sequences के लिए एक deep recurrent मॉडल train कर रही टीम अपने recurrent weight matrix को orthogonal matrix के रूप में initialize करती है। क्योंकि यह vector लंबाइयों को बनाए रखता है, लंबी sequences पर activations और gradients उतनी जल्दी न explode होते हैं न vanish।"
+ },
+ "eigen": {
+  "n": "Eigenvalues और Eigenvectors (आइगेन मान और आइगेन सदिश)",
+  "d": "किसी square matrix A का eigenvector एक nonzero vector है जिसकी दिशा A लगाने पर नहीं बदलती; वह केवल scale होता है, और scaling गुणांक उसका eigenvalue λ है। दूसरे शब्दों में, Av = λv, इसलिए eigenvector के अनुदिश matrix किसी संख्या से साधारण गुणा की तरह काम करता है।\n\nCovariance matrix जैसे symmetric matrix के लिए eigenvectors orthogonal और eigenvalues वास्तविक होते हैं, इसलिए matrix को QΛQᵀ के रूप में लिखा जा सकता है। PCA ठीक यही उपयोग करता है: covariance matrix के eigenvectors principal components हैं और eigenvalues उनके अनुदिश variances हैं। Eigenvalues training की गतिशीलता भी बताते हैं: Hessian का सबसे बड़ा eigenvalue gradient descent में स्थिर learning rate को सीमित करता है, और recurrent weight matrices के 1 से बड़े eigenvalues signals को explode करवाते हैं। एक गलतफ़हमी यह है कि हर matrix के eigenvalues वास्तविक होते हैं; rotations जैसे non-symmetric matrices के eigenvalues complex हो सकते हैं।",
+  "u": [
+   "Covariance matrix से principal components निकालना",
+   "Graph Laplacians पर spectral clustering",
+   "Training के दौरान curvature और स्थिरता का विश्लेषण"
+  ],
+  "x": "एक fraud analytics टीम devices साझा करने वाले accounts के graph पर spectral clustering चलाती है। सबसे छोटे eigenvalues वाले graph Laplacian के eigenvectors accounts के घनिष्ठ रूप से जुड़े समूहों को अलग करते हैं, जिन्हें संभावित fraud rings के रूप में जाँचकर्ताओं को भेजा जाता है।"
+ },
+ "matrank": {
+  "n": "Matrix Rank (आव्यूह कोटि)",
+  "d": "किसी matrix की rank उसकी linearly independent rows की संख्या है, जो हमेशा linearly independent columns की संख्या के बराबर होती है। यह गिनती है कि matrix में वास्तव में कितनी अलग दिशाएँ हैं; m×n matrix की rank अधिकतम min(m, n) होती है, और उस सीमा तक पहुँचने पर वह full rank कहलाता है।\n\nRank तब मायने रखती है जब features या parameters redundant हों। अगर कोई design matrix rank-deficient है, उदाहरण के लिए जब पूरी one-hot encoding एक intercept के साथ हो, तो linear regression का कोई अद्वितीय हल नहीं होता; ridge regression जैसा regularization या एक column हटाना इसे ठीक करता है। Low-rank संरचना का जानबूझकर लाभ भी उठाया जाता है: truncated SVD, matrix factorization और LoRA, जो छोटी rank r वाला weight update सीखकर किसी बड़े मॉडल को fine-tune करता है। एक जोखिम floating-point डेटा पर rank को ठीक-ठीक निकालना है: noise लगभग हर matrix को तकनीकी रूप से full rank बना देता है, इसलिए numerical rank इस आधार पर आँकी जाती है कि कितने singular values एक tolerance से अधिक हैं।",
+  "u": [
+   "Linear regression में redundant features पहचानना",
+   "Recommendations के लिए low-rank matrix factorization",
+   "Fine-tuning के लिए LoRA जैसे low-rank adapters"
+  ],
+  "x": "Pricing regression बना रहा एक analyst अस्थिर, विशाल coefficients पाता है और देखता है कि design matrix rank-deficient है क्योंकि one-hot encoded region columns का योग intercept column के बराबर है। हर feature से एक category हटाने पर full rank और स्थिर अनुमान लौट आते हैं।"
+ },
+ "covmatrix": {
+  "n": "Covariance Matrix (सहप्रसरण मैट्रिक्स)",
+  "d": "Covariance matrix किसी dataset में variables के हर जोड़े के बीच की covariances को एकत्र करता है: प्रविष्टि (i, j) feature i और feature j की covariance है, और diagonal पर हर feature का variance होता है। d features के लिए यह एक symmetric d×d matrix है जो हमेशा positive semi-definite होता है।\n\nयह पूरे डेटा के linear फैलाव और साथ-साथ चलने का सारांश देता है। PCA इसके eigenvectors को principal components के रूप में लेता है; multivariate normal distribution, Gaussian mixture models और LDA इससे parameterize होते हैं; Mahalanobis distance इसके inverse का उपयोग करके ऐसी इकाइयों में दूरी मापती है जो correlated features का ध्यान रखती हैं; whitening डेटा को इस तरह बदलता है कि उसकी covariance identity बन जाए। Standard deviations से भाग देने पर यह correlation matrix बन जाता है। एक मुख्य जोखिम features की तुलना में कम samples के साथ अनुमान लगाना है: sample covariance noisy या singular हो जाती है और invert नहीं की जा सकती, इसलिए उसकी जगह Ledoit-Wolf जैसे shrinkage estimators उपयोग होते हैं।",
+  "u": [
+   "PCA के लिए principal components निकालना",
+   "Multivariate anomaly detection के लिए Mahalanobis distance",
+   "Asset returns से portfolio risk का अनुमान"
+  ],
+  "x": "एक manufacturing quality टीम सामान्य संचालन के दौरान कई correlated sensors की readings पर covariance matrix fit करती है। नई readings तब चिह्नित की जाती हैं जब उनकी Mahalanobis distance असामान्य रूप से बड़ी हो, और Ledoit-Wolf estimator सीमित सामान्य डेटा के बावजूद inverse को स्थिर रखता है।"
+ },
+ "derivative": {
+  "n": "Derivative (अवकलज)",
+  "d": "किसी बिंदु पर function का derivative उसकी तात्कालिक परिवर्तन दर है: input में अत्यंत छोटे बदलाव के लिए प्रति इकाई बदलाव पर output कितना बदलता है। ज्यामितीय रूप से यह उस बिंदु पर वक्र की tangent रेखा का slope है।\n\nDerivatives ही वह तरीका हैं जिनसे मॉडल सीखते हैं। Training एक loss को न्यूनतम करती है, और किसी parameter के सापेक्ष loss का derivative बताता है कि उस parameter को थोड़ा खिसकाने पर loss किस दिशा में और कितनी तेज़ी से बदलता है। Gradient descent इस slope के विपरीत कदम बढ़ाता है। Backpropagation chain rule लगाता है, जो nested functions के derivatives को गुणा करता है, ताकि neural network की हर layer से होकर derivatives मिल सकें, और frameworks इन्हें symbolic सूत्रों या finite differences के बजाय automatic differentiation से निकालते हैं। एक जोखिम यह मान लेना है कि training में उपयोग होने वाला हर function हर जगह differentiable है: ReLU और निरपेक्ष मान में शून्य पर मोड़ (kink) होता है, जहाँ frameworks परंपरा के अनुसार बस एक subgradient चुन लेते हैं।",
+  "u": [
+   "Gradient-based training के लिए loss slopes निकालना",
+   "Backpropagation में layers से होकर chain rule",
+   "Finite differences से analytic gradients की जाँच"
+  ],
+  "x": "Ranking मॉडल के लिए custom loss लिख रहा एक engineer random inputs पर PyTorch के autograd derivative की तुलना finite-difference अनुमान से करके अपने implementation की पुष्टि करता है। एक बेमेल हाथ से लिखे backward function में छूटे हुए गुणांक को उजागर करता है।"
+ },
+ "partialderiv": {
+  "n": "Partial Derivative (आंशिक अवकलज)",
+  "d": "Partial derivative मापता है कि कई variables वाला function तब कैसे बदलता है जब एक input बदले और बाकी सभी स्थिर रहें। f(x, y) के लिए ∂f/∂x किसी बिंदु पर x दिशा के अनुदिश slope है, जिसे y को स्थिरांक मानकर निकाला जाता है।\n\nकिसी मॉडल का loss एक साथ कई parameters पर निर्भर करता है, अक्सर लाखों या अरबों, और हर parameter के सापेक्ष partial derivative बताता है कि केवल उस parameter को बदलने पर loss कैसी प्रतिक्रिया देता है। सभी partial derivatives को एकत्र करने पर gradient मिलता है, जिसका पालन gradient descent और Adam करते हैं; backpropagation एक ही backward pass में इन सभी को कुशलता से निकाल लेता है। एक जोखिम partial derivative को किसी input का कुल प्रभाव समझ लेना है: जब inputs correlated हों, तो एक को बदलने से आम तौर पर दूसरे भी बदलते हैं, इसलिए एक-एक करके निकाला गया slope व्याख्या के लिए भ्रामक हो सकता है।",
+  "u": [
+   "Network training के दौरान प्रति-parameter loss slopes",
+   "Linear मॉडलों के लिए update नियम निकालना",
+   "Inputs के प्रति मॉडल outputs का sensitivity analysis"
+  ],
+  "x": "एक pricing टीम अन्य inputs को स्थिर रखते हुए कीमत के सापेक्ष demand मॉडल के output का partial derivative निकालती है, ताकि प्रति product स्थानीय price sensitivity का अनुमान लग सके। टीम परिणाम को सावधानी से लेती है क्योंकि training डेटा में कीमत promotions के साथ correlated है।"
+ },
+ "gradient": {
+  "n": "Gradient (प्रवणता)",
+  "d": "कई variables वाले function का gradient उसके सभी partial derivatives का vector है। किसी भी बिंदु पर यह उस दिशा में इंगित करता है जिसमें function सबसे तेज़ी से बढ़ता है, और इसकी लंबाई उस वृद्धि की दर है; इसके लंबवत चलने पर function पहले क्रम तक अपरिवर्तित रहता है।\n\nमॉडल train करने का अर्थ है parameters के सापेक्ष loss के negative gradient का पालन करना: gradient descent, SGD, momentum और Adam सभी इसका उपयोग करते हैं, और backpropagation neural networks के लिए इसे कुशलता से निकालता है। Inputs के सापेक्ष gradients भी उपयोगी हैं, saliency maps, adversarial examples और integrated gradients के लिए। व्यावहारिक समस्याएँ gradient के आकार के इर्द-गिर्द घूमती हैं: vanishing gradients deep networks में सीखना रोक देते हैं, exploding gradients उसे diverge करवा देते हैं, और gradient clipping, normalization layers और residual connections दोनों का समाधान करते हैं। एक जोखिम PyTorch में steps के बीच जमा gradients को reset करना भूल जाना है, जो चुपचाप batches के पार gradients को जोड़ता रहता है।",
+  "u": [
+   "Gradient descent और Adam में parameter updates",
+   "Input gradients से saliency maps",
+   "Training स्थिरता के लिए gradient norms की निगरानी"
+  ],
+  "x": "एक बड़े मॉडल को fine-tune कर रही टीम हर layer का gradient norm log करती है। जब learning-rate warmup ग़लती से हट गया, तो logs ने पहले steps में gradient norms के spikes दिखाए, जिससे स्पष्ट हुआ कि loss क्यों diverge हुआ था।"
+ },
+ "jacobian": {
+  "n": "Jacobian (जैकोबियन)",
+  "d": "n inputs को m outputs पर map करने वाले function का Jacobian सभी प्रथम-क्रम partial derivatives का m×n matrix है: row i में output i का gradient होता है। यह किसी बिंदु के पास function का सबसे अच्छा linear सन्निकटन है, जो बताता है कि हर input में छोटा बदलाव हर output को कैसे खिसकाता है।\n\nBackpropagation Jacobian गुणनफलों की एक श्रृंखला है: हर layer का Jacobian उसके input के बदलावों को उसके output के बदलावों पर map करता है, और reverse-mode automatic differentiation loss से पीछे की ओर एक row vector को इन Jacobians से गुणा करता है, इसीलिए उसे कभी पूरे Jacobians स्पष्ट रूप से बनाने की ज़रूरत नहीं पड़ती। इसका determinant मापता है कि function volume को कितना खींचता है, जिसका उपयोग normalizing flows सटीक likelihoods के लिए करते हैं। Inputs के सापेक्ष इसका norm sensitivity मापता है। एक जोखिम किसी बड़े network के लिए पूरा Jacobian बनाना है: इसका आकार outputs गुणा inputs होता है, इसलिए इसकी जगह vector-Jacobian या Jacobian-vector products उपयोग करें।",
+  "u": [
+   "Deep learning में reverse-mode automatic differentiation",
+   "Normalizing flows में change-of-variables likelihoods",
+   "Robustness analysis के लिए input sensitivity मापना"
+  ],
+  "x": "Density estimation के लिए normalizing flow बना रही एक research टीम हर layer को इस तरह design करती है कि उसका Jacobian triangular हो। तब log-determinant diagonal पर एक योग में सिमट जाता है, जिससे high-dimensional inputs के लिए भी सटीक likelihood गणना सस्ती बनी रहती है।"
+ },
+ "hessian": {
+  "n": "Hessian (हेसियन)",
+  "d": "कई variables वाले scalar function का Hessian उसके द्वितीय-क्रम partial derivatives का square matrix है। प्रविष्टि (i, j) ∂²f/∂xᵢ∂xⱼ है, और यह matrix function की curvature बताता है: हर दिशा में चलने पर gradient स्वयं कैसे बदलता है।\n\nजिस बिंदु पर gradient शून्य हो, वहाँ Hessian उसे वर्गीकृत करता है: सभी eigenvalues धनात्मक हों तो local minimum, सभी ऋणात्मक हों तो maximum, और मिश्रित चिह्न हों तो saddle point, जो neural network loss surfaces में आम है। Newton का तरीका curvature-aware कदमों के लिए inverse Hessian का उपयोग करता है, और L-BFGS जैसे quasi-Newton तरीके इसका सन्निकटन लेते हैं; logistic regression solvers और XGBoost का second-order boosting इसे सीधे उपयोग करते हैं। सबसे बड़ा eigenvalue gradient descent के लिए स्थिर learning rate को सीमित करता है। जोखिम आकार है: d parameters के लिए इसमें d² प्रविष्टियाँ होती हैं, इसलिए deep networks के लिए पूरे matrix की जगह Hessian-vector products उपयोग किए जाते हैं।",
+  "u": [
+   "Convex मॉडलों का Newton और L-BFGS optimization",
+   "XGBoost में second-order gradient boosting",
+   "Loss-surface की curvature और sharpness का विश्लेषण"
+  ],
+  "x": "कुछ सौ features पर logistic regression train कर रही एक टीम Newton-प्रकार का solver उपयोग करती है जो हर step पर Hessian बनाता है। यह कुछ ही iterations में converge हो जाता है, जो मायने रखता है क्योंकि मॉडल को हर घंटे ताज़ा डेटा पर फिर से train किया जाता है।"
+ },
+ "logsumexp": {
+  "n": "Log-Sum-Exp और Numerical Stability",
+  "d": "Log-sum-exp, log(Σ exp(xᵢ)) को इस तरह निकालता है कि overflow और underflow से बचा जा सके: पहले अधिकतम मान घटाकर, सर्वसमिका log Σ exp(xᵢ) = m + log Σ exp(xᵢ − m) का उपयोग करते हुए। सामान्य रूप से numerical stability का अर्थ है गणना को इस तरह व्यवस्थित करना कि floating-point संख्याओं की सीमित range और precision परिणाम को दूषित न करें।\n\nयह trick machine learning में हर जगह है। Softmax exponentiate करने से पहले अधिकतम logit घटाता है; cross-entropy loss को softmax probabilities का log लेकर नहीं, बल्कि logits से log-softmax के ज़रिए निकाला जाता है; Gaussian mixture models और HMMs probabilities को log space में जोड़ते हैं। संबंधित आदतों में छोटी probabilities को गुणा करने के बजाय log-likelihoods जोड़ना, और mixed-precision training में loss scaling शामिल हैं। एक आम bug fused functions की जगह पहले softmax और फिर log लगाना, या sigmoid के बाद binary cross-entropy लगाना है: बड़े logits के साथ इससे log(0) और NaN losses मिलते हैं।",
+  "u": [
+   "Logits से स्थिर softmax और cross-entropy",
+   "Mixtures के लिए log space में probabilities जोड़ना",
+   "Mixed-precision training में NaN losses से बचना"
+  ],
+  "x": "एक टीम float16 में classifier train करते समय कभी-कभी NaN losses देखती है। कारण softmax outputs का हाथ से लिया गया log है जो underflow होकर शून्य हो जाते हैं, और raw logits पर framework के fused cross-entropy पर जाने से NaNs ख़त्म हो जाते हैं।"
+ },
+ "nonlinearity": {
+  "n": "Linearity बनाम Nonlinearity (रैखिकता बनाम अरैखिकता)",
+  "d": "कोई function linear होता है जब उसके input को scale करने पर output उसी गुणांक से scale हो और inputs के योग का output outputs के योग के बराबर हो; व्यवहार में इसका अर्थ है कि outputs inputs के weighted योग हैं, संभवतः एक स्थिरांक के साथ। Nonlinear function इन नियमों को तोड़ता है, जैसे वर्ग, thresholds, features के गुणनफल या ReLU।\n\nयह भेद तय करता है कि मॉडल क्या दर्शा सकता है। Linear regression और logistic regression linear decision functions बनाते हैं, इसलिए जब तक nonlinear features न जोड़े जाएँ, वे XOR जैसे patterns या interactions नहीं पकड़ सकते। Neural network में linear layers को एक के ऊपर एक रखने से फिर भी एक ही linear map मिलता है, इसीलिए layers के बीच ReLU, GELU या sigmoid जैसे activation functions रखे जाते हैं; इनके साथ network किसी भी continuous function का सन्निकटन कर सकता है। एक गलतफ़हमी यह है कि sigmoid के कारण logistic regression nonlinear है: उसकी decision boundary फिर भी feature space में एक सीधा hyperplane ही है।",
+  "u": [
+   "Neural network layers के बीच activation functions",
+   "Linear मॉडलों के लिए polynomial और spline features",
+   "घुमावदार decision boundaries के लिए kernel methods"
+  ],
+  "x": "एक analytics टीम पाती है कि loan approval के लिए उसका logistic regression एक ऐसा pattern चूक जाता है जिसमें risk तभी बढ़ता है जब debt और utilization दोनों ऊँचे हों। एक gradient-boosted tree मॉडल बिना manual feature engineering के यह nonlinear interaction पकड़ लेता है।"
+ },
+ "highdim": {
+  "n": "High-Dimensional Space (उच्च-आयामी समष्टि)",
+  "d": "High-dimensional space कई निर्देशांकों वाला एक vector space है, दर्जनों से लेकर कई हज़ारों तक, जैसे 768-dimensional sentence embedding या बड़ी vocabulary पर TF-IDF vector। वहाँ की ज्यामिति उन दो या तीन dimensions से बहुत अलग व्यवहार करती है जिनकी लोग कल्पना कर सकते हैं।\n\nVolume किसी गोले की सतह के पास केंद्रित हो जाता है, random vectors लगभग orthogonal होते हैं, और random बिंदुओं के बीच की दूरियाँ लगभग बराबर हो जाती हैं, इसलिए निकटतम और दूरतम पड़ोसी का अनुपात एक के क़रीब पहुँच जाता है। यही curse of dimensionality है: k-nearest neighbors और k-means जैसे दूरी पर आधारित तरीके अपना contrast खो देते हैं, और space को ढकने के लिए ज़रूरी डेटा की मात्रा घातांकी रूप से बढ़ती है। वास्तविक डेटा आम तौर पर कहीं कम-आयामी manifold के पास होता है, इसीलिए PCA, UMAP और सीखे गए embeddings काम करते हैं, और embeddings पर approximate nearest neighbor search उपयोगी बनी रहती है। एक गलतफ़हमी यह है कि अधिक features हमेशा मदद करते हैं; अप्रासंगिक dimensions दूरियों में noise जोड़ते हैं और overfitting को न्योता देते हैं।",
+  "u": [
+   "Dense embedding spaces पर vector search",
+   "Clustering या k-NN से पहले dimensionality reduction",
+   "कई features और कम samples वाले मॉडलों को regularize करना"
+  ],
+  "x": "प्रति मरीज़ हज़ारों gene-expression features और केवल कुछ सौ मरीज़ों वाली एक genomics टीम clustering से पहले PCA लगाती है। Reduction के बिना k-means की दूरियों पर noise genes हावी थे और clusters अस्थिर बन रहे थे।"
+ }
+}

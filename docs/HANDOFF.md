@@ -6,6 +6,7 @@ Read README.md first, then this file.
 - docs/VIZ_SPEC.md: how 3D figure builders work (contract, colour rule: everything ink except the core idea in accent clay, kit reference, style).
 - docs/CONTENT_SPEC.md: format and quality bar for the English text (n, d, f, u, x, c).
 - docs/TRANSLATE_SPEC.md: translation rules for the 11 other languages.
+- docs/APPENDIX_SPEC.md: the appendix chapters and the term links in the prose (content/terms/<lang>.json matching rules).
 
 ## Testing figures
 ```bash

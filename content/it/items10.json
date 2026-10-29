@@ -1,0 +1,372 @@
+{
+ "token": {
+  "n": "Token",
+  "d": "Un token è l'unità di base del testo che un modello linguistico legge e scrive: di solito una parola, un pezzo di parola, un segno di punteggiatura o un byte.\n\nUn tokenizer suddivide il testo grezzo in token e associa a ciascuno un id intero preso da un vocabolario fisso; il modello non vede mai i caratteri, ma solo questi id, che un embedding layer trasforma in vettori. Gli schemi a sottoparole come il Byte-Pair Encoding (BPE) mantengono intere le parole frequenti e spezzano quelle rare in pezzi più piccoli, così qualsiasi stringa può essere rappresentata.\n\nIl token è l'unità di misura di quasi tutto nel lavoro con gli LLM: la finestra di contesto, la previsione del token successivo, il prezzo delle API, la velocità di generazione e la KV cache si misurano tutti in token. Un equivoco comune è che un token corrisponda a una parola. Il testo inglese vale in media circa tre quarti di parola per token, mentre il codice, i numeri e molte lingue diverse dall'inglese richiedono sensibilmente più token.",
+  "u": [
+   "Stimare il costo delle API LLM e la lunghezza del prompt",
+   "Dosare il testo per farlo rientrare nella finestra di contesto",
+   "Misurare la velocità di generazione in token al secondo"
+  ],
+  "x": "Un team di assistenza clienti conta i token di ogni ticket in arrivo prima di inviarlo a un LLM, troncando i thread di email lunghi in modo che la richiesta resti entro il limite di contesto del modello. Gli stessi conteggi di token alimentano la dashboard mensile dei costi, perché il fornitore fattura per token di input e di output."
+ },
+ "vocab": {
+  "n": "Vocabolario",
+  "d": "Il vocabolario è l'insieme fisso di token distinti che un tokenizer e un modello conoscono, ciascuno associato a un id intero.\n\nViene costruito una sola volta, prima del pretraining, da un algoritmo come il Byte-Pair Encoding (BPE), WordPiece o Unigram, che sceglie le sequenze di caratteri frequenti in un corpus di addestramento fino a raggiungere una dimensione obiettivo. I vocabolari tipici degli LLM contano da circa 30.000 a oltre 200.000 voci, più token speciali per il padding e per l'inizio e la fine della sequenza.\n\nLa dimensione è un compromesso. Un vocabolario più grande accorcia le sequenze, risparmiando contesto e calcolo, ma ingrandisce l'embedding layer e la softmax di output, e le voci rare ricevono pochi aggiornamenti durante il training. Il vocabolario è legato al modello: un modello preaddestrato non può semplicemente cambiare tokenizer, e aggiungere nuovi token per il fine-tuning richiede di ridimensionare e addestrare le nuove righe di embedding. Anche i modelli classici di NLP basati su bag of words o TF-IDF si appoggiano a un vocabolario.",
+  "u": [
+   "Scegliere la dimensione del tokenizer prima del pretraining di un LLM",
+   "Aggiungere token di dominio prima del fine-tuning",
+   "Limitare le feature nei classificatori di testo bag-of-words"
+  ],
+  "x": "Un team legal-tech che esegue il fine-tuning di un modello open aggiunge qualche centinaio di token speciali per il markup dei documenti e i tag delle clausole. Ridimensiona la matrice di embedding, inizializza le nuove righe con la media degli embedding esistenti e verifica che il testo dei contratti tokenizzato diventi più corto prima di avviare il training."
+ },
+ "contextwin": {
+  "n": "Finestra di contesto",
+  "d": "La finestra di contesto è il numero massimo di token che un modello linguistico può considerare contemporaneamente, comprendendo il prompt e i token che genera.\n\nIn un Transformer ogni token presta attenzione agli altri all'interno di questa finestra, quindi tutto ciò che sta fuori è invisibile al modello. Il limite deriva dal training: i positional encoding come RoPE sono appresi fino a una certa lunghezza, e il costo della self-attention cresce in modo quadratico con la lunghezza della sequenza, mentre la memoria della KV cache cresce linearmente. I metodi di estensione del contesto lungo e FlashAttention spingono il limite a centinaia di migliaia di token.\n\nLa finestra condiziona il design del sistema: la Retrieval-Augmented Generation (RAG), il chunking, il riassunto dei turni di chat più vecchi e il troncamento esistono per far stare le informazioni al suo interno. Un errore frequente è presumere che un modello sfrutti tutta la finestra allo stesso modo. Molti modelli richiamano i fatti collocati a metà di un input lungo in modo meno affidabile di quelli vicini all'inizio o alla fine.",
+  "u": [
+   "Dimensionare i chunk recuperati per i prompt RAG",
+   "Troncare o riassumere lunghe cronologie di chat",
+   "Scegliere un modello per l'analisi di documenti lunghi"
+  ],
+  "x": "Un prodotto di revisione documentale suddivide i contratti che superano la finestra di contesto del modello in sezioni sovrapposte, estrae gli obblighi da ciascuna sezione e unisce i risultati. Per i contratti più brevi invia il testo completo in un'unica richiesta, che secondo il team produce riferimenti incrociati più coerenti."
+ },
+ "prompt": {
+  "n": "Prompt",
+  "d": "Un prompt è il testo di input fornito a un modello linguistico per condizionare ciò che genererà dopo.\n\nPoiché un modello decoder-only si limita a continuare una sequenza, è il prompt a definire il task: può contenere istruzioni, un messaggio di sistema, esempi, documenti recuperati, risultati di tool e la conversazione fin lì. I modelli di chat ricevono il prompt in un template strutturato con marcatori di ruolo, che il tokenizer trasforma in token speciali. Il modello poi predice la continuazione un token alla volta.\n\nI prompt sono la principale leva di controllo nel prompt engineering, nell'in-context learning, nel chain-of-thought e nella Retrieval-Augmented Generation (RAG), e nei sistemi in produzione vengono versionati e valutati come codice. Un equivoco comune è che un prompt insegni al modello qualcosa in modo permanente. Nei pesi non cambia nulla; le istruzioni valgono solo per quella richiesta, e ogni token del prompt pesa sulla finestra di contesto e sul costo.",
+  "u": [
+   "Istruire i modelli di chat con messaggi di sistema e utente",
+   "Fornire esempi few-shot per l'in-context learning",
+   "Inserire documenti recuperati nelle richieste RAG"
+  ],
+  "x": "Una piattaforma di marketing conserva i prompt per le descrizioni dei prodotti in un sistema di versionamento, con un messaggio di sistema, due esempi svolti e slot per gli attributi del prodotto. Ogni modifica a un prompt viene eseguita su un evaluation set fisso prima del rilascio, perché piccoli cambi di formulazione possono alterare tono e lunghezza su migliaia di pagine generate."
+ },
+ "finetuning": {
+  "n": "Fine-tuning",
+  "d": "Il fine-tuning è la prosecuzione dell'addestramento di un modello preaddestrato su un dataset più piccolo e specifico, per adattarlo a un nuovo task, dominio o stile.\n\nIl modello parte dai pesi appresi durante il pretraining, che codificano già feature generali, e la discesa del gradiente li aggiorna sui nuovi dati con un learning rate più basso. Il fine-tuning completo aggiorna tutti i parametri; i metodi parameter-efficient come LoRA, QLoRA e gli adapter addestrano invece un piccolo numero di pesi aggiuntivi. Per gli LLM, il supervised fine-tuning (SFT) su coppie istruzione-risposta è di solito seguito da metodi basati sulle preferenze come RLHF o DPO.\n\nIl fine-tuning è la strada standard per passare da un foundation model a un modello di produzione, nella visione come nel linguaggio. Le sue insidie principali sono l'overfitting su dataset piccoli e il catastrophic forgetting, in cui il modello perde capacità generali che possedeva prima. Il fine-tuning è anche un pessimo modo per aggiungere fatti che cambiano spesso; il retrieval è di solito più economico e più facile da aggiornare.",
+  "u": [
+   "Adattare gli LLM al tono e al formato di un'azienda",
+   "Addestrare classificatori di immagini da backbone ImageNet",
+   "Specializzare modelli su testi medici o legali"
+  ],
+  "x": "Una banca esegue il fine-tuning con LoRA di un LLM open-weight su alcune migliaia di esempi revisionati di sintesi dei reclami, così che gli output seguano il suo template regolamentare. Il team mantiene nella suite di valutazione un benchmark di capacità generali per rilevare il catastrophic forgetting dopo ogni ciclo di training."
+ },
+ "foundation": {
+  "n": "Foundation model",
+  "d": "Un foundation model è un modello di grandi dimensioni preaddestrato su dati ampi e su larga scala, adattabile a molti task a valle.\n\nIl termine comprende LLM come GPT e Llama, encoder come BERT, modelli immagine-testo come CLIP e i foundation model per serie temporali. Vengono addestrati con obiettivi self-supervised come la previsione del token successivo o il masked language modeling su enormi corpora non etichettati, così l'apprendimento costoso avviene una volta sola. Gli utenti affrontano poi nuovi task tramite prompting, in-context learning, fine-tuning, LoRA o usando gli embedding del modello come feature.\n\nI foundation model hanno cambiato la pratica del ML, dall'addestrare un modello per ogni task all'adattare un unico modello condiviso, il che rende molto più utili anche piccoli dataset etichettati. Ogni applicazione eredita però le debolezze del modello di base: i bias nei suoi dati di training, una conoscenza che si ferma a una data di cutoff e modalità di errore come l'allucinazione. Resta necessario valutare il modello di base sul task target effettivo.",
+  "u": [
+   "Punto di partenza per il fine-tuning di modelli specifici",
+   "Classificazione zero-shot tramite prompt",
+   "Produzione di embedding per ricerca e clustering"
+  ],
+  "x": "Una compagnia assicurativa costruisce il triage dei sinistri, l'estrazione dai documenti e la stesura delle risposte ai clienti su un unico foundation model in licenza, invece che su tre sistemi addestrati separatamente. Ogni caso d'uso ha i propri prompt, il proprio evaluation set e, dove serve, un piccolo adapter LoRA, mentre il modello di base condiviso viene aggiornato secondo un calendario pianificato."
+ },
+ "perplexity": {
+  "n": "Perplexity (perplessità)",
+  "d": "La perplexity misura quanto bene un modello linguistico predice un testo: è l'esponenziale della log-probabilità negativa media per token.\n\nIntuitivamente, una perplexity di 20 significa che il modello è in media incerto quanto lo sarebbe scegliendo uniformemente tra 20 token a ogni passo. Più bassa è meglio, e un modello perfetto arriverebbe a 1. Essendo l'esponenziale della cross-entropy loss, la perplexity si muove esattamente con la loss di training della previsione del token successivo.\n\nLa perplexity su testo held-out è la metrica intrinseca standard per i run di pretraining, gli studi sulle scaling laws, le verifiche dopo la quantizzazione e gli esperimenti di adattamento al dominio. L'insidia principale è confrontare valori tra modelli con tokenizer o vocabolari diversi: la perplexity per token dipende da come viene suddiviso il testo, quindi i numeri non sono confrontabili. Una perplexity bassa non garantisce inoltre che un modello segua le istruzioni, ragioni bene o eviti l'allucinazione, ed è per questo che servono ancora benchmark sui task.",
+  "u": [
+   "Monitorare l'avanzamento del pretraining di un modello linguistico",
+   "Verificare la perdita di qualità dopo la quantizzazione",
+   "Confrontare modelli adattati al dominio su testo held-out"
+  ],
+  "x": "Un team che quantizza un LLM a 4 bit per ridurre i costi di serving misura la perplexity sullo stesso corpus held-out prima e dopo la quantizzazione, con lo stesso tokenizer. Un piccolo aumento è accettato, ma un salto marcato su una porzione dei dati lo spinge a provare un calibration set diverso."
+ },
+ "logprob": {
+  "n": "Log-probabilità",
+  "d": "Una log-probabilità è il logaritmo naturale di una probabilità, quindi i suoi valori stanno tra meno infinito e 0, dove 0 indica certezza.\n\nI modelli lavorano con le log-probabilità perché il prodotto di molte probabilità piccole va in underflow in virgola mobile, mentre i loro logaritmi si sommano semplicemente. Un modello linguistico produce logit; applicando la log-softmax si ottiene la log-probabilità di ogni token del vocabolario, e la log-probabilità di un'intera sequenza è la somma su tutti i suoi token.\n\nLe log-probabilità sono ovunque nel ML: la stima di massima verosimiglianza le massimizza, la cross-entropy loss e la log loss ne sono la media cambiata di segno, la perplexity ne esponenzia la media, la beam search ordina le ipotesi in base alla loro somma, e PPO e DPO le confrontano tra una policy e un modello di riferimento. Le API degli LLM restituiscono anche le log-probabilità dei token per stimare la confidenza. Un errore comune è confrontare le log-probabilità grezze di sequenze di lunghezza diversa; le sequenze più lunghe ottengono sempre punteggi più bassi, quindi di solito serve una normalizzazione per lunghezza.",
+  "u": [
+   "Valutare risposte candidate in base alla verosimiglianza del modello",
+   "Calcolare le loss nell'addestramento a massima verosimiglianza",
+   "Segnalare output LLM a bassa confidenza per la revisione"
+  ],
+  "x": "Un servizio di estrazione di informazioni chiede all'API dell'LLM le log-probabilità dei token insieme a ogni campo estratto. I campi la cui log-probabilità media scende sotto una soglia calibrata vengono inviati a un revisore umano invece di essere scritti direttamente nel database."
+ },
+ "ngram": {
+  "n": "N-gramma (n-gram)",
+  "d": "Un n-gramma è una sequenza contigua di n elementi, di solito parole o caratteri: gli unigrammi sono elementi singoli, i bigrammi coppie e i trigrammi terne.\n\nContare gli n-grammi cattura l'ordine locale delle parole che le parole singole non colgono, per esempio che «non buono» è diverso da «buono». Un classico modello linguistico a n-grammi stima la probabilità della parola successiva dai conteggi delle n−1 parole precedenti, con uno smoothing per gestire le sequenze mai viste in training.\n\nGli n-grammi restano feature utili nei classificatori di testo basati su bag of words e TF-IDF, nel controllo ortografico, nel rilevamento dei quasi-duplicati e in metriche di valutazione come BLEU e ROUGE, che contano la sovrapposizione di n-grammi. I team che lavorano sugli LLM usano la sovrapposizione di n-grammi anche per rilevare la contaminazione dei benchmark nei dati di training. Il limite principale è la sparsità: il numero di n-grammi possibili cresce esponenzialmente con n, quindi la maggior parte degli n-grammi lunghi compare raramente o mai, e i conteggi non possono generalizzare a frasi simili ma mai viste.",
+  "u": [
+   "Feature basate su coppie di parole per classificatori di testo",
+   "Rilevare la contaminazione del test set nei corpora di training",
+   "Calcolare i punteggi di sovrapposizione BLEU e ROUGE"
+  ],
+  "x": "Un team che prepara un corpus di training per un LLM calcola le sovrapposizioni di 13-grammi tra il corpus e i propri benchmark di valutazione. I documenti che condividono n-grammi lunghi con le domande dei benchmark vengono rimossi, così i punteggi riportati riflettono la generalizzazione e non la memorizzazione."
+ },
+ "tfidf": {
+  "n": "TF-IDF",
+  "d": "TF-IDF (term frequency–inverse document frequency) è una pesatura che assegna un punteggio alto a una parola in un documento quando vi compare spesso ma è rara nel resto del corpus.\n\nLa term frequency premia le parole in evidenza nel documento; la inverse document frequency, un logaritmo di quanti documenti contengono la parola, penalizza le parole comuni come «il» o «dati». Ogni documento diventa un vettore sparso sul vocabolario, di solito normalizzato L2 perché la similarità del coseno confronti i documenti in modo equo.\n\nI vettori TF-IDF con la regressione logistica o una SVM lineare sono una baseline forte e veloce per la classificazione del testo, e TF-IDF insieme a BM25 alimenta ancora la ricerca per parole chiave e il retrieval ibrido nei sistemi RAG. Il limite principale è che ignora il significato: sinonimi come «auto» e «automobile» non condividono alcun peso, e l'ordine delle parole va perso a meno di aggiungere n-grammi.",
+  "u": [
+   "Baseline veloci per la classificazione del testo",
+   "Retrieval per parole chiave nei sistemi di ricerca ibrida",
+   "Individuare i termini caratteristici di cluster di documenti"
+  ],
+  "x": "Una piattaforma di assistenza smista i ticket in arrivo verso i team con un modello TF-IDF e regressione logistica che si riaddestra in pochi minuti su una CPU. Il team lo mantiene come baseline di produzione che qualsiasi classificatore Transformer più pesante deve battere nettamente prima di sostituirlo."
+ },
+ "bagofwords": {
+  "n": "Bag of words",
+  "d": "Il bag of words rappresenta un testo come i conteggi di ciascuna parola del vocabolario che contiene, ignorando grammatica e ordine delle parole.\n\nUn vectorizer costruisce prima un vocabolario dal corpus di training, poi trasforma ogni documento in un vettore con una voce per parola, che contiene un conteggio o un flag binario di presenza. Poiché la maggior parte dei documenti usa una frazione minima del vocabolario, i vettori vengono memorizzati come matrici sparse. Aggiungere n-grammi ripristina parte dell'ordine locale, e TF-IDF ripesa i conteggi.\n\nIl bag of words è l'input classico per i filtri antispam Naive Bayes, i classificatori di testo a regressione logistica e i topic model, e serve ancora per baseline rapide e interpretabili. Il limite chiave è che «il cane morde l'uomo» e «l'uomo morde il cane» ottengono vettori identici, e i sinonimi non hanno alcun legame. Le parole non viste durante la costruzione del vocabolario vengono scartate silenziosamente in fase di predizione, il che può nascondere il drift nel testo in arrivo.",
+  "u": [
+   "Filtri Naive Bayes per spam e sentiment",
+   "Classificatori di testo interpretabili basati su parole chiave",
+   "Feature di input per il topic modeling"
+  ],
+  "x": "Il filtro antispam di primo livello di un provider di email usa conteggi bag-of-words con Naive Bayes multinomiale, perché si addestra in modo incrementale e valuta i messaggi in microsecondi. I messaggi con punteggio incerto passano a un modello neurale più lento."
+ },
+ "hallucination": {
+  "n": "Allucinazione",
+  "d": "Si parla di allucinazione quando un modello linguistico genera contenuti fluenti e sicuri, ma falsi o non supportati dal suo input o dai fatti noti.\n\nDeriva dal modo in cui gli LLM vengono addestrati: la previsione del token successivo premia le continuazioni plausibili, non quelle verificate, quindi quando il modello non possiede una conoscenza produce comunque il testo che suona più probabile, come una citazione, una funzione di API o una statistica inventate. Il campionamento con temperatura alta e le domande su fatti rari la rendono più probabile.\n\nLe mitigazioni comprendono la Retrieval-Augmented Generation (RAG), che ancora le risposte a documenti forniti, la richiesta di citazioni, il tool use per calcoli e ricerche, i controlli di self-consistency, l'addestramento all'astensione durante l'allineamento e gli evaluation set che misurano la fattualità. Un equivoco comune è che la RAG elimini le allucinazioni. Il modello può comunque fraintendere, combinare o ignorare i passaggi recuperati, quindi anche i sistemi ancorati alle fonti hanno bisogno di verifiche che ogni affermazione sia supportata da esse.",
+  "u": [
+   "Valutazione della fattualità delle risposte degli LLM",
+   "Verifica delle citazioni negli assistenti basati su retrieval",
+   "Guardrail per output legali, medici e finanziari"
+  ],
+  "x": "Un assistente di ricerca giuridica risponde solo a partire da documenti giurisprudenziali recuperati e allega una citazione a ogni affermazione. Un secondo passaggio di verifica controlla che ogni passaggio citato contenga davvero il principio di diritto indicato, e le risposte che non superano il controllo vengono segnalate invece di essere mostrate."
+ },
+ "alignment": {
+  "n": "Allineamento",
+  "d": "L'allineamento è il lavoro che fa corrispondere il comportamento di un modello di AI alle intenzioni e ai valori di chi lo sviluppa e di chi lo usa: utile, onesto e innocuo.\n\nUn LLM preaddestrato si limita a continuare il testo, quindi può ignorare le istruzioni, produrre contenuti tossici o assecondare richieste dannose. L'addestramento di allineamento rimodella questo comportamento dopo il pretraining, di solito con un supervised fine-tuning (SFT) su dimostrazioni, seguito da un'ottimizzazione sulle preferenze come RLHF con un reward model e PPO, DPO, oppure Constitutional AI e RLAIF. Il red teaming e le valutazioni di sicurezza mettono alla prova il risultato.\n\nL'allineamento ha anche un versante di ricerca: l'interpretabilità meccanicistica e la scalable oversight studiano se i modelli perseguono gli obiettivi previsti. Un'insidia comune è il reward hacking, in cui il modello impara a sfruttare i difetti del segnale di ricompensa, per esempio diventando eccessivamente prolisso o accondiscendente, invece di migliorare davvero. Il rifiuto eccessivo di richieste innocue è l'errore opposto, quindi la valutazione dell'allineamento deve misurare entrambi.",
+  "u": [
+   "Rispetto delle istruzioni negli assistenti di chat",
+   "Ridurre gli output dannosi o tossici dei modelli",
+   "Red teaming prima del rilascio pubblico di un modello"
+  ],
+  "x": "Un laboratorio di AI raccoglie da annotatori formati giudizi di preferenza a coppie sulle risposte dell'assistente ed esegue DPO sopra il proprio modello SFT. Prima del rilascio, il modello allineato viene valutato sul rifiuto delle richieste dannose e su un insieme di prompt innocui ma dall'apparenza sensibile, per intercettare i rifiuti eccessivi."
+ },
+ "mdp": {
+  "n": "Processo decisionale di Markov (MDP)",
+  "d": "Un processo decisionale di Markov è il modello matematico del processo decisionale sequenziale usato nell'apprendimento per rinforzo: stati, azioni, probabilità di transizione, ricompense e un fattore di sconto.\n\nA ogni passo un agente osserva uno stato, sceglie un'azione, riceve una ricompensa e passa a un nuovo stato. La proprietà di Markov afferma che lo stato e la ricompensa successivi dipendono solo dallo stato e dall'azione correnti. L'obiettivo è una policy che massimizzi la somma attesa scontata delle ricompense future.\n\nGli MDP sono alla base di value iteration, Q-learning, policy gradient e PPO, e inquadrano anche l'RLHF, dove lo stato è il prompt più il testo generato fin lì e ogni azione è un token. Un errore comune è definire uno stato che in realtà non è markoviano, per esempio un singolo fotogramma video che nasconde la velocità; il problema diventa allora parzialmente osservabile, e lo stato va esteso con la cronologia o con uno stato nascosto.",
+  "u": [
+   "Formalizzare problemi di controllo e robotica",
+   "Inquadrare la generazione di testo degli LLM per l'RLHF",
+   "Modellare decisioni su scorte e prezzi"
+  ],
+  "x": "Un team operativo modella il rifornimento di un magazzino come un MDP il cui stato contiene le scorte correnti e gli ordini aperti, le cui azioni sono le quantità da ordinare e la cui ricompensa sottrae i costi di giacenza e di rottura di stock. Una policy appresa in un simulatore della domanda passata viene confrontata con l'attuale regola del punto di riordino prima di qualsiasi rilascio."
+ },
+ "policy": {
+  "n": "Policy",
+  "d": "Nell'apprendimento per rinforzo, la policy è la regola con cui l'agente sceglie le azioni: una funzione che associa a ogni stato un'azione o una distribuzione di probabilità sulle azioni.\n\nUna policy deterministica restituisce un'azione per stato; una policy stocastica π(a|s) restituisce probabilità, il che consente l'esplorazione ed è richiesto dai metodi policy gradient. Una policy può essere una tabella o una rete neurale, derivata da una funzione di valore oppure appresa direttamente.\n\nI metodi policy gradient come REINFORCE, PPO e GRPO regolano i parametri della policy per aumentare la probabilità delle azioni che hanno portato a una ricompensa alta. Nell'RLHF la policy è l'LLM stesso: lo stato è il testo fin lì e ogni azione è il token successivo. Un'insidia comune è ottimizzare la policy così aggressivamente contro una ricompensa imperfetta da farla derivare verso comportamenti strani; l'RLHF lo limita con una penalità KL che mantiene la policy vicina a un modello di riferimento.",
+  "u": [
+   "Controllare robot e agenti che giocano",
+   "Fine-tuning degli LLM con PPO o GRPO",
+   "Scegliere azioni nei sistemi di raccomandazione e di bidding"
+  ],
+  "x": "Un team di ad bidding addestra una policy neurale che mappa le feature dell'asta su un moltiplicatore dell'offerta, partendo dai dati registrati e affinandola poi con un'esplorazione online limitata. Ogni nuova policy gira in shadow mode accanto a quella attuale prima di controllare la spesa reale."
+ },
+ "reward": {
+  "n": "Ricompensa (reward)",
+  "d": "Una ricompensa è il segnale di feedback scalare che l'ambiente restituisce a un agente di apprendimento per rinforzo dopo un'azione.\n\nL'agente non massimizza le singole ricompense ma il ritorno, cioè la somma scontata delle ricompense future, quindi può accettare un piccolo costo ora in cambio di un guadagno maggiore dopo. Il fattore di sconto γ stabilisce quanto conta il futuro. Le ricompense possono essere dense, cioè arrivare a ogni passo, oppure sparse, cioè arrivare solo alla fine di un episodio, il che rende l'apprendimento molto più difficile.\n\nNell'addestramento degli LLM le ricompense provengono da un reward model appreso nell'RLHF, dal feedback di un'AI nell'RLAIF, oppure da controlli automatici come unit test e risposte esatte nell'RL con ricompense verificabili. L'insidia più nota è il reward hacking: l'agente trova un modo di ottenere punteggi alti che il progettista non aveva previsto, come un modello che produce risposte più lunghe perché il reward model preferisce la lunghezza.",
+  "u": [
+   "Progettare obiettivi per agenti RL e robot",
+   "Valutare gli output degli LLM con reward model",
+   "Ricompense basate su unit test per addestrare la generazione di codice"
+  ],
+  "x": "Un team che addestra un modello di generazione di codice con l'apprendimento per rinforzo assegna una ricompensa di 1 solo quando la funzione generata supera unit test nascosti. Il team sorveglia il reward hacking campionando gli output, dopo aver scoperto che le prime policy gestivano come casi speciali gli input dei test visibili."
+ },
+ "stateaction": {
+  "n": "Stato e azione",
+  "d": "Nell'apprendimento per rinforzo, lo stato è l'informazione che descrive la situazione corrente dell'ambiente, e un'azione è una scelta che l'agente può compiere in quello stato.\n\nNel ciclo fondamentale l'agente osserva lo stato sₜ, esegue l'azione aₜ e l'ambiente restituisce una ricompensa e lo stato successivo sₜ₊₁. Gli stati possono essere piccoli vettori, come posizione e velocità di un carrello, oppure osservazioni ad alta dimensionalità, come le immagini. Gli spazi delle azioni sono discreti, come muoversi a sinistra o a destra, oppure continui, come le coppie ai giunti di un braccio robotico.\n\nLa scelta della rappresentazione di stato e azione determina quali algoritmi si possono applicare: Q-learning e DQN richiedono azioni discrete, mentre il controllo continuo usa metodi actor-critic. Nell'RLHF lo stato è il prompt più il testo generato fin lì e l'azione è il token successivo. Un errore comune è lasciare fuori dallo stato informazioni da cui dipende la ricompensa, il che rende il problema non markoviano.",
+  "u": [
+   "Progettare spazi di osservazione per il controllo robotico",
+   "Definire insiemi di azioni discrete per agenti di gioco",
+   "Rappresentare la generazione di testo come stato e azione"
+  ],
+  "x": "Un team di data center che costruisce un controller RL per il raffreddamento definisce lo stato come temperature recenti, carico dei server e meteo esterno, e le azioni come variazioni dei setpoint entro limiti sicuri. Limitare le azioni a piccoli aggiustamenti vincolati permette agli operatori di approvare il controller per l'uso reale."
+ },
+ "valuefn": {
+  "n": "Funzione di valore (value function)",
+  "d": "Una funzione di valore stima il ritorno atteso che un agente raccoglierà a partire da uno stato, o da una coppia stato-azione, seguendo poi una data policy.\n\nIl valore di stato V(s) indica quanto è buono trovarsi in uno stato; il valore d'azione Q(s,a) indica quanto è buono compiere lì l'azione a. Entrambi soddisfano l'equazione di Bellman: un valore è uguale alla ricompensa immediata più il valore scontato dello stato successivo, quindi entrambi si possono apprendere dall'esperienza tramite bootstrapping.\n\nQ-learning e DQN apprendono direttamente Q e agiscono in modo greedy rispetto a essa. I metodi actor-critic come PPO addestrano una rete di valore come critic, che riduce la varianza dei policy gradient tramite il vantaggio A = Q − V; GRPO elimina questo critic e usa le medie di gruppo come baseline. Non bisogna confondere valore e ricompensa: la ricompensa è immediata, il valore è il totale atteso a lungo termine.",
+  "u": [
+   "Q-learning e DQN per il controllo discreto",
+   "Reti critic in actor-critic e PPO",
+   "Valutazione delle posizioni negli agenti di gioco"
+  ],
+  "x": "Uno studio di videogiochi addestra agenti per il playtesting con un metodo actor-critic, in cui una rete di valore predice l'esito atteso di ogni posizione di gioco. Le stime di valore vengono anche registrate per evidenziare i livelli in cui gli agenti sono sicuri di vincere troppo presto, il che segnala ai designer problemi di bilanciamento."
+ },
+ "explore": {
+  "n": "Esplorazione e sfruttamento (exploration vs exploitation)",
+  "d": "Esplorazione e sfruttamento indicano il compromesso tra provare azioni per saperne di più e scegliere l'azione che al momento sembra la migliore.\n\nUn agente che si limita a sfruttare può fissarsi su un'opzione mediocre; un agente che si limita a esplorare spreca ricompensa su opzioni che sa già essere scarse. Le strategie standard sono ε-greedy, che sceglie un'azione casuale con una piccola probabilità ε; l'upper confidence bound (UCB), che aggiunge un bonus alle opzioni incerte; e il Thompson sampling, che campiona da una posterior sul valore di ciascuna opzione.\n\nIl compromesso compare nell'apprendimento per rinforzo, nei multi-armed bandit per raccomandazioni e pubblicità, nell'ottimizzazione bayesiana e nella temperatura di campionamento durante il fine-tuning RL degli LLM. Un'insidia comune nei sistemi di raccomandazione in produzione è il puro sfruttamento: un modello addestrato solo sugli item che ha già scelto di mostrare non impara nulla sul resto del catalogo, il che rafforza il popularity bias e rallenta l'uscita dal cold start.",
+  "u": [
+   "Multi-armed bandit per pubblicità e raccomandazioni",
+   "Schedule di esplorazione nell'apprendimento per rinforzo",
+   "Funzioni di acquisizione nell'ottimizzazione bayesiana"
+  ],
+  "x": "Un'app di notizie usa il Thompson sampling per scegliere i titoli della schermata principale, così le nuove notizie ricevono qualche impression anche prima di avere una storia di clic. La quota di traffico dedicata all'esplorazione cala automaticamente man mano che la stima del click-through di ogni notizia diventa più certa."
+ },
+ "inference": {
+  "n": "Inferenza",
+  "d": "L'inferenza consiste nell'eseguire un modello addestrato su nuovi input per produrre predizioni, a differenza del training, che aggiorna i pesi del modello.\n\nDurante l'inferenza i pesi sono fissi, non si calcolano gradienti, e layer come dropout e batch normalization passano al comportamento di valutazione. Può avvenire in modalità batch, valutando un'intera tabella durante la notte, oppure online, rispondendo a singole richieste entro un budget di latenza. Per gli LLM l'inferenza si divide in una fase di prefill, che elabora il prompt in parallelo, e una fase di decode, che genera un token alla volta usando la KV cache.\n\nL'inferenza domina di solito il costo complessivo di un modello in produzione lungo tutta la sua vita, ed è per questo che esistono quantizzazione, knowledge distillation, pruning, continuous batching e speculative decoding. Un errore classico è lasciare un modello PyTorch in modalità training, con il dropout ancora attivo; un altro è preprocessare gli input in modo diverso in inferenza rispetto al training, il che degrada l'accuratezza senza dare segnali.",
+  "u": [
+   "Scoring in tempo reale dietro API web",
+   "Predizioni batch notturne su grandi tabelle",
+   "Generazione di testo nei prodotti di chat basati su LLM"
+  ],
+  "x": "Un retailer valuta l'intera base clienti con un modello di churn in un job batch notturno, mentre un servizio separato a bassa latenza esegue un sistema di raccomandazione di prodotti per ogni visualizzazione di pagina. Entrambi riutilizzano esattamente il codice di preprocessing del training, impacchettato insieme all'artefatto del modello."
+ },
+ "latency": {
+  "n": "Latenza e throughput",
+  "d": "La latenza è il tempo che una richiesta impiega dall'arrivo alla risposta; il throughput è il numero di richieste o di token che un sistema completa per unità di tempo.\n\nLe due grandezze sono collegate ma spesso tirano in direzioni opposte. Raggruppare molte richieste in batch sfrutta la GPU in modo molto più efficiente e aumenta il throughput, ma ogni richiesta può dover aspettare che il batch si riempia, il che aumenta la latenza. La latenza si riporta con percentili come p50 e p99, perché le medie nascondono i casi lenti che gli utenti notano. Per gli LLM si misurano separatamente il time to first token e il tempo per token di output, e il throughput in token al secondo.\n\nQuesti numeri guidano le scelte su dimensione del modello, quantizzazione, hardware, politica di batching, continuous batching, KV cache e caching dei risultati. Un errore frequente è misurare la latenza con una singola richiesta su una macchina inattiva; sotto un carico concorrente reale, le code possono moltiplicare la latenza di coda, quindi i test di carico devono riprodurre i pattern di traffico di produzione.",
+  "u": [
+   "Fissare target di latenza p99 per le API dei modelli",
+   "Scegliere la dimensione dei batch per il serving su GPU",
+   "Pianificare la capacità per il throughput di token degli LLM"
+  ],
+  "x": "Un team di ricerca deve restituire i risultati riordinati entro un budget fisso di latenza p99, quindi ha distillato il proprio cross-encoder in un modello più piccolo e ha posto un limite al tempo di attesa dei batch. Il throughput viene poi scalato aggiungendo repliche invece di ingrandire i batch."
+ },
+ "gpu": {
+  "n": "GPU e VRAM",
+  "d": "Una GPU è un processore con migliaia di core paralleli, progettato per la moltiplicazione di matrici densa che sta al cuore del deep learning, e la VRAM è la sua memoria integrata.\n\nTraining e inferenza sono veloci su GPU perché le operazioni di un layer possono girare in parallelo, specialmente sui tensor core che accelerano FP16, BF16 e formati a precisione inferiore. Tutto ciò che un calcolo tocca deve stare nella VRAM: pesi del modello, attivazioni, gradienti e stati dell'ottimizzatore durante il training, e la KV cache durante l'inferenza degli LLM. Il traffico di memoria è spesso il vero collo di bottiglia, che FlashAttention riduce per l'attenzione.\n\nLa capacità della VRAM decide di solito che cosa è possibile: dimensione del modello, batch size e lunghezza del contesto. Mixed precision, quantizzazione, gradient checkpointing, LoRA e il parallelismo dei dati, tensoriale o a pipeline esistono tutti per rientrarvi. Un equivoco comune è che siano solo i pesi a determinare il fabbisogno di memoria; con Adam, il training richiede circa quattro volte la memoria dei pesi o più, prima ancora di contare le attivazioni.",
+  "u": [
+   "Dimensionare l'hardware per training e serving di LLM",
+   "Scegliere batch size e precisione per rientrare nella memoria",
+   "Diagnosticare errori di out-of-memory durante il training"
+  ],
+  "x": "Un team che pianifica il serving di un modello da 7 miliardi di parametri calcola che i pesi a 16 bit richiedono circa 14 GB prima della KV cache, quindi sceglie la quantizzazione a 4 bit per gestire diverse richieste concorrenti a contesto lungo su una sola GPU da 24 GB. Esegue test di carico alla lunghezza di contesto massima per confermare che la KV cache non sfori la memoria."
+ },
+ "serving": {
+  "n": "Model serving",
+  "d": "Il model serving è l'infrastruttura che carica un modello addestrato e risponde alle richieste di predizione delle applicazioni, di solito tramite un'API HTTP o gRPC.\n\nUn sistema di serving impacchetta il modello con il suo preprocessing, lo mantiene caricato in memoria, raggruppa le richieste in batch, aumenta e riduce le repliche in base al traffico ed espone health check e metriche. Tra i server generici ci sono TorchServe, Triton Inference Server e BentoML; i server per LLM come vLLM e TGI aggiungono continuous batching, PagedAttention e lo streaming dei token generati. Pattern di deployment come i canary release, lo shadow traffic e il test A/B permettono a una nuova versione di dimostrare il proprio valore in sicurezza.\n\nIl serving collega il training al monitoraggio dei modelli, ai target di latenza e throughput e al feature store, che deve fornire online le stesse feature disponibili offline. L'insidia più nota è il training-serving skew: feature calcolate nel percorso di serving in modo diverso rispetto al training, che degradano le predizioni senza sollevare alcun errore.",
+  "u": [
+   "Endpoint REST per predizioni in tempo reale",
+   "API di LLM con risposte in streaming dei token",
+   "Rilasci canary e shadow di nuove versioni del modello"
+  ],
+  "x": "Una piattaforma di prestiti espone il proprio modello di credito dietro un'API interna con due repliche per regione e un canary che riceve una piccola quota di traffico per ogni nuova versione. Richieste e predizioni vengono registrate, così il monitoraggio può confrontare le distribuzioni delle feature in produzione con i dati di training."
+ },
+ "monitoring": {
+  "n": "Monitoraggio dei modelli",
+  "d": "Il monitoraggio dei modelli è il tracciamento continuo di input, output, prestazioni e stato di salute del sistema di un modello in produzione, per accorgersi di quando smette di funzionare come previsto.\n\nI modelli si degradano in silenzio: non viene sollevata alcuna eccezione quando i clienti cambiano comportamento o una pipeline a monte inizia a inviare valori nulli. Il monitoraggio osserva quindi diversi livelli: la qualità dei dati, come i tassi di valori mancanti e i cambi di schema; il data drift degli input, misurato con statistiche come il population stability index o la divergenza KL; il drift della distribuzione delle predizioni; e, quando arrivano le etichette, le metriche reali come ROC-AUC, precision o calibrazione.\n\nGli alert del monitoraggio fanno partire un'indagine, un rollback o un riaddestramento. Un errore comune è affidarsi solo agli allarmi di drift: il drift di una feature poco importante può non contare, mentre le prestazioni possono calare senza drift visibile quando cambia la relazione tra feature ed etichetta. Contano anche i ritardi delle etichette; le etichette di frode possono arrivare settimane dopo, quindi nel frattempo servono metriche proxy.",
+  "u": [
+   "Rilevare il data drift nelle feature di produzione",
+   "Tracciare l'accuratezza reale quando arrivano le etichette",
+   "Generare alert su pipeline di dati a monte guaste"
+  ],
+  "x": "Un team antifrode monitora ogni giorno il population stability index delle feature principali, la quota di transazioni sopra la soglia di decisione e, con un certo ritardo, la precision sui casi confermati. Un aumento improvviso dei valori mancanti per un circuito di carte è stato ricondotto a un cambio di schema a monte prima che danneggiasse i tassi di rilevamento."
+ },
+ "retraining": {
+  "n": "Riaddestramento",
+  "d": "Il riaddestramento consiste nell'addestrare di nuovo un modello in produzione su dati più recenti, perché resti al passo con i cambiamenti del mondo che predice.\n\nA causa del data drift e del concept drift, l'accuratezza di un modello di solito si degrada dopo il deployment. I team riaddestrano secondo un calendario fisso, per esempio settimanale o mensile, oppure quando il monitoraggio dei modelli rileva un calo delle prestazioni o un drift. Il nuovo modello viene addestrato dalla stessa pipeline di ML, valutato su dati recenti held-out con una validazione temporale, confrontato con il modello in produzione e promosso solo se è almeno altrettanto buono.\n\nLe scelte di riaddestramento riguardano la finestra di training, se dare più peso ai dati recenti e se partire dal vecchio modello con un warm start o addestrare da zero. Un'insidia frequente è la contaminazione da feedback: le decisioni del modello stesso modellano le nuove etichette, come un modello antifrode che blocca transazioni il cui esito reale non viene quindi mai osservato. Un'altra è la promozione automatica senza guardrail.",
+  "u": [
+   "Aggiornamenti programmati dei modelli di previsione della domanda",
+   "Riaddestramento dei modelli antifrode innescato dal drift",
+   "Valutazione champion-challenger prima della promozione"
+  ],
+  "x": "Un'azienda di food delivery riaddestra ogni settimana il proprio modello dei tempi di consegna sugli ordini degli ultimi mesi. Il modello candidato deve battere il champion attuale sull'ultima settimana di ordini held-out e superare controlli di coerenza su ogni città prima di sostituire la versione in produzione."
+ },
+ "featurestore": {
+  "n": "Feature store",
+  "d": "Un feature store è un sistema di dati che calcola, memorizza e serve le feature di machine learning, in modo che training e produzione usino le stesse definizioni.\n\nDi solito ha due parti: un offline store, che conserva i valori storici delle feature per costruire i training set, e un online store, un database chiave-valore a bassa latenza, che al momento della predizione restituisce i valori più recenti per un'entità come un utente o una carta. Le definizioni si scrivono una volta e si condividono tra i team. Il progetto open source Feast e le piattaforme gestite dei cloud provider seguono questo schema.\n\nI feature store affrontano il training-serving skew e supportano join corretti point-in-time: per ogni esempio di training restituiscono i valori delle feature così com'erano al timestamp dell'etichetta, non valori successivi. Sbagliare questo passaggio è una forma silenziosa di data leakage che gonfia le metriche offline. Il costo principale è operativo: un altro sistema da gestire, mantenere aggiornato e monitorare, di cui i team piccoli con modelli solo batch possono fare a meno.",
+  "u": [
+   "Servire feature utente in tempo reale ai modelli antifrode",
+   "Costruire training set corretti point-in-time",
+   "Condividere le definizioni delle feature tra team di ML"
+  ],
+  "x": "Un'azienda di pagamenti calcola in un job di streaming conteggi mobili delle transazioni per carta su diverse finestre e li scrive nell'online store. Il modello antifrode li legge in millisecondi al momento dell'autorizzazione, e le stesse identiche definizioni generano i dati storici di training dall'offline store."
+ },
+ "mlpipeline": {
+  "n": "Pipeline di ML",
+  "d": "Una pipeline di ML è una sequenza ordinata e automatizzata di passi che trasforma i dati grezzi in un modello addestrato, valutato e pronto per il deployment.\n\nI passi tipici sono acquisizione dei dati, validazione, feature engineering, suddivisione, training, tuning degli iperparametri, valutazione e registrazione del modello con le sue metriche e la sua lineage. Orchestratori come Airflow, Kubeflow Pipelines e strumenti simili eseguono i passi, mettono in cache i loro output e li rieseguono secondo un calendario o un trigger. Su scala più piccola, il termine indica anche una Pipeline di scikit-learn che concatena preprocessing e modello in un unico oggetto.\n\nLe pipeline rendono i risultati riproducibili e sono ciò su cui gira il riaddestramento. La versione di scikit-learn previene anche una forma classica di data leakage: adattare scaler, imputer o target encoder sull'intero dataset prima della cross-validation fa trapelare nel training informazioni dei fold di test. Racchiuderli in una Pipeline fa sì che ogni trasformazione venga adattata solo sul fold di training e salvata insieme al modello per l'inferenza.",
+  "u": [
+   "Run di training end-to-end riproducibili",
+   "Preprocessing senza leakage dentro la cross-validation",
+   "Riaddestramento programmato e registrazione dei modelli"
+  ],
+  "x": "Un team di analytics assicurativo esegue ogni notte una pipeline che valida i nuovi dati delle polizze rispetto a uno schema, ricostruisce le feature, riaddestra un modello di pricing e lo registra con il suo report di valutazione. Un passo di validazione fallito interrompe il run, così un file a monte malformato non arriva mai al training."
+ },
+ "benchmark": {
+  "n": "Benchmark",
+  "d": "Un benchmark è un insieme standardizzato di dataset, task e metrica usato per confrontare modelli o sistemi nelle stesse condizioni.\n\nTra i benchmark di ML più noti ci sono ImageNet per la classificazione di immagini, GLUE e SuperGLUE per la comprensione del linguaggio, e MMLU, GSM8K, HumanEval e SWE-bench per gli LLM; MLPerf misura la velocità di hardware e software. Un benchmark fissa la suddivisione dei dati, la procedura di valutazione e la regola di punteggio, così che un numero riportato si possa riprodurre e confrontare.\n\nI benchmark guidano i progressi della ricerca e la scelta dei modelli, e i report di valutazione degli LLM ne elencano di solito diversi. Le loro insidie sono ben documentate: la contaminazione del test set, quando gli item del benchmark compaiono nei dati di training; la saturazione, quando i modelli migliori si avvicinano tutti al massimo; e l'overfitting sul benchmark dovuto a ripetuti tuning su di esso. Inoltre i punteggi dei benchmark spesso non si trasferiscono a un prodotto specifico, quindi i team costruiscono evaluation set interni a partire da task reali degli utenti.",
+  "u": [
+   "Confrontare LLM su task di ragionamento e di codice",
+   "Misurare le prestazioni dell'hardware per l'inferenza",
+   "Tracciare la qualità del modello tra un rilascio e l'altro"
+  ],
+  "x": "Un'azienda che valuta tre fornitori di LLM usa i punteggi dei benchmark pubblici solo per una prima selezione, poi costruisce un benchmark interno di alcune centinaia di domande di assistenza reali e anonimizzate, con risposte di riferimento valutate. La scelta finale si basa su quell'insieme interno, insieme a latenza e costo per richiesta."
+ },
+ "anomaly": {
+  "n": "Rilevamento di anomalie (anomaly detection)",
+  "d": "Il rilevamento di anomalie è il task di individuare le osservazioni che si discostano nettamente dal pattern normale dei dati, come eventi rari, guasti o attacchi.\n\nPoiché le anomalie sono rare e spesso non etichettate, la maggior parte dei metodi impara com'è la normalità e assegna a ogni punto un punteggio in base a quanto se ne allontana. Gli approcci comuni sono regole statistiche sugli z-score o sullo scarto interquartile, metodi basati su densità e distanza come il Local Outlier Factor (LOF) e DBSCAN, Isolation Forest, che isola i punti insoliti con pochi split casuali, e l'errore di ricostruzione di un autoencoder o della PCA.\n\nIl rilevamento di anomalie è al servizio di antifrode, monitoraggio delle apparecchiature, sicurezza di rete e monitoraggio dei modelli. La sua insidia centrale è la soglia: il punteggio non ha unità di misura, il tasso di contaminazione di solito è ignoto, e una soglia troppo bassa sommerge gli operatori di falsi positivi. La valutazione è difficile senza etichette, quindi i team revisionano i casi segnalati e tracciano la precision su quel campione.",
+  "u": [
+   "Rilevare guasti delle apparecchiature dai dati dei sensori",
+   "Individuare login e traffico di rete sospetti",
+   "Segnalare problemi di qualità dei dati nelle pipeline"
+  ],
+  "x": "Un'azienda manifatturiera valuta le letture dei sensori di vibrazione delle macchine di produzione con un Isolation Forest addestrato su settimane di funzionamento normale. Gli alert vanno ai tecnici della manutenzione, le cui conferme vengono raccolte per calibrare la soglia e, in seguito, per addestrare un modello supervisionato."
+ },
+ "recsys": {
+  "n": "Sistema di raccomandazione",
+  "d": "Un sistema di raccomandazione predice quali item, come prodotti, video, brani o articoli, un utente probabilmente desidera e ne mostra una selezione ordinata.\n\nI grandi sistemi lavorano di solito per fasi. La candidate generation recupera qualche centinaio di item tra milioni, usando il filtraggio collaborativo, modelli two-tower che proiettano utenti e item nello stesso spazio vettoriale e la ricerca vettoriale approssimata ai vicini più prossimi. Un modello di ranking, spesso gradient boosting o una rete profonda, assegna poi un punteggio ai candidati con feature ricche per predire il click-through rate (CTR), il tempo di visione o l'acquisto.\n\nLa qualità offline si misura con metriche di ranking come NDCG e recall at k, ma il test decisivo è il test A/B sugli utenti reali. Le insidie principali sono il problema del cold start per nuovi utenti e item, il popularity bias e i feedback loop, in cui il sistema impara solo dagli item che ha già scelto di mostrare, restringendo le raccomandazioni nel tempo a meno di aggiungere esplorazione.",
+  "u": [
+   "Raccomandazioni di prodotti nei negozi online",
+   "Feed personalizzati di video e musica",
+   "Ranking di articoli di notizie e annunci di lavoro"
+  ],
+  "x": "Un servizio di streaming recupera i candidati con un modello di embedding two-tower e un indice ANN, poi li ordina con un modello gradient boosting che predice la probabilità di guardare oltre pochi minuti. Le nuove uscite ricevono una piccola spinta di esplorazione, così raccolgono feedback pur non avendo alcuna storia di visualizzazioni."
+ },
+ "ctr": {
+  "n": "Click-through rate (CTR)",
+  "d": "Il click-through rate è la frazione di impression, cioè delle volte in cui un item è stato mostrato, che si sono tradotte in un clic.\n\nMisura quanto sono coinvolgenti annunci, risultati di ricerca o raccomandazioni. Come target di modellazione, il CTR predetto è la probabilità che un utente specifico clicchi un item specifico in un contesto specifico, appresa da un classificatore binario sui log delle impression: regressione logistica, factorization machine, gradient boosting o modelli profondi con embedding layer. Nelle aste pubblicitarie il CTR predetto viene moltiplicato per l'offerta, quindi la probabilità deve essere ben calibrata e non solo ordinata correttamente; log loss e calibrazione delle probabilità vengono monitorate insieme alla ROC-AUC.\n\nI dati di CTR sono fortemente sbilanciati, spesso con clic ben al di sotto dell'uno per cento delle impression. Un'insidia comune è il position bias: gli item mostrati in alto ricevono più clic indipendentemente dalla rilevanza, quindi un modello addestrato ingenuamente sui log impara dove erano posizionati gli item invece di ciò che gli utenti preferiscono.",
+  "u": [
+   "Ordinare gli annunci nelle aste in tempo reale",
+   "Ottimizzare l'ordine dei risultati di ricerca",
+   "Confrontare varianti di raccomandazione nei test A/B"
+  ],
+  "x": "Una piattaforma pubblicitaria predice il CTR di ogni annuncio idoneo in pochi millisecondi e ordina gli annunci per offerta moltiplicata per il CTR predetto. Poiché il sottocampionamento dei non-clic distorce le probabilità, il team corregge le predizioni del modello in base al tasso di campionamento e monitora ogni giorno la calibrazione per categoria di annuncio."
+ },
+ "coldstart": {
+  "n": "Cold start",
+  "d": "Il cold start è il problema di fare buone predizioni per nuovi utenti, nuovi item o un nuovo sistema che hanno poca o nessuna storia di interazioni.\n\nColpisce più duramente i sistemi di raccomandazione basati sul filtraggio collaborativo, che imparano esclusivamente dalle interazioni passate: un prodotto che nessuno ha ancora acquistato non ha un embedding appreso, e un nuovo utente non ha una storia da confrontare. I rimedi comuni sono feature basate sul contenuto, come testo, immagini e categoria dell'item, codificate con un modello preaddestrato; feature demografiche o di contesto per gli utenti; fallback basati sulla popolarità; domande di onboarding; e un'esplorazione esplicita che mostra i nuovi item ad alcuni utenti per raccogliere feedback rapidamente.\n\nI modelli ibridi che combinano segnali collaborativi e feature di contenuto sono la risposta standard in produzione. Un errore frequente è valutare solo su utenti e item con una lunga storia, il che nasconde quanto male il sistema tratti i nuovi arrivati; le prestazioni in cold start andrebbero riportate come una porzione separata.",
+  "u": [
+   "Raccomandare prodotti appena inseriti",
+   "Personalizzare le prime sessioni dei nuovi utenti",
+   "Lanciare un sistema di raccomandazione senza dati di interazione"
+  ],
+  "x": "Un marketplace online codifica titolo e foto di ogni nuovo annuncio con un modello testo-immagine preaddestrato e lo colloca vicino ad articoli simili già consolidati nell'indice di raccomandazione. Quando l'annuncio raccoglie abbastanza interazioni, il suo embedding collaborativo prende il posto di quello basato sul contenuto."
+ },
+ "collabfilter": {
+  "n": "Filtraggio collaborativo (collaborative filtering)",
+  "d": "Il filtraggio collaborativo raccomanda item a un utente in base alle preferenze di altri utenti con comportamento simile, usando solo i dati di interazione e nessun contenuto degli item.\n\nI metodi di vicinato calcolano la similarità tra utenti o tra item, di solito la similarità del coseno sui vettori di interazione, e raccomandano gli item apprezzati da utenti simili o simili agli item che l'utente ha apprezzato. I metodi di fattorizzazione di matrici approssimano invece la matrice sparsa utente-item come prodotto di matrici di embedding di utenti e item a basso rango, addestrate con alternating least squares o con la discesa del gradiente.\n\nIl filtraggio collaborativo alimenta i sistemi di raccomandazione di prodotti, film e musica, e i suoi embedding servono spesso per il retrieval dei candidati. Le sue debolezze principali sono il problema del cold start, la scarsità di dati e il popularity bias. Un'insidia sottile è trattare il feedback implicito, come clic o visualizzazioni, alla stregua di valutazioni esplicite: un'interazione mancante non significa disinteresse, quindi i metodi impliciti pesano in modo diverso le voci osservate e quelle non osservate.",
+  "u": [
+   "Raccomandazioni di prodotti dalla cronologia degli acquisti",
+   "Liste di articoli simili, come «spesso comprati insieme»",
+   "Retrieval dei candidati per i modelli di ranking"
+  ],
+  "x": "Un servizio musicale fattorizza ogni notte la propria matrice di ascolti con alternating least squares implicito per produrre embedding di utenti e brani. Questi embedding alimentano sia le playlist personali sia una funzione di brani simili, mentre i brani appena usciti si affidano alle feature audio finché non raccolgono ascolti."
+ },
+ "fraud": {
+  "n": "Rilevamento delle frodi",
+  "d": "Il rilevamento delle frodi usa il machine learning per individuare transazioni, account o richieste di rimborso probabilmente fraudolenti, di solito in tempo reale e prima che si verifichino perdite.\n\nViene tipicamente impostato come una classificazione binaria su dati fortemente sbilanciati, spesso con le frodi ben al di sotto dell'uno per cento degli eventi. I modelli gradient boosting come XGBoost e LightGBM su feature costruite ad hoc, come la velocità delle transazioni, l'importo rispetto alla storia dell'utente e i cambi di dispositivo e di posizione, sono il cavallo di battaglia del settore, affiancati dal rilevamento di anomalie per i nuovi pattern e dalle graph neural network per le reti di frodatori. I punteggi alimentano regole che approvano, bloccano o inviano a revisione.\n\nLa valutazione usa precision, recall, PR-AUC e soglie di decisione basate sui costi invece dell'accuratezza, che non ha senso con tassi di base così bassi. Le insidie comprendono il ritardo delle etichette, perché i chargeback arrivano settimane dopo; il drift avversario, dato che i frodatori si adattano; e il data leakage da feature calcolate dopo la transazione, che sembrano predittive offline ma non sono disponibili al momento della decisione.",
+  "u": [
+   "Scoring in tempo reale delle transazioni con carta",
+   "Triage delle frodi nei sinistri assicurativi",
+   "Rilevare account falsi e abusi delle promozioni"
+  ],
+  "x": "Un emittente di carte valuta ogni autorizzazione con un modello gradient boosting alimentato da feature di velocità in tempo reale provenienti da un feature store. I punteggi sopra una soglia vengono rifiutati e una fascia intermedia attiva un'autenticazione rafforzata, con soglie fissate confrontando il costo delle frodi con l'attrito per i clienti."
+ },
+ "churn": {
+  "n": "Previsione del churn",
+  "d": "La previsione del churn stima quali clienti probabilmente smetteranno di usare un prodotto o disdiranno un abbonamento entro un periodo futuro.\n\nDi solito è un problema di classificazione binaria costruito con un design a snapshot: le feature vengono calcolate dalla storia di ciascun cliente fino a una data di cutoff, come trend di utilizzo, ticket di assistenza, pagamenti falliti e anzianità, e l'etichetta registra se il cliente ha abbandonato nella finestra successiva. Regressione logistica e gradient boosting sono comuni, e i valori SHAP spiegano quali fattori determinano il rischio di ciascun cliente.\n\nI punteggi ordinano i clienti per le campagne di retention, quindi la precision tra i clienti in cima alla classifica e la calibrazione contano spesso più dell'accuratezza complessiva. Un'insidia chiave è il data leakage attraverso feature registrate dopo il cutoff. Un'altra è agire solo sul rischio: i clienti con maggiore probabilità di abbandonare non sono necessariamente quelli che uno sconto riuscirà a trattenere, ed è per questo che i team più maturi passano all'uplift modeling e al test A/B degli interventi.",
+  "u": [
+   "Indirizzare offerte di retention per servizi in abbonamento",
+   "Dare priorità ai contatti degli account manager",
+   "Stimare il fatturato ricorrente a rischio"
+  ],
+  "x": "Un operatore di telecomunicazioni valuta ogni mese tutti i clienti in abbonamento con un modello di churn gradient boosting costruito su una data di cutoff fissa e una finestra di etichetta di 60 giorni. Il team di retention contatta i clienti in cima alla classifica, e un gruppo di controllo randomizzato misura se il contatto riduce davvero il churn."
+ },
+ "demandfc": {
+  "n": "Previsione della domanda",
+  "d": "La previsione della domanda stima quanto di un prodotto o servizio servirà nei periodi futuri, per esempio unità per negozio al giorno.\n\nLe previsioni nascono dalle vendite storiche combinate con trend, stagionalità, festività, prezzi, promozioni e meteo. I metodi vanno dallo smoothing esponenziale, ARIMA e Prophet per le singole serie ai modelli globali come il gradient boosting con feature di lag e feature su finestra mobile, fino a modelli profondi come N-BEATS, il Temporal Fusion Transformer e i foundation model per serie temporali, che imparano su migliaia di serie. Le previsioni per quantili forniscono gli intervalli di cui hanno bisogno le decisioni sulle scorte.\n\nLa validazione deve rispettare l'ordine temporale, usando una validazione temporale con un orizzonte coerente con la decisione di business. Un'insidia comune è che le vendite registrate non sono la domanda reale: quando un articolo è esaurito le vendite scendono a zero anche se i clienti lo volevano, quindi i modelli addestrati sulle vendite grezze sottostimano la domanda a meno che le rotture di stock non vengano segnalate o corrette.",
+  "u": [
+   "Riassortimento e ordini delle scorte a livello di negozio",
+   "Pianificazione del personale per call center e magazzini",
+   "Pianificazione del carico energetico e della domanda di corse"
+  ],
+  "x": "Una catena di supermercati addestra un unico modello globale gradient boosting su tutte le combinazioni di negozio e prodotto, usando vendite ritardate, promozioni e flag delle festività, e predice diversi quantili per le due settimane successive. I giorni con rotture di stock vengono esclusi dai target di training, così il modello non impara una domanda artificialmente bassa."
+ },
+ "creditscore": {
+  "n": "Credit scoring",
+  "d": "Il credit scoring stima la probabilità che un mutuatario non rimborsi un prestito, e i finanziatori la usano per approvare, prezzare e limitare il credito.\n\nLo strumento classico è la scorecard: le feature numeriche vengono raggruppate con il binning, ogni bin viene codificato con il suo weight of evidence, e una regressione logistica li trasforma in punti che, sommati, danno un punteggio. I finanziatori moderni usano anche il gradient boosting sui dati delle centrali rischi e delle domande di finanziamento, spesso con vincoli di monotonicità, così che un rapporto di indebitamento più alto non abbassi mai il rischio predetto.\n\nI modelli di credito sono strettamente regolamentati. I finanziatori devono spiegare le decisioni sfavorevoli, ed è per questo che scorecard interpretabili e spiegazioni SHAP sono comuni, e devono verificare l'assenza di trattamenti iniqui verso i gruppi protetti. Gli strumenti di valutazione chiave sono la ROC-AUC o il coefficiente di Gini (2·AUC − 1), la calibrazione e la stabilità nel tempo. Un'insidia nota è la reject inference: il modello impara solo dai richiedenti approvati, quindi gli esiti dei richiedenti respinti non vengono mai osservati.",
+  "u": [
+   "Approvare e prezzare prestiti al consumo",
+   "Fissare i limiti delle carte di credito",
+   "Scorecard interpretabili per il credito regolamentato"
+  ],
+  "x": "Un finanziatore al consumo valuta le domande con un modello gradient boosting sotto vincoli di monotonicità e mappa le probabilità su una scala a punti familiare. Ogni richiedente respinto riceve i motivi principali tratti dalle spiegazioni del modello, e la stabilità del punteggio viene riesaminata ogni mese rispetto al campione di sviluppo."
+ }
+}

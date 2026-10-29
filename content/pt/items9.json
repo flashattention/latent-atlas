@@ -1,0 +1,382 @@
+{
+ "lossfn": {
+  "n": "Função de Loss (Função de Perda)",
+  "d": "Uma função de loss é uma fórmula que atribui um único número ao quanto a previsão de um modelo está errada para um exemplo. O treinamento ajusta os parâmetros para tornar a loss média sobre os dados a menor possível, de modo que a loss define o que o modelo é levado a acertar. O gradiente descendente segue o seu gradiente.\n\nTarefas diferentes pedem losses diferentes: erro quadrático médio para regressão, entropia cruzada para classificação e modelagem de linguagem, hinge loss para máquinas de vetores de suporte, Huber loss quando os alvos contêm outliers. A escolha embute suposições; o erro quadrático, por exemplo, corresponde a ruído gaussiano e pune fortemente os erros grandes. Uma confusão comum é tratar a loss como a métrica de avaliação. A loss precisa ser diferenciável e bem-comportada para a otimização, enquanto métricas de negócio como acurácia ou F1 muitas vezes não são, então um modelo pode melhorar sua loss sem melhorar a métrica que realmente importa.",
+  "u": [
+   "Definir o alvo de treinamento de qualquer modelo supervisionado",
+   "Comparar modelos na validação e no early stopping",
+   "Codificar a assimetria de erros de um problema de negócio"
+  ],
+  "x": "Uma equipe de previsão de demanda troca o erro quadrático do seu modelo de gradient boosting por uma quantile loss, porque a falta de estoque custa mais do que o excesso. O modelo continua sendo monitorado pela métrica de acurácia dos planejadores, mas a loss agora empurra as previsões para o quantil mais alto de que o negócio realmente precisa."
+ },
+ "objective": {
+  "n": "Função Objetivo",
+  "d": "Uma função objetivo é a quantidade completa que um otimizador minimiza ou maximiza, normalmente a loss média sobre os dados de treino mais eventuais termos de penalidade. A loss avalia uma única previsão; o objetivo combina todas elas com regularização, restrições reescritas como penalidades ou termos auxiliares em um único escalar que define o problema de otimização.\n\nNa regressão ridge, o objetivo é o erro quadrático mais λ vezes a norma quadrática dos pesos. No XGBoost, ele acrescenta penalidades sobre o número de folhas e os pesos das folhas. No RLHF, o objetivo é a recompensa esperada menos uma penalidade de KL que mantém a política perto do modelo de referência. Alterar qualquer termo muda a solução, então ajustar λ é, na verdade, ajustar o objetivo. Um erro frequente é reportar o valor do objetivo como qualidade do modelo: ele inclui termos de penalidade e dados de treino, portanto não é comparável entre configurações e não diz nada sobre generalização.",
+  "u": [
+   "Adicionar penalidades de regularização a uma loss de treino",
+   "Equilibrar vários objetivos em treinamento multitarefa",
+   "Formular os termos de recompensa e KL no RLHF"
+  ],
+  "x": "Uma equipe de recomendação treina um modelo cujo objetivo soma uma loss de cliques, uma loss ponderada de tempo assistido e uma penalidade L2. Quando testa um novo peso para o tempo assistido, a equipe compara as execuções por métricas de negócio em dados separados, e não pelo valor do objetivo, porque o próprio objetivo muda a cada ponderação."
+ },
+ "paramhyper": {
+  "n": "Parâmetros vs. Hiperparâmetros",
+  "d": "Parâmetros são os valores que um modelo aprende com os dados durante o treinamento, enquanto hiperparâmetros são as configurações escolhidas antes do treinamento que controlam como o aprendizado acontece. Os pesos de uma rede neural, os coeficientes de uma regressão logística e os limiares de divisão de uma árvore de decisão são parâmetros. Taxa de aprendizado, tamanho do batch, profundidade, força da regularização e número de épocas são hiperparâmetros.\n\nOs parâmetros são ajustados pelo algoritmo de treinamento, por exemplo, pelo gradiente descendente sobre a loss. Os hiperparâmetros são escolhidos por uma busca externa, como grid search, random search ou otimização bayesiana, avaliada em um conjunto de validação ou por validação cruzada. O conjunto de teste não pode ser usado nessa escolha; caso contrário, o score reportado fica otimista. Uma ideia equivocada relacionada é que mais tuning sempre ajuda: buscar centenas de configurações em um conjunto de validação pequeno pode causar overfitting nos próprios dados de validação, e a configuração escolhida parece melhor do que realmente é.",
+  "u": [
+   "Escolher taxa de aprendizado e tamanho do batch",
+   "Ajustar profundidade e número de folhas no boosting",
+   "Separar pesos aprendidos de configurações em experimentos"
+  ],
+  "x": "Uma equipe de plataforma de ML executa toda noite uma otimização bayesiana sobre taxa de aprendizado, número de folhas e fração de features do seu modelo de churn em LightGBM. Cada tentativa ajusta os parâmetros do modelo nos folds de treino, e apenas a melhor configuração é retreinada com todos os dados e avaliada uma única vez em um mês reservado."
+ },
+ "weightsbias": {
+  "n": "Pesos e Bias",
+  "d": "Pesos e bias são os números aprendíveis dentro de um modelo: cada peso escala uma entrada, e o bias é uma constante somada depois. Um único neurônio calcula z = w·x + b, então os pesos decidem com que força cada entrada empurra a saída, e o bias desloca o resultado independentemente das entradas.\n\nGeometricamente, os pesos definem a orientação de uma fronteira de decisão e o bias a afasta da origem; sem bias, toda fronteira de um modelo linear teria de passar pelo zero. Em uma rede neural, cada camada tem uma matriz de pesos e um vetor de bias, e a backpropagation calcula gradientes para ambos. O weight decay costuma ser aplicado aos pesos, mas muitas vezes não aos biases. Note que esse bias não tem relação com o viés estatístico do trade-off viés–variância nem com o viés social nos dados; a mesma palavra nomeia três ideias diferentes.",
+  "u": [
+   "Definir os neurônios de toda camada densa e convolucional",
+   "Excluir os biases do weight decay nos otimizadores",
+   "Interpretar coeficientes de modelos lineares e logísticos"
+  ],
+  "x": "Uma equipe que faz fine-tuning de um modelo de visão cria dois grupos de parâmetros no otimizador, aplicando weight decay às matrizes de pesos e deixando biases e escalas de normalização sem decay. Isso segue a prática comum das receitas de treinamento de transformers e evita encolher parâmetros que não contribuem para o overfitting da mesma forma."
+ },
+ "epoch": {
+  "n": "Época, Batch e Iteração",
+  "d": "Uma época é uma passagem completa pelos dados de treino, um batch é o subconjunto de exemplos usado em uma única atualização, e uma iteração é um desses passos de atualização. Com 10.000 exemplos e tamanho de batch 100, uma época leva 100 iterações.\n\nO treinamento com mini-batches, padrão no gradiente descendente estocástico e no Adam, calcula o gradiente em um batch, atualiza os pesos e segue adiante; os dados costumam ser embaralhados a cada época para que os batches variem. Schedules de taxa de aprendizado, warmup, checkpointing e early stopping são configurados em épocas ou em passos, e misturar os dois é uma fonte comum de bugs. Grandes modelos de linguagem costumam ser treinados por cerca de uma época ou menos, então o progresso é contado em tokens ou passos. Uma ideia equivocada frequente é que mais épocas sempre ajudam; a partir de certo ponto o modelo memoriza o conjunto de treino e a loss de validação sobe, e é por isso que o early stopping a monitora.",
+  "u": [
+   "Configurar data loaders e a duração do treinamento",
+   "Programar o decaimento da taxa de aprendizado por passo",
+   "Escolher quando avaliar e salvar checkpoints"
+  ],
+  "x": "Uma equipe de fala treina em um dataset grande demais para ser revisitado com frequência, então mede o progresso em passos do otimizador e avalia a cada 2.000 passos em vez de a cada época. Quando depois aumenta o tamanho do batch para um cluster maior, ela reescala os schedules de warmup e decaimento para que continuem cobrindo a mesma quantidade de dados."
+ },
+ "convergence": {
+  "n": "Convergência",
+  "d": "Convergência significa que um procedimento iterativo de treinamento se estabilizou: novas atualizações já não mudam de forma significativa os parâmetros nem reduzem o objetivo. Na prática, ela é declarada quando a melhora da loss, a norma do gradiente ou a mudança dos parâmetros fica abaixo de uma tolerância, ou quando um número máximo de iterações é atingido.\n\nEm problemas convexos como a regressão logística, o gradiente descendente com uma taxa de aprendizado adequada converge para o mínimo global, e os solvers do scikit-learn param por tolerância e emitem um aviso quando max_iter é atingido antes. Em redes neurais, convergência normalmente significa chegar a uma região plana da paisagem da loss, não a um ótimo garantido. A taxa de aprendizado controla o caminho: alta demais causa oscilação ou divergência, baixa demais torna o progresso muito lento. Uma armadilha comum é ignorar um ConvergenceWarning ou supor que uma loss de treino estagnada é boa notícia; features sem escalonamento costumam causar o aviso, e um platô também pode ser um ponto de sela.",
+  "u": [
+   "Definir tolerância e max_iter dos solvers",
+   "Diagnosticar divergência por taxa de aprendizado alta demais",
+   "Decidir quando treinamentos longos podem parar"
+  ],
+  "x": "Uma equipe de analytics recebe um ConvergenceWarning da regressão logística treinada sobre valores brutos de transações. Depois de padronizar as features, o solver converge em uma fração das iterações e os coeficientes ficam estáveis entre retreinamentos, o que permite usá-los em um relatório mensal."
+ },
+ "localmin": {
+  "n": "Mínimo Local vs. Global",
+  "d": "Um mínimo global é o ponto mais baixo de uma função de loss considerando todos os parâmetros possíveis, enquanto um mínimo local é mais baixo que a sua vizinhança imediata, mas não necessariamente o mais baixo de todos. O gradiente descendente usa apenas a informação de inclinação local, então ele para onde o gradiente se anula, o que pode ser um mínimo local.\n\nProblemas convexos como regressão linear, regressão logística e SVMs não têm mínimos locais ruins: qualquer mínimo local é global. As losses de redes neurais são não convexas, mas pesquisas sugerem que, em dimensões muito altas, a maioria dos pontos críticos com loss alta são pontos de sela, e não mínimos locais ruins, e que muitos mínimos locais atingem losses semelhantes. O ruído do gradiente estocástico, o momentum, uma boa inicialização e reinícios aleatórios ajudam; o k-means usa várias inicializações pelo mesmo motivo. Uma ideia equivocada é que encontrar o mínimo global da loss de treino seja desejável; isso pode simplesmente gerar overfitting, e mínimos planos costumam generalizar melhor.",
+  "u": [
+   "Rodar k-means com várias inicializações aleatórias",
+   "Explicar por que modelos convexos têm solução única",
+   "Reiniciar ajustes não convexos a partir de seeds diferentes"
+  ],
+  "x": "Uma equipe de segmentação de clientes roda o k-means com dez inicializações e fica com a solução de menor inércia, porque uma única execução às vezes cai em um mínimo local que junta dois segmentos reais. As mesmas seeds são registradas para que a clusterização escolhida possa ser reproduzida na próxima atualização."
+ },
+ "closedform": {
+  "n": "Solução em Forma Fechada",
+  "d": "Uma solução em forma fechada é uma resposta exata para um problema de otimização escrita como uma fórmula finita, calculada diretamente em vez de por atualizações iterativas. Os mínimos quadrados ordinários são o caso clássico: os melhores pesos da regressão linear são w = (XᵀX)⁻¹Xᵀy, obtidos em um único passo de álgebra linear.\n\nA regressão ridge e o PCA (por meio de uma decomposição em autovalores ou da SVD) também têm uma. A regressão logística, o lasso e as redes neurais não têm, então precisam de gradiente descendente ou de outros solvers iterativos. Uma forma fechada é precisa e não tem taxa de aprendizado para ajustar, mas pode ser cara: inverter uma matriz d × d custa cerca de O(d³). Na prática, as bibliotecas nunca formam a inversa explícita; elas resolvem o sistema linear com QR, Cholesky ou SVD, o que é mais rápido e numericamente mais estável quando as features são quase colineares.",
+  "u": [
+   "Ajustar mínimos quadrados ordinários e regressão ridge",
+   "Calcular o PCA por decomposição em autovalores ou SVD",
+   "Baselines rápidos antes do treinamento iterativo de modelos"
+  ],
+  "x": "Uma equipe de precificação reajusta a cada hora uma regressão ridge sobre algumas centenas de features usando a solução em forma fechada por meio de uma resolução de Cholesky. Cada reajuste leva bem menos de um segundo, sem taxa de aprendizado nem verificações de convergência para monitorar, o que mantém o pipeline simples."
+ },
+ "stochastic": {
+  "n": "Estocástico vs. Determinístico",
+  "d": "Um processo determinístico sempre produz a mesma saída para a mesma entrada, enquanto um processo estocástico envolve aleatoriedade, de modo que execuções repetidas podem diferir. Em machine learning, tanto os algoritmos quanto as execuções de treinamento podem ser de um tipo ou de outro.\n\nO gradiente descendente estocástico estima o gradiente a partir de um mini-batch aleatório em vez do dataset inteiro, o que é mais ruidoso, mas muito mais barato por passo, e o ruído pode ajudar a escapar de pontos de sela. Random forest, bagging, dropout, data augmentation, inicialização aleatória de pesos e decodificação de texto por amostragem com temperatura também são estocásticos. A regressão linear em forma fechada e a decodificação gulosa são determinísticas. Fixar uma seed aleatória torna as execuções repetíveis, mas o determinismo completo em GPUs também exige kernels determinísticos, porque algumas operações paralelas somam números de ponto flutuante em ordens variáveis. Uma armadilha comum é comparar dois modelos a partir de execuções únicas: diferenças menores que a variação entre seeds não são evidência de que um modelo seja melhor.",
+  "u": [
+   "Estimativas de gradiente com mini-batches no SGD e no Adam",
+   "Experimentos reproduzíveis com seeds aleatórias fixas",
+   "Amostragem vs. decodificação gulosa na geração de texto"
+  ],
+  "x": "Uma equipe de pesquisa reporta cada configuração de modelo como a média e a dispersão sobre cinco seeds, depois de perceber que uma melhora obtida com uma única seed desapareceu ao rodar de novo. Para os testes de regressão da stack de serving, ela ativa algoritmos determinísticos de GPU, aceitando kernels mais lentos em troca de saídas idênticas bit a bit."
+ },
+ "lagrange": {
+  "n": "Multiplicadores de Lagrange e Restrições",
+  "d": "Os multiplicadores de Lagrange transformam um problema de otimização com restrições em um problema sem restrições, somando cada restrição ao objetivo, ponderada por uma nova variável chamada multiplicador. No ótimo, o gradiente do objetivo é uma combinação dos gradientes das restrições, e cada multiplicador mede quanto o valor ótimo mudaria se a sua restrição fosse relaxada.\n\nCom restrições de desigualdade, as condições passam a ser as condições de Karush–Kuhn–Tucker (KKT). A máquina de vetores de suporte é derivada dessa forma: maximizar a margem sujeita às restrições de classificação leva a um problema dual em que apenas os exemplos com multiplicadores não nulos, os vetores de suporte, determinam a fronteira. A mesma ideia explica por que as penalidades do lasso e do ridge equivalem a restringir a norma dos pesos. Uma confusão comum é tratar o λ de um objetivo penalizado como uma restrição fixa; cada λ corresponde a algum raio de restrição, mas esse mapeamento depende dos dados.",
+  "u": [
+   "Derivar o dual da SVM e os vetores de suporte",
+   "Relacionar penalidades de regularização a restrições de norma",
+   "Otimização com restrições de fairness ou de orçamento"
+  ],
+  "x": "Uma equipe de publicidade distribui o orçamento diário entre campanhas maximizando as conversões previstas sujeitas a uma restrição de gasto total. O solver retorna um multiplicador para a restrição de orçamento, que a equipe interpreta como as conversões marginais ganhas por unidade extra de orçamento ao decidir se aumenta o gasto."
+ },
+ "generalization": {
+  "n": "Generalização",
+  "d": "Generalização é a capacidade de um modelo de ter bom desempenho em dados novos vindos da mesma distribuição dos dados de treino, e não apenas nos exemplos em que foi ajustado. A diferença entre o erro de treino e o erro em dados separados, chamada de gap de generalização, mede o quanto o modelo memorizou em vez de aprender padrões reutilizáveis.\n\nEla é estimada com uma divisão treino / validação / teste ou com validação cruzada, e melhorada com mais dados ou dados melhores, regularização como weight decay e dropout, data augmentation, early stopping e a escolha de um modelo com capacidade adequada. O overfitting é o caso de falha. Redes profundas podem generalizar bem mesmo tendo parâmetros suficientes para memorizar seus dados, um fato que a teoria clássica não explica totalmente. Generalizar para a mesma distribuição não é robustez: sob data drift, um modelo com excelentes scores em dados separados ainda pode falhar em produção.",
+  "u": [
+   "Estimar o desempenho real com dados separados",
+   "Escolher a força da regularização e o tamanho do modelo",
+   "Verificar a robustez a novos usuários ou períodos"
+  ],
+  "x": "Uma equipe de fraude valida seu modelo em uma janela de tempo posterior em vez de uma divisão aleatória, porque a divisão aleatória deixava transações quase duplicadas aparecerem nos dois conjuntos e superestimava a generalização. A estimativa baseada no tempo é mais baixa, mas corresponde muito melhor ao desempenho observado depois do deploy."
+ },
+ "capacity": {
+  "n": "Capacidade do Modelo",
+  "d": "Capacidade do modelo é o conjunto de funções que um modelo consegue representar, ou seja, aproximadamente quão complexo é o padrão que ele é capaz de ajustar. Um modelo linear tem baixa capacidade; uma árvore de decisão profunda, um polinômio de grau alto ou uma grande rede neural tem alta capacidade.\n\nA capacidade cresce com o número de parâmetros, de camadas, a profundidade da árvore, o grau do polinômio ou o número de rodadas de boosting, e é reduzida por regularização, dropout ou early stopping, que limitam as funções que o treinamento consegue alcançar na prática. Capacidade de menos causa underfitting; capacidade demais em relação à quantidade de dados favorece o overfitting, o clássico trade-off viés–variância. Medidas formais incluem a dimensão VC e a complexidade de Rademacher. O número de parâmetros sozinho é um indicador imperfeito: grandes redes neurais podem generalizar bem, às vezes melhor à medida que o tamanho passa do ponto em que memorizam os dados, um padrão chamado double descent. As leis de escala dos modelos de linguagem descrevem como a loss cai quando capacidade e dados crescem juntos.",
+  "u": [
+   "Escolher a profundidade da árvore ou a largura da rede",
+   "Diagnosticar underfitting vs. overfitting com curvas de aprendizado",
+   "Dimensionar modelos de linguagem com leis de escala"
+  ],
+  "x": "Uma equipe que constrói um modelo de churn tabular compara gradient boosting com várias profundidades máximas e números de árvores, plotando a loss de validação de cada um. O modelo mais raso faz underfitting dos efeitos sazonais e o mais profundo faz overfitting de segmentos raros de clientes, então uma configuração intermediária é escolhida e reavaliada sempre que o dataset cresce de forma significativa."
+ },
+ "inductivebias": {
+  "n": "Viés Indutivo",
+  "d": "Viés indutivo é o conjunto de suposições que um algoritmo de aprendizado usa para preferir algumas explicações dos dados a outras, algo de que ele precisa para prever entradas que nunca viu. Dados finitos são compatíveis com infinitas funções, então todo algoritmo de aprendizado precisa favorecer algumas.\n\nOs exemplos estão por toda parte. A regressão linear supõe que o alvo é uma soma ponderada de features. O k-vizinhos mais próximos supõe que pontos próximos compartilham rótulos. Árvores de decisão preferem divisões alinhadas aos eixos. Uma rede neural convolucional supõe localidade e equivariância à translação por meio de kernels pequenos e compartilhamento de pesos. O transformer tem menos estrutura embutida, e é por isso que um Vision Transformer geralmente precisa de mais dados ou de mais augmentation do que uma CNN para igualá-la. Um viés indutivo forte ajuda mais quando os dados são escassos e a suposição está correta; quando a suposição está errada, ele limita o desempenho por mais dados que se acrescentem.",
+  "u": [
+   "Escolher CNNs para imagens e poucos dados",
+   "Explicar a demanda de dados dos Vision Transformers",
+   "Projetar arquiteturas que respeitem simetrias do domínio"
+  ],
+  "x": "Um grupo de imagens médicas com alguns milhares de exames rotulados escolhe um backbone convolucional em vez de um Vision Transformer treinado do zero, porque o viés de localidade das convoluções compensa a escassez de dados. Quando um grande transformer pré-treinado fica disponível, o grupo revê a escolha, já que o pré-treinamento fornece o que falta à arquitetura."
+ },
+ "trainloop": {
+  "n": "Loop de Treinamento",
+  "d": "O loop de treinamento é o ciclo repetido que ajusta um modelo: pegar um batch, executar o forward pass, calcular a loss, rodar a backpropagation para obter os gradientes, atualizar os parâmetros com o otimizador e repetir. No PyTorch, o núcleo tem cinco linhas: zerar os gradientes, prever, calcular a loss, chamar backward, chamar step.\n\nEm volta desse núcleo ficam as peças práticas: carregamento e embaralhamento dos dados, envio dos tensores para a GPU, um schedule de taxa de aprendizado e warmup, gradient clipping, precisão mista, acumulação de gradientes, validação periódica, logging, early stopping e salvamento de checkpoints. Bibliotecas como PyTorch Lightning, o fit do Keras e o Trainer da Hugging Face empacotam esse loop. Os bugs comuns vêm da ordem desses passos: esquecer de zerar os gradientes, que então se acumulam entre batches; deixar o modelo em modo de treino durante a validação, de modo que o dropout e a batch normalization se comportam de outra forma; ou calcular a validação sem torch.no_grad e desperdiçar memória.",
+  "u": [
+   "Escrever treinamento customizado em PyTorch para modelos de pesquisa",
+   "Adicionar clipping, schedules e precisão mista",
+   "Depurar divergência ou bugs silenciosos de treinamento"
+  ],
+  "x": "Uma equipe de visão computacional substitui um loop escrito à mão por um módulo de treinamento compartilhado depois que dois projetos colocaram em produção modelos com o dropout ativo por engano durante a validação. O loop compartilhado garante os modos de treino e de avaliação, registra a taxa de aprendizado e a norma do gradiente a cada passo e salva checkpoints em um cronograma fixo."
+ },
+ "checkpoint": {
+  "n": "Checkpoint de Modelo",
+  "d": "Um checkpoint de modelo é um snapshot salvo do estado do treinamento em determinado momento, para que o treinamento possa ser retomado após uma interrupção ou a melhor versão possa ser restaurada depois. Um checkpoint mínimo guarda os pesos do modelo; um completo também guarda o estado do otimizador, como as estimativas de momentos do Adam, o scheduler da taxa de aprendizado, o contador de passos ou épocas e os estados dos geradores de números aleatórios.\n\nCheckpoints são gravados periodicamente durante execuções longas, em máquinas preemptíveis na nuvem e sempre que a validação melhora, o que combina naturalmente com o early stopping. No ecossistema da Hugging Face, um checkpoint é um diretório com os pesos mais os arquivos de configuração e do tokenizador, e os adapters LoRA são compartilhados da mesma forma. Um erro comum é salvar apenas os pesos e depois retomar o treinamento: o otimizador reinicia com estimativas de momentos vazias e o schedule recomeça do início, o que pode causar um pico na loss.",
+  "u": [
+   "Retomar o treinamento em instâncias de GPU preemptíveis",
+   "Manter o melhor modelo pelo score de validação",
+   "Distribuir pesos e adapters após fine-tuning"
+  ],
+  "x": "Uma equipe que faz o pré-treinamento de um modelo de linguagem em instâncias spot salva a cada hora um checkpoint completo, incluindo otimizador, scheduler e posição do data loader, em um object storage. Quando um nó é retomado pelo provedor, o job reinicia a partir do checkpoint mais recente e a curva da loss continua suave em vez de apresentar um pico."
+ },
+ "hingeloss": {
+  "n": "Hinge Loss",
+  "d": "A hinge loss penaliza um classificador quando um exemplo está do lado errado da fronteira de decisão ou dentro da margem, e dá loss zero quando o exemplo está corretamente classificado com margem de pelo menos um. Com rótulos y em {−1, +1} e score bruto f(x), a loss é max(0, 1 − y·f(x)).\n\nÉ a loss por trás da máquina de vetores de suporte linear: combinada com uma penalidade L2, minimizar a hinge loss equivale a maximizar a margem. Como exemplos corretos com folga não contribuem em nada, a solução depende apenas dos vetores de suporte próximos à fronteira. Entre as variantes estão a squared hinge e a hinge multiclasse. A hinge loss é convexa, mas não é diferenciável na margem, então os solvers usam subgradientes. Uma ideia equivocada comum é que os scores de uma SVM são probabilidades: a hinge loss não as estima, então as saídas precisam de calibração de probabilidades quando probabilidades são necessárias, ao contrário do log loss usado na regressão logística.",
+  "u": [
+   "Treinar SVMs lineares para classificação de texto",
+   "Losses baseadas em margem para discriminadores de GANs",
+   "Ranking com objetivos de margem entre pares"
+  ],
+  "x": "Uma equipe de suporte classifica os tickets recebidos em filas com uma SVM linear treinada sobre features TF-IDF, que é rápida de retreinar diariamente com milhões de textos curtos. Como as regras de roteamento precisam de limiares de confiança, a equipe adiciona Platt scaling em um conjunto separado para transformar os scores treinados com hinge em probabilidades calibradas."
+ },
+ "huberloss": {
+  "n": "Huber Loss",
+  "d": "A Huber loss é uma loss de regressão que se comporta como o erro quadrático para resíduos pequenos e como o erro absoluto para resíduos grandes, com um limiar δ que define onde ocorre a troca. Ela combina os gradientes suaves do MSE perto do alvo com a robustez a outliers do MAE.\n\nPara |r| ≤ δ, a loss é ½r², e além disso cresce linearmente como δ(|r| − ½δ), de modo que um único outlier extremo contribui com um gradiente limitado em vez de dominar o ajuste. Ela é usada em regressão linear robusta, como objetivo em bibliotecas de gradient boosting, como smooth L1 loss para as caixas na detecção de objetos e em deep Q-learning. O limiar δ está nas unidades do alvo e deve ser escolhido em relação à sua escala; um δ muito maior que os erros típicos reduz a Huber ao MSE, e um δ muito pequeno a torna quase o MAE.",
+  "u": [
+   "Regressão robusta em alvos com outliers",
+   "Regressão de bounding boxes na detecção de objetos",
+   "Estabilizar os alvos de valor no deep Q-learning"
+  ],
+  "x": "Uma empresa de entregas prevê a duração de viagens em que uma pequena parcela inclui longas paradas não registradas. Treinar com Huber loss impede que essas viagens puxem a previsão média para cima, enquanto as viagens comuns continuam sendo ajustadas com a precisão do erro quadrático."
+ },
+ "focalloss": {
+  "n": "Focal Loss",
+  "d": "A focal loss é uma loss de entropia cruzada modificada que reduz o peso dos exemplos que o modelo já classifica com facilidade, para que o treinamento se concentre nos exemplos difíceis e mal classificados. Ela multiplica o termo de entropia cruzada por (1 − p_t)^γ, em que p_t é a probabilidade prevista para a classe verdadeira e γ ≥ 0 define com que força os exemplos fáceis são suprimidos.\n\nCom γ = 0, ela é igual à entropia cruzada comum. Com γ = 2, um exemplo previsto com 0,9 para a classe correta tem sua loss multiplicada por 0,01. Ela foi introduzida para detecção densa de objetos na RetinaNet, em que dezenas de milhares de âncoras fáceis de fundo sobrecarregam um punhado de objetos, e também é usada contra o desbalanceamento de classes em segmentação e em problemas tabulares, com um termo de ponderação α. Uma ressalva é que a focal loss muda as probabilidades que o modelo aprende, então as saídas tendem a ser menos calibradas e podem precisar de calibração de probabilidades antes da aplicação de um limiar.",
+  "u": [
+   "Detecção densa de objetos com muitas âncoras de fundo",
+   "Segmentação de estruturas pequenas ou raras",
+   "Classificação muito desbalanceada sem reamostragem"
+  ],
+  "x": "Uma equipe de inspeção industrial detecta defeitos minúsculos de superfície que ocupam uma fração ínfima de cada imagem. Trocar a entropia cruzada do detector pela focal loss impede que as abundantes regiões fáceis de fundo dominem o gradiente, e a equipe recalibra os scores em um conjunto de validação antes de definir o limiar de alarme."
+ },
+ "mape": {
+  "n": "MAPE",
+  "d": "O erro percentual absoluto médio (MAPE) mede o tamanho médio dos erros de previsão em relação aos valores reais, expresso como porcentagem. Cada erro |y − ŷ| é dividido por |y| e as razões são promediadas, então um erro de 10 sobre um valor real de 100 conta como 10 por cento.\n\nSeu atrativo é a independência de escala: usuários de negócio conseguem comparar a acurácia entre produtos ou lojas com volumes muito diferentes, e é por isso que ele é comum em previsão de demanda com Prophet ou ARIMA. As fraquezas são sérias. O MAPE é indefinido quando um valor real é zero e explode quando os valores reais são pequenos, então séries de demanda intermitente o quebram. Ele também é assimétrico: uma previsão acima do real pode gerar um erro muito acima de 100 por cento, enquanto uma previsão abaixo nunca passa de 100 por cento, então otimizar o MAPE favorece previsões enviesadas para baixo. O MAPE ponderado (erro absoluto total sobre o total real), o sMAPE e o MASE são alternativas comuns.",
+  "u": [
+   "Reportar a acurácia das previsões de demanda às áreas de negócio",
+   "Comparar a acurácia entre séries de escalas diferentes",
+   "Acompanhar a qualidade das previsões no planejamento de vendas"
+  ],
+  "x": "Uma rede de supermercados reporta a acurácia das previsões aos gerentes de loja como porcentagem, mas o MAPE por item perde o sentido para produtos de giro lento com muitos dias sem venda. A equipe de analytics troca a métrica principal pelo MAPE ponderado sobre todos os itens de uma loja, que continua definido e é dominado pelos produtos que mais pesam no volume."
+ },
+ "rankmetrics": {
+  "n": "Métricas de Ranking (NDCG, MRR)",
+  "d": "Métricas de ranking avaliam uma lista ordenada de resultados pelo quão bem os itens relevantes são colocados perto do topo, em vez de classificar cada item de forma independente. Duas das mais comuns são o NDCG e o MRR.\n\nO ganho cumulativo descontado (DCG) soma a relevância de cada resultado dividida por um logaritmo da sua posição, de modo que um item relevante na posição 1 conta mais do que o mesmo item na posição 10. Normalizar pelo DCG da ordenação ideal dá o NDCG, entre 0 e 1. O mean reciprocal rank (MRR) faz a média de 1/posição do primeiro resultado relevante entre as consultas, então se encaixa em tarefas em que uma boa resposta basta. Ambos costumam ser calculados até um corte k, como NDCG@10. Eles avaliam busca, reranking e a recuperação no RAG. Uma armadilha é ignorar documentos não avaliados: os rótulos offline cobrem poucos resultados, então um novo ranqueador que traz itens relevantes sem rótulo pode parecer pior.",
+  "u": [
+   "Avaliação offline de ranqueadores de busca e recomendação",
+   "Medir a qualidade da recuperação em pipelines de RAG",
+   "Treinar modelos de learning-to-rank com LambdaRank"
+  ],
+  "x": "Uma equipe de busca de e-commerce avalia cada novo modelo de ranking pelo NDCG@10 sobre um conjunto de consultas com rótulos humanos de relevância graduada antes de rodar um teste A/B online. No seu serviço de recuperação para perguntas e respostas, em que só importa a primeira passagem correta, ela acompanha o MRR."
+ },
+ "iou": {
+  "n": "Intersection over Union (IoU)",
+  "d": "Intersection over union (IoU) mede o quanto duas regiões se sobrepõem, como a área que compartilham dividida pela área que cobrem juntas. Vai de 0, para regiões disjuntas, a 1, para regiões idênticas.\n\nNa detecção de objetos, ela compara uma bounding box prevista com a caixa de referência; uma previsão normalmente conta como verdadeiro positivo quando a IoU é de pelo menos 0,5, e a mean average precision no estilo COCO faz a média sobre limiares de 0,5 a 0,95. A non-maximum suppression usa a IoU entre previsões para remover caixas duplicadas. Na segmentação semântica, a mesma razão é calculada sobre máscaras de pixels por classe e promediada como mean IoU, o índice de Jaccard. Uma armadilha é que a IoU é severa com objetos pequenos: um deslocamento de poucos pixels quase não afeta uma caixa grande, mas pode empurrar uma caixa pequena para baixo do limiar, então as médias escondem o desempenho ruim em objetos pequenos.",
+  "u": [
+   "Associar caixas previstas e de referência na detecção",
+   "Non-maximum suppression de detecções duplicadas",
+   "Mean IoU para a qualidade da segmentação semântica"
+  ],
+  "x": "Uma equipe de monitoramento de gôndolas no varejo avalia seu detector de produtos com mean average precision sobre vários limiares de IoU e, separadamente, para objetos pequenos. O detalhamento mostra que a maioria dos erros vem de etiquetas de preço pequenas, o que leva a equipe a aumentar a resolução de entrada em vez de retreinar o modelo inteiro."
+ },
+ "baserate": {
+  "n": "Taxa de Base",
+  "d": "A taxa de base é o quão comum uma classe ou um evento é na população antes de considerar qualquer evidência, como a fração de transações fraudulentas ou de pacientes que têm uma doença. Ela é a probabilidade a priori no teorema de Bayes.\n\nA taxa de base decide quanto uma previsão positiva significa. Um teste com 99 por cento de sensibilidade e 99 por cento de especificidade, aplicado a uma condição com taxa de base de 0,1 por cento, produz cerca de dez falsos positivos para cada verdadeiro positivo, então a maioria dos alarmes está errada. Ignorar isso é a falácia da taxa de base. Em machine learning, a taxa de base define o baseline trivial da acurácia (prever sempre a classe majoritária) e é igual ao baseline aleatório do PR-AUC. Um modelo treinado com dados reamostrados por SMOTE ou undersampling aprende uma taxa de base diferente, então suas probabilidades precisam ser recalibradas para a taxa real antes de serem usadas como estimativas de risco.",
+  "u": [
+   "Interpretar a precisão de alertas sobre eventos raros",
+   "Definir baselines ingênuos para métricas de classificação",
+   "Recalibrar probabilidades após reamostrar os dados de treino"
+  ],
+  "x": "Um hospital implanta um alerta de sepse cuja validação foi feita em uma amostra balanceada, e logo os médicos reclamam que a maioria dos alertas é falsa. A equipe de ciência de dados reestima a precisão na prevalência real da enfermaria, recalibra os scores e aumenta o limiar para que o volume de alertas corresponda ao que a equipe consegue revisar."
+ },
+ "activation": {
+  "n": "Função de Ativação",
+  "d": "Uma função de ativação é a função não linear que um neurônio aplica à sua soma ponderada antes de repassar o resultado. Sem ela, qualquer pilha de camadas lineares se reduz a uma única transformação linear, então é a não linearidade que permite a um perceptron multicamadas representar fronteiras de decisão curvas e funções complexas.\n\nAs escolhas comuns são a ReLU, barata e não saturante para entradas positivas; a GELU e a SwiGLU, usadas nas camadas feed-forward dos transformers; a sigmoide e a tanh, usadas nos gates das células LSTM e GRU e para saídas limitadas; e a softmax, que transforma um vetor de logits em uma distribuição de probabilidade na saída. A escolha afeta o fluxo do gradiente: funções saturantes como a sigmoide contribuem para o desaparecimento de gradientes em redes profundas, e os esquemas de inicialização de pesos são ajustados à ativação. Um erro frequente é aplicar softmax ou sigmoide antes de uma loss como a CrossEntropyLoss do PyTorch, que já espera logits brutos.",
+  "u": [
+   "Adicionar não linearidade entre camadas densas e convolucionais",
+   "Gates em blocos LSTM, GRU e SwiGLU",
+   "Mapear saídas para probabilidades ou intervalos limitados"
+  ],
+  "x": "Uma equipe que moderniza um classificador de texto antigo troca as camadas ocultas com tanh por GELU e passa a usar a inicialização He. A versão mais profunda agora treina de forma estável sem um ajuste cuidadoso da taxa de aprendizado, e a equipe mantém uma sigmoide apenas na saída, para as probabilidades multirrótulo."
+ },
+ "hiddenlayer": {
+  "n": "Camada Oculta",
+  "d": "Uma camada oculta é qualquer camada de uma rede neural entre a entrada e a saída, chamada assim porque seus valores não são observados diretamente nem nos dados nem nas previsões. Cada camada oculta aplica uma transformação linear seguida de uma função de ativação.\n\nO número de camadas ocultas é a profundidade da rede, e o número de unidades por camada é a sua largura; juntas, elas determinam boa parte da capacidade do modelo. O teorema da aproximação universal mostra que uma única camada oculta larga o suficiente pode aproximar qualquer função contínua, mas redes mais profundas costumam representar as mesmas funções com muito menos unidades. Em um transformer, cada rede feed-forward tem uma camada oculta com cerca de quatro vezes a largura do modelo. Mais camadas ocultas não são automaticamente melhores: profundidade sem conexões residuais e normalização costuma treinar mal.",
+  "u": [
+   "Dimensionar a profundidade e a largura de MLPs",
+   "Extrair features intermediárias para tarefas downstream",
+   "Definir a dimensão oculta da feed-forward do transformer"
+  ],
+  "x": "Uma equipe que constrói um modelo de taxa de cliques sobre features tabulares e embeddings ajusta o número e a largura das camadas ocultas da torre MLP. Acima de três camadas, a loss de validação para de melhorar e a latência aumenta, então o modelo de produção usa três camadas ocultas com dropout entre elas."
+ },
+ "hiddenstate": {
+  "n": "Estado Oculto",
+  "d": "Um estado oculto é o vetor que uma rede mantém internamente para resumir o que já processou, seja ao longo dos passos de tempo em um modelo sequencial, seja ao longo das camadas para um único token. É a memória de trabalho do modelo.\n\nEm uma rede neural recorrente, o estado oculto hₜ é atualizado a cada passo a partir do estado anterior e da entrada atual, então ele precisa comprimir todo o passado em um vetor de tamanho fixo; as células LSTM e GRU adicionam gates para controlar o que é mantido ou esquecido. Em um transformer, \"estados ocultos\" normalmente significa os vetores por token produzidos por cada camada, e os estados ocultos da última camada alimentam a cabeça de modelo de linguagem ou servem como embeddings. A interpretabilidade mecanicista os estuda. Uma confusão comum é equiparar os estados ocultos do transformer à memória de uma RNN: os transformers não carregam um estado de tamanho fixo adiante, mas fazem atenção sobre todos os tokens anteriores por meio do KV cache.",
+  "u": [
+   "Levar contexto adiante em sequências de RNN e LSTM",
+   "Extrair as saídas das camadas do transformer como embeddings",
+   "Sondar representações internas para interpretabilidade"
+  ],
+  "x": "Uma equipe de busca extrai os estados ocultos da última camada de um encoder no estilo BERT e faz mean pooling deles para obter embeddings de documentos para um índice de recuperação. Depois de comparar camadas, ela descobre que uma camada intermediária dá melhores resultados em uma tarefa de textos curtos e registra a escolha da camada no model card."
+ },
+ "logits": {
+  "n": "Logits",
+  "d": "Logits são os scores brutos, não normalizados, que um modelo de classificação produz antes de serem convertidos em probabilidades. Em um classificador binário, o logit é o log-odds, log(p / (1 − p)), e a sigmoide o mapeia para uma probabilidade; com várias classes, a softmax converte um vetor de logits em uma distribuição.\n\nLogits podem ser qualquer número real, e para a softmax só importam as diferenças entre eles: somar a mesma constante a todos os logits não altera as probabilidades. Funções de loss como cross_entropy e binary_cross_entropy_with_logits do PyTorch recebem logits diretamente por estabilidade numérica. Em modelos de linguagem, a última camada produz um logit por token do vocabulário, e os métodos de decodificação atuam sobre eles: a temperatura divide os logits, a amostragem top-k e top-p os mascara, e a decodificação gulosa pega o argmax. Um bug comum é aplicar softmax no modelo e depois passar essas probabilidades para uma loss que espera logits, o que enfraquece os gradientes silenciosamente.",
+  "u": [
+   "Alimentar losses de entropia cruzada numericamente estáveis",
+   "Aplicar temperatura e top-p na geração de texto",
+   "Imitar os logits do professor na destilação de conhecimento"
+  ],
+  "x": "Uma equipe que serve um modelo de linguagem expõe os logits por token a uma ferramenta interna que bane certos tokens definindo seus logits como menos infinito antes da amostragem. Como o mascaramento acontece antes da softmax, as probabilidades restantes se renormalizam automaticamente e as configurações de decodificação permanecem as mesmas."
+ },
+ "featuremap": {
+  "n": "Mapa de Features (Feature Map)",
+  "d": "Um mapa de features é a grade de saída produzida quando um filtro convolucional é aplicado sobre uma entrada, registrando com que intensidade o padrão desse filtro aparece em cada posição espacial. Uma camada convolucional com 64 filtros produz 64 mapas de features, empilhados como os canais do seu tensor de saída.\n\nAs primeiras camadas de uma CNN produzem mapas de features que respondem a bordas, cores e texturas simples; as camadas mais profundas respondem a partes e a objetos inteiros, porque cada camada combina os mapas abaixo dela e seu campo receptivo cresce. Stride e pooling reduzem o tamanho espacial dos mapas de features, enquanto o número de canais normalmente aumenta. As skip connections da U-Net e o Grad-CAM reutilizam mapas de features. Uma confusão comum é equiparar um mapa de features a uma feature do aprendizado tabular; um mapa de features é um array espacial inteiro de respostas.",
+  "u": [
+   "Features multiescala para detecção e segmentação",
+   "Visualizações com Grad-CAM do foco do modelo",
+   "Transfer learning a partir de backbones de CNN pré-treinados"
+  ],
+  "x": "Uma equipe de imagens médicas reutiliza os mapas de features intermediários de uma ResNet pré-treinada como encoder de um modelo de segmentação. Ela também sobrepõe heatmaps do Grad-CAM calculados a partir dos últimos mapas de features convolucionais para que os radiologistas confirmem que as previsões se apoiam no tecido relevante."
+ },
+ "kernelfilter": {
+  "n": "Kernel (Filtro)",
+  "d": "Em uma rede neural convolucional, um kernel ou filtro é um pequeno array de pesos aprendíveis que desliza sobre a entrada e calcula uma soma ponderada em cada posição. Um kernel 3×3 sobre uma imagem RGB tem, na verdade, formato 3×3×3, abrangendo todos os canais de entrada.\n\nO kernel funciona como um detector de padrões: as posições em que a entrada local coincide com seus pesos produzem saídas grandes. Como o mesmo kernel é usado em todas as posições, a convolução tem muito menos parâmetros que uma camada densa e responde a um padrão onde quer que ele apareça. O tamanho do kernel define a janela local; pilhas de kernels 3×3 são o padrão porque dois deles cobrem um campo receptivo 5×5 com menos pesos. As CNNs aprendem os kernels por backpropagation, ao contrário de filtros de Sobel projetados à mão. Esse kernel não tem relação com o kernel do kernel trick em SVMs ou no kernel PCA, que é uma função de similaridade entre pontos de dados.",
+  "u": [
+   "Detectar padrões locais em imagens e áudio",
+   "Filtros de borda e desfoque projetados à mão no pré-processamento",
+   "Escolher tamanhos de kernel ao projetar backbones de CNN"
+  ],
+  "x": "Uma equipe de áudio classifica sons de máquinas a partir de espectrogramas usando uma CNN com pequenos kernels bidimensionais. Visualizar os kernels aprendidos na primeira camada mostra vários que respondem a faixas harmônicas, o que ajuda os engenheiros a confiar que o modelo reage aos padrões de vibração esperados."
+ },
+ "stridepad": {
+  "n": "Stride e Padding",
+  "d": "Stride é quantas posições uma janela de convolução ou de pooling avança entre uma saída e outra, e padding é a borda de valores extras, geralmente zeros, adicionada em volta da entrada antes de a janela deslizar. Junto com o tamanho do kernel, eles determinam o tamanho espacial de cada mapa de features.\n\nCom stride 1, a saída tem quase a resolução da entrada; stride 2 reduz cada dimensão aproximadamente pela metade e muitas vezes substitui o pooling em uma CNN. O padding permite que os pixels da borda sejam cobertos pelo kernel inteiro e preserva o tamanho: um kernel 3×3 com padding 1 e stride 1 mantém altura e largura, o chamado padding \"same\", enquanto a ausência de padding é chamada de \"valid\" e encolhe a saída. Um bug frequente é a incompatibilidade de tamanhos quando uma camada com stride 2 encontra uma entrada de tamanho ímpar, o que quebra as skip connections da U-Net ou de redes residuais, a menos que o padding ou o recorte seja ajustado.",
+  "u": [
+   "Reduzir a resolução de mapas de features em backbones de CNN",
+   "Manter o tamanho espacial para as skip connections da U-Net",
+   "Embedding de patches em Vision Transformers"
+  ],
+  "x": "A U-Net de uma equipe de segmentação falha em imagens cujos lados não são múltiplos de 32, porque as saídas do decoder deixam de bater com as skip connections do encoder. A correção aplica padding em cada entrada até o próximo múltiplo de 32 antes da inferência e recorta a máscara prevista de volta ao tamanho original."
+ },
+ "receptive": {
+  "n": "Campo Receptivo",
+  "d": "O campo receptivo de uma unidade em uma rede neural é a região da entrada que pode influenciar seu valor. Uma unidade na primeira camada de uma CNN com kernel 3×3 vê um patch 3×3; cada camada seguinte combina unidades vizinhas, então a região cresce com a profundidade.\n\nEmpilhar camadas com stride 1 acrescenta o tamanho do kernel menos um a cada camada, enquanto strides, pooling e convoluções dilatadas multiplicam o crescimento, e é assim que CNNs profundas acabam cobrindo a imagem inteira. O campo receptivo importa no projeto: um detector precisa ver contexto suficiente para reconhecer objetos grandes, e um modelo de segmentação precisa ver o entorno para rotular um pixel corretamente. A self-attention dá a cada token um campo receptivo global em uma única camada. Uma ideia equivocada comum é que o campo receptivo teórico é totalmente aproveitado; o campo receptivo efetivo se concentra perto do centro e é bem menor.",
+  "u": [
+   "Garantir que detectores vejam contexto suficiente para objetos grandes",
+   "Projetar convoluções dilatadas para áudio e séries temporais",
+   "Comparar a localidade das CNNs com a self-attention global"
+  ],
+  "x": "Uma equipe de imagens de satélite descobre que sua CNN classifica mal campos agrícolas grandes porque as unidades mais profundas cobrem apenas parte de cada campo. Adicionar convoluções dilatadas nos últimos estágios amplia o campo receptivo sem reduzir a resolução, e os erros nas bordas diminuem."
+ },
+ "channels": {
+  "n": "Canais",
+  "d": "Canais são as camadas separadas e empilhadas de valores em cada posição espacial de um tensor, como os planos vermelho, verde e azul de uma imagem colorida ou os muitos mapas de features produzidos por uma camada convolucional. Um tensor no layout de imagem padrão do PyTorch tem formato (batch, canais, altura, largura).\n\nUma imagem de entrada começa com 3 canais, e cada convolução mapeia C_in canais para C_out canais, um por filtro; cada filtro abrange todos os canais de entrada. As CNNs normalmente trocam resolução espacial por canais à medida que ficam mais profundas. Uma convolução 1×1 mistura os canais sem olhar os vizinhos e é usada para mudar a quantidade deles a baixo custo. A batch normalization mantém estatísticas por canal. Uma fonte frequente de bugs é o layout: o PyTorch usa channels-first (NCHW), enquanto TensorFlow, PIL e OpenCV usam por padrão channels-last (NHWC ou HWC), e o OpenCV ordena os canais de cor como BGR.",
+  "u": [
+   "Converter tensores de imagem entre layouts e ordens de cor",
+   "Escalar a largura em canais ao projetar CNNs",
+   "Misturar canais a baixo custo com convoluções 1×1"
+  ],
+  "x": "Uma equipe que leva um modelo de imagem do treinamento para um dispositivo de borda vê a acurácia despencar porque o pipeline da câmera entrega quadros BGR em channels-last. Adicionar na entrada uma reordenação explícita dos canais e uma transposição resolve o problema, e um teste unitário agora verifica o layout de cada quadro pré-processado."
+ },
+ "latentspace": {
+  "n": "Espaço Latente",
+  "d": "Um espaço latente é o espaço vetorial interno em que um modelo representa suas entradas, geralmente de dimensão menor e organizado de modo que entradas semelhantes fiquem próximas.\n\nUm autoencoder comprime as entradas em um código latente e as reconstrói a partir dele. Um autoencoder variacional também molda o espaço latente para seguir uma distribuição simples, de modo que pontos amostrados dele são decodificados em saídas realistas e a interpolação entre códigos é suave. Modelos de difusão latente como o Stable Diffusion executam o processo de difusão no espaço latente de um autoencoder em vez do espaço de pixels, o que é muito mais barato. Modelos de embedding, word2vec e CLIP mapeiam textos ou imagens em espaços latentes em que a distância reflete o significado, e é nisso que a busca vetorial e o RAG se apoiam. Uma ideia equivocada comum é que cada dimensão latente tem significado isolado; a maioria é uma mistura entrelaçada de fatores, e muitas vezes são direções, e não eixos individuais, que carregam propriedades interpretáveis.",
+  "u": [
+   "Gerar imagens em modelos de difusão latente",
+   "Busca semântica sobre vetores de embedding",
+   "Detecção de anomalias pela reconstrução no espaço latente"
+  ],
+  "x": "Uma equipe de fotos de produtos usa um modelo de difusão latente para gerar variações de fundo, trabalhando no espaço latente comprimido para que cada imagem seja renderizada rapidamente em uma única GPU. Para a deduplicação, ela gera separadamente o embedding de cada imagem do catálogo e sinaliza pares cujos vetores latentes são quase idênticos."
+ },
+ "representation": {
+  "n": "Aprendizado de Representações",
+  "d": "Aprendizado de representações é a prática de treinar modelos para descobrir automaticamente features úteis dos dados, em vez de depender de features construídas à mão. A representação aprendida deve tornar fáceis as tarefas downstream, como classificação ou recuperação, muitas vezes com um simples modelo linear por cima.\n\nRedes profundas aprendem representações como efeito colateral do treinamento supervisionado: a penúltima camada de um classificador de imagens é um extrator de features de uso geral muito bom. O aprendizado autossupervisionado as aprende sem rótulos, por meio de tarefas como o masked language modeling no BERT, a previsão do próximo token no GPT e o aprendizado contrastivo no SimCLR e no CLIP. Pré-treinar uma representação uma vez e reutilizá-la por fine-tuning, adapters ou embeddings é a base do transfer learning e dos modelos de fundação. Linear probes sobre features congeladas medem a qualidade. Uma armadilha é supor que uma representação se transfere para qualquer lugar; features aprendidas em fotos naturais podem codificar pouco do que importa para exames médicos ou imagens de satélite.",
+  "u": [
+   "Pré-treinar encoders para transferir a tarefas pequenas",
+   "Construir embeddings de texto e imagem para busca",
+   "Linear probing para comparar modelos autossupervisionados"
+  ],
+  "x": "Uma empresa de legal tech faz fine-tuning de um encoder de texto pré-treinado com seus próprios documentos usando um objetivo contrastivo e depois treina apenas pequenas cabeças lineares para classificar cláusulas. A representação compartilhada permite adicionar cada novo tipo de cláusula com algumas centenas de rótulos em vez de um modelo completo."
+ },
+ "weightshare": {
+  "n": "Compartilhamento de Pesos",
+  "d": "Compartilhamento de pesos significa usar os mesmos parâmetros em vários lugares de uma rede, de modo que um único conjunto de pesos é aprendido a partir de todos esses usos juntos. Ele reduz o número de parâmetros e pressupõe que a mesma operação serve em todos os lugares.\n\nA convolução compartilha um kernel entre todas as posições espaciais, o que dá a uma CNN equivariância à translação. Uma rede neural recorrente aplica os mesmos pesos a cada passo de tempo, então lida com sequências de qualquer comprimento. Os transformers compartilham os pesos da feed-forward e da atenção entre todas as posições de token, e muitos modelos de linguagem amarram a matriz de embeddings de entrada à projeção de saída. Redes siamesas usam um único encoder para as duas entradas, para que seus embeddings sejam comparáveis. Durante a backpropagation, o gradiente de um peso compartilhado é a soma dos gradientes de todos os lugares em que ele é usado. Uma ideia equivocada é que o compartilhamento reduz a computação: ele reduz parâmetros e memória, mas cada uso continua custando os mesmos FLOPs.",
+  "u": [
+   "Convoluções e recorrências ao longo de posições e do tempo",
+   "Amarrar embeddings de entrada e saída em modelos de linguagem",
+   "Encoders siameses para similaridade e verificação"
+  ],
+  "x": "Um sistema de verificação facial codifica tanto a foto de cadastro quanto o quadro ao vivo da câmera com a mesma rede, de modo que os dois embeddings ficam no mesmo espaço e podem ser comparados por similaridade de cosseno. Compartilhar os pesos também reduz pela metade o tamanho do modelo enviado aos dispositivos móveis."
+ },
+ "paramcount": {
+  "n": "Número de Parâmetros",
+  "d": "O número de parâmetros é a quantidade total de valores aprendíveis de um modelo, os pesos e biases que o treinamento ajusta. É a forma abreviada mais comum de indicar o tamanho de um modelo, como em um modelo de linguagem 7B, com cerca de sete bilhões de parâmetros.\n\nEm uma camada densa, ele é entradas × saídas mais um bias por saída; em um transformer, é aproximadamente 12 × camadas × d_model² mais a matriz de embeddings. O número de parâmetros determina a memória: cada parâmetro ocupa 2 bytes em BF16 e 4 em FP32, e o treinamento com Adam precisa de várias vezes mais para gradientes e estados do otimizador. Esse número não é o mesmo que computação ou velocidade: um modelo Mixture of Experts tem muitos parâmetros no total, mas usa apenas alguns experts por token, então seus parâmetros ativos são muito menos numerosos, e o compartilhamento de pesos reduz a contagem sem reduzir os FLOPs.",
+  "u": [
+   "Estimar a memória de GPU para treinamento e inferência",
+   "Comparar tamanhos de modelos em estudos de leis de escala",
+   "Distinguir parâmetros totais e ativos em MoE"
+  ],
+  "x": "Antes de fazer fine-tuning de um modelo aberto de 8B parâmetros, uma equipe de engenharia estima que só os pesos em BF16 precisam de cerca de 16 GB de memória de GPU e que o fine-tuning completo com Adam precisaria de várias vezes mais. Ela escolhe o LoRA, que treina apenas uma pequena fração dos parâmetros, e assim o job cabe em um único acelerador."
+ },
+ "flops": {
+  "n": "FLOPs",
+  "d": "FLOPs são contagens de operações de ponto flutuante, as somas e multiplicações que um modelo executa, e são a medida padrão de quanta computação um forward pass ou uma execução de treinamento exige. FLOPS com S maiúsculo, ou FLOP/s, é outra unidade: operações por segundo, uma medida da velocidade do hardware.\n\nMultiplicar uma matriz m × k por uma matriz k × n custa cerca de 2mkn FLOPs, já que cada multiplicação-soma conta como duas. Em um transformer, um forward pass custa aproximadamente 2 FLOPs por parâmetro por token, e o treinamento cerca de 6, o que dá C ≈ 6ND para N parâmetros e D tokens, a estimativa por trás das leis de escala e do treinamento Chinchilla-ótimo. A atenção acrescenta um termo que cresce com o quadrado do comprimento da sequência. Uma armadilha é equiparar FLOPs a latência: a largura de banda de memória, a eficiência dos kernels e o tamanho do batch muitas vezes dominam, então a decodificação com KV cache costuma ser limitada pela memória, e não pela computação.",
+  "u": [
+   "Orçar a computação de execuções de pré-treinamento",
+   "Comparar a eficiência de arquiteturas de modelos",
+   "Medir a utilização de FLOPs do modelo em aceleradores"
+  ],
+  "x": "Uma equipe que planeja uma execução de pré-treinamento multiplica o número de parâmetros do modelo pelo orçamento de tokens previsto e por seis para estimar o total de FLOPs de treinamento. Dividir pelo throughput sustentado realista do cluster, e não pelo pico, dá a duração esperada da execução, que a equipe reserva no cluster compartilhado."
+ },
+ "floatfmt": {
+  "n": "Formatos de Ponto Flutuante",
+  "d": "Formatos de ponto flutuante armazenam números reais como um sinal, um expoente e uma mantissa, e a quantidade de bits dada a cada parte define o intervalo e a precisão. O FP32 usa 8 bits de expoente e 23 de mantissa; o FP16 usa 5 e 10; o BF16 usa 8 e 7; variantes de FP8 como E4M3 e E5M2 usam 8 bits no total.\n\nO expoente controla o intervalo e a mantissa controla a precisão. O BF16 mantém o intervalo do FP32 com menos precisão, então raramente sofre overflow e é a escolha habitual para o treinamento com precisão mista, enquanto o FP16 tem precisão mais fina, mas um intervalo estreito, e precisa de loss scaling para evitar que gradientes pequenos sofram underflow para zero. Formatos inteiros como INT8 e INT4, usados na quantização, não são de ponto flutuante. Uma armadilha frequente é acumular somas em baixa precisão: os erros de arredondamento se acumulam, então as unidades de multiplicação de matrizes acumulam em FP32 e os otimizadores costumam manter pesos mestres em FP32.",
+  "u": [
+   "Treinamento com precisão mista em BF16 ou FP16",
+   "Multiplicação de matrizes em FP8 nas GPUs recentes",
+   "Diagnosticar overflow, underflow e losses NaN"
+  ],
+  "x": "Uma equipe que migra um job de treinamento de FP16 para BF16 remove seu loss scaler dinâmico, porque o BF16 tem o mesmo intervalo de expoente do FP32. As losses NaN ocasionais causadas por ativações com overflow param de ocorrer, e a equipe mantém os estados do otimizador em FP32 para atualizações estáveis."
+ },
+ "sparsity": {
+  "n": "Esparsidade",
+  "d": "Esparsidade significa que a maioria das entradas de um vetor, de uma matriz ou de um conjunto de ativações é zero, de modo que apenas uma pequena fração carrega informação ou exige computação. Ela aparece nos dados, nos pesos dos modelos e nas ativações.\n\nDados esparsos incluem codificações one-hot e matrizes de bag of words e TF-IDF, que são armazenadas em formatos comprimidos como CSR para economizar memória. Pesos esparsos vêm da regularização L1, que leva muitos coeficientes do lasso exatamente a zero, ou do pruning. Ativações esparsas vêm da ReLU, que zera entradas negativas, de sparse autoencoders que aprendem features interpretáveis e do roteamento em Mixture of Experts, em que cada token ativa apenas alguns experts. Uma ideia equivocada comum é que zeros tornam os modelos automaticamente mais rápidos: a esparsidade não estruturada raramente acelera kernels densos de GPU, então ganhos práticos de velocidade exigem padrões estruturados, como remover canais inteiros, esparsidade em blocos ou o padrão 2:4 que algumas GPUs aceleram.",
+  "u": [
+   "Armazenar features one-hot e de texto como matrizes esparsas",
+   "Seleção de features por regularização L1",
+   "Computação condicional com Mixture of Experts"
+  ],
+  "x": "Uma equipe de busca armazena milhões de vetores de documentos TF-IDF como uma matriz esparsa do SciPy, que cabe na memória onde um array denso não caberia. Ela treina uma regressão logística diretamente sobre a entrada esparsa, e uma penalidade L1 mantém o modelo final pequeno o bastante para ser servido por um serviço leve."
+ }
+}

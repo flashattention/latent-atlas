@@ -5,6 +5,7 @@ Inputs:
   content/<lang>/items*.json   {id: {n,d,u,x}}   (translations, any number of chunk files)
   content/<lang>/ui.json       {"ui": {...}, "cats": {...}}
   content/legend.json          {"en": [...strings], "<lang>": {en_string: translated}}
+  content/terms/<lang>.json    {id: [surface forms that link to that page]}
 """
 import json, glob, os, shutil, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -58,10 +59,13 @@ def main():
             uip = os.path.join(d, 'ui.json')
             u = load(uip) if os.path.exists(uip) else {}
             data = {'ui': u.get('ui', {}), 'cats': u.get('cats', {}), 'items': {i: items[i] for i in idset if i in items}, 'legend': legend.get(lg, {})}
+        tp = os.path.join(ROOT, 'content', 'terms', lg + '.json')  # surface forms that link to each page
+        terms = load(tp) if os.path.exists(tp) else {}
+        data['terms'] = {i: terms[i] for i in idset if terms.get(i)}
         report[lg] = len(data['items'])
         with open(os.path.join(DIST, 'i18n', lg + '.js'), 'w', encoding='utf-8') as f:
             f.write('__ATLAS_SET(' + json.dumps(lg) + ',' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ');\n')
-    for name in ['core', 'registry', 'viz-a', 'viz-b', 'viz-c', 'viz-d', 'viz-e', 'stage', 'flags', 'app']:
+    for name in ['core', 'registry', 'viz-a', 'viz-b', 'viz-c', 'viz-d', 'viz-e', 'viz-zstat', 'viz-zdata', 'viz-zmath', 'viz-ztrain', 'viz-znn', 'viz-zlang', 'viz-zprod', 'stage', 'flags', 'app']:
         src = os.path.join(ROOT, 'src', name + '.js')
         if os.path.exists(src):
             shutil.copy(src, os.path.join(DIST, 'js', name + '.js'))

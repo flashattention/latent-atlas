@@ -1,0 +1,372 @@
+{
+ "mean": {
+  "n": "Media (media aritmetica)",
+  "d": "La media è la somma di un insieme di valori divisa per il loro numero. È il punto di equilibrio di una distribuzione: gli scarti positivi e negativi rispetto alla media si compensano esattamente, ed è l'unica costante che minimizza la somma degli errori al quadrato.\n\nLe medie compaiono ovunque nel machine learning. La standardizzazione sottrae la media della feature, l'imputazione con la media la usa per riempire i valori mancanti, MSE e log loss sono medie delle loss dei singoli esempi, e la discesa del gradiente a mini-batch fa la media dei gradienti su un batch. Batch normalization e layer normalization calcolano entrambe medie mobili o per campione.\n\nIl rischio principale è la sensibilità agli outlier. Un solo valore estremo può spostare la media lontano da dove si trova la maggior parte dei dati, quindi per grandezze asimmetriche come reddito, latenza o importo delle transazioni la mediana descrive spesso meglio un caso tipico.",
+  "u": [
+   "Centrare le feature prima della standardizzazione o della PCA",
+   "Mediare le loss dei singoli esempi in un obiettivo di training",
+   "Imputare i valori numerici mancanti con la media della colonna"
+  ],
+  "x": "Un team pagamenti monitora l'importo medio delle transazioni per esercente come feature di base per un modello antifrode. Poiché pochi acquisti aziendali molto grandi la distorcono, registra anche una media troncata e la mediana, e il modello usa tutte e tre."
+ },
+ "median": {
+  "n": "Mediana",
+  "d": "La mediana è il valore centrale di un dataset ordinato: metà delle osservazioni sta sotto e metà sopra. Con un numero pari di valori, per convenzione è la media dei due valori centrali.\n\nPoiché dipende solo dall'ordine e non dalle grandezze, la mediana è robusta: portare il valore più grande all'infinito non la modifica. È la costante che minimizza la somma degli errori assoluti, ed è per questo che i modelli addestrati con la MAE prevedono una mediana condizionata anziché una media. Si usa per l'imputazione con la mediana, per il robust scaling (che sottrae la mediana e divide per l'IQR) e per riassumere metriche asimmetriche come latenza o prezzi delle case.\n\nUn malinteso comune è che la mediana sia sempre la sintesi migliore. Per dati simmetrici senza outlier la media è statisticamente più efficiente, e la mediana di un piccolo campione può variare in modo marcato da un campione all'altro.",
+  "u": [
+   "Imputazione robusta di feature numeriche asimmetriche",
+   "Riportare livelli tipici di latenza o di prezzo",
+   "Centrare le feature nel robust scaling"
+  ],
+  "x": "Una piattaforma immobiliare riporta il prezzo di vendita mediano per quartiere anziché la media, perché altrimenti poche vendite di lusso dominerebbero la sintesi. La stessa mediana serve a imputare i prezzi mancanti nei dati di training del suo modello di valutazione."
+ },
+ "variance": {
+  "n": "Varianza",
+  "d": "La varianza misura quanto i valori sono dispersi attorno alla loro media: è la media degli scarti al quadrato dalla media. L'elevamento al quadrato rende positivo ogni scarto e pesa molto quelli grandi, quindi pochi punti lontani possono dominarla.\n\nLa varianza della popolazione divide per n; la varianza campionaria divide per n − 1 (correzione di Bessel) per ottenere una stima non distorta quando la media stessa è stata stimata dagli stessi dati. La varianza è alla base della standardizzazione, della PCA (che trova le direzioni di massima varianza), del compromesso bias–varianza, degli schemi di inizializzazione dei pesi che mantengono costante la varianza delle attivazioni tra i layer e della stima del secondo momento in Adam.\n\nUna fonte frequente di confusione è che var di numpy usa n per default (ddof=0) mentre pandas usa n − 1 (ddof=1), quindi le due librerie restituiscono numeri diversi per lo stesso piccolo campione. La varianza è inoltre espressa in unità al quadrato, ed è per questo che di solito si riporta la deviazione standard.",
+  "u": [
+   "Selezionare le componenti principali in base alla varianza spiegata",
+   "Eliminare feature quasi costanti con una soglia di varianza",
+   "Monitorare nel tempo la stabilità delle previsioni del modello"
+  ],
+  "x": "Un team di analytics manifatturiero rimuove i canali dei sensori la cui varianza nella finestra di training è quasi nulla, perché i segnali costanti non portano informazione al classificatore dei guasti. Le varianze vengono ricalcolate ogni settimana per individuare i sensori che si sono bloccati sul campo."
+ },
+ "stddev": {
+  "n": "Deviazione standard",
+  "d": "La deviazione standard è la radice quadrata della varianza e fornisce una misura di dispersione nelle stesse unità dei dati. Descrive quanto un valore tipico si discosta dalla media.\n\nPer dati approssimativamente normali, circa il 68% dei valori cade entro una deviazione standard dalla media e circa il 95% entro due, il che la rende un metro comodo per individuare valori insoliti. La standardizzazione (z-score) divide le feature centrate per la loro deviazione standard, così che feature su scale diverse contribuiscano in modo comparabile in discesa del gradiente, k-nearest neighbors, SVM e modelli regolarizzati. Schemi di inizializzazione dei pesi come Xavier e He fissano la deviazione standard dei pesi iniziali in base alla larghezza del layer.\n\nLa deviazione standard non va confusa con l'errore standard, che descrive l'incertezza di una stima come la media e si riduce al crescere del campione. Inoltre la regola 68–95 non vale per dati a code pesanti o asimmetrici.",
+  "u": [
+   "Calcolare gli z-score per la standardizzazione delle feature",
+   "Segnalare anomalie oltre tre deviazioni standard",
+   "Fissare la scala dell'inizializzazione dei pesi"
+  ],
+  "x": "Un team operations monitora il volume giornaliero degli ordini di ogni magazzino e lancia un allarme quando un giorno si discosta di più di tre deviazioni standard mobili dalla media mobile. Poiché il volume è più alto nel fine settimana, le statistiche sono calcolate separatamente per giorno della settimana."
+ },
+ "covariance": {
+  "n": "Covarianza",
+  "d": "La covarianza misura come due variabili variano insieme: è la media del prodotto dei loro scarti dalle rispettive medie. Un valore positivo indica che tendono a stare sopra la media nello stesso momento, uno negativo che una tende a essere alta quando l'altra è bassa.\n\nCon molte feature, le covarianze a coppie formano la matrice di covarianza, simmetrica e semidefinita positiva, con le varianze sulla diagonale. La PCA è l'autodecomposizione di questa matrice, i Gaussian Mixture Model e la distribuzione normale multivariata sono parametrizzati da essa e la distanza di Mahalanobis ne usa l'inversa.\n\nIl limite principale è che la covarianza dipende dalle unità di entrambe le variabili, quindi la sua grandezza è difficile da interpretare: misurare l'altezza in centimetri anziché in metri la moltiplica per 100. Dividendo per le due deviazioni standard si ottiene il coefficiente di correlazione, che è adimensionale. La covarianza coglie inoltre solo la co-variazione lineare.",
+  "u": [
+   "Costruire matrici di covarianza per la PCA",
+   "Parametrizzare modelli gaussiani multivariati",
+   "Stimare il rischio di portafoglio dai co-movimenti degli asset"
+  ],
+  "x": "Un team di finanza quantitativa stima la matrice di covarianza dei rendimenti giornalieri degli asset per dimensionare le posizioni in un portafoglio. Poiché la covarianza campionaria è rumorosa con centinaia di asset e uno storico limitato, usa uno stimatore shrinkage come Ledoit-Wolf."
+ },
+ "correlation": {
+  "n": "Coefficiente di correlazione",
+  "d": "Il coefficiente di correlazione misura la forza e la direzione di una relazione lineare tra due variabili su una scala fissa da −1 a +1. Il coefficiente di Pearson è la covarianza divisa per il prodotto delle due deviazioni standard, quindi è adimensionale.\n\nUn valore vicino a +1 indica che i punti stanno vicino a una retta crescente, vicino a −1 a una retta decrescente, e vicino a 0 che non c'è un andamento lineare. La correlazione per ranghi di Spearman applica la stessa formula ai ranghi e coglie qualsiasi relazione monotona. La correlazione si usa nella EDA, per filtrare le feature rispetto al target, per rilevare la multicollinearità e per confrontare i punteggi di un modello con valutazioni umane.\n\nIl malinteso classico è che correlazione nulla significhi indipendenza: y = x² su un intervallo simmetrico ha correlazione di Pearson vicina a zero nonostante una dipendenza perfetta. La correlazione è inoltre sensibile agli outlier e non dice nulla sulla causalità.",
+  "u": [
+   "Filtrare le feature candidate rispetto al target",
+   "Rilevare coppie di feature ridondanti e molto correlate",
+   "Confrontare metriche automatiche con giudizi umani"
+  ],
+  "x": "Un team di valutazione di LLM calcola la correlazione di Spearman tra i punteggi di un modello giudice automatico e le valutazioni di preferenza umane su un insieme comune di risposte. Un giudice viene adottato solo se la sua correlazione per ranghi con gli umani è costantemente alta in tutte le categorie di task."
+ },
+ "corrmatrix": {
+  "n": "Matrice di correlazione",
+  "d": "Una matrice di correlazione è una tabella quadrata che contiene il coefficiente di correlazione tra ogni coppia di variabili di un dataset. La diagonale vale sempre 1, la matrice è simmetrica ed è la matrice di covarianza delle variabili standardizzate.\n\nDi solito viene mostrata come heatmap durante l'analisi esplorativa dei dati per individuare gruppi di feature correlate, feature che seguono il target e colonne quasi duplicate. Valori grandi fuori dalla diagonale segnalano multicollinearità, che gonfia la varianza dei coefficienti nella regressione lineare e ripartisce l'importanza tra più feature nei modelli ad albero. La PCA su dati standardizzati è l'autodecomposizione della matrice di correlazione.\n\nUn errore è leggerla come una mappa completa delle dipendenze. Le correlazioni a coppie non vedono relazioni non lineari né interazioni tra tre o più variabili, e la multicollinearità può esistere anche quando nessuna singola coppia è fortemente correlata: per questo si controlla anche il variance inflation factor (VIF).",
+  "u": [
+   "Heatmap delle relazioni tra feature durante la EDA",
+   "Trovare feature ridondanti prima della modellazione lineare",
+   "Eseguire la PCA su feature con unità di misura diverse"
+  ],
+  "x": "Un team di rischio di credito traccia la matrice di correlazione di circa cento feature provenienti dalle centrali rischi prima di addestrare un modello di scorecard. I gruppi di feature con correlazioni sopra una soglia scelta vengono ridotti a un solo rappresentante ciascuno, così che i coefficienti della regressione logistica restino stabili e spiegabili alle autorità di vigilanza."
+ },
+ "quantile": {
+  "n": "Quantili e percentili",
+  "d": "Un quantile è un punto di taglio al di sotto del quale si trova una data frazione dei dati; un percentile è la stessa idea espressa in centesimi. Il quantile 0,9, o 90° percentile, è il valore che il 90% delle osservazioni non supera. La mediana è il quantile 0,5 e i quartili sono i quantili 0,25, 0,5 e 0,75.\n\nI quantili descrivono una distribuzione senza assumerne la forma e sono robusti agli outlier. Definiscono l'IQR e i box plot, il binning per quantili, le trasformazioni quantiliche che mappano le feature su una distribuzione uniforme o normale e metriche di servizio come la latenza p95 e p99. La regressione quantile e la pinball loss addestrano i modelli a prevedere un quantile scelto, fornendo intervalli di previsione.\n\nUn problema pratico è che i quantili campionari hanno diverse definizioni di interpolazione, quindi le librerie possono restituire valori leggermente diversi su piccoli campioni, e percentili estremi come il p99,9 richiedono molte osservazioni per essere stimati in modo affidabile.",
+  "u": [
+   "Riportare la latenza di serving p95 e p99",
+   "Binning per quantili e trasformazioni quantiliche delle feature",
+   "Intervalli di previsione con la regressione quantile"
+  ],
+  "x": "Il team di una piattaforma di inferenza fissa il proprio service-level objective sulla latenza p99 anziché sulla latenza media, perché sono le poche richieste molto lente a essere notate dagli utenti. I percentili sono calcolati su finestre scorrevoli a partire da istogrammi di latenza raccolti su ogni server."
+ },
+ "iqr": {
+  "n": "Scarto interquartile (IQR)",
+  "d": "Lo scarto interquartile è la distanza tra il primo quartile (25° percentile) e il terzo quartile (75° percentile), quindi copre la metà centrale dei dati. Poiché ignora il quarto più basso e quello più alto, i valori estremi non lo influenzano.\n\nL'IQR è la controparte robusta della deviazione standard. Definisce la scatola di un box plot, e la regola di Tukey segnala come potenziali outlier i punti sotto Q1 − 1,5·IQR o sopra Q3 + 1,5·IQR. Il robust scaling sottrae la mediana e divide per l'IQR, il che, a differenza della standardizzazione, impedisce a pochi valori estremi di comprimere tutti gli altri.\n\nUn errore comune è trattare tutto ciò che cade fuori dalle barriere a 1,5·IQR come un errore da eliminare. Per variabili asimmetriche come il reddito o la durata delle sessioni, molti valori legittimi cadono fuori dalle barriere, quindi la regola è uno spunto per un controllo, non un filtro automatico.",
+  "u": [
+   "Segnalare outlier con le barriere di Tukey",
+   "Robust scaling di feature con valori estremi",
+   "Riassumere la dispersione di metriche asimmetriche"
+  ],
+  "x": "Un'azienda di logistica usa barriere basate sull'IQR sui tempi di consegna per tratta per segnalare spedizioni da rivedere manualmente. Gli analisti hanno notato che le tratte con ritardi a coda lunga ma legittimi producevano molte segnalazioni, quindi per quelle tratte sono passati a barriere calcolate sui tempi trasformati in logaritmo."
+ },
+ "skewness": {
+  "n": "Asimmetria (skewness)",
+  "d": "L'asimmetria (skewness) misura quanto una distribuzione è asimmetrica attorno alla sua media. Una distribuzione asimmetrica a destra (asimmetria positiva) ha una coda lunga verso i valori grandi, una asimmetrica a sinistra una coda lunga verso i valori piccoli, e una distribuzione simmetrica come la normale ha asimmetria zero.\n\nSi calcola come media dei cubi degli scarti standardizzati, quindi dominano i valori lontani nella coda. Nei dati asimmetrici a destra la media di solito supera la mediana. Molte feature reali sono fortemente asimmetriche a destra: prezzi, conteggi, durate, redditi. L'asimmetria si controlla durante l'analisi esplorativa dei dati e spesso si applica una trasformazione logaritmica o una trasformazione di Box-Cox prima di regressione lineare, k-means o reti neurali, che funzionano meglio con input circa simmetrici. I modelli ad albero vi sono in gran parte insensibili.\n\nUn malinteso è che le feature asimmetriche vadano sempre trasformate. Per la regressione lineare contano i residui, non le distribuzioni grezze delle feature.",
+  "u": [
+   "Decidere quando applicare il logaritmo a una feature",
+   "Preferire la mediana alla media nelle sintesi",
+   "Diagnosticare residui asimmetrici nella regressione"
+  ],
+  "x": "Il team di analytics di un marketplace scopre che il valore degli ordini è fortemente asimmetrico a destra e che un modello lineare di domanda vi si adatta male. Modellare il logaritmo del valore dell'ordine produce residui circa simmetrici, e le previsioni vengono riportate alla scala originale con una correzione del bias."
+ },
+ "kurtosis": {
+  "n": "Curtosi e code pesanti",
+  "d": "La curtosi misura quanta parte della varianza di una distribuzione deriva da valori rari ed estremi, cioè quanto sono pesanti le sue code. La distribuzione normale ha curtosi 3; la curtosi in eccesso sottrae 3, quindi una curtosi in eccesso positiva indica code più pesanti della normale.\n\nÈ la media delle quarte potenze degli scarti standardizzati, quindi pochi scarti molto grandi la dominano. Dati a code pesanti compaiono nei rendimenti finanziari, nella latenza di rete, nei sinistri assicurativi e nelle attivazioni dei large language model, dove i canali outlier complicano la quantizzazione. Con dati di questo tipo le loss basate sull'errore quadratico e le regole sugli outlier basate sulla deviazione standard sono fragili, e si preferiscono loss robuste come Huber o MAE, il robust scaling e metriche basate sui quantili.\n\nUn malinteso comune è che la curtosi misuri quanto è appuntito il centro di una distribuzione. In realtà dipende soprattutto dalle code, e due distribuzioni con lo stesso picco possono avere curtosi molto diverse.",
+  "u": [
+   "Rilevare feature e residui a code pesanti",
+   "Valutare il rischio di outlier prima di scegliere una loss",
+   "Analizzare le attivazioni outlier prima della quantizzazione di un LLM"
+  ],
+  "x": "Un team che quantizza un LLM a 8 bit esamina la curtosi delle attivazioni per canale e trova alcuni canali con code estremamente pesanti. Quei canali vengono gestiti separatamente, ed è proprio questa la motivazione dei metodi consapevoli degli outlier come LLM.int8() e SmoothQuant."
+ },
+ "probdist": {
+  "n": "Distribuzione di probabilità",
+  "d": "Una distribuzione di probabilità descrive quanto è probabile ciascun valore possibile di una variabile aleatoria. Per le variabili discrete è una funzione di massa di probabilità che assegna una probabilità a ogni valore; per quelle continue è una funzione di densità di probabilità il cui integrale su un intervallo dà la probabilità di quell'intervallo.\n\nOgni distribuzione ha una funzione di ripartizione F(x) = P(X ≤ x), e probabilità o densità devono sommare o integrare a 1. Il machine learning riguarda in gran parte le distribuzioni: un classificatore con output softmax prevede una distribuzione categoriale sulle classi, un modello linguistico prevede una distribuzione sul token successivo, modelli generativi come i VAE e i modelli di diffusione apprendono una distribuzione dei dati, e loss come la cross-entropy e la divergenza KL confrontano distribuzioni.\n\nUna confusione frequente è leggere un valore di densità come una probabilità. Una densità può superare 1; solo la sua area su un intervallo è una probabilità.",
+  "u": [
+   "Modellare l'incertezza predittiva dei classificatori",
+   "Campionare token dall'output di un modello linguistico",
+   "Adattare modelli parametrici ai dati osservati"
+  ],
+  "x": "Un team di previsione della domanda prevede per ogni prodotto un'intera distribuzione delle vendite della settimana successiva anziché un singolo numero. I livelli di scorta vengono poi fissati in base a un quantile scelto di quella distribuzione, bilanciando il costo delle rotture di stock con quello delle scorte in eccesso."
+ },
+ "normaldist": {
+  "n": "Distribuzione normale (gaussiana)",
+  "d": "La distribuzione normale, o gaussiana, è la distribuzione continua simmetrica a campana descritta interamente dalla media μ e dalla deviazione standard σ. Circa il 68% della sua massa cade entro una σ dalla media, il 95% entro due e il 99,7% entro tre.\n\nCompare così spesso grazie al teorema del limite centrale: somme e medie di molti piccoli effetti indipendenti sono approssimativamente normali. La regressione lineare con errore quadratico è una stima di massima verosimiglianza con rumore gaussiano, i pesi vengono spesso inizializzati da una distribuzione normale, i Gaussian Mixture Model e i processi gaussiani si basano su di essa, i VAE usano una prior latente gaussiana e i modelli di diffusione aggiungono rumore gaussiano passo dopo passo.\n\nIl rischio principale è assumere la normalità dove non vale. Molte grandezze reali sono asimmetriche o a code pesanti, e le regole dei tre sigma o le affermazioni di confidenza basate sulla normale possono sottostimare gravemente la frequenza dei valori estremi.",
+  "u": [
+   "Modelli di rumore gaussiano alla base della regressione ai minimi quadrati",
+   "Inizializzazione casuale dei pesi nelle reti neurali",
+   "Noise schedule nei modelli di diffusione"
+  ],
+  "x": "Un team che lavora su modelli di diffusione addestra un generatore di immagini corrompendo le immagini con rumore gaussiano di varianza crescente e insegnando a una rete a prevedere quel rumore. In fase di campionamento il modello parte da puro rumore normale standard e lo rimuove passo dopo passo."
+ },
+ "binomial": {
+  "n": "Distribuzioni di Bernoulli e binomiale",
+  "d": "Una distribuzione di Bernoulli modella una singola prova sì/no che ha successo con probabilità p. La distribuzione binomiale conta il numero di successi in n prove di Bernoulli indipendenti con la stessa p.\n\nLa Bernoulli ha media p e varianza p(1 − p); la binomiale ha media np e varianza np(1 − p). La classificazione binaria si fonda sulla Bernoulli: la regressione logistica restituisce p, e la binary cross-entropy (log loss) è la sua log-verosimiglianza negativa. La binomiale descrive i conteggi di conversioni nei test A/B, il numero di risposte corrette in un benchmark e il numero di unità azzerate dal dropout in un layer.\n\nUn errore comune è applicare la binomiale quando le prove non sono indipendenti o non condividono un'unica p. I clic raggruppati per utente, o le domande di un benchmark tratte da pochi template, sono correlati, quindi la varianza reale è maggiore di np(1 − p) e gli intervalli di confidenza ingenui risultano troppo stretti.",
+  "u": [
+   "Modellare etichette binarie con la regressione logistica",
+   "Contare le conversioni negli esperimenti A/B",
+   "Barre di errore per l'accuratezza sui benchmark"
+  ],
+  "x": "Un team di valutazione di LLM riporta l'accuratezza su un benchmark con un intervallo di confidenza binomiale, trattando ciascuna delle diverse centinaia di domande come una prova di Bernoulli. Quando confronta due modelli sulle stesse domande usa invece un test appaiato, perché gli esiti per domanda dei due modelli sono correlati."
+ },
+ "poisson": {
+  "n": "Distribuzione di Poisson",
+  "d": "La distribuzione di Poisson modella il numero di eventi che si verificano in un intervallo fisso di tempo o di spazio quando gli eventi accadono in modo indipendente a un tasso medio costante λ. La sua media e la sua varianza sono entrambe pari a λ.\n\nNasce come limite di una binomiale con molte prove e una piccola probabilità di successo, ed è per questo che si adatta ai conteggi di eventi rari: richieste al secondo, sinistri per polizza, difetti per lotto, acquisti per cliente. La regressione di Poisson, un modello lineare generalizzato con link logaritmico, prevede questi conteggi a partire dalle feature, e le librerie di gradient boosting offrono un obiettivo di Poisson per target di conteggio.\n\nIl problema tipico è la sovradispersione. I conteggi reali hanno spesso una varianza molto maggiore della media perché il tasso varia tra le unità o gli eventi si raggruppano, e un modello di Poisson sottostima allora l'incertezza. L'alternativa comune è un modello binomiale negativo, e un eccesso di zeri suggerisce un modello zero-inflated.",
+  "u": [
+   "Prevedere i conteggi di arrivo di richieste o chiamate",
+   "Regressione di Poisson per la frequenza dei sinistri assicurativi",
+   "Obiettivi di conteggio nei modelli di gradient boosting"
+  ],
+  "x": "Un assicuratore modella il numero annuo di sinistri per polizza con la regressione di Poisson, usando la durata della polizza come offset di esposizione. Quando la varianza dei conteggi dei sinistri risulta molto maggiore della media, il team valuta anche un modello binomiale negativo prima di scegliere il modello di pricing definitivo."
+ },
+ "uniformdist": {
+  "n": "Distribuzione uniforme",
+  "d": "La distribuzione uniforme assegna la stessa probabilità a ogni valore di un intervallo. L'uniforme continua su [a, b] ha densità costante 1/(b − a); l'uniforme discreta assegna la stessa probabilità a ciascun esito di un insieme finito, come le facce di un dado equo.\n\nLa sua media è (a + b)/2 e la sua varianza (b − a)²/12. I generatori di numeri casuali producono prima valori uniformi e poi li trasformano in altre distribuzioni, per esempio con l'inverse transform sampling. Nel machine learning compare nell'inizializzazione uniforme dei pesi Xavier e He, nella random search su intervalli di iperparametri, nel rimescolamento casuale e nelle suddivisioni train/test, nelle maschere di dropout e come prior a massima entropia quando si conosce solo un intervallo.\n\nUn errore è campionare in modo uniforme su scala lineare iperparametri di tipo scala come il learning rate. La maggior parte dei campioni finisce allora vicino all'estremo superiore; una distribuzione log-uniforme li distribuisce in modo uniforme tra gli ordini di grandezza.",
+  "u": [
+   "Schemi di inizializzazione uniforme dei pesi",
+   "Random search su intervalli di iperparametri",
+   "Inverse transform sampling di altre distribuzioni"
+  ],
+  "x": "Un team di tuning dei modelli campiona i tassi di dropout in modo uniforme tra 0 e 0,5, ma i learning rate in modo log-uniforme tra 1e-5 e 1e-2. Con un semplice intervallo uniforme, quasi nessuna prova avrebbe testato learning rate inferiori a 1e-3."
+ },
+ "expectation": {
+  "n": "Valore atteso",
+  "d": "Il valore atteso di una variabile aleatoria è la sua media ponderata per le probabilità: la media di lungo periodo che si osserverebbe ripetendo indefinitamente l'esperimento casuale. Per una variabile discreta è la somma di ogni valore per la sua probabilità; per una variabile continua il corrispondente integrale rispetto alla densità.\n\nIl valore atteso è lineare, quindi E[aX + bY] = aE[X] + bE[Y] anche quando X e Y sono dipendenti. Gli obiettivi del machine learning sono valori attesi: il training minimizza la loss attesa sulla distribuzione dei dati, approssimata dalla loss media su un mini-batch, ed è per questo che la discesa stocastica del gradiente funziona. L'apprendimento per rinforzo massimizza il ritorno atteso, l'algoritmo EM calcola un valore atteso sulle variabili latenti e la stima Monte Carlo approssima i valori attesi con medie campionarie.\n\nUn errore comune è assumere che E[f(X)] = f(E[X]). Per f non lineare questo non vale; per la disuguaglianza di Jensen, se f è convessa il valore atteso di f è almeno f del valore atteso.",
+  "u": [
+   "Definire la loss attesa come obiettivo di training",
+   "Ritorno atteso nell'apprendimento per rinforzo",
+   "Costo atteso nella scelta delle soglie di decisione"
+  ],
+  "x": "Un team antifrode fissa la soglia di decisione minimizzando il costo atteso, pesando ogni probabilità prevista con il costo di una frode non rilevata e quello di un falso allarme. La soglia viene ricalcolata ogni volta che cambiano le stime dei costi fornite dal team operations."
+ },
+ "condprob": {
+  "n": "Probabilità condizionata",
+  "d": "La probabilità condizionata è la probabilità di un evento A sapendo che un altro evento B si è verificato, scritta P(A|B). Restringe l'attenzione ai casi in cui B è vero e chiede quale frazione di essi presenta anche A.\n\nFormalmente è la probabilità congiunta di A e B divisa per la probabilità di B. Due eventi sono indipendenti esattamente quando P(A|B) = P(A). La maggior parte dei modelli supervisionati stima una probabilità condizionata: un classificatore restituisce P(y | x), un modello linguistico P(token successivo | token precedenti), e il Naive Bayes moltiplica le probabilità condizionate delle feature data la classe. Precision e recall sono entrambe probabilità condizionate, condizionate a eventi diversi.\n\nL'errore classico è confondere P(A|B) con P(B|A). Un test che rileva una malattia nel 99% dei casi, P(positivo | malattia), può comunque produrre soprattutto falsi positivi, con P(malattia | positivo) bassa, quando la malattia è rara.",
+  "u": [
+   "Interpretare gli output di un classificatore come P(y dato x)",
+   "Probabilità del token successivo nei modelli linguistici",
+   "Calcolare precision e recall dai conteggi"
+  ],
+  "x": "Un team di screening medico riporta sia la sensibilità, P(test positivo | malattia), sia il valore predittivo positivo, P(malattia | test positivo), per un nuovo modello di imaging. Poiché la prevalenza differisce tra l'ospedale e la popolazione generale, il valore predittivo viene calcolato separatamente per ciascun contesto."
+ },
+ "bayesthm": {
+  "n": "Teorema di Bayes",
+  "d": "Il teorema di Bayes indica come invertire una probabilità condizionata: calcola P(A|B) a partire da P(B|A), dalla probabilità a priori P(A) e dalla probabilità complessiva P(B). È la regola per aggiornare una convinzione su A dopo aver osservato l'evidenza B.\n\nLa prior P(A) viene moltiplicata per la verosimiglianza P(B|A) e rinormalizzata dall'evidenza P(B), che si può sviluppare come somma su tutte le ipotesi. Il classificatore Naive Bayes lo applica direttamente, con l'ipotesi aggiuntiva che le feature siano condizionatamente indipendenti data la classe. È il fondamento dell'inferenza bayesiana, della stima MAP, dell'ottimizzazione bayesiana e dei filtri antispam, e spiega perché i tassi di base contano nell'interpretare qualsiasi rilevatore.\n\nL'errore più comune è ignorare la prior, la cosiddetta fallacia del tasso di base. Quando i positivi sono rari, anche un test accurato produce soprattutto falsi allarmi, quindi una P(B|A) alta non implica una P(A|B) alta.",
+  "u": [
+   "Classificazione di testi e spam con Naive Bayes",
+   "Aggiornare le convinzioni nell'inferenza bayesiana",
+   "Interpretare gli allarmi dei rilevatori di eventi rari"
+  ],
+  "x": "Un team di security operations calibra un allarme di intrusione combinando i tassi di veri e falsi positivi del rilevatore con il basso tasso di base degli attacchi reali. Il teorema di Bayes mostra che la maggior parte degli allarmi è falsa, quindi il team li instrada verso una fase di triage automatico prima di allertare un analista."
+ },
+ "priorpost": {
+  "n": "Prior e posterior",
+  "d": "La prior è una distribuzione di probabilità che esprime ciò che si ritiene su una grandezza ignota prima di vedere i dati; la posterior è la distribuzione aggiornata dopo aver tenuto conto dei dati. Il teorema di Bayes le collega: la posterior è proporzionale alla verosimiglianza per la prior.\n\nCon pochi dati la prior ha un'influenza forte; man mano che i dati si accumulano domina la verosimiglianza, e le posterior ottenute da prior ragionevoli diverse convergono. Le prior coniugate, come la prior Beta per un tasso di Bernoulli, mantengono la posterior nella stessa famiglia e consentono aggiornamenti in forma chiusa. Nel machine learning le prior compaiono come regolarizzazione (una prior gaussiana sui pesi corrisponde a L2, una prior di Laplace a L1), nei test A/B bayesiani, nel Thompson sampling per i bandit e nell'ottimizzazione bayesiana.\n\nUn malinteso è che una prior piatta sia sempre neutrale. È piatta solo in una parametrizzazione, e su una scala trasformata diventa informativa.",
+  "u": [
+   "Test A/B bayesiani sui tassi di conversione",
+   "Thompson sampling per multi-armed bandit",
+   "Contrarre le stime per item con pochi dati"
+  ],
+  "x": "Un team di raccomandazione stima il click-through rate dei nuovi item con una prior Beta adattata sugli item storici. Un nuovo item con tre clic su cinque impression ottiene una stima a posteriori spinta verso il tasso tipico anziché un 60% grezzo, il che evita che venga messo in cima alla classifica per effetto del rumore."
+ },
+ "likelihood": {
+  "n": "Verosimiglianza",
+  "d": "La verosimiglianza è la probabilità (o densità) dei dati osservati vista come funzione dei parametri del modello, tenendo fissi i dati. Indica quanto bene ciascun valore candidato dei parametri spiega ciò che è stato effettivamente osservato.\n\nPer osservazioni indipendenti la verosimiglianza è il prodotto delle probabilità dei singoli esempi, quindi in pratica si lavora con la log-verosimiglianza, una somma numericamente stabile e più facile da derivare. Massimizzarla dà la stima di massima verosimiglianza, e la maggior parte delle loss di training sono log-verosimiglianze negative: la cross-entropy per classificatori e modelli linguistici, l'errore quadratico con rumore gaussiano. La perplexity è l'esponenziale della log-verosimiglianza negativa media per token, e i rapporti di verosimiglianza sono alla base di molti test statistici e confronti tra modelli.\n\nIl malinteso principale è trattare la verosimiglianza come una distribuzione di probabilità sui parametri. Non integra a 1 su θ e non dice quanto è probabile un parametro; per questo servono una prior e il teorema di Bayes.",
+  "u": [
+   "Log-verosimiglianza negativa come loss di training",
+   "Perplexity dei modelli linguistici su testo held-out",
+   "Confrontare modelli annidati con test del rapporto di verosimiglianza"
+  ],
+  "x": "Un team che sviluppa modelli linguistici monitora la log-verosimiglianza negativa media per token su un corpus held-out dopo ogni checkpoint. L'aumento della verosimiglianza held-out conferma che il pretraining sta ancora migliorando, e la stessa metrica espressa come perplexity serve a confrontare varianti di tokenizer solo quando i vocabolari coincidono."
+ },
+ "mle": {
+  "n": "Stima di massima verosimiglianza (MLE)",
+  "d": "La stima di massima verosimiglianza sceglie i valori dei parametri che rendono i dati osservati più probabili secondo il modello. In pratica massimizza la log-verosimiglianza o, in modo equivalente, minimizza la log-verosimiglianza negativa.\n\nPer alcuni modelli il massimo ha una forma chiusa: la MLE della media di una gaussiana è la media campionaria, e quella di un tasso di Bernoulli è la frazione di successi osservata. Molte procedure di training standard sono una MLE sotto mentite spoglie: la regressione lineare ai minimi quadrati con rumore gaussiano, la regressione logistica con log loss, i classificatori neurali e i modelli linguistici addestrati con cross-entropy e l'algoritmo EM per le misture gaussiane. In condizioni blande la MLE è consistente e asintoticamente efficiente.\n\nIl suo punto debole è l'overfitting con pochi dati o molti parametri. Una moneta uscita testa tre volte su tre riceve una probabilità stimata di testa pari a 1, e la MLE della varianza gaussiana divide per n ed è distorta verso il basso. La regolarizzazione o la stima MAP contrastano questo effetto.",
+  "u": [
+   "Adattare la regressione logistica e i modelli lineari generalizzati",
+   "Addestrare modelli linguistici con la cross-entropy",
+   "Stimare i parametri di distribuzioni statistiche"
+  ],
+  "x": "Un team di affidabilità adatta per massima verosimiglianza una distribuzione di Weibull ai tempi di guasto di dispositivi sul campo. I parametri stimati alimentano la pianificazione dei ricambi, e i record censurati dei dispositivi ancora funzionanti entrano nella verosimiglianza tramite la loro probabilità di sopravvivenza."
+ },
+ "mapest": {
+  "n": "Stima MAP",
+  "d": "La stima maximum a posteriori (MAP) sceglie il valore dei parametri con la probabilità a posteriori più alta, combinando la verosimiglianza dei dati con una prior sui parametri. È la stima di massima verosimiglianza più un termine di log-prior.\n\nPassando ai logaritmi la prior diventa una penalità additiva. Una prior gaussiana a media zero sui pesi dà esattamente una penalità L2 (ridge), e una prior di Laplace una penalità L1 (lasso), quindi la regressione regolarizzata e il weight decay si possono leggere come stima MAP. Con una prior Beta, la stima di un tasso di Bernoulli diventa una frazione smussata, che è l'idea alla base dello smoothing additivo (di Laplace) nel Naive Bayes. Al crescere del dataset domina la verosimiglianza e la MAP si avvicina alla MLE.\n\nLa MAP restituisce un singolo punto, la moda a posteriori, e non l'intera posterior, quindi non fornisce alcuna stima dell'incertezza. La moda può inoltre essere poco rappresentativa della posterior e, a differenza della posterior completa, cambia se i parametri vengono riparametrizzati.",
+  "u": [
+   "Interpretare le penalità L2 e L1 come prior",
+   "Smussare le stime di probabilità per categorie rare",
+   "Stabilizzare le stime con dataset piccoli"
+  ],
+  "x": "Un team di ricerca stima il click-through rate di ogni coppia query–documento, molte delle quali hanno solo una manciata di impression. Usare una stima MAP con una prior Beta adattata su tutte le coppie evita tassi estremi di 0 o 1 che altrimenti destabilizzerebbero le feature di ranking."
+ },
+ "iid": {
+  "n": "Ipotesi i.i.d.",
+  "d": "Indipendenti e identicamente distribuite (i.i.d.) significa che ogni osservazione è estratta dalla stessa distribuzione di probabilità e che nessuna osservazione porta informazione su un'altra. È l'ipotesi di default alla base di gran parte della statistica e dell'apprendimento supervisionato.\n\nGiustifica il trattare la loss media di training come stima della loss attesa, le suddivisioni casuali train/test e la cross-validation k-fold, il teorema del limite centrale alla base degli errori standard e la forma a prodotto della verosimiglianza usata nella stima di massima verosimiglianza. Anche la discesa del gradiente a mini-batch si basa su batch rimescolati e approssimativamente i.i.d. per ottenere stime del gradiente non distorte.\n\nL'ipotesi viene violata più spesso di quanto ci si accorga. Le serie temporali non sono indipendenti, più righe dello stesso paziente o utente sono correlate, e i dati di produzione si allontanano dalla distribuzione di training. Le suddivisioni casuali su dati di questo tipo causano leakage di informazione e danno punteggi ottimistici; la validazione temporale e il group k-fold rispettano la struttura reale.",
+  "u": [
+   "Giustificare suddivisioni casuali e cross-validation k-fold",
+   "Derivare verosimiglianze ed errori standard",
+   "Scegliere una validazione per gruppi o temporale quando l'ipotesi è violata"
+  ],
+  "x": "Un team health-tech che prevede le riammissioni ospedaliere ha scoperto che la suddivisione casuale metteva le visite dello stesso paziente sia nel training sia nel test set, gonfiando i punteggi di validazione. Passare a un group k-fold per ID paziente ha prodotto una stima più bassa ma realistica, che corrispondeva alle prestazioni osservate in seguito in produzione."
+ },
+ "clt": {
+  "n": "Teorema del limite centrale",
+  "d": "Il teorema del limite centrale afferma che la media di molte variabili aleatorie indipendenti con varianza finita è approssimativamente distribuita in modo normale, qualunque sia la forma della distribuzione originale. L'approssimazione migliora al crescere della dimensione del campione n, e la dispersione della media si riduce come σ/√n.\n\nÈ per questo che la distribuzione normale compare così spesso e che gli strumenti basati sulla normale funzionano anche su dati non normali. Gli intervalli di confidenza per una media, i test z e t usati nei test A/B, gli errori standard dell'accuratezza su un test set e le barre di errore tra seed casuali si basano tutti su di esso. Spiega anche perché i gradienti dei mini-batch appaiono approssimativamente gaussiani attorno al gradiente completo.\n\nIl teorema riguarda la distribuzione della media campionaria, non quella dei dati: le singole osservazioni restano asimmetriche. La convergenza può essere lenta per dati a code pesanti o molto asimmetrici, come il ricavo per utente, e fallisce del tutto quando la varianza è infinita.",
+  "u": [
+   "Intervalli di confidenza per medie di metriche",
+   "Approssimazioni normali nelle statistiche dei test A/B",
+   "Barre di errore sull'accuratezza del test set"
+  ],
+  "x": "Una piattaforma di sperimentazione calcola intervalli di confidenza con test z per il ricavo medio per utente, estremamente asimmetrico a livello di singolo utente. Poiché per dati simili l'approssimazione normale della media converge lentamente, il team la verifica con intervalli bootstrap su esperimenti passati e limita i valori estremi prima del test."
+ },
+ "stderr": {
+  "n": "Errore standard",
+  "d": "L'errore standard è la deviazione standard di una stima su ipotetici campioni ripetuti. Misura con quale precisione una statistica, il più delle volte una media o una proporzione, è stata stimata dai dati disponibili.\n\nPer una media campionaria è pari alla deviazione standard dei dati divisa per √n, quindi quadruplicare la dimensione del campione dimezza l'incertezza. Per una proporzione p, come l'accuratezza su un test set, vale √(p(1 − p)/n). Gli errori standard sono il mattone degli intervalli di confidenza, delle statistiche z e t nei test d'ipotesi e nei test A/B e delle tabelle dei coefficienti riportate per la regressione lineare e logistica. Quando non esiste una formula, il bootstrap lo stima tramite ricampionamento.\n\nLa confusione frequente è con la deviazione standard. La deviazione standard descrive la dispersione dei dati e non si riduce con più campioni; l'errore standard descrive l'incertezza della stima e invece sì.",
+  "u": [
+   "Barre di errore per l'accuratezza sui benchmark",
+   "Significatività dei coefficienti di regressione",
+   "Dimensionare i campioni per una precisione obiettivo"
+  ],
+  "x": "Un team di valutazione riporta l'accuratezza del modello su un benchmark di 1.000 domande insieme al suo errore standard. Quando due modelli differiscono di meno di circa due errori standard, le note di rilascio li descrivono come comparabili anziché dichiarare un miglioramento."
+ },
+ "confint": {
+  "n": "Intervallo di confidenza",
+  "d": "Un intervallo di confidenza è un intervallo calcolato dai dati che, su campionamenti ripetuti, conterrebbe il vero valore di un parametro in una frazione dichiarata dei casi, per esempio il 95%. Esprime l'incertezza di una stima anziché un singolo punto.\n\nLa forma comune è stima ± valore critico × errore standard, con valore critico 1,96 per un intervallo normale al 95%. Gli intervalli di Wilson sono adatti a proporzioni vicine a 0 o 1; gli intervalli bootstrap a percentili funzionano per statistiche senza una formula semplice, come AUC o F1. Gli intervalli di confidenza si usano per i risultati dei test A/B, i punteggi sui benchmark, i coefficienti di regressione e i confronti tra modelli.\n\nLa lettura errata standard è che uno specifico intervallo al 95% già calcolato contenga il vero valore con probabilità del 95%. Il 95% si riferisce alla procedura su molti campioni; un'affermazione probabilistica sul parametro stesso richiede un intervallo di credibilità bayesiano.",
+  "u": [
+   "Riportare l'incertezza dei lift nei test A/B",
+   "Intervalli bootstrap per AUC e F1",
+   "Margini di errore sui punteggi delle leaderboard"
+  ],
+  "x": "Un team di valutazione dei modelli pubblica intervalli di confidenza bootstrap al 95% per la ROC-AUC su ogni segmento di clientela. I segmenti con pochi casi positivi ottengono intervalli ampi, il che impedisce ai product manager di sovrainterpretare piccole differenze tra versioni del modello in quei segmenti."
+ },
+ "hyptest": {
+  "n": "Test d'ipotesi e p-value",
+  "d": "Il test d'ipotesi è una procedura per decidere se i dati forniscono evidenza sufficiente contro un'affermazione di default, l'ipotesi nulla, come \"i due modelli hanno la stessa accuratezza\". Il p-value è la probabilità, assumendo vera l'ipotesi nulla, di osservare un risultato estremo almeno quanto quello osservato.\n\nUna statistica test (t, z, chi-quadro) viene calcolata dai dati e confrontata con la sua distribuzione sotto l'ipotesi nulla; se il p-value scende sotto un livello di significatività α scelto in anticipo, spesso 0,05, l'ipotesi nulla viene rifiutata. Si usano test t e test z nei test A/B, il test di McNemar per confrontare due classificatori sullo stesso test set, test chi-quadro per l'indipendenza tra feature e target e test di Kolmogorov–Smirnov per il data drift.\n\nIl p-value non è la probabilità che l'ipotesi nulla sia vera, e un p-value piccolo non indica un effetto grande o importante. Eseguire molti test senza correzione, inoltre, fa aumentare i falsi positivi.",
+  "u": [
+   "Decidere l'esito dei test A/B",
+   "Confrontare due classificatori con il test di McNemar",
+   "Rilevare il drift delle feature con test KS"
+  ],
+  "x": "Una piattaforma ML esegue un test di Kolmogorov–Smirnov a due campioni su ogni feature di input, confrontando il traffico del giorno precedente con i dati di training. Poiché ogni giorno vengono testate centinaia di feature, il team applica una correzione per il false discovery rate e richiede anche una dimensione minima dell'effetto prima di lanciare un allarme di drift."
+ },
+ "abtest": {
+  "n": "Test A/B",
+  "d": "Un test A/B è un esperimento controllato randomizzato in cui gli utenti vengono assegnati a caso a una versione di controllo (A) o a una versione di trattamento (B), e una metrica scelta in anticipo viene confrontata tra i gruppi. La randomizzazione rende i gruppi comparabili, quindi una differenza significativa si può attribuire al cambiamento stesso.\n\nPrima del lancio il team fissa la metrica primaria, l'effetto minimo rilevabile, il livello di significatività e la dimensione del campione, esegue il test per cicli settimanali completi e poi applica un test d'ipotesi e un intervallo di confidenza alla differenza. È il modo standard per validare in produzione un nuovo modello di ranking, un algoritmo di raccomandazione, una regola di pricing o un prompt di un LLM, perché le metriche offline spesso non predicono l'impatto online.\n\nL'errore classico è il peeking: controllare ripetutamente i risultati e fermarsi appena p < 0,05 gonfia enormemente i falsi positivi, a meno di usare un metodo di test sequenziale. Effetti novità, sample ratio mismatch e interferenza tra utenti sono altre trappole comuni.",
+  "u": [
+   "Validare online nuovi modelli di ranking o di raccomandazione",
+   "Testare modifiche a pricing, UI e prompt",
+   "Misurare l'impatto reale oltre le metriche offline"
+  ],
+  "x": "Un servizio di streaming rilascia un nuovo modello di raccomandazione solo dopo un test A/B in cui una quota casuale di utenti lo riceve. Il team verifica il sample ratio mismatch il primo giorno e valuta il tempo di visione su due settimane intere per evitare gli effetti novità."
+ },
+ "kldiv": {
+  "n": "Divergenza KL",
+  "d": "La divergenza di Kullback–Leibler (KL) misura quanto una distribuzione di probabilità P differisce da una distribuzione di riferimento Q. È il numero atteso di bit (o nat) in più necessari per codificare campioni di P usando un codice ottimizzato per Q.\n\nÈ sempre non negativa e vale zero solo quando P coincide con Q, ma non è simmetrica e non è una vera distanza. La cross-entropy è pari all'entropia di P più KL(P‖Q), quindi minimizzare la cross-entropy loss rispetto a etichette fisse minimizza la KL. La KL compare nella loss dei VAE come regolarizzatore verso la prior, in RLHF come penalità che mantiene la policy vicina al modello di riferimento, nella knowledge distillation tra gli output di teacher e student e nel monitoraggio del drift.\n\nLa direzione conta. La KL diretta KL(P‖Q) è mean-covering e penalizza Q se manca una qualsiasi moda di P, mentre la KL inversa KL(Q‖P) è mode-seeking. La KL è inoltre infinita quando Q assegna probabilità zero dove P non lo fa.",
+  "u": [
+   "Penalità KL verso il modello di riferimento in RLHF",
+   "Regolarizzare lo spazio latente dei VAE",
+   "Distillare la distribuzione di output di un teacher"
+  ],
+  "x": "Un team che fa fine-tuning di un modello di chat con PPO aggiunge alla ricompensa una penalità KL per token tra la policy e il modello SFT congelato. Monitorare la KL media durante il training mostra quando la policy inizia ad allontanarsi abbastanza da sfruttare le debolezze del reward model."
+ },
+ "mutualinfo": {
+  "n": "Informazione mutua",
+  "d": "L'informazione mutua misura quanto conoscere una variabile riduce l'incertezza su un'altra. È la divergenza KL tra la distribuzione congiunta di X e Y e il prodotto delle loro marginali, quindi vale zero esattamente quando le due variabili sono indipendenti.\n\nA differenza del coefficiente di correlazione, l'informazione mutua coglie qualsiasi tipo di dipendenza, lineare o no, e funziona con variabili categoriali. È pari all'entropia di Y meno l'entropia condizionata di Y dato X, la stessa grandezza che l'information gain usa per scegliere gli split negli alberi decisionali. Si usa per la selezione delle feature, per rilevare relazioni non lineari durante la EDA, negli obiettivi di apprendimento contrastivo come InfoNCE che la limitano e nella valutazione del clustering.\n\nStimare l'informazione mutua per variabili continue è difficile. Le stime basate su istogrammi dipendono dalla scelta dei bin, gli stimatori nearest-neighbor sono rumorosi in alta dimensionalità e i valori grezzi non sono confrontabili tra feature con entropie diverse.",
+  "u": [
+   "Selezione delle feature con dipendenze non lineari",
+   "Information gain per gli split degli alberi decisionali",
+   "Confrontare clustering con l'informazione mutua normalizzata"
+  ],
+  "x": "Un team antifrode ordina centinaia di feature candidate in base alla loro informazione mutua stimata con l'etichetta di frode prima del training. Diverse feature con correlazione quasi nulla ma informazione mutua alta si rivelano avere effetti a soglia che un modello di gradient boosting sfrutta."
+ },
+ "montecarlo": {
+  "n": "Stima Monte Carlo",
+  "d": "La stima Monte Carlo approssima un valore atteso, un integrale o una probabilità facendo la media su campioni casuali. Invece di risolvere un integrale analiticamente, si estraggono campioni dalla distribuzione rilevante, si valuta la grandezza su ciascuno e se ne prende la media.\n\nPer la legge dei grandi numeri la stima converge al valore vero, e il suo errore standard si riduce come 1/√N indipendentemente dalla dimensione, il che rende il metodo praticabile per problemi ad alta dimensionalità in cui le griglie sono impossibili. Nel machine learning i gradienti dei mini-batch sono stime Monte Carlo del gradiente completo, il MC dropout fa la media delle previsioni su maschere di dropout casuali per stimare l'incertezza, l'apprendimento per rinforzo stima i ritorni da episodi campionati, i VAE usano variabili latenti campionate e il bootstrap è un ricampionamento Monte Carlo.\n\nIl limite è la convergenza lenta: dimezzare l'errore richiede quattro volte più campioni. Le probabilità di eventi rari richiedono numeri enormi di campioni, ed è per questo che esistono tecniche di riduzione della varianza come l'importance sampling.",
+  "u": [
+   "MC dropout per l'incertezza predittiva",
+   "Stimare i ritorni nell'apprendimento per rinforzo",
+   "Simulare scenari di rischio e di domanda"
+  ],
+  "x": "Un team di supply chain simula migliaia di scenari di domanda estratti dalla distribuzione predittiva di un modello di previsione per stimare la probabilità di rottura di stock con ciascuna politica di riordino. Il numero di simulazioni viene aumentato finché le probabilità di rottura di stock stimate non smettono di cambiare in modo significativo tra un'esecuzione e l'altra."
+ },
+ "markovchain": {
+  "n": "Catena di Markov",
+  "d": "Una catena di Markov è un processo casuale che si muove tra stati in cui la probabilità dello stato successivo dipende solo dallo stato corrente, non da come il processo vi è arrivato. È descritta completamente dalle sue probabilità di transizione, raccolte in una matrice di transizione le cui righe sommano a 1.\n\nIn condizioni blande una catena converge a una distribuzione stazionaria che non cambia più da un passo all'altro. PageRank è la distribuzione stazionaria di una passeggiata casuale sul web, i metodi MCMC come Metropolis-Hastings e il Gibbs sampling costruiscono catene la cui distribuzione stazionaria è una posterior obiettivo, l'apprendimento per rinforzo modella gli ambienti come processi decisionali di Markov, e i modelli n-gram e gli hidden Markov model sono catene di Markov.\n\nLa proprietà di Markov è un'ipotesi, non un fatto sui dati. Le sequenze reali hanno spesso dipendenze a lungo raggio, ed è per questo che i Transformer si condizionano sull'intero contesto anziché solo sul token precedente.",
+  "u": [
+   "Campionamento MCMC da posterior bayesiane",
+   "Ordinare pagine o utenti con passeggiate casuali",
+   "Modellare la navigazione degli utenti e gli stati di churn"
+  ],
+  "x": "Un'azienda in abbonamento modella lo stato mensile di ogni cliente come una catena di Markov su stati come attivo, in pausa e perso, stimando le probabilità di transizione dallo storico. La distribuzione stazionaria e le probabilità di transizione a più passi forniscono previsioni del churn di lungo periodo con diverse offerte di retention."
+ },
+ "causation": {
+  "n": "Correlazione e causalità",
+  "d": "Correlazione significa che due variabili si muovono insieme; causalità significa che modificare l'una cambierebbe l'altra. Una correlazione può nascere senza alcun legame causale, per una causa comune, per causalità inversa, per effetti di selezione o per caso, quindi l'associazione osservata da sola non mostra cosa farebbe un intervento.\n\nQuesta distinzione decide come si possono usare i modelli. Un modello predittivo addestrato su dati osservazionali apprende correlazioni, il che va bene per prevedere ma non per decidere azioni: una feature che predice il churn può non ridurlo quando viene modificata. I test A/B randomizzati stabiliscono direttamente gli effetti causali; quando gli esperimenti sono impossibili, metodi di inferenza causale come il propensity score matching, le variabili strumentali, il difference-in-differences o l'uplift modeling li stimano sotto ipotesi esplicite. I valori SHAP descrivono il modello, non il mondo.\n\nL'errore comune è leggere un partial dependence plot marcato o un coefficiente di regressione come l'effetto di un intervento, il che è valido solo se il confondimento è escluso.",
+  "u": [
+   "Decidere quando serve un test A/B",
+   "Uplift modeling per interventi mirati",
+   "Interpretare con cautela SHAP e importanza delle feature"
+  ],
+  "x": "Il modello di churn di un retailer mostrava che i clienti che avevano contattato l'assistenza erano più propensi ad abbandonare, e ne è seguita una proposta per scoraggiare i contatti con l'assistenza. Un test randomizzato di assistenza proattiva ha mostrato l'effetto opposto, perché i clienti insoddisfatti sia contattano l'assistenza sia abbandonano."
+ },
+ "confounder": {
+  "n": "Variabile confondente",
+  "d": "Una variabile confondente è un terzo fattore che influenza sia una presunta causa sia un esito, creando tra loro un'associazione che non è un effetto causale. L'età, per esempio, influisce sia sull'uso di farmaci sia sugli esiti di salute.\n\nSe un confondente viene escluso da un'analisi, l'effetto stimato della variabile di interesse ne assorbe l'influenza, una forma di distorsione da variabile omessa (omitted-variable bias). Nei casi estremi la direzione di un'associazione può invertirsi quando si controlla per il confondente, il cosiddetto paradosso di Simpson. Gli esperimenti randomizzati come i test A/B eliminano il confondimento per costruzione; gli studi osservazionali correggono per i confondenti misurati tramite stratificazione, regressione o propensity score matching. Nel machine learning i confondenti causano anche lo shortcut learning, per esempio un classificatore che si basa su un marcatore dello scanner correlato con la malattia.\n\nLa correzione gestisce solo i confondenti misurati, e correggere per una conseguenza del trattamento aggiunge distorsione invece di rimuoverla.",
+  "u": [
+   "Correggere le analisi osservazionali con i propensity score",
+   "Spiegare il paradosso di Simpson nei report aggregati",
+   "Rilevare feature scorciatoia nei classificatori"
+  ],
+  "x": "Un team di imaging medico ha scoperto che il suo classificatore di polmonite si basava su marcatori specifici degli scanner portatili, usati soprattutto per i pazienti ricoverati più gravi. Il tipo di scanner era un confondente, quindi il team ha stratificato la valutazione per scanner e ha aggiunto dati di training bilanciati tra i dispositivi."
+ },
+ "samplingbias": {
+  "n": "Bias di campionamento",
+  "d": "Il bias di campionamento si verifica quando i dati raccolti non sono rappresentativi della popolazione che il modello o l'analisi dovrebbe descrivere, perché alcuni membri avevano più probabilità di essere inclusi di altri. Stime e modelli riflettono allora le peculiarità del campione anziché la realtà.\n\nLe sue forme includono il bias di selezione (solo i richiedenti a cui è stato concesso il prestito hanno etichette di rimborso), il bias di sopravvivenza (si analizzano solo i prodotti ancora in vendita), il bias di non risposta nei sondaggi e i campioni di convenienza, come dati provenienti da una sola regione o da un solo tipo di dispositivo. Nel machine learning porta a modelli che vanno bene su dati di validazione estratti allo stesso modo ma falliscono in produzione, e a problemi di equità quando alcuni gruppi sono sottorappresentati. I rimedi includono il campionamento stratificato, la ripesatura con l'inverso della probabilità di inclusione e la raccolta di dati dai segmenti mancanti.\n\nUn dataset più grande non risolve il bias di campionamento. Raccogliere più dati con lo stesso processo distorto rende solo più sicura una stima sbagliata.",
+  "u": [
+   "Modelli di credito addestrati solo sui richiedenti approvati",
+   "Ripesare sondaggi e dati di log rispetto alla popolazione",
+   "Verificare la copertura del dataset tra i gruppi di utenti"
+  ],
+  "x": "Un team di riconoscimento vocale ha notato tassi di errore molto più alti per alcuni accenti in produzione rispetto alla validazione. Le registrazioni di training e validazione erano state raccolte da volontari di poche regioni, quindi il team ha avviato una raccolta dati mirata e ha iniziato a riportare i tassi di errore per gruppo di accento."
+ },
+ "heterosked": {
+  "n": "Eteroschedasticità",
+  "d": "Eteroschedasticità significa che la varianza degli errori di un modello non è costante ma cambia con gli input o con il valore previsto. Il caso opposto, varianza degli errori costante, si chiama omoschedasticità.\n\nÈ tipica quando la scala del target varia: gli errori nel prevedere i prezzi delle case o i ricavi sono maggiori per le case costose e i grandi clienti. Un grafico dei residui rispetto ai valori stimati a forma di imbuto è il segnale classico, e i test di Breusch–Pagan e di White la verificano formalmente. Nella regressione lineare i coefficienti dei minimi quadrati ordinari restano non distorti, ma gli errori standard, gli intervalli di confidenza e i p-value usuali diventano errati. Le soluzioni comuni sono gli errori standard robusti all'eteroschedasticità (sandwich), i minimi quadrati ponderati, la modellazione di un target trasformato in logaritmo o la previsione esplicita della varianza, per esempio con una log-verosimiglianza negativa gaussiana o con la regressione quantile.\n\nUn malinteso è che l'eteroschedasticità distorca le previsioni stesse. In realtà rende soprattutto fuorvianti le stime dell'incertezza e gli intervalli di previsione di ampiezza uniforme.",
+  "u": [
+   "Diagnosticare i grafici dei residui nella regressione",
+   "Errori standard robusti per l'inferenza sui coefficienti",
+   "Costruire intervalli di previsione dipendenti dagli input per le previsioni"
+  ],
+  "x": "Un team di valutazione immobiliare ha scoperto che un intervallo di previsione di ampiezza costante era troppo stretto per le case di lusso e troppo largo per i piccoli appartamenti. È passato alla regressione quantile per i limiti dell'intervallo, così che la sua ampiezza cresca con il prezzo previsto."
+ }
+}

@@ -1,0 +1,2205 @@
+{
+ "eda": [
+  "探索性数据分析（EDA）",
+  "探索性数据分析",
+  "探索性分析",
+  "EDA"
+ ],
+ "supervised": [
+  "监督学习",
+  "有监督学习",
+  "监督模型"
+ ],
+ "unsupervised": [
+  "无监督学习",
+  "无监督"
+ ],
+ "selfsup": [
+  "自监督学习",
+  "自监督预训练",
+  "自监督"
+ ],
+ "rl": [
+  "强化学习",
+  "RL",
+  "智能体"
+ ],
+ "split": [
+  "训练集 / 验证集 / 测试集划分",
+  "训练集",
+  "验证集",
+  "测试集",
+  "留出集"
+ ],
+ "cv": [
+  "交叉验证",
+  "k 折",
+  "五折"
+ ],
+ "stratified": [
+  "分层抽样",
+  "分层采样",
+  "分层划分",
+  "分层 k",
+  "分层交叉验证"
+ ],
+ "leak": [
+  "数据泄漏",
+  "信息泄漏",
+  "目标泄漏",
+  "标签泄漏",
+  "时间泄漏",
+  "泄漏"
+ ],
+ "overfit": [
+  "过拟合"
+ ],
+ "underfit": [
+  "欠拟合"
+ ],
+ "biasvar": [
+  "偏差-方差权衡",
+  "偏差-方差"
+ ],
+ "curse": [
+  "维度灾难",
+  "维数灾难"
+ ],
+ "learncurve": [
+  "学习曲线"
+ ],
+ "drift": [
+  "数据漂移与分布偏移",
+  "数据漂移",
+  "分布偏移",
+  "概念漂移",
+  "协变量偏移",
+  "漂移",
+  "PSI"
+ ],
+ "minmax": [
+  "最小-最大归一化（Min-Max）",
+  "最小-最大归一化",
+  "最小-最大缩放",
+  "Min-Max",
+  "MinMaxScaler"
+ ],
+ "standard": [
+  "标准化（Z-score）",
+  "标准化",
+  "Z-score",
+  "StandardScaler"
+ ],
+ "robust": [
+  "稳健缩放（Robust Scaling）",
+  "稳健缩放",
+  "Robust Scaling",
+  "RobustScaler"
+ ],
+ "logtf": [
+  "对数变换",
+  "log1p"
+ ],
+ "boxcox": [
+  "Box-Cox 变换",
+  "Box-Cox",
+  "Yeo-Johnson"
+ ],
+ "impute": [
+  "缺失值填补",
+  "填补",
+  "迭代填补",
+  "填充缺失",
+  "插补"
+ ],
+ "outlier": [
+  "离群点处理",
+  "离群点",
+  "离群值",
+  "异常值"
+ ],
+ "clipwin": [
+  "截断与缩尾（Clipping & Winsorizing）",
+  "截断与缩尾",
+  "截断和缩尾",
+  "缩尾",
+  "截断"
+ ],
+ "onehot": [
+  "独热编码（One-Hot Encoding）",
+  "独热编码",
+  "独热",
+  "one-hot"
+ ],
+ "targetenc": [
+  "目标编码（Target Encoding）",
+  "目标编码",
+  "Target Encoding",
+  "TargetEncoder"
+ ],
+ "freqenc": [
+  "频率编码",
+  "计数编码"
+ ],
+ "binning": [
+  "分箱（离散化）",
+  "分箱",
+  "离散化"
+ ],
+ "featureeng": [
+  "特征工程"
+ ],
+ "lagfeat": [
+  "滞后特征"
+ ],
+ "rollfeat": [
+  "滚动窗口特征",
+  "滚动特征",
+  "滚动均值",
+  "滚动统计"
+ ],
+ "imbalance": [
+  "类别不平衡",
+  "不平衡"
+ ],
+ "smote": [
+  "SMOTE 过采样",
+  "SMOTE",
+  "过采样",
+  "ADASYN"
+ ],
+ "undersample": [
+  "欠采样"
+ ],
+ "classweight": [
+  "类别权重",
+  "class_weight"
+ ],
+ "featsel": [
+  "特征选择"
+ ],
+ "vif": [
+  "多重共线性与 VIF",
+  "多重共线性",
+  "共线性",
+  "VIF"
+ ],
+ "dimred": [
+  "降维"
+ ],
+ "l1": [
+  "L1 正则化（Lasso）",
+  "L1 正则化",
+  "L1 惩罚",
+  "Lasso"
+ ],
+ "l2": [
+  "L2 正则化（Ridge）",
+  "L2 正则化",
+  "L2 惩罚",
+  "Ridge",
+  "岭回归",
+  "岭正则化"
+ ],
+ "elasticnet": [
+  "弹性网络（Elastic Net）",
+  "弹性网络",
+  "Elastic Net",
+  "ElasticNet"
+ ],
+ "weightdecay": [
+  "权重衰减"
+ ],
+ "dropout": [
+  "Dropout"
+ ],
+ "earlystop": [
+  "早停（Early Stopping）",
+  "早停",
+  "提前停止",
+  "Early Stopping"
+ ],
+ "augment": [
+  "数据增强"
+ ],
+ "labelsmooth": [
+  "标签平滑"
+ ],
+ "batchnorm": [
+  "批归一化（Batch Normalization）",
+  "批归一化",
+  "Batch Normalization",
+  "BatchNorm"
+ ],
+ "layernorm": [
+  "层归一化（Layer Normalization）",
+  "层归一化",
+  "Layer Normalization",
+  "LayerNorm"
+ ],
+ "rmsnorm": [
+  "RMSNorm",
+  "均方根归一化"
+ ],
+ "gradclip": [
+  "梯度裁剪"
+ ],
+ "linreg": [
+  "线性回归",
+  "最小二乘",
+  "OLS"
+ ],
+ "tls": [
+  "总体最小二乘",
+  "TLS"
+ ],
+ "polyreg": [
+  "多项式回归"
+ ],
+ "logreg": [
+  "逻辑回归"
+ ],
+ "knn": [
+  "k 近邻（KNN）",
+  "k 近邻",
+  "KNN",
+  "k-NN"
+ ],
+ "naivebayes": [
+  "朴素贝叶斯"
+ ],
+ "svm": [
+  "支持向量机（SVM）",
+  "支持向量机",
+  "SVM",
+  "支持向量"
+ ],
+ "kerneltrick": [
+  "核技巧",
+  "核函数",
+  "核方法",
+  "核矩阵",
+  "核岭回归",
+  "RBF",
+  "Gram 矩阵"
+ ],
+ "lda": [
+  "线性判别分析（LDA）",
+  "线性判别分析",
+  "LDA"
+ ],
+ "perceptron": [
+  "感知机"
+ ],
+ "dtree": [
+  "决策树",
+  "C4.5",
+  "ID3"
+ ],
+ "gini": [
+  "基尼不纯度",
+  "基尼系数",
+  "基尼"
+ ],
+ "entropy": [
+  "熵与信息增益",
+  "信息增益",
+  "信息熵"
+ ],
+ "cart": [
+  "CART 与轴对齐分裂",
+  "CART",
+  "轴对齐分裂",
+  "轴对齐"
+ ],
+ "pruning": [
+  "树剪枝",
+  "代价复杂度剪枝",
+  "后剪枝",
+  "预剪枝"
+ ],
+ "bootstrap": [
+  "自助采样（Bootstrap）",
+  "自助采样",
+  "自助法",
+  "Bootstrap"
+ ],
+ "bagging": [
+  "Bagging"
+ ],
+ "oob": [
+  "袋外（OOB）分数",
+  "袋外分数",
+  "袋外",
+  "OOB"
+ ],
+ "rf": [
+  "随机森林"
+ ],
+ "maxfeat": [
+  "特征子采样（max_features）",
+  "特征子采样",
+  "max_features",
+  "colsample_bytree",
+  "colsample"
+ ],
+ "extratrees": [
+  "极端随机树（Extra Trees）",
+  "极端随机树",
+  "Extra Trees",
+  "ExtraTrees"
+ ],
+ "boosting": [
+  "Boosting（提升法）",
+  "Boosting",
+  "提升法"
+ ],
+ "adaboost": [
+  "AdaBoost"
+ ],
+ "gbm": [
+  "梯度提升",
+  "提升树",
+  "GBDT",
+  "GBM"
+ ],
+ "xgboost": [
+  "XGBoost"
+ ],
+ "lightgbm": [
+  "LightGBM"
+ ],
+ "catboost": [
+  "CatBoost"
+ ],
+ "goss": [
+  "GOSS（基于梯度的单边采样）",
+  "GOSS",
+  "基于梯度的单边采样",
+  "单边采样"
+ ],
+ "histsplit": [
+  "基于直方图的分裂",
+  "直方图分裂",
+  "直方图算法"
+ ],
+ "subsample": [
+  "行子采样（随机梯度提升）",
+  "行子采样",
+  "随机梯度提升",
+  "subsample"
+ ],
+ "shrinkage": [
+  "收缩（Boosting 中的学习率）",
+  "收缩"
+ ],
+ "stacking": [
+  "堆叠（Stacking）",
+  "堆叠泛化",
+  "堆叠集成",
+  "Stacking"
+ ],
+ "voting": [
+  "投票集成",
+  "软投票",
+  "硬投票",
+  "多数投票"
+ ],
+ "confusion": [
+  "混淆矩阵",
+  "真正例与假正例",
+  "真正例",
+  "假正例",
+  "真负例",
+  "假负例",
+  "假阳性",
+  "真阳性",
+  "假阴性",
+  "真阴性"
+ ],
+ "accuracy": [
+  "准确率"
+ ],
+ "precision": [
+  "精确率"
+ ],
+ "recall": [
+  "召回率"
+ ],
+ "f1": [
+  "F1 分数",
+  "F1"
+ ],
+ "roc": [
+  "ROC 曲线",
+  "ROC"
+ ],
+ "rocauc": [
+  "ROC-AUC",
+  "AUC"
+ ],
+ "prcurve": [
+  "精确率-召回率曲线",
+  "PR 曲线"
+ ],
+ "prauc": [
+  "PR-AUC"
+ ],
+ "threshold": [
+  "决策阈值",
+  "分类阈值"
+ ],
+ "calibration": [
+  "概率校准",
+  "校准",
+  "温度缩放",
+  "Platt",
+  "Brier",
+  "ECE"
+ ],
+ "logloss": [
+  "对数损失（交叉熵）",
+  "对数损失",
+  "交叉熵",
+  "log loss"
+ ],
+ "mse": [
+  "MSE / RMSE",
+  "MSE",
+  "RMSE",
+  "均方误差",
+  "均方根误差"
+ ],
+ "mae": [
+  "MAE（平均绝对误差）",
+  "MAE",
+  "平均绝对误差"
+ ],
+ "r2": [
+  "R²（决定系数）",
+  "R²",
+  "决定系数"
+ ],
+ "mdi": [
+  "平均不纯度减少（MDI）",
+  "平均不纯度减少",
+  "MDI",
+  "不纯度重要性"
+ ],
+ "permimp": [
+  "置换重要性（Permutation Importance）",
+  "置换重要性",
+  "Permutation Importance"
+ ],
+ "shap": [
+  "SHAP（Shapley 值）",
+  "SHAP",
+  "Shapley 值",
+  "Shapley"
+ ],
+ "treeshap": [
+  "TreeSHAP"
+ ],
+ "pdp": [
+  "部分依赖图（PDP）",
+  "部分依赖图",
+  "部分依赖",
+  "PDP"
+ ],
+ "ice": [
+  "ICE 图（个体条件期望）",
+  "ICE 图",
+  "个体条件期望",
+  "ICE"
+ ],
+ "lime": [
+  "LIME（局部可解释的模型无关解释）",
+  "LIME"
+ ],
+ "counterfactual": [
+  "反事实解释",
+  "反事实"
+ ],
+ "kmeans": [
+  "k 均值聚类（k-Means）",
+  "k 均值聚类",
+  "k 均值",
+  "k-Means"
+ ],
+ "hierclust": [
+  "层次聚类",
+  "树状图"
+ ],
+ "dbscan": [
+  "DBSCAN",
+  "HDBSCAN"
+ ],
+ "gmm": [
+  "高斯混合模型（GMM）",
+  "高斯混合模型",
+  "高斯混合",
+  "GMM"
+ ],
+ "em": [
+  "EM 算法（期望最大化）",
+  "EM 算法",
+  "期望最大化",
+  "EM"
+ ],
+ "pca": [
+  "主成分分析（PCA）",
+  "主成分分析",
+  "主成分",
+  "PCA"
+ ],
+ "kpca": [
+  "核主成分分析（Kernel PCA）",
+  "核主成分分析",
+  "Kernel PCA",
+  "核 PCA"
+ ],
+ "svd": [
+  "奇异值分解（SVD）",
+  "奇异值分解",
+  "截断 SVD",
+  "SVD",
+  "奇异值"
+ ],
+ "tsne": [
+  "t-SNE"
+ ],
+ "umap": [
+  "UMAP"
+ ],
+ "autoencoder": [
+  "自编码器（Autoencoder）",
+  "自编码器",
+  "Autoencoder"
+ ],
+ "isoforest": [
+  "孤立森林（Isolation Forest）",
+  "孤立森林",
+  "Isolation Forest",
+  "IsolationForest"
+ ],
+ "lof": [
+  "局部离群因子（LOF）",
+  "局部离群因子",
+  "LOF"
+ ],
+ "spectral": [
+  "谱聚类"
+ ],
+ "stationarity": [
+  "平稳性",
+  "非平稳",
+  "平稳序列",
+  "ADF",
+  "KPSS",
+  "Dickey-Fuller"
+ ],
+ "acf": [
+  "自相关（ACF / PACF）",
+  "偏自相关",
+  "自相关",
+  "ACF",
+  "PACF"
+ ],
+ "decomp": [
+  "季节性分解",
+  "STL"
+ ],
+ "arima": [
+  "ARIMA",
+  "ARMA"
+ ],
+ "sarima": [
+  "SARIMA",
+  "SARIMAX"
+ ],
+ "prophet": [
+  "Prophet"
+ ],
+ "holtwinters": [
+  "指数平滑（Holt-Winters）",
+  "指数平滑",
+  "Holt-Winters",
+  "ETS"
+ ],
+ "tssplit": [
+  "基于时间的验证",
+  "时间序列交叉验证",
+  "滚动起点",
+  "前向验证"
+ ],
+ "multistep": [
+  "多步预测",
+  "递归策略",
+  "直接策略",
+  "多步策略"
+ ],
+ "gbmts": [
+  "时间序列的梯度提升"
+ ],
+ "nbeats": [
+  "N-BEATS",
+  "N-HiTS"
+ ],
+ "tft": [
+  "时间融合 Transformer（TFT）",
+  "时间融合 Transformer",
+  "TFT"
+ ],
+ "patchtst": [
+  "PatchTST"
+ ],
+ "tsfm": [
+  "时间序列基础模型",
+  "TimesFM",
+  "Chronos",
+  "Moirai",
+  "Lag-Llama"
+ ],
+ "gd": [
+  "梯度下降"
+ ],
+ "sgd": [
+  "随机梯度下降（SGD）",
+  "随机梯度下降",
+  "SGD"
+ ],
+ "minibatch": [
+  "小批量（Mini-Batch）",
+  "小批量",
+  "Mini-Batch",
+  "批量大小",
+  "批大小"
+ ],
+ "momentum": [
+  "动量（Momentum）",
+  "动量",
+  "Momentum"
+ ],
+ "nesterov": [
+  "Nesterov 加速梯度",
+  "Nesterov"
+ ],
+ "rmsprop": [
+  "RMSProp",
+  "AdaGrad"
+ ],
+ "adam": [
+  "Adam"
+ ],
+ "adamw": [
+  "AdamW"
+ ],
+ "lr": [
+  "学习率"
+ ],
+ "lrsched": [
+  "学习率调度",
+  "余弦退火",
+  "余弦衰减"
+ ],
+ "warmup": [
+  "预热（Warmup）",
+  "预热",
+  "Warmup"
+ ],
+ "landscape": [
+  "损失曲面（Loss Landscape）",
+  "损失曲面",
+  "损失地形",
+  "Loss Landscape"
+ ],
+ "saddle": [
+  "鞍点"
+ ],
+ "sharpflat": [
+  "尖锐极小值与平坦极小值",
+  "尖锐极小值",
+  "平坦极小值",
+  "尖锐的极小值",
+  "平坦的极小值"
+ ],
+ "convex": [
+  "凸优化",
+  "非凸",
+  "凸函数"
+ ],
+ "newton": [
+  "二阶方法（牛顿法）",
+  "二阶方法",
+  "牛顿法",
+  "L-BFGS",
+  "拟牛顿"
+ ],
+ "gridsearch": [
+  "网格搜索"
+ ],
+ "randsearch": [
+  "随机搜索"
+ ],
+ "bayesopt": [
+  "贝叶斯优化",
+  "Optuna"
+ ],
+ "neuron": [
+  "人工神经元",
+  "神经元"
+ ],
+ "mlp": [
+  "多层感知机（MLP）",
+  "多层感知机",
+  "MLP"
+ ],
+ "backprop": [
+  "反向传播"
+ ],
+ "autograd": [
+  "链式法则与自动微分（Autograd）",
+  "链式法则",
+  "自动微分",
+  "Autograd"
+ ],
+ "relu": [
+  "ReLU",
+  "Leaky ReLU"
+ ],
+ "sigmoid": [
+  "Sigmoid"
+ ],
+ "tanh": [
+  "Tanh"
+ ],
+ "gelu": [
+  "GELU"
+ ],
+ "swiglu": [
+  "SwiGLU"
+ ],
+ "softmax": [
+  "Softmax"
+ ],
+ "xent": [
+  "交叉熵损失"
+ ],
+ "vanishing": [
+  "梯度消失与梯度爆炸",
+  "梯度消失",
+  "梯度爆炸"
+ ],
+ "residual": [
+  "残差连接",
+  "跳跃连接",
+  "残差块",
+  "残差分支",
+  "残差流"
+ ],
+ "init": [
+  "权重初始化（Xavier / He）",
+  "权重初始化",
+  "Xavier",
+  "He 初始化",
+  "Glorot",
+  "Kaiming"
+ ],
+ "uat": [
+  "万能逼近定理",
+  "通用逼近定理"
+ ],
+ "embedding": [
+  "嵌入层",
+  "嵌入表",
+  "嵌入"
+ ],
+ "cnn": [
+  "卷积神经网络（CNN）",
+  "卷积神经网络",
+  "卷积网络",
+  "CNN"
+ ],
+ "convolution": [
+  "卷积"
+ ],
+ "pooling": [
+  "池化"
+ ],
+ "resnet": [
+  "ResNet",
+  "残差网络"
+ ],
+ "rnn": [
+  "循环神经网络（RNN）",
+  "循环神经网络",
+  "RNN"
+ ],
+ "lstm": [
+  "LSTM"
+ ],
+ "gru": [
+  "GRU"
+ ],
+ "bidir": [
+  "双向 RNN",
+  "双向 LSTM"
+ ],
+ "seq2seq": [
+  "序列到序列（Seq2Seq）",
+  "序列到序列",
+  "Seq2Seq"
+ ],
+ "word2vec": [
+  "Word2Vec",
+  "skip-gram",
+  "CBOW"
+ ],
+ "unet": [
+  "U-Net"
+ ],
+ "gnn": [
+  "图神经网络（GNN）",
+  "图神经网络",
+  "GNN",
+  "GCN",
+  "GAT",
+  "GraphSAGE"
+ ],
+ "vit": [
+  "Vision Transformer（ViT）",
+  "Vision Transformer",
+  "ViT"
+ ],
+ "clip": [
+  "CLIP"
+ ],
+ "contrastive": [
+  "对比学习",
+  "对比损失",
+  "InfoNCE",
+  "SimCLR",
+  "MoCo"
+ ],
+ "gan": [
+  "生成对抗网络（GAN）",
+  "生成对抗网络",
+  "GAN",
+  "StyleGAN"
+ ],
+ "vae": [
+  "变分自编码器（VAE）",
+  "变分自编码器",
+  "VAE",
+  "ELBO"
+ ],
+ "diffusion": [
+  "扩散模型",
+  "DDPM",
+  "DDIM"
+ ],
+ "latentdiff": [
+  "潜在扩散（Latent Diffusion）",
+  "潜在扩散",
+  "Latent Diffusion",
+  "Stable Diffusion"
+ ],
+ "flowmatch": [
+  "流匹配（Flow Matching）",
+  "流匹配",
+  "Flow Matching"
+ ],
+ "autoregressive": [
+  "自回归模型",
+  "自回归生成",
+  "自回归"
+ ],
+ "dlm": [
+  "扩散语言模型"
+ ],
+ "attention": [
+  "注意力机制",
+  "注意力"
+ ],
+ "selfattn": [
+  "自注意力"
+ ],
+ "qkv": [
+  "查询、键、值（Q, K, V）",
+  "查询、键和值",
+  "查询、键与值",
+  "查询、键",
+  "查询与键",
+  "查询和键",
+  "查询-键",
+  "查询向量",
+  "查询头"
+ ],
+ "mha": [
+  "多头注意力",
+  "多头自注意力",
+  "注意力头"
+ ],
+ "crossattn": [
+  "交叉注意力"
+ ],
+ "causalmask": [
+  "因果掩码",
+  "因果自注意力"
+ ],
+ "posenc": [
+  "位置编码"
+ ],
+ "rope": [
+  "旋转位置编码（RoPE）",
+  "旋转位置编码",
+  "RoPE",
+  "YaRN"
+ ],
+ "alibi": [
+  "ALiBi（线性偏置注意力）",
+  "ALiBi",
+  "线性偏置注意力"
+ ],
+ "transformer": [
+  "Transformer 块",
+  "Transformer 层",
+  "Transformer"
+ ],
+ "encoderonly": [
+  "仅编码器模型（BERT）",
+  "仅编码器模型",
+  "仅编码器",
+  "BERT",
+  "RoBERTa"
+ ],
+ "decoderonly": [
+  "仅解码器模型（GPT）",
+  "仅解码器模型",
+  "仅解码器",
+  "GPT"
+ ],
+ "encdec": [
+  "编码器-解码器模型（T5）",
+  "编码器-解码器模型",
+  "编码器-解码器",
+  "T5",
+  "BART"
+ ],
+ "ffn": [
+  "前馈网络（FFN）",
+  "前馈网络",
+  "前馈层",
+  "FFN"
+ ],
+ "prenorm": [
+  "Pre-Norm 与 Post-Norm",
+  "Pre-Norm",
+  "Post-Norm",
+  "Pre-LN",
+  "Post-LN"
+ ],
+ "tokenization": [
+  "分词（Tokenization）",
+  "分词器",
+  "分词",
+  "Tokenization",
+  "tokenizer",
+  "WordPiece"
+ ],
+ "bpe": [
+  "字节对编码（BPE）",
+  "字节对编码",
+  "BPE"
+ ],
+ "mlm": [
+  "掩码语言建模（MLM）",
+  "掩码语言建模",
+  "掩码语言模型",
+  "MLM"
+ ],
+ "nexttoken": [
+  "下一个 token 预测",
+  "下一 token 预测"
+ ],
+ "kvcache": [
+  "KV 缓存（KV Cache）",
+  "KV 缓存",
+  "KV Cache",
+  "预填充"
+ ],
+ "flashattn": [
+  "FlashAttention"
+ ],
+ "mqa": [
+  "多查询注意力（MQA）",
+  "多查询注意力",
+  "MQA"
+ ],
+ "gqa": [
+  "分组查询注意力（GQA）",
+  "分组查询注意力",
+  "GQA"
+ ],
+ "swa": [
+  "滑动窗口注意力"
+ ],
+ "sparseattn": [
+  "稀疏注意力",
+  "BigBird"
+ ],
+ "linattn": [
+  "线性注意力"
+ ],
+ "scaling": [
+  "缩放定律（Scaling Laws）",
+  "缩放定律",
+  "规模定律",
+  "Scaling Laws"
+ ],
+ "chinchilla": [
+  "Chinchilla 最优训练",
+  "Chinchilla"
+ ],
+ "icl": [
+  "上下文学习（ICL）",
+  "上下文学习",
+  "ICL",
+  "少样本提示"
+ ],
+ "pretrain": [
+  "预训练"
+ ],
+ "sft": [
+  "监督微调（SFT）",
+  "监督微调",
+  "指令微调",
+  "示范数据",
+  "SFT"
+ ],
+ "rlhf": [
+  "RLHF（基于人类反馈的强化学习）",
+  "基于人类反馈的强化学习",
+  "RLHF"
+ ],
+ "rewardmodel": [
+  "奖励模型"
+ ],
+ "ppo": [
+  "PPO（近端策略优化）",
+  "近端策略优化",
+  "PPO",
+  "截断比率"
+ ],
+ "dpo": [
+  "DPO（直接偏好优化）",
+  "直接偏好优化",
+  "DPO"
+ ],
+ "grpo": [
+  "GRPO（组相对策略优化）",
+  "组相对策略优化",
+  "GRPO"
+ ],
+ "rlvr": [
+  "可验证奖励强化学习（RLVR）",
+  "可验证奖励强化学习",
+  "可验证奖励",
+  "RLVR"
+ ],
+ "cai": [
+  "宪法式 AI 与 RLAIF",
+  "宪法式 AI",
+  "RLAIF"
+ ],
+ "lora": [
+  "LoRA（低秩适配）",
+  "低秩适配",
+  "LoRA"
+ ],
+ "qlora": [
+  "QLoRA"
+ ],
+ "adapters": [
+  "适配器与 PEFT",
+  "适配器",
+  "PEFT",
+  "参数高效微调"
+ ],
+ "prompttuning": [
+  "前缀微调与提示微调",
+  "前缀微调",
+  "提示微调",
+  "软提示"
+ ],
+ "distill": [
+  "知识蒸馏",
+  "蒸馏"
+ ],
+ "synthdata": [
+  "合成数据"
+ ],
+ "forgetting": [
+  "灾难性遗忘"
+ ],
+ "quantization": [
+  "量化"
+ ],
+ "gptq": [
+  "INT8 / INT4 权重量化（GPTQ、AWQ）",
+  "GPTQ",
+  "AWQ",
+  "INT8",
+  "INT4"
+ ],
+ "mixedprec": [
+  "混合精度（FP16 / BF16）",
+  "混合精度",
+  "FP16",
+  "BF16",
+  "损失缩放"
+ ],
+ "prune": [
+  "剪枝"
+ ],
+ "gradaccum": [
+  "梯度累积",
+  "微批次"
+ ],
+ "gradckpt": [
+  "梯度检查点（Gradient Checkpointing）",
+  "梯度检查点",
+  "激活检查点",
+  "Gradient Checkpointing",
+  "激活重计算"
+ ],
+ "parallelism": [
+  "数据并行、张量并行与流水线并行",
+  "数据并行",
+  "张量并行",
+  "流水线并行",
+  "模型并行",
+  "FSDP",
+  "ZeRO"
+ ],
+ "greedy": [
+  "贪心解码（Greedy Decoding）",
+  "贪心解码",
+  "Greedy Decoding",
+  "解码策略"
+ ],
+ "beam": [
+  "束搜索（Beam Search）",
+  "束搜索",
+  "Beam Search",
+  "集束搜索"
+ ],
+ "temperature": [
+  "温度（Temperature）",
+  "温度",
+  "Temperature"
+ ],
+ "topk": [
+  "Top-k 采样"
+ ],
+ "topp": [
+  "Top-p（核）采样",
+  "Top-p 采样",
+  "Top-p",
+  "核采样"
+ ],
+ "specdec": [
+  "推测解码（Speculative Decoding）",
+  "推测解码",
+  "投机解码",
+  "Speculative Decoding",
+  "草稿模型"
+ ],
+ "pagedattn": [
+  "PagedAttention"
+ ],
+ "contbatch": [
+  "连续批处理（Continuous Batching）",
+  "连续批处理",
+  "Continuous Batching",
+  "迭代级批处理"
+ ],
+ "longctx": [
+  "长上下文扩展",
+  "长上下文",
+  "上下文扩展"
+ ],
+ "prompting": [
+  "提示工程（Prompt Engineering）",
+  "提示工程",
+  "Prompt Engineering",
+  "少样本示例"
+ ],
+ "cot": [
+  "思维链（Chain-of-Thought, CoT）",
+  "思维链",
+  "Chain-of-Thought",
+  "CoT",
+  "推理链",
+  "推理轨迹",
+  "推理路径",
+  "推理步骤",
+  "中间推理",
+  "逐步推理"
+ ],
+ "selfcons": [
+  "自洽性（Self-Consistency）",
+  "自洽性",
+  "Self-Consistency"
+ ],
+ "tot": [
+  "思维树（Tree of Thoughts, ToT）",
+  "思维树",
+  "Tree of Thoughts",
+  "ToT"
+ ],
+ "rag": [
+  "检索增强生成（RAG）",
+  "检索增强生成",
+  "检索增强",
+  "RAG"
+ ],
+ "vectordb": [
+  "向量检索与近似最近邻（ANN）",
+  "向量检索",
+  "近似最近邻",
+  "向量数据库",
+  "ANN",
+  "HNSW"
+ ],
+ "embedmodel": [
+  "文本嵌入（Text Embeddings）",
+  "文本嵌入",
+  "句子嵌入",
+  "嵌入模型",
+  "Text Embeddings"
+ ],
+ "rerank": [
+  "重排序（Reranking）",
+  "重排序",
+  "重排",
+  "交叉编码器",
+  "Reranking",
+  "相关性分数",
+  "相关性判断",
+  "按相关性排序"
+ ],
+ "agent": [
+  "LLM 智能体（LLM Agents）",
+  "LLM 智能体",
+  "LLM Agents",
+  "编程智能体",
+  "智能体框架"
+ ],
+ "tooluse": [
+  "工具使用与函数调用（Function Calling）",
+  "工具使用",
+  "工具调用",
+  "函数调用",
+  "Function Calling"
+ ],
+ "react": [
+  "ReAct（推理 + 行动）",
+  "ReAct"
+ ],
+ "ttc": [
+  "推理模型与测试时计算（Test-Time Compute）",
+  "推理模型",
+  "测试时计算",
+  "Test-Time Compute",
+  "推理力度",
+  "推理 token",
+  "推理能力",
+  "推理任务",
+  "推理训练",
+  "数学推理",
+  "复杂推理",
+  "抽象推理",
+  "空间推理"
+ ],
+ "llmeval": [
+  "LLM 评估与基准测试",
+  "LLM 评估",
+  "MMLU",
+  "GSM8K",
+  "HumanEval",
+  "SWE-bench"
+ ],
+ "moe": [
+  "混合专家（Mixture of Experts, MoE）",
+  "混合专家",
+  "Mixture of Experts",
+  "MoE",
+  "Mixtral"
+ ],
+ "router": [
+  "路由器与 Top-k 门控",
+  "路由器",
+  "Top-k 门控",
+  "top-k 路由",
+  "门控网络"
+ ],
+ "loadbal": [
+  "负载均衡损失（Load-Balancing Loss）",
+  "负载均衡损失",
+  "辅助损失",
+  "Load-Balancing Loss"
+ ],
+ "finegrained": [
+  "细粒度专家与共享专家",
+  "细粒度专家",
+  "共享专家"
+ ],
+ "ssm": [
+  "状态空间模型（S4）",
+  "状态空间模型",
+  "S4",
+  "SSM"
+ ],
+ "mamba": [
+  "Mamba（选择性 SSM）",
+  "Mamba",
+  "选择性 SSM",
+  "选择性状态空间模型"
+ ],
+ "rwkv": [
+  "RWKV"
+ ],
+ "hybrid": [
+  "混合架构（Jamba）",
+  "混合架构",
+  "Jamba"
+ ],
+ "mla": [
+  "多头潜在注意力（MLA）",
+  "多头潜在注意力",
+  "MLA"
+ ],
+ "mtp": [
+  "多 token 预测（MTP）",
+  "多 token 预测",
+  "MTP"
+ ],
+ "mod": [
+  "混合深度（Mixture of Depths, MoD）",
+  "混合深度",
+  "Mixture of Depths",
+  "MoD"
+ ],
+ "ringattn": [
+  "环形注意力（Ring Attention）",
+  "环形注意力",
+  "Ring Attention"
+ ],
+ "multimodal": [
+  "多模态大语言模型（Multimodal LLM）",
+  "多模态大语言模型",
+  "多模态语言模型",
+  "多模态 LLM",
+  "Multimodal LLM"
+ ],
+ "vla": [
+  "视觉-语言-动作模型（VLA）",
+  "视觉-语言-动作模型",
+  "VLA"
+ ],
+ "worldmodel": [
+  "世界模型（World Models）",
+  "世界模型",
+  "World Models"
+ ],
+ "jepa": [
+  "JEPA（联合嵌入预测架构）",
+  "JEPA",
+  "联合嵌入预测架构",
+  "I-JEPA",
+  "V-JEPA"
+ ],
+ "kan": [
+  "Kolmogorov–Arnold 网络（KAN）",
+  "Kolmogorov–Arnold 网络",
+  "KAN"
+ ],
+ "ttt": [
+  "测试时训练（TTT）",
+  "测试时训练",
+  "TTT"
+ ],
+ "merging": [
+  "模型合并（Model Merging）",
+  "模型合并",
+  "Model Merging",
+  "TIES-Merging"
+ ],
+ "bitnet": [
+  "1-bit 大语言模型（BitNet）",
+  "1-bit 大语言模型",
+  "BitNet"
+ ],
+ "mechinterp": [
+  "机制可解释性（Mechanistic Interpretability）",
+  "机制可解释性",
+  "Mechanistic Interpretability"
+ ],
+ "sae": [
+  "用于可解释性的稀疏自编码器（SAE）",
+  "稀疏自编码器",
+  "SAE"
+ ],
+ "mean": [
+  "均值（平均值）",
+  "均值",
+  "平均值",
+  "算术平均",
+  "平均数"
+ ],
+ "median": [
+  "中位数"
+ ],
+ "variance": [
+  "方差"
+ ],
+ "stddev": [
+  "标准差"
+ ],
+ "covariance": [
+  "协方差"
+ ],
+ "correlation": [
+  "相关系数",
+  "相关性",
+  "Pearson",
+  "Spearman",
+  "皮尔逊"
+ ],
+ "corrmatrix": [
+  "相关矩阵",
+  "相关性矩阵"
+ ],
+ "quantile": [
+  "分位数与百分位数",
+  "分位数",
+  "百分位数",
+  "四分位数",
+  "百分位"
+ ],
+ "iqr": [
+  "四分位距（IQR）",
+  "四分位距",
+  "IQR"
+ ],
+ "skewness": [
+  "偏度",
+  "偏态",
+  "偏斜"
+ ],
+ "kurtosis": [
+  "峰度与重尾",
+  "峰度",
+  "重尾",
+  "厚尾"
+ ],
+ "probdist": [
+  "概率分布"
+ ],
+ "normaldist": [
+  "正态（高斯）分布",
+  "正态分布",
+  "高斯分布",
+  "正态性",
+  "正态"
+ ],
+ "binomial": [
+  "伯努利分布与二项分布",
+  "伯努利分布",
+  "二项分布",
+  "伯努利"
+ ],
+ "poisson": [
+  "泊松分布",
+  "泊松",
+  "Poisson"
+ ],
+ "uniformdist": [
+  "均匀分布"
+ ],
+ "expectation": [
+  "期望值",
+  "数学期望",
+  "期望"
+ ],
+ "condprob": [
+  "条件概率"
+ ],
+ "bayesthm": [
+  "贝叶斯定理",
+  "贝叶斯公式",
+  "贝叶斯法则"
+ ],
+ "priorpost": [
+  "先验与后验",
+  "先验",
+  "后验"
+ ],
+ "likelihood": [
+  "似然",
+  "对数似然"
+ ],
+ "mle": [
+  "最大似然估计（MLE）",
+  "最大似然估计",
+  "最大似然",
+  "极大似然",
+  "MLE"
+ ],
+ "mapest": [
+  "最大后验估计（MAP）",
+  "最大后验估计",
+  "最大后验",
+  "MAP"
+ ],
+ "iid": [
+  "独立同分布（i.i.d.）假设",
+  "独立同分布",
+  "i.i.d."
+ ],
+ "clt": [
+  "中心极限定理"
+ ],
+ "stderr": [
+  "标准误"
+ ],
+ "confint": [
+  "置信区间"
+ ],
+ "hyptest": [
+  "假设检验与 p 值",
+  "假设检验",
+  "p 值",
+  "显著性检验",
+  "统计显著",
+  "零假设",
+  "原假设"
+ ],
+ "abtest": [
+  "A/B 测试",
+  "A/B 实验"
+ ],
+ "kldiv": [
+  "KL 散度",
+  "KL"
+ ],
+ "mutualinfo": [
+  "互信息"
+ ],
+ "montecarlo": [
+  "蒙特卡洛估计",
+  "蒙特卡洛",
+  "MCMC"
+ ],
+ "markovchain": [
+  "马尔可夫链",
+  "平稳分布"
+ ],
+ "causation": [
+  "相关与因果",
+  "因果关系",
+  "因果效应",
+  "因果推断",
+  "因果影响",
+  "因果联系",
+  "反向因果",
+  "而非因果",
+  "双重差分"
+ ],
+ "confounder": [
+  "混杂变量",
+  "混杂因素"
+ ],
+ "samplingbias": [
+  "抽样偏差",
+  "选择偏差",
+  "幸存者偏差"
+ ],
+ "heterosked": [
+  "异方差",
+  "同方差"
+ ],
+ "histogram": [
+  "直方图"
+ ],
+ "boxplot": [
+  "箱线图"
+ ],
+ "scatterplot": [
+  "散点图"
+ ],
+ "heatmap": [
+  "热力图"
+ ],
+ "qqplot": [
+  "Q-Q 图（分位数-分位数图）",
+  "Q-Q 图",
+  "Q-Q"
+ ],
+ "feature": [
+  "特征"
+ ],
+ "label": [
+  "标签（目标）",
+  "标签",
+  "目标变量"
+ ],
+ "tabular": [
+  "表格数据"
+ ],
+ "numcat": [
+  "数值特征与类别特征",
+  "数值特征",
+  "类别特征",
+  "类别变量",
+  "分类特征"
+ ],
+ "ordinal": [
+  "有序变量与名义变量",
+  "有序变量",
+  "名义变量",
+  "序数编码",
+  "有序编码"
+ ],
+ "cardinality": [
+  "基数"
+ ],
+ "missingval": [
+  "缺失值（MCAR、MAR、MNAR）",
+  "缺失值",
+  "缺失数据",
+  "MCAR",
+  "MAR",
+  "MNAR"
+ ],
+ "duplicates": [
+  "重复记录",
+  "重复样本",
+  "去重"
+ ],
+ "labelnoise": [
+  "标签噪声",
+  "噪声标签"
+ ],
+ "sparsedata": [
+  "稀疏数据",
+  "稀疏矩阵"
+ ],
+ "interaction": [
+  "特征交互",
+  "交互项",
+  "交互特征"
+ ],
+ "baseline": [
+  "基线模型",
+  "基线"
+ ],
+ "timeseries": [
+  "时间序列数据",
+  "时间序列"
+ ],
+ "trend": [
+  "趋势"
+ ],
+ "seasonality": [
+  "季节性"
+ ],
+ "whitenoise": [
+  "白噪声"
+ ],
+ "randomwalk": [
+  "随机游走"
+ ],
+ "differencing": [
+  "差分"
+ ],
+ "horizon": [
+  "预测步长",
+  "预测范围"
+ ],
+ "vector": [
+  "向量"
+ ],
+ "matrix": [
+  "矩阵"
+ ],
+ "tensor": [
+  "张量"
+ ],
+ "dotproduct": [
+  "点积",
+  "内积"
+ ],
+ "matmul": [
+  "矩阵乘法",
+  "矩阵乘"
+ ],
+ "vecnorm": [
+  "向量范数（L1、L2）",
+  "向量范数",
+  "范数",
+  "L2 范数",
+  "L1 范数"
+ ],
+ "euclidean": [
+  "欧氏距离",
+  "欧几里得距离"
+ ],
+ "cosine": [
+  "余弦相似度",
+  "余弦距离"
+ ],
+ "distmetric": [
+  "距离度量",
+  "Jaccard"
+ ],
+ "projection": [
+  "投影"
+ ],
+ "orthogonal": [
+  "正交性",
+  "正交"
+ ],
+ "eigen": [
+  "特征值与特征向量",
+  "特征值",
+  "特征向量",
+  "特征分解"
+ ],
+ "matrank": [
+  "矩阵的秩",
+  "低秩",
+  "满秩"
+ ],
+ "covmatrix": [
+  "协方差矩阵"
+ ],
+ "derivative": [
+  "导数",
+  "有限差分"
+ ],
+ "partialderiv": [
+  "偏导数",
+  "偏导"
+ ],
+ "gradient": [
+  "梯度"
+ ],
+ "jacobian": [
+  "雅可比矩阵",
+  "雅可比"
+ ],
+ "hessian": [
+  "Hessian 矩阵",
+  "Hessian",
+  "海森矩阵"
+ ],
+ "logsumexp": [
+  "Log-Sum-Exp 与数值稳定性",
+  "Log-Sum-Exp",
+  "logsumexp",
+  "数值稳定性",
+  "数值稳定"
+ ],
+ "nonlinearity": [
+  "线性与非线性",
+  "非线性"
+ ],
+ "highdim": [
+  "高维空间",
+  "高维"
+ ],
+ "lossfn": [
+  "损失函数",
+  "损失"
+ ],
+ "objective": [
+  "目标函数"
+ ],
+ "paramhyper": [
+  "参数与超参数",
+  "超参数",
+  "参数"
+ ],
+ "weightsbias": [
+  "权重与偏置",
+  "权重",
+  "偏置"
+ ],
+ "epoch": [
+  "Epoch、批次与迭代",
+  "Epoch",
+  "轮次",
+  "批次",
+  "迭代"
+ ],
+ "convergence": [
+  "收敛"
+ ],
+ "localmin": [
+  "局部极小值与全局极小值",
+  "局部极小值",
+  "全局极小值",
+  "局部极小",
+  "局部最小值",
+  "全局最小值",
+  "全局最优"
+ ],
+ "closedform": [
+  "闭式解",
+  "解析解"
+ ],
+ "stochastic": [
+  "随机性与确定性",
+  "随机性"
+ ],
+ "lagrange": [
+  "拉格朗日乘子与约束",
+  "拉格朗日乘子",
+  "拉格朗日",
+  "约束优化"
+ ],
+ "generalization": [
+  "泛化"
+ ],
+ "capacity": [
+  "模型容量"
+ ],
+ "inductivebias": [
+  "归纳偏置"
+ ],
+ "trainloop": [
+  "训练循环（Training Loop）",
+  "训练循环",
+  "Training Loop"
+ ],
+ "checkpoint": [
+  "模型检查点",
+  "检查点"
+ ],
+ "hingeloss": [
+  "合页损失（Hinge Loss）",
+  "合页损失",
+  "Hinge Loss",
+  "hinge"
+ ],
+ "huberloss": [
+  "Huber 损失",
+  "Huber"
+ ],
+ "focalloss": [
+  "Focal Loss（焦点损失）",
+  "Focal Loss",
+  "焦点损失"
+ ],
+ "mape": [
+  "MAPE（平均绝对百分比误差）",
+  "MAPE",
+  "平均绝对百分比误差",
+  "sMAPE"
+ ],
+ "rankmetrics": [
+  "排序指标（NDCG、MRR）",
+  "排序指标",
+  "NDCG",
+  "MRR",
+  "DCG"
+ ],
+ "iou": [
+  "交并比（IoU）",
+  "交并比",
+  "IoU"
+ ],
+ "baserate": [
+  "基础率",
+  "基率"
+ ],
+ "activation": [
+  "激活函数"
+ ],
+ "hiddenlayer": [
+  "隐藏层",
+  "隐层"
+ ],
+ "hiddenstate": [
+  "隐藏状态"
+ ],
+ "logits": [
+  "Logits",
+  "logit"
+ ],
+ "featuremap": [
+  "特征图"
+ ],
+ "kernelfilter": [
+  "卷积核（滤波器）",
+  "卷积核",
+  "滤波器"
+ ],
+ "stridepad": [
+  "步幅与填充",
+  "步幅",
+  "填充"
+ ],
+ "receptive": [
+  "感受野"
+ ],
+ "channels": [
+  "通道"
+ ],
+ "latentspace": [
+  "潜在空间",
+  "潜空间",
+  "隐空间",
+  "潜变量",
+  "隐变量"
+ ],
+ "representation": [
+  "表示学习"
+ ],
+ "weightshare": [
+  "权重共享",
+  "参数共享"
+ ],
+ "paramcount": [
+  "参数量",
+  "参数数量"
+ ],
+ "flops": [
+  "FLOPs",
+  "FLOP"
+ ],
+ "floatfmt": [
+  "浮点格式",
+  "浮点数",
+  "FP32",
+  "FP8",
+  "bfloat16",
+  "float32",
+  "float16"
+ ],
+ "sparsity": [
+  "稀疏性"
+ ],
+ "token": [
+  "Token（词元）",
+  "token",
+  "词元"
+ ],
+ "vocab": [
+  "词表（Vocabulary）",
+  "词表",
+  "词汇表",
+  "Vocabulary"
+ ],
+ "contextwin": [
+  "上下文窗口（Context Window）",
+  "上下文窗口",
+  "上下文长度",
+  "Context Window"
+ ],
+ "prompt": [
+  "提示词（Prompt）",
+  "提示词",
+  "Prompt"
+ ],
+ "finetuning": [
+  "微调（Fine-Tuning）",
+  "微调",
+  "Fine-Tuning"
+ ],
+ "foundation": [
+  "基础模型（Foundation Model）",
+  "基础模型",
+  "Foundation Model"
+ ],
+ "perplexity": [
+  "困惑度（Perplexity）",
+  "困惑度",
+  "Perplexity"
+ ],
+ "logprob": [
+  "对数概率（Log-Probability）",
+  "对数概率",
+  "Log-Probability",
+  "logprob"
+ ],
+ "ngram": [
+  "N-gram（n 元语法）",
+  "N-gram",
+  "n 元语法"
+ ],
+ "tfidf": [
+  "TF-IDF"
+ ],
+ "bagofwords": [
+  "词袋模型（Bag of Words）",
+  "词袋模型",
+  "词袋",
+  "Bag of Words"
+ ],
+ "hallucination": [
+  "幻觉（Hallucination）",
+  "幻觉",
+  "Hallucination"
+ ],
+ "alignment": [
+  "对齐（Alignment）",
+  "偏好对齐",
+  "对齐训练",
+  "对齐评估",
+  "对齐步骤",
+  "对齐阶段",
+  "Alignment"
+ ],
+ "mdp": [
+  "马尔可夫决策过程（MDP）",
+  "马尔可夫决策过程",
+  "MDP"
+ ],
+ "policy": [
+  "策略（Policy）",
+  "策略",
+  "Policy"
+ ],
+ "reward": [
+  "奖励（Reward）",
+  "奖励",
+  "Reward"
+ ],
+ "stateaction": [
+  "状态与动作（State & Action）",
+  "状态与动作",
+  "状态和动作",
+  "动作"
+ ],
+ "valuefn": [
+  "价值函数（Value Function）",
+  "价值函数",
+  "Value Function",
+  "Q-learning",
+  "动作价值"
+ ],
+ "explore": [
+  "探索与利用（Exploration vs Exploitation）",
+  "探索与利用",
+  "探索和利用",
+  "Exploration vs Exploitation"
+ ],
+ "inference": [
+  "推理（Inference）",
+  "推理",
+  "Inference"
+ ],
+ "latency": [
+  "延迟与吞吐量（Latency & Throughput）",
+  "延迟与吞吐量",
+  "延迟",
+  "吞吐量",
+  "Latency & Throughput"
+ ],
+ "gpu": [
+  "GPU 与显存（GPU & VRAM）",
+  "GPU & VRAM",
+  "GPU",
+  "显存",
+  "VRAM"
+ ],
+ "serving": [
+  "模型服务（Model Serving）",
+  "模型服务",
+  "推理服务",
+  "Model Serving"
+ ],
+ "monitoring": [
+  "模型监控（Model Monitoring）",
+  "模型监控",
+  "监控",
+  "Model Monitoring"
+ ],
+ "retraining": [
+  "重新训练（Retraining）",
+  "重新训练",
+  "再训练",
+  "Retraining"
+ ],
+ "featurestore": [
+  "特征库（Feature Store）",
+  "特征库",
+  "特征存储",
+  "Feature Store"
+ ],
+ "mlpipeline": [
+  "机器学习流水线（ML Pipeline）",
+  "机器学习流水线",
+  "流水线",
+  "ML Pipeline"
+ ],
+ "benchmark": [
+  "基准测试（Benchmark）",
+  "基准测试",
+  "基准",
+  "Benchmark"
+ ],
+ "anomaly": [
+  "异常检测（Anomaly Detection）",
+  "异常检测",
+  "Anomaly Detection"
+ ],
+ "recsys": [
+  "推荐系统（Recommender System）",
+  "推荐系统",
+  "推荐模型",
+  "Recommender System"
+ ],
+ "ctr": [
+  "点击率（CTR）",
+  "点击率",
+  "CTR"
+ ],
+ "coldstart": [
+  "冷启动（Cold Start）",
+  "冷启动",
+  "Cold Start"
+ ],
+ "collabfilter": [
+  "协同过滤（Collaborative Filtering）",
+  "协同过滤",
+  "Collaborative Filtering"
+ ],
+ "fraud": [
+  "欺诈检测（Fraud Detection）",
+  "欺诈检测",
+  "欺诈",
+  "Fraud Detection"
+ ],
+ "churn": [
+  "流失预测（Churn Prediction）",
+  "流失预测",
+  "流失",
+  "Churn Prediction"
+ ],
+ "demandfc": [
+  "需求预测（Demand Forecasting）",
+  "需求预测",
+  "Demand Forecasting"
+ ],
+ "creditscore": [
+  "信用评分（Credit Scoring）",
+  "信用评分",
+  "信用风险",
+  "信用模型",
+  "Credit Scoring"
+ ]
+}

@@ -1,0 +1,1836 @@
+{
+ "eda": [
+  "探索的データ分析（EDA）",
+  "探索的データ分析",
+  "EDA"
+ ],
+ "supervised": [
+  "教師あり学習"
+ ],
+ "unsupervised": [
+  "教師なし学習"
+ ],
+ "selfsup": [
+  "自己教師あり学習",
+  "自己教師あり"
+ ],
+ "rl": [
+  "強化学習"
+ ],
+ "split": [
+  "学習・検証・テストデータの分割",
+  "テストデータの分割",
+  "学習セット",
+  "検証セット",
+  "テストセット",
+  "ホールドアウト",
+  "テストデータ",
+  "検証データ"
+ ],
+ "cv": [
+  "交差検証",
+  "k分割交差検証",
+  "K分割交差検証",
+  "k分割"
+ ],
+ "stratified": [
+  "層化抽出法",
+  "層化抽出",
+  "層化"
+ ],
+ "leak": [
+  "データリーク",
+  "リーク"
+ ],
+ "overfit": [
+  "過学習"
+ ],
+ "underfit": [
+  "学習不足（アンダーフィッティング）",
+  "学習不足"
+ ],
+ "biasvar": [
+  "バイアス–バリアンスのトレードオフ",
+  "バイアス–バリアンス",
+  "バイアスとバリアンス"
+ ],
+ "curse": [
+  "次元の呪い"
+ ],
+ "learncurve": [
+  "学習曲線"
+ ],
+ "drift": [
+  "データドリフトと分布シフト",
+  "データドリフト",
+  "分布シフト",
+  "コンセプトドリフト",
+  "ドリフト"
+ ],
+ "minmax": [
+  "Min-Max正規化",
+  "Min-Maxスケーリング",
+  "Min-Max"
+ ],
+ "standard": [
+  "標準化（Zスコア）",
+  "標準化",
+  "Zスコア",
+  "StandardScaler"
+ ],
+ "robust": [
+  "ロバストスケーリング"
+ ],
+ "logtf": [
+  "対数変換"
+ ],
+ "boxcox": [
+  "Box-Cox変換",
+  "Box-Cox",
+  "Yeo-Johnson"
+ ],
+ "impute": [
+  "欠損値補完",
+  "欠損値の補完",
+  "平均値補完",
+  "MICE"
+ ],
+ "outlier": [
+  "外れ値の処理",
+  "外れ値"
+ ],
+ "clipwin": [
+  "クリッピングとウィンソライジング",
+  "ウィンソライジング",
+  "クリッピング"
+ ],
+ "onehot": [
+  "ワンホットエンコーディング",
+  "ワンホット",
+  "one-hot"
+ ],
+ "targetenc": [
+  "ターゲットエンコーディング"
+ ],
+ "freqenc": [
+  "頻度エンコーディング"
+ ],
+ "binning": [
+  "ビニング（離散化）",
+  "ビニング",
+  "離散化"
+ ],
+ "featureeng": [
+  "特徴量エンジニアリング"
+ ],
+ "lagfeat": [
+  "ラグ特徴量"
+ ],
+ "rollfeat": [
+  "移動ウィンドウ特徴量",
+  "移動ウィンドウ",
+  "ローリング"
+ ],
+ "imbalance": [
+  "クラス不均衡",
+  "不均衡"
+ ],
+ "smote": [
+  "SMOTEによるオーバーサンプリング",
+  "SMOTE",
+  "オーバーサンプリング"
+ ],
+ "undersample": [
+  "アンダーサンプリング"
+ ],
+ "classweight": [
+  "クラス重み",
+  "class_weight"
+ ],
+ "featsel": [
+  "特徴量選択"
+ ],
+ "vif": [
+  "多重共線性とVIF",
+  "多重共線性",
+  "VIF",
+  "分散拡大係数"
+ ],
+ "dimred": [
+  "次元削減"
+ ],
+ "l1": [
+  "L1正則化（Lasso）",
+  "L1正則化",
+  "Lasso",
+  "ラッソ",
+  "L1ペナルティ",
+  "L1"
+ ],
+ "l2": [
+  "L2正則化（Ridge）",
+  "L2正則化",
+  "L2 正則化",
+  "Ridge",
+  "リッジ回帰",
+  "リッジ",
+  "L2ペナルティ",
+  "L2"
+ ],
+ "elasticnet": [
+  "Elastic Net"
+ ],
+ "weightdecay": [
+  "重み減衰（Weight Decay）",
+  "重み減衰",
+  "weight decay"
+ ],
+ "dropout": [
+  "ドロップアウト"
+ ],
+ "earlystop": [
+  "早期終了（Early Stopping）",
+  "早期終了",
+  "早期停止"
+ ],
+ "augment": [
+  "データ拡張"
+ ],
+ "labelsmooth": [
+  "ラベルスムージング"
+ ],
+ "batchnorm": [
+  "バッチ正規化",
+  "BatchNorm"
+ ],
+ "layernorm": [
+  "レイヤー正規化",
+  "LayerNorm",
+  "層正規化"
+ ],
+ "rmsnorm": [
+  "RMSNorm"
+ ],
+ "gradclip": [
+  "勾配クリッピング"
+ ],
+ "linreg": [
+  "線形回帰"
+ ],
+ "tls": [
+  "全最小二乗法（TLS）",
+  "全最小二乗法",
+  "TLS"
+ ],
+ "polyreg": [
+  "多項式回帰"
+ ],
+ "logreg": [
+  "ロジスティック回帰"
+ ],
+ "knn": [
+  "k近傍法（KNN）",
+  "k近傍法",
+  "KNN",
+  "k近傍"
+ ],
+ "naivebayes": [
+  "ナイーブベイズ"
+ ],
+ "svm": [
+  "サポートベクターマシン（SVM）",
+  "サポートベクターマシン",
+  "SVM",
+  "サポートベクター",
+  "マージン"
+ ],
+ "kerneltrick": [
+  "カーネルトリック",
+  "カーネル法"
+ ],
+ "lda": [
+  "線形判別分析（LDA）",
+  "線形判別分析",
+  "LDA"
+ ],
+ "perceptron": [
+  "パーセプトロン"
+ ],
+ "dtree": [
+  "決定木"
+ ],
+ "gini": [
+  "ジニ不純度"
+ ],
+ "entropy": [
+  "エントロピーと情報利得",
+  "エントロピー",
+  "情報利得"
+ ],
+ "cart": [
+  "CARTと軸に平行な分岐",
+  "CART",
+  "軸に平行な分岐"
+ ],
+ "pruning": [
+  "決定木の剪定",
+  "剪定"
+ ],
+ "bootstrap": [
+  "ブートストラップサンプリング",
+  "ブートストラップ"
+ ],
+ "bagging": [
+  "バギング"
+ ],
+ "oob": [
+  "OOBスコア（Out-of-Bag）",
+  "OOBスコア",
+  "OOB"
+ ],
+ "rf": [
+  "ランダムフォレスト"
+ ],
+ "maxfeat": [
+  "特徴量のサブサンプリング（max_features）",
+  "特徴量のサブサンプリング",
+  "max_features"
+ ],
+ "extratrees": [
+  "Extra Trees"
+ ],
+ "boosting": [
+  "ブースティング"
+ ],
+ "adaboost": [
+  "AdaBoost"
+ ],
+ "gbm": [
+  "勾配ブースティング",
+  "勾配ブースティング木",
+  "GBM"
+ ],
+ "xgboost": [
+  "XGBoost"
+ ],
+ "lightgbm": [
+  "LightGBM"
+ ],
+ "catboost": [
+  "CatBoost"
+ ],
+ "goss": [
+  "GOSS（Gradient-based One-Side Sampling）",
+  "GOSS",
+  "Gradient-based One-Side Sampling"
+ ],
+ "histsplit": [
+  "ヒストグラムベースの分岐探索",
+  "ヒストグラムベース"
+ ],
+ "subsample": [
+  "行のサブサンプリング（確率的勾配ブースティング）",
+  "行のサブサンプリング",
+  "確率的勾配ブースティング"
+ ],
+ "shrinkage": [
+  "縮小（ブースティングにおける学習率）"
+ ],
+ "stacking": [
+  "スタッキング"
+ ],
+ "voting": [
+  "投票アンサンブル",
+  "ソフト投票",
+  "ハード投票",
+  "投票"
+ ],
+ "confusion": [
+  "混同行列",
+  "真陽性と偽陽性",
+  "真陽性",
+  "偽陽性",
+  "偽陰性",
+  "真陰性"
+ ],
+ "accuracy": [
+  "正解率（Accuracy）",
+  "正解率"
+ ],
+ "precision": [
+  "適合率（Precision）",
+  "適合率",
+  "Precision"
+ ],
+ "recall": [
+  "再現率（Recall）",
+  "再現率",
+  "Recall"
+ ],
+ "f1": [
+  "F1スコア",
+  "F1"
+ ],
+ "roc": [
+  "ROC曲線",
+  "ROC"
+ ],
+ "rocauc": [
+  "ROC-AUC",
+  "AUC"
+ ],
+ "prcurve": [
+  "適合率–再現率曲線",
+  "PR曲線",
+  "平均適合率"
+ ],
+ "prauc": [
+  "PR-AUC"
+ ],
+ "threshold": [
+  "判定しきい値"
+ ],
+ "calibration": [
+  "確率の較正",
+  "較正",
+  "キャリブレーション",
+  "温度スケーリング"
+ ],
+ "logloss": [
+  "対数損失（交差エントロピー）",
+  "対数損失"
+ ],
+ "mse": [
+  "MSE / RMSE",
+  "MSE",
+  "RMSE",
+  "平均二乗誤差",
+  "二乗平均平方根誤差"
+ ],
+ "mae": [
+  "MAE（平均絶対誤差）",
+  "MAE",
+  "平均絶対誤差"
+ ],
+ "r2": [
+  "決定係数（R²）",
+  "決定係数",
+  "R²"
+ ],
+ "mdi": [
+  "不純度減少量の平均（MDI）",
+  "不純度減少量の平均",
+  "MDI"
+ ],
+ "permimp": [
+  "Permutation Importance（順列重要度）",
+  "Permutation Importance"
+ ],
+ "shap": [
+  "SHAP（シャープレイ値）",
+  "SHAP",
+  "シャープレイ値",
+  "シャープレイ"
+ ],
+ "treeshap": [
+  "TreeSHAP"
+ ],
+ "pdp": [
+  "部分依存プロット（PDP）",
+  "部分依存プロット",
+  "部分依存",
+  "PDP"
+ ],
+ "ice": [
+  "ICEプロット（Individual Conditional Expectation）",
+  "ICEプロット",
+  "Individual Conditional Expectation",
+  "ICE"
+ ],
+ "lime": [
+  "LIME（Local Interpretable Model-agnostic Explanations）",
+  "LIME"
+ ],
+ "counterfactual": [
+  "反実仮想説明（Counterfactual Explanations）",
+  "反実仮想説明",
+  "反実仮想"
+ ],
+ "kmeans": [
+  "k-means法",
+  "k-means"
+ ],
+ "hierclust": [
+  "階層的クラスタリング"
+ ],
+ "dbscan": [
+  "DBSCAN"
+ ],
+ "gmm": [
+  "混合ガウスモデル（GMM）",
+  "混合ガウスモデル",
+  "GMM"
+ ],
+ "em": [
+  "EMアルゴリズム（Expectation-Maximization）",
+  "EMアルゴリズム",
+  "Expectation-Maximization"
+ ],
+ "pca": [
+  "主成分分析（PCA）",
+  "主成分分析",
+  "PCA",
+  "主成分"
+ ],
+ "kpca": [
+  "カーネルPCA"
+ ],
+ "svd": [
+  "特異値分解（SVD）",
+  "特異値分解",
+  "SVD"
+ ],
+ "tsne": [
+  "t-SNE"
+ ],
+ "umap": [
+  "UMAP"
+ ],
+ "autoencoder": [
+  "オートエンコーダ"
+ ],
+ "isoforest": [
+  "Isolation Forest（アイソレーションフォレスト）",
+  "Isolation Forest"
+ ],
+ "lof": [
+  "局所外れ値因子法（LOF）",
+  "局所外れ値因子法",
+  "LOF"
+ ],
+ "spectral": [
+  "スペクトラルクラスタリング"
+ ],
+ "stationarity": [
+  "定常性",
+  "非定常",
+  "定常"
+ ],
+ "acf": [
+  "自己相関（ACF / PACF）",
+  "自己相関",
+  "偏自己相関",
+  "ACF",
+  "PACF"
+ ],
+ "decomp": [
+  "季節分解",
+  "STL"
+ ],
+ "arima": [
+  "ARIMA",
+  "自己回帰和分移動平均"
+ ],
+ "sarima": [
+  "SARIMA",
+  "SARIMAX"
+ ],
+ "prophet": [
+  "Prophet"
+ ],
+ "holtwinters": [
+  "指数平滑法（Holt-Winters）",
+  "指数平滑法",
+  "Holt-Winters"
+ ],
+ "tssplit": [
+  "時系列に沿った検証",
+  "時系列分割"
+ ],
+ "multistep": [
+  "マルチステップ予測"
+ ],
+ "gbmts": [
+  "時系列予測のための勾配ブースティング"
+ ],
+ "nbeats": [
+  "N-BEATS"
+ ],
+ "tft": [
+  "Temporal Fusion Transformer（TFT）",
+  "Temporal Fusion Transformer",
+  "TFT"
+ ],
+ "patchtst": [
+  "PatchTST"
+ ],
+ "tsfm": [
+  "時系列基盤モデル"
+ ],
+ "gd": [
+  "勾配降下法",
+  "勾配降下"
+ ],
+ "sgd": [
+  "確率的勾配降下法（SGD）",
+  "確率的勾配降下法",
+  "確率的勾配降下",
+  "確率的勾配",
+  "SGD"
+ ],
+ "minibatch": [
+  "ミニバッチ"
+ ],
+ "momentum": [
+  "モメンタム"
+ ],
+ "nesterov": [
+  "ネステロフの加速勾配法",
+  "ネステロフ",
+  "Nesterov"
+ ],
+ "rmsprop": [
+  "RMSProp"
+ ],
+ "adam": [
+  "Adam"
+ ],
+ "adamw": [
+  "AdamW"
+ ],
+ "lr": [
+  "学習率"
+ ],
+ "lrsched": [
+  "学習率スケジュール",
+  "コサインスケジュール",
+  "コサイン減衰",
+  "コサインアニーリング"
+ ],
+ "warmup": [
+  "ウォームアップ"
+ ],
+ "landscape": [
+  "損失ランドスケープ"
+ ],
+ "saddle": [
+  "鞍点"
+ ],
+ "sharpflat": [
+  "鋭い極小と平坦な極小",
+  "鋭い極小",
+  "平坦な極小"
+ ],
+ "convex": [
+  "凸最適化",
+  "凸関数",
+  "非凸"
+ ],
+ "newton": [
+  "2 次最適化手法（ニュートン法）",
+  "2 次最適化手法",
+  "ニュートン法",
+  "L-BFGS"
+ ],
+ "gridsearch": [
+  "グリッドサーチ"
+ ],
+ "randsearch": [
+  "ランダムサーチ"
+ ],
+ "bayesopt": [
+  "ベイズ最適化"
+ ],
+ "neuron": [
+  "人工ニューロン",
+  "ニューロン"
+ ],
+ "mlp": [
+  "多層パーセプトロン（MLP）",
+  "多層パーセプトロン",
+  "MLP",
+  "ニューラルネットワーク"
+ ],
+ "backprop": [
+  "誤差逆伝播法",
+  "誤差逆伝播",
+  "逆伝播",
+  "バックプロパゲーション"
+ ],
+ "autograd": [
+  "連鎖律と自動微分（Autograd）",
+  "連鎖律と自動微分",
+  "自動微分",
+  "連鎖律",
+  "autograd"
+ ],
+ "relu": [
+  "ReLU"
+ ],
+ "sigmoid": [
+  "シグモイド関数",
+  "シグモイド"
+ ],
+ "tanh": [
+  "tanh（双曲線正接関数）",
+  "tanh",
+  "双曲線正接関数"
+ ],
+ "gelu": [
+  "GELU"
+ ],
+ "swiglu": [
+  "SwiGLU"
+ ],
+ "softmax": [
+  "ソフトマックス関数",
+  "ソフトマックス"
+ ],
+ "xent": [
+  "交差エントロピー損失",
+  "交差エントロピー"
+ ],
+ "vanishing": [
+  "勾配消失と勾配爆発",
+  "勾配消失",
+  "勾配爆発"
+ ],
+ "residual": [
+  "残差接続",
+  "スキップ接続"
+ ],
+ "init": [
+  "重みの初期化（Xavier / He）",
+  "重みの初期化",
+  "Xavier",
+  "Glorot",
+  "Heの初期化"
+ ],
+ "uat": [
+  "万能近似定理"
+ ],
+ "embedding": [
+  "埋め込み層",
+  "埋め込みベクトル",
+  "埋め込み"
+ ],
+ "cnn": [
+  "畳み込みニューラルネットワーク（CNN）",
+  "畳み込みニューラルネットワーク",
+  "CNN"
+ ],
+ "convolution": [
+  "畳み込み"
+ ],
+ "pooling": [
+  "プーリング"
+ ],
+ "resnet": [
+  "ResNet"
+ ],
+ "rnn": [
+  "再帰型ニューラルネットワーク（RNN）",
+  "再帰型ニューラルネットワーク",
+  "RNN"
+ ],
+ "lstm": [
+  "LSTM"
+ ],
+ "gru": [
+  "GRU"
+ ],
+ "bidir": [
+  "双方向 RNN",
+  "双方向"
+ ],
+ "seq2seq": [
+  "Seq2Seq（系列変換モデル）",
+  "Seq2Seq",
+  "系列変換モデル"
+ ],
+ "word2vec": [
+  "Word2Vec"
+ ],
+ "unet": [
+  "U-Net"
+ ],
+ "gnn": [
+  "グラフニューラルネットワーク（GNN）",
+  "グラフニューラルネットワーク",
+  "GNN"
+ ],
+ "vit": [
+  "Vision Transformer（ViT）",
+  "Vision Transformer",
+  "ViT"
+ ],
+ "clip": [
+  "CLIP"
+ ],
+ "contrastive": [
+  "対照学習",
+  "InfoNCE"
+ ],
+ "gan": [
+  "敵対的生成ネットワーク（GAN）",
+  "敵対的生成ネットワーク",
+  "GAN"
+ ],
+ "vae": [
+  "変分オートエンコーダ（VAE）",
+  "変分オートエンコーダ",
+  "VAE"
+ ],
+ "diffusion": [
+  "拡散モデル"
+ ],
+ "latentdiff": [
+  "潜在拡散モデル（Latent Diffusion）",
+  "潜在拡散モデル",
+  "Stable Diffusion"
+ ],
+ "flowmatch": [
+  "フローマッチング（Flow Matching）",
+  "フローマッチング"
+ ],
+ "autoregressive": [
+  "自己回帰モデル",
+  "自己回帰"
+ ],
+ "dlm": [
+  "拡散言語モデル"
+ ],
+ "attention": [
+  "Attention 機構（注意機構）",
+  "Attention 機構",
+  "注意機構",
+  "Attention",
+  "アテンション"
+ ],
+ "selfattn": [
+  "自己注意機構（Self-Attention）",
+  "自己注意機構",
+  "Self-Attention",
+  "自己注意"
+ ],
+ "qkv": [
+  "クエリ・キー・バリュー（Q, K, V）",
+  "クエリ・キー・バリュー"
+ ],
+ "mha": [
+  "マルチヘッドアテンション",
+  "マルチヘッド"
+ ],
+ "crossattn": [
+  "クロスアテンション"
+ ],
+ "causalmask": [
+  "因果マスク"
+ ],
+ "posenc": [
+  "位置エンコーディング",
+  "位置埋め込み"
+ ],
+ "rope": [
+  "回転位置埋め込み（RoPE）",
+  "回転位置埋め込み",
+  "RoPE"
+ ],
+ "alibi": [
+  "ALiBi（Attention with Linear Biases）",
+  "ALiBi"
+ ],
+ "transformer": [
+  "Transformer ブロック",
+  "Transformerブロック",
+  "Transformer"
+ ],
+ "encoderonly": [
+  "エンコーダのみのモデル（BERT）",
+  "エンコーダのみのモデル",
+  "エンコーダのみ",
+  "BERT"
+ ],
+ "decoderonly": [
+  "デコーダのみのモデル（GPT）",
+  "デコーダのみのモデル",
+  "デコーダのみ",
+  "GPT"
+ ],
+ "encdec": [
+  "エンコーダ・デコーダモデル（T5）",
+  "エンコーダ・デコーダモデル",
+  "エンコーダ・デコーダ",
+  "T5"
+ ],
+ "ffn": [
+  "フィードフォワードネットワーク（FFN）",
+  "フィードフォワードネットワーク",
+  "フィードフォワード",
+  "FFN"
+ ],
+ "prenorm": [
+  "Pre-Norm と Post-Norm",
+  "Pre-Norm",
+  "Post-Norm"
+ ],
+ "tokenization": [
+  "トークン化",
+  "トークナイザー",
+  "トークナイザ"
+ ],
+ "bpe": [
+  "バイトペア符号化（BPE）",
+  "バイトペア符号化",
+  "BPE"
+ ],
+ "mlm": [
+  "マスク言語モデリング（MLM）",
+  "マスク言語モデリング",
+  "MLM"
+ ],
+ "nexttoken": [
+  "次トークン予測"
+ ],
+ "kvcache": [
+  "KV キャッシュ"
+ ],
+ "flashattn": [
+  "FlashAttention"
+ ],
+ "mqa": [
+  "Multi-Query Attention（MQA）",
+  "Multi-Query Attention",
+  "MQA"
+ ],
+ "gqa": [
+  "Grouped-Query Attention（GQA）",
+  "Grouped-Query Attention",
+  "GQA"
+ ],
+ "swa": [
+  "スライディングウィンドウアテンション",
+  "スライディングウィンドウ"
+ ],
+ "sparseattn": [
+  "スパースアテンション"
+ ],
+ "linattn": [
+  "線形アテンション"
+ ],
+ "scaling": [
+  "スケーリング則"
+ ],
+ "chinchilla": [
+  "Chinchilla 最適な学習",
+  "Chinchilla"
+ ],
+ "icl": [
+  "インコンテキスト学習（ICL）",
+  "インコンテキスト学習",
+  "few-shot"
+ ],
+ "pretrain": [
+  "事前学習"
+ ],
+ "sft": [
+  "教師ありファインチューニング（SFT）",
+  "教師ありファインチューニング",
+  "SFT"
+ ],
+ "rlhf": [
+  "RLHF（人間のフィードバックによる強化学習）",
+  "RLHF",
+  "人間のフィードバックによる強化学習"
+ ],
+ "rewardmodel": [
+  "報酬モデル"
+ ],
+ "ppo": [
+  "PPO（Proximal Policy Optimization）",
+  "PPO",
+  "Proximal Policy Optimization"
+ ],
+ "dpo": [
+  "DPO（Direct Preference Optimization）",
+  "DPO",
+  "Direct Preference Optimization"
+ ],
+ "grpo": [
+  "GRPO（Group Relative Policy Optimization）",
+  "GRPO",
+  "Group Relative Policy Optimization"
+ ],
+ "rlvr": [
+  "検証可能な報酬による強化学習（RLVR）",
+  "検証可能な報酬による強化学習",
+  "RLVR",
+  "検証可能な報酬"
+ ],
+ "cai": [
+  "Constitutional AI と RLAIF",
+  "Constitutional AI",
+  "RLAIF"
+ ],
+ "lora": [
+  "LoRA（低ランク適応）",
+  "LoRA"
+ ],
+ "qlora": [
+  "QLoRA"
+ ],
+ "adapters": [
+  "アダプタと PEFT",
+  "アダプタ",
+  "PEFT"
+ ],
+ "prompttuning": [
+  "プレフィックスチューニングとプロンプトチューニング",
+  "プレフィックスチューニング",
+  "プロンプトチューニング"
+ ],
+ "distill": [
+  "知識蒸留",
+  "蒸留"
+ ],
+ "synthdata": [
+  "合成データ"
+ ],
+ "forgetting": [
+  "破滅的忘却"
+ ],
+ "quantization": [
+  "量子化"
+ ],
+ "gptq": [
+  "INT8 / INT4 重み量子化（GPTQ、AWQ）",
+  "INT8 / INT4 重み量子化",
+  "GPTQ",
+  "AWQ",
+  "INT8",
+  "INT4"
+ ],
+ "mixedprec": [
+  "混合精度（FP16 / BF16）",
+  "混合精度",
+  "FP16",
+  "BF16",
+  "bfloat16",
+  "FP8"
+ ],
+ "prune": [
+  "枝刈り（プルーニング）",
+  "枝刈り"
+ ],
+ "gradaccum": [
+  "勾配累積"
+ ],
+ "gradckpt": [
+  "勾配チェックポインティング"
+ ],
+ "parallelism": [
+  "データ並列・テンソル並列・パイプライン並列",
+  "データ並列",
+  "テンソル並列",
+  "パイプライン並列",
+  "分散学習"
+ ],
+ "greedy": [
+  "貪欲デコーディング",
+  "貪欲"
+ ],
+ "beam": [
+  "ビームサーチ"
+ ],
+ "temperature": [
+  "温度（Temperature）",
+  "温度"
+ ],
+ "topk": [
+  "Top-k サンプリング",
+  "Top-kサンプリング"
+ ],
+ "topp": [
+  "Top-p（Nucleus）サンプリング",
+  "Top-pサンプリング",
+  "Top-p サンプリング",
+  "Nucleus サンプリング",
+  "Top-p"
+ ],
+ "specdec": [
+  "投機的デコーディング（Speculative Decoding）",
+  "投機的デコーディング"
+ ],
+ "pagedattn": [
+  "PagedAttention"
+ ],
+ "contbatch": [
+  "連続バッチング（Continuous Batching）",
+  "連続バッチング"
+ ],
+ "longctx": [
+  "長文コンテキスト拡張",
+  "長文コンテキスト"
+ ],
+ "prompting": [
+  "プロンプトエンジニアリング"
+ ],
+ "cot": [
+  "Chain-of-Thought（CoT）",
+  "Chain-of-Thought",
+  "思考の連鎖"
+ ],
+ "selfcons": [
+  "Self-Consistency（自己整合性）",
+  "Self-Consistency",
+  "自己整合性"
+ ],
+ "tot": [
+  "Tree of Thoughts（ToT）",
+  "Tree of Thoughts"
+ ],
+ "rag": [
+  "検索拡張生成（RAG）",
+  "検索拡張生成",
+  "RAG"
+ ],
+ "vectordb": [
+  "ベクトル検索と近似最近傍探索（ANN）",
+  "ベクトル検索と近似最近傍探索",
+  "近似最近傍探索",
+  "ベクトル検索",
+  "ベクトルデータベース",
+  "ANN",
+  "HNSW"
+ ],
+ "embedmodel": [
+  "テキスト埋め込み",
+  "埋め込みモデル",
+  "文埋め込み"
+ ],
+ "rerank": [
+  "リランキング",
+  "リランカー"
+ ],
+ "agent": [
+  "LLM エージェント",
+  "コーディングエージェント"
+ ],
+ "tooluse": [
+  "ツール利用と Function Calling",
+  "ツール利用",
+  "Function Calling",
+  "ツール呼び出し"
+ ],
+ "react": [
+  "ReAct（Reason + Act）",
+  "ReAct"
+ ],
+ "ttc": [
+  "推論モデルとテスト時計算（Test-Time Compute）",
+  "推論モデルとテスト時計算",
+  "推論モデル",
+  "テスト時計算"
+ ],
+ "llmeval": [
+  "LLM の評価とベンチマーク",
+  "LLM の評価"
+ ],
+ "moe": [
+  "Mixture of Experts（MoE）",
+  "Mixture of Experts",
+  "MoE",
+  "エキスパート"
+ ],
+ "router": [
+  "ルーターと Top-k ゲーティング",
+  "ルーター",
+  "Top-k ゲーティング",
+  "ゲーティング"
+ ],
+ "loadbal": [
+  "負荷分散損失（Load-Balancing Loss）",
+  "負荷分散損失",
+  "負荷分散"
+ ],
+ "finegrained": [
+  "細粒度エキスパートと共有エキスパート",
+  "細粒度エキスパート",
+  "共有エキスパート"
+ ],
+ "ssm": [
+  "状態空間モデル（S4）",
+  "状態空間モデル",
+  "S4",
+  "SSM"
+ ],
+ "mamba": [
+  "Mamba（選択的状態空間モデル）",
+  "Mamba",
+  "選択的状態空間モデル"
+ ],
+ "rwkv": [
+  "RWKV"
+ ],
+ "hybrid": [
+  "ハイブリッドアーキテクチャ（Jamba）",
+  "ハイブリッドアーキテクチャ",
+  "Jamba"
+ ],
+ "mla": [
+  "Multi-Head Latent Attention（MLA）",
+  "Multi-Head Latent Attention",
+  "MLA"
+ ],
+ "mtp": [
+  "マルチトークン予測（MTP）",
+  "マルチトークン予測",
+  "MTP"
+ ],
+ "mod": [
+  "Mixture of Depths（MoD）",
+  "Mixture of Depths",
+  "MoD"
+ ],
+ "ringattn": [
+  "Ring Attention"
+ ],
+ "multimodal": [
+  "マルチモーダル LLM",
+  "マルチモーダル"
+ ],
+ "vla": [
+  "Vision-Language-Action モデル（VLA）",
+  "Vision-Language-Action モデル",
+  "VLA"
+ ],
+ "worldmodel": [
+  "世界モデル（World Models）",
+  "世界モデル"
+ ],
+ "jepa": [
+  "JEPA（Joint-Embedding Predictive Architecture）",
+  "JEPA"
+ ],
+ "kan": [
+  "コルモゴロフ・アーノルド・ネットワーク（KAN）",
+  "コルモゴロフ・アーノルド・ネットワーク",
+  "KAN"
+ ],
+ "ttt": [
+  "テスト時学習（Test-Time Training, TTT）",
+  "テスト時学習",
+  "TTT"
+ ],
+ "merging": [
+  "モデルマージ",
+  "マージ"
+ ],
+ "bitnet": [
+  "1 ビット LLM（BitNet）",
+  "1 ビット LLM",
+  "BitNet"
+ ],
+ "mechinterp": [
+  "メカニスティック解釈可能性（Mechanistic Interpretability）",
+  "メカニスティック解釈可能性"
+ ],
+ "sae": [
+  "解釈可能性のためのスパースオートエンコーダ（SAE）",
+  "解釈可能性のためのスパースオートエンコーダ",
+  "スパースオートエンコーダ",
+  "SAE"
+ ],
+ "mean": [
+  "平均（Mean）",
+  "平均",
+  "平均値",
+  "Mean"
+ ],
+ "median": [
+  "中央値"
+ ],
+ "variance": [
+  "分散"
+ ],
+ "stddev": [
+  "標準偏差"
+ ],
+ "covariance": [
+  "共分散"
+ ],
+ "correlation": [
+  "相関係数",
+  "相関"
+ ],
+ "corrmatrix": [
+  "相関行列"
+ ],
+ "quantile": [
+  "分位点とパーセンタイル",
+  "分位点",
+  "パーセンタイル",
+  "分位数"
+ ],
+ "iqr": [
+  "四分位範囲（IQR）",
+  "四分位範囲",
+  "IQR"
+ ],
+ "skewness": [
+  "歪度",
+  "歪んだ"
+ ],
+ "kurtosis": [
+  "尖度と裾の重さ",
+  "尖度",
+  "裾の重さ",
+  "裾の重い"
+ ],
+ "probdist": [
+  "確率分布"
+ ],
+ "normaldist": [
+  "正規分布（ガウス分布）",
+  "正規分布",
+  "ガウス分布"
+ ],
+ "binomial": [
+  "ベルヌーイ分布と二項分布",
+  "ベルヌーイ分布",
+  "二項分布"
+ ],
+ "poisson": [
+  "ポアソン分布"
+ ],
+ "uniformdist": [
+  "一様分布"
+ ],
+ "expectation": [
+  "期待値"
+ ],
+ "condprob": [
+  "条件付き確率"
+ ],
+ "bayesthm": [
+  "ベイズの定理"
+ ],
+ "priorpost": [
+  "事前分布と事後分布",
+  "事前分布",
+  "事後分布"
+ ],
+ "likelihood": [
+  "尤度"
+ ],
+ "mle": [
+  "最尤推定（MLE）",
+  "最尤推定",
+  "MLE"
+ ],
+ "mapest": [
+  "MAP推定"
+ ],
+ "iid": [
+  "i.i.d.の仮定（独立同分布）",
+  "i.i.d.の仮定",
+  "独立同分布",
+  "i.i.d."
+ ],
+ "clt": [
+  "中心極限定理"
+ ],
+ "stderr": [
+  "標準誤差"
+ ],
+ "confint": [
+  "信頼区間"
+ ],
+ "hyptest": [
+  "仮説検定とp値",
+  "仮説検定",
+  "p値"
+ ],
+ "abtest": [
+  "A/Bテスト",
+  "A/B テスト"
+ ],
+ "kldiv": [
+  "KLダイバージェンス",
+  "KL ダイバージェンス"
+ ],
+ "mutualinfo": [
+  "相互情報量"
+ ],
+ "montecarlo": [
+  "モンテカルロ推定",
+  "モンテカルロ"
+ ],
+ "markovchain": [
+  "マルコフ連鎖",
+  "定常分布"
+ ],
+ "causation": [
+  "相関と因果",
+  "因果関係",
+  "因果"
+ ],
+ "confounder": [
+  "交絡変数",
+  "交絡"
+ ],
+ "samplingbias": [
+  "サンプリングバイアス",
+  "選択バイアス"
+ ],
+ "heterosked": [
+  "不均一分散"
+ ],
+ "histogram": [
+  "ヒストグラム"
+ ],
+ "boxplot": [
+  "箱ひげ図"
+ ],
+ "scatterplot": [
+  "散布図"
+ ],
+ "heatmap": [
+  "ヒートマップ"
+ ],
+ "qqplot": [
+  "Q-Qプロット（分位点-分位点プロット）",
+  "Q-Qプロット"
+ ],
+ "feature": [
+  "特徴量"
+ ],
+ "label": [
+  "ラベル（目的変数）",
+  "ラベル",
+  "目的変数"
+ ],
+ "tabular": [
+  "表形式データ",
+  "表形式"
+ ],
+ "numcat": [
+  "数値特徴量とカテゴリ特徴量",
+  "カテゴリ特徴量",
+  "数値特徴量",
+  "カテゴリ変数"
+ ],
+ "ordinal": [
+  "順序変数と名義変数",
+  "順序変数",
+  "名義変数"
+ ],
+ "cardinality": [
+  "カーディナリティ"
+ ],
+ "missingval": [
+  "欠損値（MCAR、MAR、MNAR）",
+  "欠損値",
+  "欠損",
+  "MCAR",
+  "MNAR",
+  "MAR"
+ ],
+ "duplicates": [
+  "重複レコード",
+  "重複排除",
+  "重複除去"
+ ],
+ "labelnoise": [
+  "ラベルノイズ"
+ ],
+ "sparsedata": [
+  "スパースデータ",
+  "疎なデータ"
+ ],
+ "interaction": [
+  "特徴量の交互作用",
+  "交互作用"
+ ],
+ "baseline": [
+  "ベースラインモデル",
+  "ベースライン"
+ ],
+ "timeseries": [
+  "時系列データ",
+  "時系列"
+ ],
+ "trend": [
+  "トレンド"
+ ],
+ "seasonality": [
+  "季節性"
+ ],
+ "whitenoise": [
+  "ホワイトノイズ"
+ ],
+ "randomwalk": [
+  "ランダムウォーク"
+ ],
+ "differencing": [
+  "差分"
+ ],
+ "horizon": [
+  "予測ホライズン",
+  "ホライズン"
+ ],
+ "vector": [
+  "ベクトル"
+ ],
+ "matrix": [
+  "行列"
+ ],
+ "tensor": [
+  "テンソル"
+ ],
+ "dotproduct": [
+  "内積"
+ ],
+ "matmul": [
+  "行列積"
+ ],
+ "vecnorm": [
+  "ベクトルノルム（L1、L2）",
+  "ベクトルノルム",
+  "ノルム"
+ ],
+ "euclidean": [
+  "ユークリッド距離"
+ ],
+ "cosine": [
+  "コサイン類似度"
+ ],
+ "distmetric": [
+  "距離関数",
+  "距離指標"
+ ],
+ "projection": [
+  "射影"
+ ],
+ "orthogonal": [
+  "直交性",
+  "直交"
+ ],
+ "eigen": [
+  "固有値と固有ベクトル",
+  "固有値",
+  "固有ベクトル"
+ ],
+ "matrank": [
+  "行列のランク",
+  "低ランク",
+  "ランク落ち"
+ ],
+ "covmatrix": [
+  "共分散行列"
+ ],
+ "derivative": [
+  "微分（導関数）",
+  "微分",
+  "導関数"
+ ],
+ "partialderiv": [
+  "偏微分"
+ ],
+ "gradient": [
+  "勾配"
+ ],
+ "jacobian": [
+  "ヤコビ行列"
+ ],
+ "hessian": [
+  "ヘッセ行列"
+ ],
+ "logsumexp": [
+  "Log-Sum-Expと数値安定性",
+  "Log-Sum-Exp",
+  "数値安定性"
+ ],
+ "nonlinearity": [
+  "線形性と非線形性",
+  "非線形性",
+  "線形性",
+  "非線形"
+ ],
+ "highdim": [
+  "高次元空間",
+  "高次元"
+ ],
+ "lossfn": [
+  "損失関数"
+ ],
+ "objective": [
+  "目的関数"
+ ],
+ "paramhyper": [
+  "パラメータとハイパーパラメータ",
+  "ハイパーパラメータ",
+  "パラメータ"
+ ],
+ "weightsbias": [
+  "重みとバイアス",
+  "重み"
+ ],
+ "epoch": [
+  "エポック・バッチ・イテレーション",
+  "エポック",
+  "イテレーション",
+  "バッチサイズ",
+  "バッチ"
+ ],
+ "convergence": [
+  "収束"
+ ],
+ "localmin": [
+  "局所最小値と大域的最小値",
+  "局所最小値",
+  "大域的最小値",
+  "局所解",
+  "局所最適"
+ ],
+ "closedform": [
+  "閉形式解",
+  "閉形式"
+ ],
+ "stochastic": [
+  "確率的と決定論的",
+  "決定論的"
+ ],
+ "lagrange": [
+  "ラグランジュの未定乗数法と制約",
+  "ラグランジュの未定乗数法"
+ ],
+ "generalization": [
+  "汎化"
+ ],
+ "capacity": [
+  "モデルの容量",
+  "モデル容量"
+ ],
+ "inductivebias": [
+  "帰納バイアス"
+ ],
+ "trainloop": [
+  "学習ループ"
+ ],
+ "checkpoint": [
+  "モデルのチェックポイント",
+  "チェックポイント"
+ ],
+ "hingeloss": [
+  "ヒンジ損失"
+ ],
+ "huberloss": [
+  "Huber損失",
+  "Huber"
+ ],
+ "focalloss": [
+  "Focal Loss"
+ ],
+ "mape": [
+  "MAPE（平均絶対パーセント誤差）",
+  "MAPE",
+  "平均絶対パーセント誤差"
+ ],
+ "rankmetrics": [
+  "ランキング指標（NDCG、MRR）",
+  "ランキング指標",
+  "NDCG",
+  "MRR"
+ ],
+ "iou": [
+  "IoU（Intersection over Union）",
+  "IoU",
+  "Intersection over Union"
+ ],
+ "baserate": [
+  "基準率（ベースレート）",
+  "基準率"
+ ],
+ "activation": [
+  "活性化関数",
+  "活性化"
+ ],
+ "hiddenlayer": [
+  "隠れ層"
+ ],
+ "hiddenstate": [
+  "隠れ状態"
+ ],
+ "logits": [
+  "ロジット"
+ ],
+ "featuremap": [
+  "特徴マップ"
+ ],
+ "kernelfilter": [
+  "カーネル（フィルタ）",
+  "畳み込みフィルタ"
+ ],
+ "stridepad": [
+  "ストライドとパディング",
+  "ストライド",
+  "パディング"
+ ],
+ "receptive": [
+  "受容野"
+ ],
+ "channels": [
+  "チャネル"
+ ],
+ "latentspace": [
+  "潜在空間"
+ ],
+ "representation": [
+  "表現学習"
+ ],
+ "weightshare": [
+  "重み共有"
+ ],
+ "paramcount": [
+  "パラメータ数"
+ ],
+ "flops": [
+  "FLOPs",
+  "FLOP"
+ ],
+ "floatfmt": [
+  "浮動小数点形式",
+  "浮動小数点"
+ ],
+ "sparsity": [
+  "スパース性"
+ ],
+ "token": [
+  "トークン"
+ ],
+ "vocab": [
+  "語彙"
+ ],
+ "contextwin": [
+  "コンテキストウィンドウ",
+  "コンテキスト長"
+ ],
+ "prompt": [
+  "プロンプト"
+ ],
+ "finetuning": [
+  "ファインチューニング"
+ ],
+ "foundation": [
+  "基盤モデル"
+ ],
+ "perplexity": [
+  "パープレキシティ"
+ ],
+ "logprob": [
+  "対数確率"
+ ],
+ "ngram": [
+  "n-gram"
+ ],
+ "tfidf": [
+  "TF-IDF"
+ ],
+ "bagofwords": [
+  "Bag of Words"
+ ],
+ "hallucination": [
+  "ハルシネーション"
+ ],
+ "alignment": [
+  "アライメント"
+ ],
+ "mdp": [
+  "マルコフ決定過程（MDP）",
+  "マルコフ決定過程",
+  "MDP"
+ ],
+ "policy": [
+  "方策（Policy）",
+  "方策",
+  "Policy"
+ ],
+ "reward": [
+  "報酬"
+ ],
+ "stateaction": [
+  "状態と行動"
+ ],
+ "valuefn": [
+  "価値関数"
+ ],
+ "explore": [
+  "探索と活用（Exploration vs Exploitation）",
+  "探索と活用"
+ ],
+ "inference": [
+  "推論"
+ ],
+ "latency": [
+  "レイテンシとスループット",
+  "レイテンシ",
+  "スループット"
+ ],
+ "gpu": [
+  "GPU と VRAM",
+  "GPU",
+  "VRAM"
+ ],
+ "serving": [
+  "モデルサービング",
+  "サービング"
+ ],
+ "monitoring": [
+  "モデルモニタリング",
+  "モニタリング"
+ ],
+ "retraining": [
+  "再学習"
+ ],
+ "featurestore": [
+  "特徴量ストア"
+ ],
+ "mlpipeline": [
+  "ML パイプライン",
+  "パイプライン"
+ ],
+ "benchmark": [
+  "ベンチマーク"
+ ],
+ "anomaly": [
+  "異常検知"
+ ],
+ "recsys": [
+  "推薦システム",
+  "レコメンド"
+ ],
+ "ctr": [
+  "クリック率（CTR）",
+  "クリック率",
+  "CTR"
+ ],
+ "coldstart": [
+  "コールドスタート"
+ ],
+ "collabfilter": [
+  "協調フィルタリング"
+ ],
+ "fraud": [
+  "不正検知"
+ ],
+ "churn": [
+  "解約予測"
+ ],
+ "demandfc": [
+  "需要予測"
+ ],
+ "creditscore": [
+  "信用スコアリング"
+ ]
+}

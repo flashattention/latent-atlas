@@ -1,0 +1,1848 @@
+{
+ "eda": [
+  "탐색적 데이터 분석",
+  "EDA"
+ ],
+ "supervised": [
+  "지도 학습",
+  "지도학습"
+ ],
+ "unsupervised": [
+  "비지도 학습",
+  "비지도학습",
+  "비지도"
+ ],
+ "selfsup": [
+  "자기 지도 학습",
+  "자기지도 학습",
+  "자기 지도학습"
+ ],
+ "rl": [
+  "강화 학습",
+  "강화학습"
+ ],
+ "split": [
+  "학습 / 검증 / 테스트 분할",
+  "학습/검증/테스트 분할",
+  "테스트 분할",
+  "학습 세트",
+  "검증 세트",
+  "테스트 세트",
+  "홀드아웃"
+ ],
+ "cv": [
+  "교차 검증",
+  "교차검증",
+  "k-폴드"
+ ],
+ "stratified": [
+  "층화 샘플링",
+  "층화 추출",
+  "층화 분할",
+  "층화"
+ ],
+ "leak": [
+  "데이터 누수",
+  "타깃 누수",
+  "누수"
+ ],
+ "overfit": [
+  "과적합"
+ ],
+ "underfit": [
+  "과소적합"
+ ],
+ "biasvar": [
+  "편향–분산 트레이드오프",
+  "편향-분산 트레이드오프",
+  "편향–분산",
+  "편향-분산",
+  "편향"
+ ],
+ "curse": [
+  "차원의 저주"
+ ],
+ "learncurve": [
+  "학습 곡선"
+ ],
+ "drift": [
+  "데이터 드리프트",
+  "분포 변화",
+  "개념 드리프트",
+  "공변량 이동",
+  "드리프트"
+ ],
+ "minmax": [
+  "최소-최대 정규화",
+  "최소-최대 스케일링",
+  "최소-최대",
+  "Min-Max"
+ ],
+ "standard": [
+  "표준화",
+  "Z-점수",
+  "z-점수"
+ ],
+ "robust": [
+  "로버스트 스케일링"
+ ],
+ "logtf": [
+  "로그 변환"
+ ],
+ "boxcox": [
+  "박스-콕스 변환",
+  "박스-콕스",
+  "Box-Cox",
+  "Yeo-Johnson"
+ ],
+ "impute": [
+  "결측값 대체",
+  "결측치 대체",
+  "대체값"
+ ],
+ "outlier": [
+  "이상치 처리",
+  "이상치",
+  "이상값"
+ ],
+ "clipwin": [
+  "클리핑과 윈저화",
+  "윈저화",
+  "클리핑"
+ ],
+ "onehot": [
+  "원-핫 인코딩",
+  "원-핫"
+ ],
+ "targetenc": [
+  "타깃 인코딩"
+ ],
+ "freqenc": [
+  "빈도 인코딩"
+ ],
+ "binning": [
+  "구간화",
+  "이산화"
+ ],
+ "featureeng": [
+  "피처 엔지니어링",
+  "특성 공학"
+ ],
+ "lagfeat": [
+  "래그 피처",
+  "시차 피처",
+  "래그"
+ ],
+ "rollfeat": [
+  "롤링 윈도우 피처",
+  "롤링 윈도우",
+  "롤링 평균",
+  "롤링 집계",
+  "롤링 통계"
+ ],
+ "imbalance": [
+  "클래스 불균형",
+  "불균형"
+ ],
+ "smote": [
+  "SMOTE",
+  "오버샘플링"
+ ],
+ "undersample": [
+  "언더샘플링"
+ ],
+ "classweight": [
+  "클래스 가중치"
+ ],
+ "featsel": [
+  "피처 선택"
+ ],
+ "vif": [
+  "다중공선성",
+  "VIF"
+ ],
+ "dimred": [
+  "차원 축소"
+ ],
+ "l1": [
+  "L1 정규화",
+  "L1 페널티",
+  "Lasso",
+  "라쏘"
+ ],
+ "l2": [
+  "L2 정규화",
+  "L2 페널티",
+  "Ridge",
+  "릿지"
+ ],
+ "elasticnet": [
+  "엘라스틱 넷",
+  "Elastic Net"
+ ],
+ "weightdecay": [
+  "가중치 감쇠",
+  "Weight Decay"
+ ],
+ "dropout": [
+  "드롭아웃"
+ ],
+ "earlystop": [
+  "조기 종료"
+ ],
+ "augment": [
+  "데이터 증강",
+  "증강"
+ ],
+ "labelsmooth": [
+  "레이블 스무딩"
+ ],
+ "batchnorm": [
+  "배치 정규화",
+  "BatchNorm"
+ ],
+ "layernorm": [
+  "레이어 정규화",
+  "LayerNorm"
+ ],
+ "rmsnorm": [
+  "RMSNorm"
+ ],
+ "gradclip": [
+  "그래디언트 클리핑",
+  "Gradient Clipping"
+ ],
+ "linreg": [
+  "선형 회귀",
+  "Linear Regression",
+  "최소제곱"
+ ],
+ "tls": [
+  "전체 최소제곱법",
+  "전체 최소제곱",
+  "Total Least Squares"
+ ],
+ "polyreg": [
+  "다항 회귀",
+  "Polynomial Regression"
+ ],
+ "logreg": [
+  "로지스틱 회귀",
+  "Logistic Regression"
+ ],
+ "knn": [
+  "k-최근접 이웃",
+  "k-최근접",
+  "KNN",
+  "k-NN",
+  "최근접 이웃"
+ ],
+ "naivebayes": [
+  "나이브 베이즈",
+  "Naive Bayes"
+ ],
+ "svm": [
+  "서포트 벡터 머신",
+  "서포트 벡터",
+  "SVM"
+ ],
+ "kerneltrick": [
+  "커널 트릭",
+  "Kernel Trick",
+  "커널 함수",
+  "커널 방법",
+  "커널 행렬",
+  "RBF 커널",
+  "가우시안 커널",
+  "다항 커널",
+  "커널 SVM",
+  "커널 릿지",
+  "커널 폭"
+ ],
+ "lda": [
+  "선형 판별 분석",
+  "LDA"
+ ],
+ "perceptron": [
+  "퍼셉트론"
+ ],
+ "dtree": [
+  "결정 트리",
+  "Decision Tree",
+  "트리"
+ ],
+ "gini": [
+  "지니 불순도",
+  "Gini Impurity",
+  "지니"
+ ],
+ "entropy": [
+  "정보 이득",
+  "엔트로피"
+ ],
+ "cart": [
+  "축 정렬 분할",
+  "CART"
+ ],
+ "pruning": [
+  "트리 가지치기",
+  "비용-복잡도 가지치기"
+ ],
+ "bootstrap": [
+  "부트스트랩 샘플링",
+  "부트스트랩"
+ ],
+ "bagging": [
+  "배깅",
+  "Bagging"
+ ],
+ "oob": [
+  "OOB 점수",
+  "Out-of-Bag",
+  "OOB"
+ ],
+ "rf": [
+  "랜덤 포레스트",
+  "Random Forest"
+ ],
+ "maxfeat": [
+  "특성 서브샘플링",
+  "피처 서브샘플링",
+  "max_features"
+ ],
+ "extratrees": [
+  "엑스트라 트리",
+  "Extra Trees",
+  "ExtraTrees"
+ ],
+ "boosting": [
+  "부스팅",
+  "Boosting"
+ ],
+ "adaboost": [
+  "AdaBoost"
+ ],
+ "gbm": [
+  "그래디언트 부스팅",
+  "Gradient Boosting",
+  "GBM"
+ ],
+ "xgboost": [
+  "XGBoost"
+ ],
+ "lightgbm": [
+  "LightGBM"
+ ],
+ "catboost": [
+  "CatBoost"
+ ],
+ "goss": [
+  "GOSS",
+  "Gradient-based One-Side Sampling"
+ ],
+ "histsplit": [
+  "히스토그램 기반 분할",
+  "히스토그램 기반"
+ ],
+ "subsample": [
+  "행 서브샘플링",
+  "확률적 그래디언트 부스팅"
+ ],
+ "shrinkage": [
+  "부스팅의 학습률",
+  "부스팅의 축소"
+ ],
+ "stacking": [
+  "스태킹",
+  "Stacking"
+ ],
+ "voting": [
+  "보팅 앙상블",
+  "보팅"
+ ],
+ "confusion": [
+  "혼동 행렬",
+  "Confusion Matrix",
+  "진양성",
+  "위양성",
+  "진음성",
+  "위음성"
+ ],
+ "accuracy": [
+  "정확도",
+  "Accuracy"
+ ],
+ "precision": [
+  "정밀도",
+  "Precision"
+ ],
+ "recall": [
+  "재현율",
+  "Recall"
+ ],
+ "f1": [
+  "F1 점수",
+  "F1 Score",
+  "F1"
+ ],
+ "roc": [
+  "ROC 곡선",
+  "ROC Curve"
+ ],
+ "rocauc": [
+  "ROC-AUC",
+  "ROC AUC",
+  "AUC"
+ ],
+ "prcurve": [
+  "정밀도-재현율 곡선",
+  "정밀도–재현율 곡선",
+  "PR 곡선"
+ ],
+ "prauc": [
+  "PR-AUC"
+ ],
+ "threshold": [
+  "결정 임계값",
+  "Decision Threshold",
+  "임계값"
+ ],
+ "calibration": [
+  "확률 보정",
+  "Probability Calibration",
+  "보정"
+ ],
+ "logloss": [
+  "로그 손실"
+ ],
+ "mse": [
+  "MSE",
+  "RMSE",
+  "평균 제곱 오차",
+  "평균제곱오차"
+ ],
+ "mae": [
+  "MAE",
+  "평균 절대 오차"
+ ],
+ "r2": [
+  "R²",
+  "결정계수"
+ ],
+ "mdi": [
+  "불순도 평균 감소량",
+  "MDI"
+ ],
+ "permimp": [
+  "순열 중요도",
+  "Permutation Importance"
+ ],
+ "shap": [
+  "SHAP",
+  "섀플리 값",
+  "섀플리",
+  "Shapley"
+ ],
+ "treeshap": [
+  "TreeSHAP"
+ ],
+ "pdp": [
+  "부분 의존도 플롯",
+  "부분 의존성 플롯",
+  "부분 의존도",
+  "부분 의존",
+  "PDP"
+ ],
+ "ice": [
+  "ICE 플롯",
+  "개별 조건부 기댓값",
+  "ICE"
+ ],
+ "lime": [
+  "LIME"
+ ],
+ "counterfactual": [
+  "반사실적 설명",
+  "반사실"
+ ],
+ "kmeans": [
+  "k-평균 군집화",
+  "k-평균",
+  "k-means"
+ ],
+ "hierclust": [
+  "계층적 군집화",
+  "계층적 클러스터링"
+ ],
+ "dbscan": [
+  "DBSCAN"
+ ],
+ "gmm": [
+  "가우시안 혼합 모델",
+  "가우시안 혼합",
+  "GMM"
+ ],
+ "em": [
+  "EM 알고리즘",
+  "기댓값 최대화",
+  "EM"
+ ],
+ "pca": [
+  "PCA",
+  "주성분 분석",
+  "주성분"
+ ],
+ "kpca": [
+  "커널 PCA",
+  "Kernel PCA"
+ ],
+ "svd": [
+  "특잇값 분해",
+  "특이값 분해",
+  "SVD",
+  "특잇값",
+  "특이값"
+ ],
+ "tsne": [
+  "t-SNE"
+ ],
+ "umap": [
+  "UMAP"
+ ],
+ "autoencoder": [
+  "오토인코더",
+  "Autoencoder"
+ ],
+ "isoforest": [
+  "아이솔레이션 포레스트",
+  "Isolation Forest"
+ ],
+ "lof": [
+  "국소 이상치 계수",
+  "LOF"
+ ],
+ "spectral": [
+  "스펙트럴 군집화",
+  "스펙트럴 클러스터링"
+ ],
+ "stationarity": [
+  "정상성",
+  "비정상성"
+ ],
+ "acf": [
+  "자기상관",
+  "ACF",
+  "PACF"
+ ],
+ "decomp": [
+  "계절성 분해",
+  "STL"
+ ],
+ "arima": [
+  "ARIMA"
+ ],
+ "sarima": [
+  "SARIMA"
+ ],
+ "prophet": [
+  "Prophet"
+ ],
+ "holtwinters": [
+  "지수 평활법",
+  "지수 평활",
+  "Holt-Winters"
+ ],
+ "tssplit": [
+  "시간 기반 검증",
+  "시간 기반 분할",
+  "롤링 원점",
+  "롤링 오리진"
+ ],
+ "multistep": [
+  "다중 스텝 예측",
+  "다중 스텝"
+ ],
+ "gbmts": [
+  "시계열을 위한 그래디언트 부스팅"
+ ],
+ "nbeats": [
+  "N-BEATS"
+ ],
+ "tft": [
+  "Temporal Fusion Transformer",
+  "TFT"
+ ],
+ "patchtst": [
+  "PatchTST"
+ ],
+ "tsfm": [
+  "시계열 파운데이션 모델",
+  "Time-Series Foundation Models"
+ ],
+ "gd": [
+  "경사 하강법",
+  "경사 하강",
+  "Gradient Descent"
+ ],
+ "sgd": [
+  "확률적 경사 하강법",
+  "확률적 경사 하강",
+  "SGD"
+ ],
+ "minibatch": [
+  "미니배치",
+  "Mini-Batch"
+ ],
+ "momentum": [
+  "모멘텀",
+  "Momentum"
+ ],
+ "nesterov": [
+  "네스테로프 가속 경사",
+  "네스테로프",
+  "Nesterov"
+ ],
+ "rmsprop": [
+  "RMSProp",
+  "RMSprop"
+ ],
+ "adam": [
+  "Adam"
+ ],
+ "adamw": [
+  "AdamW"
+ ],
+ "lr": [
+  "학습률",
+  "Learning Rate"
+ ],
+ "lrsched": [
+  "학습률 스케줄",
+  "학습률 스케줄러",
+  "Learning Rate Schedules",
+  "코사인 감쇠",
+  "코사인 스케줄"
+ ],
+ "warmup": [
+  "워밍업",
+  "Warmup"
+ ],
+ "landscape": [
+  "손실 지형",
+  "Loss Landscape"
+ ],
+ "saddle": [
+  "안장점",
+  "Saddle Points"
+ ],
+ "sharpflat": [
+  "날카로운 최솟값과 평탄한 최솟값",
+  "날카로운 최솟값",
+  "평탄한 최솟값"
+ ],
+ "convex": [
+  "볼록 최적화",
+  "Convex Optimization",
+  "볼록 함수"
+ ],
+ "newton": [
+  "2차 최적화 방법",
+  "뉴턴 방법",
+  "뉴턴법",
+  "L-BFGS"
+ ],
+ "gridsearch": [
+  "그리드 탐색",
+  "그리드 서치",
+  "Grid Search"
+ ],
+ "randsearch": [
+  "랜덤 탐색",
+  "랜덤 서치",
+  "Random Search"
+ ],
+ "bayesopt": [
+  "베이지안 최적화",
+  "Bayesian Optimization"
+ ],
+ "neuron": [
+  "인공 뉴런",
+  "뉴런"
+ ],
+ "mlp": [
+  "다층 퍼셉트론",
+  "MLP",
+  "신경망"
+ ],
+ "backprop": [
+  "역전파",
+  "Backpropagation"
+ ],
+ "autograd": [
+  "연쇄 법칙",
+  "자동 미분",
+  "autograd"
+ ],
+ "relu": [
+  "ReLU"
+ ],
+ "sigmoid": [
+  "시그모이드",
+  "Sigmoid"
+ ],
+ "tanh": [
+  "Tanh",
+  "쌍곡탄젠트"
+ ],
+ "gelu": [
+  "GELU"
+ ],
+ "swiglu": [
+  "SwiGLU"
+ ],
+ "softmax": [
+  "소프트맥스",
+  "Softmax"
+ ],
+ "xent": [
+  "교차 엔트로피 손실",
+  "교차 엔트로피",
+  "Cross-Entropy Loss",
+  "Cross-Entropy"
+ ],
+ "vanishing": [
+  "그래디언트 소실과 폭주",
+  "그래디언트 소실",
+  "그래디언트 폭주",
+  "기울기 소실"
+ ],
+ "residual": [
+  "잔차 연결",
+  "스킵 연결",
+  "Residual Connections"
+ ],
+ "init": [
+  "가중치 초기화",
+  "Xavier",
+  "He 초기화"
+ ],
+ "uat": [
+  "보편 근사 정리",
+  "Universal Approximation Theorem"
+ ],
+ "embedding": [
+  "임베딩 레이어",
+  "Embedding Layer",
+  "임베딩"
+ ],
+ "cnn": [
+  "합성곱 신경망",
+  "CNN"
+ ],
+ "convolution": [
+  "합성곱",
+  "Convolution"
+ ],
+ "pooling": [
+  "풀링",
+  "Pooling"
+ ],
+ "resnet": [
+  "ResNet"
+ ],
+ "rnn": [
+  "순환 신경망",
+  "RNN"
+ ],
+ "lstm": [
+  "LSTM"
+ ],
+ "gru": [
+  "GRU"
+ ],
+ "bidir": [
+  "양방향 RNN",
+  "Bidirectional RNN"
+ ],
+ "seq2seq": [
+  "Seq2Seq",
+  "시퀀스-투-시퀀스"
+ ],
+ "word2vec": [
+  "Word2Vec"
+ ],
+ "unet": [
+  "U-Net"
+ ],
+ "gnn": [
+  "그래프 신경망",
+  "GNN"
+ ],
+ "vit": [
+  "비전 트랜스포머",
+  "ViT"
+ ],
+ "clip": [
+  "CLIP"
+ ],
+ "contrastive": [
+  "대조 학습",
+  "Contrastive Learning"
+ ],
+ "gan": [
+  "생성적 적대 신경망",
+  "GAN"
+ ],
+ "vae": [
+  "변분 오토인코더",
+  "VAE"
+ ],
+ "diffusion": [
+  "디퓨전 모델",
+  "Diffusion Models",
+  "확산 모델",
+  "디퓨전"
+ ],
+ "latentdiff": [
+  "잠재 디퓨전",
+  "Latent Diffusion",
+  "잠재 확산"
+ ],
+ "flowmatch": [
+  "플로 매칭",
+  "Flow Matching"
+ ],
+ "autoregressive": [
+  "자기회귀 모델",
+  "Autoregressive Models",
+  "자기회귀"
+ ],
+ "dlm": [
+  "디퓨전 언어 모델",
+  "Diffusion Language Models"
+ ],
+ "attention": [
+  "어텐션 메커니즘",
+  "Attention Mechanism",
+  "어텐션"
+ ],
+ "selfattn": [
+  "셀프 어텐션",
+  "Self-Attention"
+ ],
+ "qkv": [
+  "쿼리, 키, 밸류",
+  "쿼리·키·밸류",
+  "키와 밸류"
+ ],
+ "mha": [
+  "멀티헤드 어텐션",
+  "멀티 헤드 어텐션",
+  "Multi-Head Attention"
+ ],
+ "crossattn": [
+  "크로스 어텐션",
+  "Cross-Attention"
+ ],
+ "causalmask": [
+  "인과적 마스크",
+  "Causal Mask",
+  "인과 마스크"
+ ],
+ "posenc": [
+  "위치 인코딩"
+ ],
+ "rope": [
+  "회전 위치 임베딩",
+  "RoPE"
+ ],
+ "alibi": [
+  "ALiBi"
+ ],
+ "transformer": [
+  "Transformer 블록",
+  "Transformer",
+  "트랜스포머"
+ ],
+ "encoderonly": [
+  "인코더 전용 모델",
+  "인코더 전용",
+  "BERT"
+ ],
+ "decoderonly": [
+  "디코더 전용 모델",
+  "디코더 전용",
+  "GPT"
+ ],
+ "encdec": [
+  "인코더–디코더 모델",
+  "인코더-디코더 모델",
+  "인코더-디코더",
+  "인코더–디코더",
+  "T5"
+ ],
+ "ffn": [
+  "피드포워드 네트워크",
+  "피드포워드",
+  "FFN"
+ ],
+ "prenorm": [
+  "Pre-Norm",
+  "Post-Norm",
+  "Pre-LN",
+  "Post-LN"
+ ],
+ "tokenization": [
+  "토큰화",
+  "토크나이저"
+ ],
+ "bpe": [
+  "바이트 페어 인코딩",
+  "BPE"
+ ],
+ "mlm": [
+  "마스크드 언어 모델링",
+  "MLM"
+ ],
+ "nexttoken": [
+  "다음 토큰 예측"
+ ],
+ "kvcache": [
+  "KV 캐시",
+  "캐시"
+ ],
+ "flashattn": [
+  "FlashAttention"
+ ],
+ "mqa": [
+  "멀티 쿼리 어텐션",
+  "MQA"
+ ],
+ "gqa": [
+  "그룹 쿼리 어텐션",
+  "GQA"
+ ],
+ "swa": [
+  "슬라이딩 윈도우 어텐션"
+ ],
+ "sparseattn": [
+  "희소 어텐션"
+ ],
+ "linattn": [
+  "선형 어텐션"
+ ],
+ "scaling": [
+  "스케일링 법칙"
+ ],
+ "chinchilla": [
+  "Chinchilla"
+ ],
+ "icl": [
+  "인컨텍스트 학습",
+  "ICL"
+ ],
+ "pretrain": [
+  "사전 학습",
+  "사전학습"
+ ],
+ "sft": [
+  "지도 파인튜닝",
+  "SFT"
+ ],
+ "rlhf": [
+  "RLHF",
+  "인간 피드백 기반 강화 학습"
+ ],
+ "rewardmodel": [
+  "보상 모델"
+ ],
+ "ppo": [
+  "PPO",
+  "근접 정책 최적화"
+ ],
+ "dpo": [
+  "DPO",
+  "직접 선호 최적화"
+ ],
+ "grpo": [
+  "GRPO",
+  "그룹 상대 정책 최적화"
+ ],
+ "rlvr": [
+  "검증 가능한 보상 기반 강화 학습",
+  "RLVR"
+ ],
+ "cai": [
+  "Constitutional AI",
+  "RLAIF"
+ ],
+ "lora": [
+  "LoRA"
+ ],
+ "qlora": [
+  "QLoRA"
+ ],
+ "adapters": [
+  "어댑터",
+  "PEFT"
+ ],
+ "prompttuning": [
+  "프리픽스 튜닝",
+  "프롬프트 튜닝"
+ ],
+ "distill": [
+  "지식 증류",
+  "증류"
+ ],
+ "synthdata": [
+  "합성 데이터"
+ ],
+ "forgetting": [
+  "파국적 망각"
+ ],
+ "quantization": [
+  "양자화"
+ ],
+ "gptq": [
+  "GPTQ",
+  "AWQ",
+  "INT4",
+  "INT8"
+ ],
+ "mixedprec": [
+  "혼합 정밀도",
+  "FP16",
+  "BF16",
+  "bfloat16"
+ ],
+ "prune": [
+  "가지치기",
+  "Pruning"
+ ],
+ "gradaccum": [
+  "그래디언트 누적"
+ ],
+ "gradckpt": [
+  "그래디언트 체크포인팅",
+  "Gradient Checkpointing",
+  "활성화 체크포인팅"
+ ],
+ "parallelism": [
+  "데이터·텐서·파이프라인 병렬화",
+  "파이프라인 병렬화",
+  "텐서 병렬화",
+  "데이터 병렬화",
+  "데이터 병렬"
+ ],
+ "greedy": [
+  "그리디 디코딩",
+  "그리디"
+ ],
+ "beam": [
+  "빔 서치",
+  "Beam Search",
+  "빔 탐색"
+ ],
+ "temperature": [
+  "온도 스케일링",
+  "샘플링 온도",
+  "온도(temperature)",
+  "Temperature"
+ ],
+ "topk": [
+  "Top-k 샘플링",
+  "top-k 샘플링"
+ ],
+ "topp": [
+  "Top-p 샘플링",
+  "Top-p(뉴클리어스) 샘플링",
+  "뉴클리어스 샘플링",
+  "Top-p",
+  "뉴클리어스"
+ ],
+ "specdec": [
+  "추측 디코딩",
+  "Speculative Decoding"
+ ],
+ "pagedattn": [
+  "PagedAttention"
+ ],
+ "contbatch": [
+  "연속 배칭",
+  "Continuous Batching"
+ ],
+ "longctx": [
+  "긴 컨텍스트 확장",
+  "컨텍스트 확장",
+  "컨텍스트 길이 확장"
+ ],
+ "prompting": [
+  "프롬프트 엔지니어링",
+  "Prompt Engineering"
+ ],
+ "cot": [
+  "사고의 사슬",
+  "Chain-of-Thought",
+  "CoT"
+ ],
+ "selfcons": [
+  "자기 일관성",
+  "Self-Consistency"
+ ],
+ "tot": [
+  "생각의 나무",
+  "Tree of Thoughts",
+  "ToT"
+ ],
+ "rag": [
+  "검색 증강 생성",
+  "RAG",
+  "검색 증강"
+ ],
+ "vectordb": [
+  "벡터 검색",
+  "ANN",
+  "근사 최근접 이웃",
+  "벡터 데이터베이스",
+  "벡터 DB"
+ ],
+ "embedmodel": [
+  "텍스트 임베딩",
+  "임베딩 모델"
+ ],
+ "rerank": [
+  "재순위화",
+  "리랭커",
+  "리랭킹"
+ ],
+ "agent": [
+  "LLM 에이전트"
+ ],
+ "tooluse": [
+  "도구 사용",
+  "함수 호출",
+  "도구 호출"
+ ],
+ "react": [
+  "ReAct"
+ ],
+ "ttc": [
+  "추론 모델",
+  "테스트 타임 컴퓨트",
+  "추론 능력",
+  "추론 과정",
+  "추론 학습"
+ ],
+ "llmeval": [
+  "LLM 평가"
+ ],
+ "moe": [
+  "전문가 혼합",
+  "Mixture of Experts",
+  "MoE"
+ ],
+ "router": [
+  "라우터",
+  "Top-k 게이팅"
+ ],
+ "loadbal": [
+  "부하 분산 손실",
+  "부하 분산",
+  "부하 균형",
+  "부하 불균형"
+ ],
+ "finegrained": [
+  "세분화 전문가",
+  "공유 전문가"
+ ],
+ "ssm": [
+  "상태 공간 모델",
+  "S4",
+  "SSM"
+ ],
+ "mamba": [
+  "Mamba"
+ ],
+ "rwkv": [
+  "RWKV"
+ ],
+ "hybrid": [
+  "하이브리드 아키텍처",
+  "Jamba",
+  "하이브리드 모델",
+  "하이브리드 어텐션"
+ ],
+ "mla": [
+  "멀티헤드 잠재 어텐션",
+  "Multi-Head Latent Attention",
+  "MLA"
+ ],
+ "mtp": [
+  "다중 토큰 예측",
+  "Multi-Token Prediction",
+  "MTP"
+ ],
+ "mod": [
+  "깊이 혼합",
+  "Mixture of Depths",
+  "MoD"
+ ],
+ "ringattn": [
+  "링 어텐션",
+  "Ring Attention"
+ ],
+ "multimodal": [
+  "멀티모달 LLM",
+  "멀티모달"
+ ],
+ "vla": [
+  "비전-언어-행동 모델",
+  "비전-언어-행동",
+  "VLA"
+ ],
+ "worldmodel": [
+  "월드 모델",
+  "World Models"
+ ],
+ "jepa": [
+  "JEPA",
+  "결합 임베딩 예측 아키텍처"
+ ],
+ "kan": [
+  "콜모고로프-아놀드 네트워크",
+  "KAN"
+ ],
+ "ttt": [
+  "테스트 타임 학습",
+  "TTT"
+ ],
+ "merging": [
+  "모델 병합",
+  "Model Merging"
+ ],
+ "bitnet": [
+  "BitNet",
+  "1비트 LLM"
+ ],
+ "mechinterp": [
+  "기계적 해석 가능성",
+  "Mechanistic Interpretability"
+ ],
+ "sae": [
+  "희소 오토인코더",
+  "SAE",
+  "Sparse Autoencoders"
+ ],
+ "mean": [
+  "평균"
+ ],
+ "median": [
+  "중앙값"
+ ],
+ "variance": [
+  "분산"
+ ],
+ "stddev": [
+  "표준편차",
+  "표준 편차"
+ ],
+ "covariance": [
+  "공분산"
+ ],
+ "correlation": [
+  "상관계수",
+  "상관 계수",
+  "상관관계",
+  "피어슨 상관"
+ ],
+ "corrmatrix": [
+  "상관 행렬",
+  "상관행렬"
+ ],
+ "quantile": [
+  "분위수",
+  "백분위수",
+  "사분위수"
+ ],
+ "iqr": [
+  "사분위 범위",
+  "IQR"
+ ],
+ "skewness": [
+  "왜도"
+ ],
+ "kurtosis": [
+  "첨도",
+  "두꺼운 꼬리"
+ ],
+ "probdist": [
+  "확률 분포"
+ ],
+ "normaldist": [
+  "정규 분포",
+  "정규분포",
+  "가우시안 분포"
+ ],
+ "binomial": [
+  "베르누이 분포",
+  "이항 분포",
+  "베르누이"
+ ],
+ "poisson": [
+  "포아송 분포",
+  "포아송"
+ ],
+ "uniformdist": [
+  "균등 분포"
+ ],
+ "expectation": [
+  "기댓값"
+ ],
+ "condprob": [
+  "조건부 확률"
+ ],
+ "bayesthm": [
+  "베이즈 정리"
+ ],
+ "priorpost": [
+  "사전 분포",
+  "사후 분포",
+  "사전 확률",
+  "사후 확률"
+ ],
+ "likelihood": [
+  "우도",
+  "가능도"
+ ],
+ "mle": [
+  "최대 우도 추정",
+  "최대 우도",
+  "MLE"
+ ],
+ "mapest": [
+  "MAP 추정",
+  "MAP"
+ ],
+ "iid": [
+  "i.i.d.",
+  "i.i.d"
+ ],
+ "clt": [
+  "중심 극한 정리"
+ ],
+ "stderr": [
+  "표준오차",
+  "표준 오차"
+ ],
+ "confint": [
+  "신뢰구간",
+  "신뢰 구간"
+ ],
+ "hyptest": [
+  "가설 검정",
+  "p-값",
+  "p값"
+ ],
+ "abtest": [
+  "A/B 테스트"
+ ],
+ "kldiv": [
+  "KL 발산",
+  "KL"
+ ],
+ "mutualinfo": [
+  "상호 정보량"
+ ],
+ "montecarlo": [
+  "몬테카를로 추정",
+  "몬테카를로"
+ ],
+ "markovchain": [
+  "마르코프 체인",
+  "은닉 마르코프 모델"
+ ],
+ "causation": [
+  "인과관계",
+  "인과 관계"
+ ],
+ "confounder": [
+  "교란 변수"
+ ],
+ "samplingbias": [
+  "샘플링 편향",
+  "표본 편향",
+  "선택 편향"
+ ],
+ "heterosked": [
+  "이분산성",
+  "등분산"
+ ],
+ "histogram": [
+  "히스토그램"
+ ],
+ "boxplot": [
+  "박스 플롯"
+ ],
+ "scatterplot": [
+  "산점도"
+ ],
+ "heatmap": [
+  "히트맵"
+ ],
+ "qqplot": [
+  "Q-Q 플롯",
+  "분위수-분위수 플롯"
+ ],
+ "feature": [
+  "피처",
+  "특성"
+ ],
+ "label": [
+  "레이블",
+  "타깃"
+ ],
+ "tabular": [
+  "정형 데이터",
+  "표 형식 데이터"
+ ],
+ "numcat": [
+  "범주형 피처",
+  "수치형 피처",
+  "범주형",
+  "수치형"
+ ],
+ "ordinal": [
+  "명목형 변수",
+  "순서형 변수",
+  "순서형",
+  "명목형"
+ ],
+ "cardinality": [
+  "카디널리티",
+  "고카디널리티"
+ ],
+ "missingval": [
+  "결측값",
+  "결측치",
+  "결측",
+  "MCAR",
+  "MNAR",
+  "MAR"
+ ],
+ "duplicates": [
+  "중복 레코드",
+  "중복 제거"
+ ],
+ "labelnoise": [
+  "레이블 노이즈"
+ ],
+ "sparsedata": [
+  "희소 데이터",
+  "희소 행렬"
+ ],
+ "interaction": [
+  "피처 상호작용",
+  "상호작용 항"
+ ],
+ "baseline": [
+  "베이스라인 모델",
+  "베이스라인"
+ ],
+ "timeseries": [
+  "시계열 데이터",
+  "시계열"
+ ],
+ "trend": [
+  "추세"
+ ],
+ "seasonality": [
+  "계절성"
+ ],
+ "whitenoise": [
+  "백색 잡음",
+  "화이트 노이즈"
+ ],
+ "randomwalk": [
+  "랜덤 워크"
+ ],
+ "differencing": [
+  "차분"
+ ],
+ "horizon": [
+  "예측 기간",
+  "Forecast Horizon",
+  "예측 시평",
+  "시평"
+ ],
+ "vector": [
+  "벡터"
+ ],
+ "matrix": [
+  "행렬"
+ ],
+ "tensor": [
+  "텐서"
+ ],
+ "dotproduct": [
+  "내적"
+ ],
+ "matmul": [
+  "행렬 곱셈",
+  "행렬 곱"
+ ],
+ "vecnorm": [
+  "벡터 노름",
+  "L2 노름",
+  "L1 노름",
+  "노름"
+ ],
+ "euclidean": [
+  "유클리드 거리",
+  "유클리드"
+ ],
+ "cosine": [
+  "코사인 유사도"
+ ],
+ "distmetric": [
+  "거리 척도",
+  "거리 지표"
+ ],
+ "projection": [
+  "투영"
+ ],
+ "orthogonal": [
+  "직교성",
+  "직교"
+ ],
+ "eigen": [
+  "고윳값",
+  "고유벡터",
+  "고유분해"
+ ],
+ "matrank": [
+  "행렬의 랭크",
+  "랭크",
+  "저랭크"
+ ],
+ "covmatrix": [
+  "공분산 행렬"
+ ],
+ "derivative": [
+  "도함수",
+  "미분"
+ ],
+ "partialderiv": [
+  "편미분"
+ ],
+ "gradient": [
+  "그래디언트",
+  "기울기"
+ ],
+ "jacobian": [
+  "야코비안"
+ ],
+ "hessian": [
+  "헤세 행렬",
+  "Hessian",
+  "헤세"
+ ],
+ "logsumexp": [
+  "Log-Sum-Exp",
+  "log-sum-exp",
+  "수치 안정성",
+  "수치적 안정성"
+ ],
+ "nonlinearity": [
+  "비선형성",
+  "선형성"
+ ],
+ "highdim": [
+  "고차원 공간",
+  "고차원"
+ ],
+ "lossfn": [
+  "손실 함수",
+  "손실"
+ ],
+ "objective": [
+  "목적 함수"
+ ],
+ "paramhyper": [
+  "하이퍼파라미터",
+  "파라미터"
+ ],
+ "weightsbias": [
+  "가중치와 편향",
+  "편향 항",
+  "가중치"
+ ],
+ "epoch": [
+  "에폭",
+  "이터레이션",
+  "배치 크기"
+ ],
+ "convergence": [
+  "수렴"
+ ],
+ "localmin": [
+  "국소 최솟값",
+  "전역 최솟값",
+  "지역 최솟값",
+  "국소 최적"
+ ],
+ "closedform": [
+  "닫힌 형태의 해",
+  "닫힌 형태",
+  "닫힌 해"
+ ],
+ "stochastic": [
+  "확률적"
+ ],
+ "lagrange": [
+  "라그랑주 승수",
+  "라그랑주",
+  "제약 조건"
+ ],
+ "generalization": [
+  "일반화"
+ ],
+ "capacity": [
+  "모델 용량"
+ ],
+ "inductivebias": [
+  "귀납적 편향"
+ ],
+ "trainloop": [
+  "학습 루프"
+ ],
+ "checkpoint": [
+  "모델 체크포인트",
+  "체크포인트"
+ ],
+ "hingeloss": [
+  "힌지 손실"
+ ],
+ "huberloss": [
+  "Huber 손실",
+  "후버 손실",
+  "Huber"
+ ],
+ "focalloss": [
+  "포컬 손실"
+ ],
+ "mape": [
+  "MAPE",
+  "평균 절대 백분율 오차"
+ ],
+ "rankmetrics": [
+  "랭킹 지표",
+  "NDCG",
+  "MRR"
+ ],
+ "iou": [
+  "IoU",
+  "Intersection over Union"
+ ],
+ "baserate": [
+  "기저율"
+ ],
+ "activation": [
+  "활성화 함수"
+ ],
+ "hiddenlayer": [
+  "은닉 레이어",
+  "은닉층",
+  "레이어"
+ ],
+ "hiddenstate": [
+  "은닉 상태"
+ ],
+ "logits": [
+  "로짓"
+ ],
+ "featuremap": [
+  "피처 맵",
+  "특성 맵"
+ ],
+ "kernelfilter": [
+  "커널 (필터)",
+  "합성곱 커널",
+  "커널 크기",
+  "3×3 커널",
+  "1×1 커널",
+  "필터를",
+  "필터가",
+  "필터는",
+  "필터의",
+  "필터당",
+  "필터 하나"
+ ],
+ "stridepad": [
+  "스트라이드",
+  "패딩"
+ ],
+ "receptive": [
+  "수용 영역"
+ ],
+ "channels": [
+  "채널"
+ ],
+ "latentspace": [
+  "잠재 공간",
+  "잠재 표현",
+  "잠재 벡터",
+  "잠재 코드"
+ ],
+ "representation": [
+  "표현 학습"
+ ],
+ "weightshare": [
+  "가중치 공유"
+ ],
+ "paramcount": [
+  "파라미터 수"
+ ],
+ "flops": [
+  "FLOPs",
+  "FLOP"
+ ],
+ "floatfmt": [
+  "부동소수점"
+ ],
+ "sparsity": [
+  "희소성",
+  "희소"
+ ],
+ "token": [
+  "토큰"
+ ],
+ "vocab": [
+  "어휘"
+ ],
+ "contextwin": [
+  "컨텍스트 윈도우",
+  "컨텍스트 길이",
+  "컨텍스트"
+ ],
+ "prompt": [
+  "프롬프트"
+ ],
+ "finetuning": [
+  "파인튜닝",
+  "미세 조정"
+ ],
+ "foundation": [
+  "파운데이션 모델"
+ ],
+ "perplexity": [
+  "퍼플렉서티"
+ ],
+ "logprob": [
+  "로그 확률"
+ ],
+ "ngram": [
+  "n-gram",
+  "N-gram"
+ ],
+ "tfidf": [
+  "TF-IDF"
+ ],
+ "bagofwords": [
+  "단어 주머니",
+  "Bag of Words",
+  "Bag-of-Words"
+ ],
+ "hallucination": [
+  "환각"
+ ],
+ "alignment": [
+  "Alignment",
+  "정렬 (Alignment)",
+  "선호에 정렬",
+  "선호도 정렬",
+  "정렬 단계",
+  "정렬 학습",
+  "정렬 평가"
+ ],
+ "mdp": [
+  "마르코프 결정 과정",
+  "MDP",
+  "마르코프 성질"
+ ],
+ "policy": [
+  "정책"
+ ],
+ "reward": [
+  "보상"
+ ],
+ "stateaction": [
+  "상태와 행동",
+  "상태-행동"
+ ],
+ "valuefn": [
+  "가치 함수"
+ ],
+ "explore": [
+  "탐험과 활용",
+  "탐험"
+ ],
+ "inference": [
+  "추론"
+ ],
+ "latency": [
+  "지연 시간",
+  "처리량"
+ ],
+ "gpu": [
+  "GPU",
+  "VRAM"
+ ],
+ "serving": [
+  "모델 서빙",
+  "서빙"
+ ],
+ "monitoring": [
+  "모델 모니터링"
+ ],
+ "retraining": [
+  "재학습"
+ ],
+ "featurestore": [
+  "피처 스토어"
+ ],
+ "mlpipeline": [
+  "ML 파이프라인"
+ ],
+ "benchmark": [
+  "벤치마크"
+ ],
+ "anomaly": [
+  "이상 탐지"
+ ],
+ "recsys": [
+  "추천 시스템"
+ ],
+ "ctr": [
+  "클릭률",
+  "CTR"
+ ],
+ "coldstart": [
+  "콜드 스타트"
+ ],
+ "collabfilter": [
+  "협업 필터링"
+ ],
+ "fraud": [
+  "사기 탐지"
+ ],
+ "churn": [
+  "이탈 예측"
+ ],
+ "demandfc": [
+  "수요 예측"
+ ],
+ "creditscore": [
+  "신용 평가",
+  "신용 점수"
+ ]
+}

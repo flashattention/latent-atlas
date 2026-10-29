@@ -37,7 +37,8 @@
     "darkMode": "深色模式",
     "zoom": "缩放",
     "zoomIn": "放大",
-    "zoomOut": "缩小"
+    "zoomOut": "缩小",
+    "appendix": "附录"
   },
   "cats": {
     "found": "基础",
@@ -57,6 +58,13 @@
     "llm": "LLM 训练与对齐",
     "inf": "推理与效率",
     "app": "LLM 系统与推理",
-    "front": "前沿趋势"
+    "front": "前沿趋势",
+    "zstat": "统计与概率",
+    "zdata": "数据与可视化",
+    "zmath": "线性代数与微积分",
+    "ztrain": "训练与优化",
+    "znn": "神经网络构件",
+    "zlang": "语言模型与强化学习",
+    "zprod": "生产环境中的机器学习"
   }
 }

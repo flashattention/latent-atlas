@@ -1,0 +1,372 @@
+{
+ "mean": {
+  "n": "Mean (औसत)",
+  "d": "Mean मानों के समूह का योग है जिसे मानों की संख्या से भाग दिया गया हो। यह किसी distribution का संतुलन बिंदु है: mean से धनात्मक और ऋणात्मक विचलन ठीक-ठीक एक-दूसरे को निरस्त कर देते हैं, और यही वह एकमात्र स्थिरांक है जो squared errors के योग को न्यूनतम करता है।\n\nMachine learning में mean हर जगह दिखता है। Standardization feature का mean घटाता है, mean imputation missing values को इसी से भरता है, MSE और log loss प्रति-उदाहरण losses के mean हैं, और mini-batch gradient descent एक batch पर gradients का औसत लेता है। Batch normalization और layer normalization दोनों running या प्रति-sample mean निकालते हैं।\n\nमुख्य कमज़ोरी outliers के प्रति संवेदनशीलता है। एक अकेला चरम मान mean को उस जगह से बहुत दूर खींच सकता है जहाँ अधिकांश डेटा है, इसलिए आय, latency या transaction size जैसी skewed मात्राओं के लिए median अक्सर सामान्य स्थिति का बेहतर वर्णन करता है।",
+  "u": [
+   "Standardization या PCA से पहले features को center करना",
+   "प्रति-उदाहरण losses का औसत लेकर training objective बनाना",
+   "Missing numeric values को column के mean से भरना"
+  ],
+  "x": "एक payments टीम fraud मॉडल के baseline feature के रूप में हर merchant की औसत transaction राशि (mean) track करती है। क्योंकि कुछ बहुत बड़ी corporate खरीदें इसे विकृत कर देती हैं, वे एक trimmed mean और median भी दर्ज करते हैं, और मॉडल तीनों का उपयोग करता है।"
+ },
+ "median": {
+  "n": "Median (माध्यिका)",
+  "d": "Median क्रमबद्ध dataset का बीच वाला मान है: आधे observations इससे नीचे और आधे इससे ऊपर होते हैं। मानों की संख्या सम होने पर परंपरा के अनुसार यह बीच के दो मानों का औसत होता है।\n\nक्योंकि यह केवल क्रम पर निर्भर करता है, परिमाण पर नहीं, median robust है: सबसे बड़े मान को अनंत तक ले जाने से भी यह नहीं बदलता। यही वह स्थिरांक है जो absolute errors के योग को न्यूनतम करता है, इसीलिए MAE से train किए गए मॉडल mean के बजाय conditional median का अनुमान देते हैं। Practitioners इसे median imputation, robust scaling (जो median घटाकर IQR से भाग देता है) और latency या घर की कीमतों जैसे skewed metrics के सारांश के लिए उपयोग करते हैं।\n\nएक आम ग़लतफ़हमी यह है कि median हमेशा बेहतर सारांश है। Outliers के बिना symmetric डेटा के लिए mean सांख्यिकीय रूप से अधिक efficient है, और छोटे sample का median एक sample से दूसरे sample में काफ़ी उछल सकता है।",
+  "u": [
+   "Skewed numeric features की robust imputation",
+   "सामान्य latency या कीमत स्तरों की रिपोर्टिंग",
+   "Robust scaling में features को center करना"
+  ],
+  "x": "एक real-estate platform हर इलाके के लिए mean के बजाय median बिक्री कीमत रिपोर्ट करता है, क्योंकि वरना कुछ luxury बिक्री पूरे सारांश पर हावी हो जातीं। यही median उसके valuation मॉडल के training डेटा में missing कीमतों को impute करने के लिए भी उपयोग होता है।"
+ },
+ "variance": {
+  "n": "Variance (प्रसरण)",
+  "d": "Variance मापता है कि मान अपने mean के आसपास कितने फैले हुए हैं: यह mean से विचलन के वर्ग का औसत है। वर्ग लेने से हर विचलन धनात्मक हो जाता है और बड़े विचलनों को भारी वज़न मिलता है, इसलिए कुछ दूर स्थित points इस पर हावी हो सकते हैं।\n\nPopulation variance n से भाग देता है; sample variance n − 1 से भाग देता है (Bessel's correction), ताकि जब mean भी उसी डेटा से अनुमानित हो तब unbiased अनुमान मिले। Variance standardization, PCA (जो अधिकतम variance की दिशाएँ खोजता है), bias–variance tradeoff, उन weight initialization योजनाओं जो layers के पार activation variance स्थिर रखती हैं, और Adam के second-moment अनुमान का आधार है।\n\nभ्रम का एक आम स्रोत यह है कि numpy का var डिफ़ॉल्ट रूप से n (ddof=0) उपयोग करता है जबकि pandas n − 1 (ddof=1), इसलिए एक ही छोटे sample पर दोनों libraries अलग संख्याएँ लौटाती हैं। Variance वर्गित इकाइयों में भी होता है, इसीलिए आम तौर पर standard deviation रिपोर्ट किया जाता है।",
+  "u": [
+   "Explained variance से principal components चुनना",
+   "Variance threshold से लगभग स्थिर features हटाना",
+   "समय के साथ मॉडल predictions की स्थिरता की निगरानी"
+  ],
+  "x": "एक manufacturing analytics टीम उन sensor channels को हटा देती है जिनका training window पर variance लगभग शून्य है, क्योंकि स्थिर signals failure classifier के लिए कोई जानकारी नहीं रखते। वे हर हफ़्ते variances दोबारा निकालते हैं ताकि field में अटक गए sensors पकड़े जा सकें।"
+ },
+ "stddev": {
+  "n": "Standard Deviation (मानक विचलन)",
+  "d": "Standard deviation variance का वर्गमूल है, जो फैलाव का माप डेटा की ही इकाइयों में देता है। यह बताता है कि एक सामान्य मान mean से कितनी दूर स्थित है।\n\nलगभग normal डेटा के लिए करीब 68% मान mean के एक standard deviation के भीतर और करीब 95% दो के भीतर होते हैं, जिससे यह असामान्य मानों को पहचानने का सुविधाजनक पैमाना बन जाता है। Standardization (z-scores) centered features को उनके standard deviation से भाग देता है ताकि अलग-अलग scales वाले features gradient descent, k-nearest neighbors, SVMs और regularized मॉडलों में तुलनीय योगदान दें। Xavier और He जैसी weight initialization योजनाएँ layer की चौड़ाई से प्रारंभिक weights का standard deviation तय करती हैं।\n\nStandard deviation को standard error से भ्रमित नहीं करना चाहिए, जो mean जैसे किसी अनुमान की अनिश्चितता बताता है और sample size बढ़ने पर घटता है। 68–95 नियम heavy-tailed या skewed डेटा पर भी विफल होता है।",
+  "u": [
+   "Feature standardization के लिए z-scores निकालना",
+   "तीन standard deviations से आगे की anomalies flag करना",
+   "Weight initialization का scale तय करना"
+  ],
+  "x": "एक operations टीम हर warehouse के दैनिक order volume की निगरानी करती है और जब कोई दिन rolling mean से तीन rolling standard deviations से अधिक दूर हो तो alert भेजती है। क्योंकि सप्ताहांत पर volume अधिक होता है, statistics हर weekday के लिए अलग से निकाले जाते हैं।"
+ },
+ "covariance": {
+  "n": "Covariance (सहप्रसरण)",
+  "d": "Covariance मापता है कि दो variables साथ-साथ कैसे बदलते हैं: यह उनके अपने-अपने mean से विचलनों के गुणनफल का औसत है। धनात्मक मान का अर्थ है कि वे एक ही समय पर अपने mean से ऊपर रहने की प्रवृत्ति रखते हैं, ऋणात्मक मान का अर्थ है कि जब एक ऊँचा होता है तो दूसरा नीचा रहता है।\n\nकई features के लिए जोड़ी-वार covariances मिलकर covariance matrix बनाते हैं, जो symmetric और positive semi-definite होता है और जिसके diagonal पर variances होते हैं। PCA इसी matrix का eigendecomposition है, Gaussian mixture models और multivariate normal distribution इसी से parameterize होते हैं, और Mahalanobis distance इसके inverse का उपयोग करता है।\n\nमुख्य सीमा यह है कि covariance दोनों variables की इकाइयों पर निर्भर करता है, इसलिए इसके परिमाण की व्याख्या कठिन है: ऊँचाई को मीटर के बजाय सेंटीमीटर में मापने से यह 100 गुना हो जाता है। दोनों standard deviations से भाग देने पर correlation coefficient मिलता है, जो इकाई-मुक्त है। Covariance केवल रैखिक सह-गति को पकड़ता है।",
+  "u": [
+   "PCA के लिए covariance matrices बनाना",
+   "Multivariate Gaussian मॉडलों को parameterize करना",
+   "Assets की सह-गति से portfolio risk का अनुमान"
+  ],
+  "x": "एक quantitative finance टीम portfolio में positions का आकार तय करने के लिए दैनिक asset returns का covariance matrix अनुमानित करती है। सैकड़ों assets और सीमित इतिहास के साथ sample covariance noisy होता है, इसलिए वे Ledoit-Wolf जैसा shrinkage estimator उपयोग करते हैं।"
+ },
+ "correlation": {
+  "n": "Correlation Coefficient (सहसंबंध गुणांक)",
+  "d": "Correlation coefficient दो variables के बीच रैखिक संबंध की ताकत और दिशा को −1 से +1 के स्थिर पैमाने पर मापता है। Pearson coefficient covariance को दोनों standard deviations के गुणनफल से भाग देकर मिलता है, इसलिए यह इकाई-मुक्त है।\n\n+1 के पास का मान बताता है कि points ऊपर की ओर ढलान वाली रेखा के पास हैं, −1 के पास नीचे की ओर ढलान वाली रेखा, और 0 के पास कोई रैखिक प्रवृत्ति नहीं। Spearman's rank correlation यही सूत्र ranks पर लगाता है और किसी भी monotonic संबंध को पकड़ता है। Practitioners correlation का उपयोग EDA में, target के विरुद्ध features की screening में, multicollinearity पकड़ने में और मॉडल scores की मानवीय ratings से तुलना में करते हैं।\n\nक्लासिक ग़लतफ़हमी यह है कि शून्य correlation का अर्थ स्वतंत्रता है: symmetric range पर y = x² का Pearson correlation पूर्ण निर्भरता के बावजूद लगभग शून्य होता है। Correlation outliers के प्रति संवेदनशील है और causation के बारे में कुछ नहीं बताता।",
+  "u": [
+   "Target के विरुद्ध candidate features की screening",
+   "Redundant, अत्यधिक correlated feature जोड़ियाँ पकड़ना",
+   "Automatic metrics की मानवीय निर्णयों से तुलना"
+  ],
+  "x": "एक LLM evaluation टीम साझा उत्तरों के समूह पर automatic judge मॉडल के scores और मानवीय preference ratings के बीच Spearman correlation निकालती है। किसी judge को तभी अपनाया जाता है जब मनुष्यों के साथ उसका rank correlation सभी task श्रेणियों में लगातार ऊँचा हो।"
+ },
+ "corrmatrix": {
+  "n": "Correlation Matrix (सहसंबंध मैट्रिक्स)",
+  "d": "Correlation matrix एक वर्गाकार तालिका है जिसमें dataset के हर variable जोड़े के बीच का correlation coefficient होता है। इसका diagonal हमेशा 1 होता है, matrix symmetric होता है, और यह standardized variables का covariance matrix है।\n\nExploratory data analysis के दौरान इसे आम तौर पर heatmap के रूप में दिखाया जाता है ताकि संबंधित features के समूह, target के साथ चलने वाले features और लगभग duplicate columns पहचाने जा सकें। Diagonal से बाहर के बड़े मान multicollinearity का संकेत देते हैं, जो linear regression में coefficient variance को फुला देता है और tree मॉडलों में importance को कई features में बाँट देता है। Standardized डेटा पर PCA correlation matrix का eigendecomposition है।\n\nएक ख़तरा इसे निर्भरताओं का पूरा नक्शा मान लेना है। जोड़ी-वार correlations non-linear संबंधों और तीन या अधिक variables के बीच interactions को चूक जाते हैं, और multicollinearity तब भी हो सकती है जब कोई अकेला जोड़ा मज़बूती से correlated न हो, इसीलिए variance inflation factor (VIF) भी जाँचा जाता है।",
+  "u": [
+   "EDA के दौरान feature संबंधों के heatmaps",
+   "Linear modeling से पहले redundant features खोजना",
+   "अलग-अलग इकाइयों वाले features पर PCA चलाना"
+  ],
+  "x": "एक credit-risk टीम scorecard मॉडल fit करने से पहले लगभग सौ bureau features का correlation matrix plot करती है। चुनी गई threshold से ऊँचे correlations वाले feature समूहों को एक-एक प्रतिनिधि तक घटाया जाता है ताकि logistic regression के coefficients स्थिर रहें और regulators को समझाए जा सकें।"
+ },
+ "quantile": {
+  "n": "Quantiles और Percentiles",
+  "d": "Quantile वह कट-बिंदु है जिसके नीचे डेटा का एक दिया गया अंश होता है; percentile वही विचार सौवें हिस्सों में व्यक्त करता है। 0.9 quantile, यानी 90th percentile, वह मान है जिससे 90% observations अधिक नहीं होते। Median 0.5 quantile है और quartiles 0.25, 0.5 और 0.75 quantiles हैं।\n\nQuantiles किसी distribution के आकार की कोई धारणा किए बिना उसका वर्णन करते हैं और outliers के प्रति robust हैं। इन्हीं से IQR और box plots, quantile binning, features को uniform या normal distribution पर map करने वाले quantile transforms, और p95 व p99 latency जैसे service metrics परिभाषित होते हैं। Quantile regression और pinball loss मॉडलों को किसी चुने हुए quantile का अनुमान लगाना सिखाते हैं, जिससे prediction intervals मिलते हैं।\n\nएक व्यावहारिक ख़तरा यह है कि sample quantiles की कई interpolation परिभाषाएँ हैं, इसलिए छोटे samples पर libraries थोड़े अलग मान लौटा सकती हैं, और p99.9 जैसे चरम percentiles का भरोसेमंद अनुमान लगाने के लिए बहुत अधिक observations चाहिए।",
+  "u": [
+   "p95 और p99 serving latency की रिपोर्टिंग",
+   "Features की quantile binning और quantile transforms",
+   "Quantile regression से prediction intervals"
+  ],
+  "x": "एक inference platform टीम अपना service-level objective mean latency के बजाय p99 latency पर तय करती है, क्योंकि users को बहुत धीमे requests का छोटा हिस्सा ही खटकता है। Percentiles हर server पर एकत्र latency histograms से sliding windows पर निकाले जाते हैं।"
+ },
+ "iqr": {
+  "n": "Interquartile Range (IQR)",
+  "d": "Interquartile range पहले quartile (25th percentile) और तीसरे quartile (75th percentile) के बीच की दूरी है, इसलिए यह डेटा के बीच वाले आधे हिस्से को समेटती है। क्योंकि यह सबसे निचले और सबसे ऊपरी चौथाई हिस्सों को अनदेखा करती है, चरम मान इसे प्रभावित नहीं करते।\n\nIQR standard deviation का robust समकक्ष है। यह box plot में box तय करता है, और Tukey का नियम Q1 − 1.5·IQR से नीचे या Q3 + 1.5·IQR से ऊपर के points को संभावित outliers के रूप में flag करता है। Robust scaling median घटाकर IQR से भाग देता है, जिससे standardization के विपरीत कुछ चरम मान बाकी सभी मानों को दबा नहीं पाते।\n\nएक आम ग़लती 1.5·IQR fences से बाहर की हर चीज़ को delete करने योग्य error मानना है। आय या session length जैसे skewed variables में कई वैध मान fences से बाहर पड़ते हैं, इसलिए यह नियम जाँच का संकेत है, स्वचालित filter नहीं।",
+  "u": [
+   "Tukey's fences से outliers flag करना",
+   "चरम मानों वाले features की robust scaling",
+   "Skewed metrics के फैलाव का सारांश"
+  ],
+  "x": "एक logistics कंपनी manual review के लिए shipments flag करने हेतु हर route पर delivery समय की IQR fences उपयोग करती है। Analysts ने पाया कि लंबी पूँछ वाली पर वैध देरी वाले routes बहुत सारे flags पैदा करते थे, इसलिए उन routes के लिए उन्होंने log-transformed समय पर निकाली गई fences अपना लीं।"
+ },
+ "skewness": {
+  "n": "Skewness (विषमता)",
+  "d": "Skewness किसी distribution की उसके mean के आसपास असममिति को मापता है। Right-skewed (positively skewed) distribution की लंबी पूँछ बड़े मानों की ओर होती है, left-skewed की छोटे मानों की ओर, और normal जैसे symmetric distribution की skewness शून्य होती है।\n\nइसे standardized विचलनों के घन के औसत के रूप में निकाला जाता है, इसलिए पूँछ में दूर स्थित मान इस पर हावी रहते हैं। Right-skewed डेटा में mean आम तौर पर median से ऊपर खिंच जाता है। कई वास्तविक features तीव्र रूप से right-skewed होते हैं: कीमतें, counts, अवधियाँ, आय। Practitioners exploratory data analysis के दौरान skewness जाँचते हैं और अक्सर linear regression, k-means या neural networks से पहले log transform या Box-Cox transform लगाते हैं, जो लगभग symmetric inputs के साथ बेहतर व्यवहार करते हैं। Tree-आधारित मॉडल इसके प्रति काफ़ी हद तक असंवेदनशील हैं।\n\nएक ग़लतफ़हमी यह है कि skewed features को हमेशा transform करना चाहिए। Linear regression के लिए residuals मायने रखते हैं, कच्चे feature distributions नहीं।",
+  "u": [
+   "तय करना कि feature को कब log-transform करें",
+   "सारांश के लिए mean के बजाय median चुनना",
+   "Regression में असममित residuals का निदान"
+  ],
+  "x": "एक marketplace analytics टीम पाती है कि order value तीव्र रूप से right-skewed है और उस पर linear demand मॉडल ख़राब fit होता है। Order value के log को मॉडल करने से लगभग symmetric residuals मिलते हैं, और predictions को bias correction के साथ मूल scale पर वापस बदला जाता है।"
+ },
+ "kurtosis": {
+  "n": "Kurtosis और Heavy Tails",
+  "d": "Kurtosis मापता है कि किसी distribution का कितना variance दुर्लभ, चरम मानों से आता है, यानी उसकी पूँछें कितनी भारी हैं। Normal distribution का kurtosis 3 है; excess kurtosis इसमें से 3 घटाता है, इसलिए धनात्मक excess kurtosis का अर्थ है normal से भारी पूँछें।\n\nयह standardized विचलनों की चौथी घात का औसत है, इसलिए कुछ बहुत बड़े विचलन इस पर हावी रहते हैं। Heavy-tailed डेटा financial returns, network latency, insurance claims और large language models की activations में दिखता है, जहाँ outlier channels quantization को जटिल बनाते हैं। ऐसे डेटा के लिए squared-error losses और standard deviation पर आधारित outlier नियम नाज़ुक होते हैं, और Huber या MAE जैसे robust losses, robust scaling और quantile-आधारित metrics पसंद किए जाते हैं।\n\nएक आम ग़लतफ़हमी यह है कि kurtosis distribution के केंद्र की नुकीलापन मापता है। यह मुख्य रूप से पूँछों से तय होता है, और एक जैसे शिखर-आकार वाले दो distributions का kurtosis बहुत अलग हो सकता है।",
+  "u": [
+   "Heavy-tailed features और residuals पहचानना",
+   "Loss चुनने से पहले outlier जोखिम का आकलन",
+   "LLM quantization से पहले outlier activations का विश्लेषण"
+  ],
+  "x": "एक LLM को 8-bit में quantize करने वाली टीम प्रति channel activations का kurtosis जाँचती है और पाती है कि कुछ channels की पूँछें अत्यधिक भारी हैं। उन channels को अलग से संभाला जाता है, और यही LLM.int8() और SmoothQuant जैसे outlier-aware तरीकों की प्रेरणा है।"
+ },
+ "probdist": {
+  "n": "Probability Distribution (प्रायिकता वितरण)",
+  "d": "Probability distribution बताता है कि किसी random variable का हर संभव मान कितना संभावित है। Discrete variables के लिए यह probability mass function है जो हर मान को एक probability देता है; continuous variables के लिए यह probability density function है जिसका किसी अंतराल पर integral उस अंतराल की probability देता है।\n\nहर distribution का एक cumulative distribution function F(x) = P(X ≤ x) होता है, और probabilities या densities का योग या integral 1 होना चाहिए। Machine learning काफ़ी हद तक distributions के बारे में है: softmax output वाला classifier classes पर एक categorical distribution का अनुमान देता है, language model अगले token पर distribution का अनुमान देता है, VAEs और diffusion models जैसे generative मॉडल डेटा distribution सीखते हैं, और cross-entropy व KL divergence जैसे losses distributions की तुलना करते हैं।\n\nएक आम भ्रम density मान को probability के रूप में पढ़ना है। Density 1 से अधिक हो सकती है; केवल किसी अंतराल पर उसका क्षेत्रफल probability है।",
+  "u": [
+   "Classifiers की predictive अनिश्चितता को मॉडल करना",
+   "Language model के output से tokens sample करना",
+   "देखे गए डेटा पर parametric मॉडल fit करना"
+  ],
+  "x": "एक demand forecasting टीम हर product के लिए अगले हफ़्ते की बिक्री की एक संख्या के बजाय पूरा distribution predict करती है। फिर stock स्तर उस distribution के एक चुने हुए quantile से तय किए जाते हैं, जिससे stockout की लागत और अतिरिक्त inventory की लागत के बीच संतुलन बनता है।"
+ },
+ "normaldist": {
+  "n": "Normal (Gaussian) Distribution",
+  "d": "Normal या Gaussian distribution एक symmetric, घंटी के आकार का continuous distribution है जो पूरी तरह अपने mean μ और standard deviation σ से वर्णित होता है। इसके द्रव्यमान का लगभग 68% mean के एक σ के भीतर, 95% दो के भीतर और 99.7% तीन के भीतर होता है।\n\nयह central limit theorem के कारण इतनी बार दिखता है: कई छोटे स्वतंत्र प्रभावों के योग और औसत लगभग normal होते हैं। Squared error वाला linear regression Gaussian noise के तहत maximum likelihood estimation है, weights को आम तौर पर normal distribution से initialize किया जाता है, Gaussian mixture models और Gaussian processes इसी पर आधारित हैं, VAEs Gaussian latent prior उपयोग करते हैं, और diffusion models चरण-दर-चरण Gaussian noise जोड़ते हैं।\n\nमुख्य ख़तरा वहाँ normality मान लेना है जहाँ वह लागू नहीं होती। कई वास्तविक मात्राएँ skewed या heavy-tailed होती हैं, और normal पर आधारित three-sigma नियम या confidence कथन चरम मानों की आवृत्ति को बुरी तरह कम आँक सकते हैं।",
+  "u": [
+   "Least-squares regression के पीछे Gaussian noise मॉडल",
+   "Neural networks में random weight initialization",
+   "Diffusion models में noise schedules"
+  ],
+  "x": "एक diffusion-model टीम images को बढ़ते variance वाले Gaussian noise से दूषित करके और एक network को वह noise predict करना सिखाकर image generator train करती है। Sampling के समय मॉडल शुद्ध standard normal noise से शुरू करता है और उसे चरण-दर-चरण हटाता है।"
+ },
+ "binomial": {
+  "n": "Bernoulli और Binomial Distributions",
+  "d": "Bernoulli distribution एक अकेले हाँ-या-ना trial को मॉडल करता है जो probability p से सफल होता है। Binomial distribution समान p वाले n स्वतंत्र Bernoulli trials में सफलताओं की संख्या गिनता है।\n\nBernoulli का mean p और variance p(1 − p) है; binomial का mean np और variance np(1 − p) है। Binary classification Bernoulli पर आधारित है: logistic regression p देता है, और binary cross-entropy (log loss) इसका negative log-likelihood है। Binomial A/B testing में conversion counts, किसी benchmark पर सही उत्तरों की संख्या, और किसी layer में dropout द्वारा गिराई गई units की संख्या का वर्णन करता है।\n\nएक आम ग़लती binomial को तब लगाना है जब trials स्वतंत्र न हों या एक ही p साझा न करते हों। User के अनुसार समूहित clicks, या कुछ templates से बने benchmark प्रश्न, correlated होते हैं, इसलिए वास्तविक variance np(1 − p) से बड़ा होता है और सरल confidence intervals बहुत संकरे निकलते हैं।",
+  "u": [
+   "Logistic regression से binary labels को मॉडल करना",
+   "A/B प्रयोगों में conversions गिनना",
+   "Benchmarks पर accuracy के error bars"
+  ],
+  "x": "एक LLM evaluation टीम कई सौ प्रश्नों में से हर एक को Bernoulli trial मानकर benchmark accuracy को binomial confidence interval के साथ रिपोर्ट करती है। एक ही प्रश्नों पर दो मॉडलों की तुलना करते समय वे इसके बजाय paired test उपयोग करते हैं, क्योंकि दोनों मॉडलों के प्रति-प्रश्न परिणाम correlated होते हैं।"
+ },
+ "poisson": {
+  "n": "Poisson Distribution",
+  "d": "Poisson distribution समय या स्थान के किसी निश्चित अंतराल में होने वाली घटनाओं की संख्या को मॉडल करता है, जब घटनाएँ एक स्थिर औसत दर λ से स्वतंत्र रूप से होती हैं। इसका mean और variance दोनों λ के बराबर होते हैं।\n\nयह बहुत सारे trials और छोटी सफलता probability वाले binomial की सीमा के रूप में उत्पन्न होता है, इसीलिए यह दुर्लभ घटनाओं के counts पर फ़िट बैठता है: प्रति सेकंड requests, प्रति policy claims, प्रति batch defects, प्रति ग्राहक खरीदें। Poisson regression, log link वाला एक generalized linear model, features से ऐसे counts का अनुमान लगाता है, और gradient boosting libraries count targets के लिए Poisson objective देती हैं।\n\nसामान्य ख़तरा overdispersion है। वास्तविक counts का variance अक्सर उनके mean से बहुत बड़ा होता है क्योंकि दर units के बीच बदलती है या घटनाएँ गुच्छों में होती हैं, और तब Poisson मॉडल अनिश्चितता को कम आँकता है। Negative binomial मॉडल आम विकल्प है, और अत्यधिक शून्य zero-inflated मॉडल की ओर इशारा करते हैं।",
+  "u": [
+   "Request या call आगमन counts का forecasting",
+   "Insurance claim आवृत्ति के लिए Poisson regression",
+   "Gradient-boosted मॉडलों में count objectives"
+  ],
+  "x": "एक insurer हर policy पर सालाना claims की संख्या को Poisson regression से मॉडल करता है, जिसमें policy की अवधि exposure offset के रूप में उपयोग होती है। जब claim counts का variance mean से बहुत बड़ा निकलता है, तो टीम अंतिम pricing मॉडल चुनने से पहले एक negative binomial मॉडल से तुलना करती है।"
+ },
+ "uniformdist": {
+  "n": "Uniform Distribution (एकसमान वितरण)",
+  "d": "Uniform distribution किसी range के हर मान को समान probability देता है। [a, b] पर continuous uniform की density स्थिर 1/(b − a) होती है; discrete uniform परिणामों के किसी सीमित समूह के हर सदस्य को समान probability देता है, जैसे एक निष्पक्ष पासे के फलक।\n\nइसका mean (a + b)/2 और variance (b − a)²/12 है। Random number generators पहले uniform मान बनाते हैं और फिर उन्हें अन्य distributions में बदलते हैं, उदाहरण के लिए inverse transform sampling से। Machine learning में यह Xavier और He uniform weight initialization, hyperparameter ranges पर random search, random shuffling और train/test splits, dropout masks में, और तब maximum-entropy prior के रूप में दिखता है जब केवल range ज्ञात हो।\n\nएक ख़तरा learning rate जैसे scale-प्रकार के hyperparameters को रैखिक range पर uniform रूप से sample करना है। तब अधिकांश samples ऊपरी सिरे के पास गिरते हैं; log-uniform distribution उन्हें परिमाण के क्रमों में समान रूप से फैलाता है।",
+  "u": [
+   "Uniform weight initialization योजनाएँ",
+   "Hyperparameter ranges पर random search",
+   "अन्य distributions का inverse transform sampling"
+  ],
+  "x": "एक model tuning टीम dropout rates को 0 और 0.5 के बीच uniform रूप से, पर learning rates को 1e-5 और 1e-2 के बीच log-uniform रूप से sample करती है। साधारण uniform range के साथ लगभग किसी भी trial में 1e-3 से नीचे की learning rates का परीक्षण नहीं होता।"
+ },
+ "expectation": {
+  "n": "Expected Value (अपेक्षित मान)",
+  "d": "किसी random variable का expected value उसका probability-भारित औसत है: वह दीर्घकालिक mean जो आप देखेंगे यदि random प्रयोग को अनिश्चित काल तक दोहरा सकें। Discrete variable के लिए यह हर मान और उसकी probability के गुणनफल का योग है; continuous variable के लिए density के विरुद्ध संगत integral।\n\nExpectation रैखिक है, इसलिए E[aX + bY] = aE[X] + bE[Y], भले ही X और Y निर्भर हों। Machine learning के objectives expectations हैं: training डेटा distribution पर अपेक्षित loss को न्यूनतम करती है, जिसे mini-batch पर औसत loss से अनुमानित किया जाता है, इसीलिए stochastic gradient descent काम करता है। Reinforcement learning अपेक्षित return को अधिकतम करता है, EM algorithm latent variables पर expectation लेता है, और Monte Carlo estimation expectations को sample औसतों से अनुमानित करता है।\n\nएक आम ग़लती E[f(X)] = f(E[X]) मान लेना है। Non-linear f के लिए यह विफल होता है; Jensen's inequality के अनुसार convex f के लिए f का expectation कम से कम expectation के f जितना होता है।",
+  "u": [
+   "Training objective के रूप में अपेक्षित loss परिभाषित करना",
+   "Reinforcement learning में अपेक्षित return",
+   "Decision thresholds चुनते समय अपेक्षित लागत"
+  ],
+  "x": "एक fraud टीम अपेक्षित लागत को न्यूनतम करके decision threshold तय करती है, जिसमें हर predicted probability को छूटे हुए fraud की लागत और false alarm की लागत से भारित किया जाता है। जब भी operations टीम के लागत अनुमान बदलते हैं, threshold दोबारा निकाली जाती है।"
+ },
+ "condprob": {
+  "n": "Conditional Probability (सशर्त प्रायिकता)",
+  "d": "Conditional probability किसी घटना A की probability है, यह जानते हुए कि एक अन्य घटना B हो चुकी है, जिसे P(A|B) लिखा जाता है। यह ध्यान को केवल उन मामलों तक सीमित करती है जहाँ B सत्य है और पूछती है कि उनमें से कितने अंश में A भी है।\n\nऔपचारिक रूप से यह A और B की joint probability को B की probability से भाग देने पर मिलती है। दो घटनाएँ ठीक तब स्वतंत्र होती हैं जब P(A|B) = P(A)। अधिकांश supervised मॉडल एक conditional probability का अनुमान लगाते हैं: classifier P(y | x) देता है, language model P(अगला token | पिछले tokens) देता है, और naive Bayes class दिए होने पर features की conditional probabilities को गुणा करता है। Precision और recall दोनों conditional probabilities हैं, जो अलग-अलग घटनाओं पर conditioned हैं।\n\nक्लासिक ग़लती P(A|B) को P(B|A) से भ्रमित करना है। जो test 99% बार रोग पकड़ता है, P(positive | disease), वह तब भी ज़्यादातर false positives दे सकता है, यानी P(disease | positive) कम हो सकती है, जब रोग दुर्लभ हो।",
+  "u": [
+   "Classifier outputs को P(y given x) के रूप में समझना",
+   "Language models में next-token probabilities",
+   "Counts से precision और recall निकालना"
+  ],
+  "x": "एक medical screening टीम नए imaging मॉडल के लिए sensitivity, P(positive test | disease), और positive predictive value, P(disease | positive test), दोनों रिपोर्ट करती है। क्योंकि अस्पताल और सामान्य आबादी में prevalence अलग है, predictive value हर setting के लिए अलग से निकाली जाती है।"
+ },
+ "bayesthm": {
+  "n": "Bayes’ Theorem (बेयज़ प्रमेय)",
+  "d": "Bayes' theorem बताता है कि conditional probability को कैसे उलटें: यह P(B|A), prior probability P(A) और समग्र probability P(B) से P(A|B) निकालता है। यह साक्ष्य B देखने के बाद A के बारे में विश्वास को update करने का नियम है।\n\nPrior P(A) को likelihood P(B|A) से गुणा किया जाता है और evidence P(B) से फिर से normalize किया जाता है, जिसे सभी hypotheses पर योग के रूप में फैलाया जा सकता है। Naive Bayes classifier इसे सीधे लागू करता है, इस अतिरिक्त धारणा के साथ कि class दिए होने पर features conditionally स्वतंत्र हैं। यह Bayesian inference, MAP estimation, Bayesian optimization और spam filtering की नींव है, और समझाता है कि किसी भी detector की व्याख्या में base rates क्यों मायने रखते हैं।\n\nसबसे आम ग़लती prior को अनदेखा करना है, जिसे base-rate neglect कहते हैं। जब positives दुर्लभ हों, तो सटीक test भी ज़्यादातर false alarms देता है, इसलिए ऊँची P(B|A) का अर्थ ऊँची P(A|B) नहीं है।",
+  "u": [
+   "Naive Bayes से text और spam classification",
+   "Bayesian inference में विश्वासों को update करना",
+   "दुर्लभ-घटना detectors के alerts की व्याख्या"
+  ],
+  "x": "एक security operations टीम detector की true और false positive दरों को वास्तविक हमलों की कम base rate के साथ जोड़कर intrusion alert को calibrate करती है। Bayes' theorem दिखाता है कि अधिकांश alerts झूठे हैं, इसलिए टीम analyst को page करने से पहले उन्हें एक automated triage चरण से गुज़ारती है।"
+ },
+ "priorpost": {
+  "n": "Prior और Posterior",
+  "d": "Prior एक probability distribution है जो डेटा देखने से पहले किसी अज्ञात मात्रा के बारे में विश्वास को व्यक्त करता है; posterior डेटा को ध्यान में लेने के बाद का updated distribution है। Bayes' theorem इन्हें जोड़ता है: posterior, likelihood गुणा prior के समानुपाती होता है।\n\nकम डेटा होने पर prior का प्रभाव मज़बूत होता है; जैसे-जैसे डेटा जमा होता है, likelihood हावी हो जाता है और अलग-अलग उचित priors से मिले posteriors एक-दूसरे के पास आ जाते हैं। Conjugate priors, जैसे Bernoulli दर के लिए Beta prior, posterior को उसी family में रखते हैं और closed-form updates देते हैं। Machine learning में priors regularization के रूप में (weights पर Gaussian prior L2 के और Laplace prior L1 के संगत है), Bayesian A/B testing में, bandits के लिए Thompson sampling में और Bayesian optimization में दिखते हैं।\n\nएक ग़लतफ़हमी यह है कि flat prior हमेशा तटस्थ होता है। यह केवल एक parameterization में flat होता है, और रूपांतरित scale पर informative बन जाता है।",
+  "u": [
+   "Conversion rates की Bayesian A/B testing",
+   "Multi-armed bandits के लिए Thompson sampling",
+   "कम डेटा वाले items के अनुमानों को shrink करना"
+  ],
+  "x": "एक recommendation टीम नए items की click-through rates का अनुमान ऐतिहासिक items पर fit किए गए Beta prior से लगाती है। पाँच impressions में तीन clicks वाले नए item को कच्चे 60% के बजाय सामान्य दर की ओर खिंचा हुआ posterior अनुमान मिलता है, जिससे वह केवल noise के कारण पहले स्थान पर rank नहीं होता।"
+ },
+ "likelihood": {
+  "n": "Likelihood",
+  "d": "Likelihood देखे गए डेटा की probability (या density) है, जिसे डेटा को स्थिर रखकर मॉडल parameters के function के रूप में देखा जाता है। यह बताती है कि हर candidate parameter मान वास्तव में देखे गए डेटा को कितनी अच्छी तरह समझाता है।\n\nस्वतंत्र observations के लिए likelihood प्रति-उदाहरण probabilities का गुणनफल है, इसलिए व्यवहार में log-likelihood के साथ काम किया जाता है, जो एक योग है, numerically स्थिर है और differentiate करना आसान है। इसे अधिकतम करने से maximum likelihood estimation मिलता है, और अधिकांश training losses negative log-likelihoods हैं: classifiers और language models के लिए cross-entropy, Gaussian noise के तहत squared error। Perplexity प्रति token औसत negative log-likelihood का exponent है, और likelihood ratios कई सांख्यिकीय tests और मॉडल तुलनाओं को चलाते हैं।\n\nमुख्य ग़लतफ़हमी likelihood को parameters पर probability distribution मानना है। θ पर इसका integral 1 नहीं होता, और यह नहीं बताती कि कोई parameter कितना संभावित है; उसके लिए prior और Bayes' theorem चाहिए।",
+  "u": [
+   "Training loss के रूप में negative log-likelihood",
+   "Held-out text पर language models की perplexity",
+   "Likelihood ratio tests से nested मॉडलों की तुलना"
+  ],
+  "x": "एक language-model टीम हर checkpoint के बाद held-out corpus पर प्रति token औसत negative log-likelihood track करती है। बढ़ती held-out likelihood पुष्टि करती है कि pretraining अभी भी सुधर रही है, और perplexity के रूप में रिपोर्ट किया गया यही metric tokenizer variants की तुलना के लिए केवल तब उपयोग होता है जब vocabularies मेल खाती हों।"
+ },
+ "mle": {
+  "n": "Maximum Likelihood Estimation (MLE)",
+  "d": "Maximum likelihood estimation वे parameter मान चुनता है जो मॉडल के तहत देखे गए डेटा को सबसे अधिक संभावित बनाते हैं। व्यवहार में यह log-likelihood को अधिकतम करता है, या समकक्ष रूप से negative log-likelihood को न्यूनतम।\n\nकुछ मॉडलों के लिए अधिकतम का closed form होता है: Gaussian mean का MLE sample mean है, और Bernoulli दर का MLE सफलताओं का देखा गया अंश। कई मानक training प्रक्रियाएँ छिपे रूप में MLE हैं: Gaussian noise के तहत least-squares linear regression, log loss के साथ logistic regression, cross-entropy से train किए गए neural classifiers और language models, और Gaussian mixtures के लिए EM algorithm। हल्की शर्तों के तहत MLE consistent और asymptotically efficient है।\n\nइसकी कमज़ोरी कम डेटा या बहुत सारे parameters के साथ overfitting है। तीन में से तीन बार heads आए सिक्के की heads probability का अनुमान 1 मिलता है, और Gaussian variance का MLE n से भाग देता है और नीचे की ओर biased होता है। Regularization या MAP estimation इसका प्रतिकार करते हैं।",
+  "u": [
+   "Logistic regression और generalized linear models fit करना",
+   "Cross-entropy से language models train करना",
+   "सांख्यिकीय distributions के parameters का अनुमान"
+  ],
+  "x": "एक reliability टीम field devices के time-to-failure डेटा पर maximum likelihood से Weibull distribution fit करती है। Fit किए गए parameters spare-part योजना में जाते हैं, और अभी भी चल रहे devices के censored records को likelihood में उनकी survival probability के ज़रिए शामिल किया जाता है।"
+ },
+ "mapest": {
+  "n": "MAP Estimation",
+  "d": "Maximum a posteriori (MAP) estimation सबसे ऊँची posterior probability वाला parameter मान चुनता है, जिसमें डेटा की likelihood को parameters पर prior के साथ जोड़ा जाता है। यह maximum likelihood estimation और एक log-prior पद का योग है।\n\nLog लेने से prior एक जोड़ी जाने वाली penalty बन जाता है। Weights पर शून्य-mean Gaussian prior ठीक L2 (ridge) penalty देता है, और Laplace prior L1 (lasso) penalty, इसलिए regularized regression और weight decay को MAP estimation के रूप में पढ़ा जा सकता है। Beta prior के साथ Bernoulli दर का अनुमान एक smoothed अंश बन जाता है, जो naive Bayes में additive (Laplace) smoothing का विचार है। जैसे-जैसे dataset बढ़ता है, likelihood हावी होती है और MAP, MLE के पास पहुँच जाता है।\n\nMAP पूरा posterior नहीं, बल्कि एक अकेला बिंदु, posterior mode, लौटाता है, इसलिए यह कोई अनिश्चितता अनुमान नहीं देता। Mode posterior का अप्रतिनिधिक भी हो सकता है और, पूरे posterior के विपरीत, parameters के reparameterize होने पर बदल जाता है।",
+  "u": [
+   "L2 और L1 penalties को priors के रूप में समझना",
+   "दुर्लभ-category probability अनुमानों को smooth करना",
+   "छोटे datasets के साथ अनुमानों को स्थिर करना"
+  ],
+  "x": "एक search टीम हर query–document जोड़े की click-through rate का अनुमान लगाती है, जिनमें से कई के केवल कुछ impressions होते हैं। सभी जोड़ों पर fit किए गए Beta prior के साथ MAP अनुमान उपयोग करने से 0 या 1 जैसी चरम दरें नहीं आतीं, जो वरना ranking features को अस्थिर कर देतीं।"
+ },
+ "iid": {
+  "n": "i.i.d. Assumption (i.i.d. धारणा)",
+  "d": "Independent and identically distributed (i.i.d.) का अर्थ है कि हर observation एक ही probability distribution से लिया गया है और कोई observation किसी दूसरे के बारे में जानकारी नहीं रखता। यह अधिकांश statistics और supervised learning के पीछे की डिफ़ॉल्ट धारणा है।\n\nयही औसत training loss को अपेक्षित loss के अनुमान के रूप में मानने, random train/test splits और k-fold cross-validation, standard errors के पीछे के central limit theorem, और maximum likelihood estimation में उपयोग होने वाले likelihood के गुणनफल रूप को उचित ठहराती है। Mini-batch gradient descent भी unbiased gradient अनुमानों के लिए shuffled, लगभग i.i.d. batches पर निर्भर करता है।\n\nयह धारणा जितनी बार ध्यान में आती है उससे कहीं अधिक बार टूटती है। Time series स्वतंत्र नहीं होतीं, एक ही patient या user की कई rows correlated होती हैं, और production डेटा training distribution से दूर drift करता है। ऐसे डेटा पर random splits जानकारी leak करते हैं और आशावादी scores देते हैं; time-based validation और group k-fold वास्तविक संरचना का सम्मान करते हैं।",
+  "u": [
+   "Random splits और k-fold cross-validation को उचित ठहराना",
+   "Likelihoods और standard errors व्युत्पन्न करना",
+   "धारणा टूटने पर group या time-based validation चुनना"
+  ],
+  "x": "Readmission predict करने वाली एक health-tech टीम ने पाया कि random splitting एक ही patient की visits को training और test दोनों sets में रख रही थी, जिससे validation scores फूल गए थे। Patient ID के अनुसार group k-fold अपनाने से कम पर यथार्थवादी अनुमान मिला, जो बाद के production प्रदर्शन से मेल खाता था।"
+ },
+ "clt": {
+  "n": "Central Limit Theorem (केंद्रीय सीमा प्रमेय)",
+  "d": "Central limit theorem कहता है कि finite variance वाले कई स्वतंत्र random variables का mean लगभग normally distributed होता है, मूल distribution का आकार चाहे जो हो। Sample size n बढ़ने के साथ यह सन्निकटन बेहतर होता है, और mean का फैलाव σ/√n की तरह घटता है।\n\nइसीलिए normal distribution इतने व्यापक रूप से दिखता है और normal पर आधारित tools non-normal डेटा पर भी काम करते हैं। Mean के लिए confidence intervals, A/B testing में उपयोग होने वाले z-tests और t-tests, test set पर accuracy के standard errors, और random seeds के पार error bars सभी इस पर निर्भर हैं। यह यह भी समझाता है कि mini-batch gradients पूरे gradient के आसपास लगभग Gaussian क्यों दिखते हैं।\n\nयह प्रमेय sample mean के distribution के बारे में है, डेटा के बारे में नहीं: अलग-अलग observations skewed ही रहते हैं। प्रति user revenue जैसे heavy-tailed या अत्यधिक skewed डेटा के लिए अभिसरण धीमा हो सकता है, और variance अनंत होने पर यह पूरी तरह विफल हो जाता है।",
+  "u": [
+   "Metric औसतों के लिए confidence intervals",
+   "A/B test statistics में normal सन्निकटन",
+   "Test-set accuracy पर error bars"
+  ],
+  "x": "एक experimentation platform प्रति user औसत revenue के लिए z-test confidence intervals निकालता है, जो user स्तर पर अत्यधिक skewed है। ऐसे डेटा पर mean का normal सन्निकटन धीमा होने के कारण टीम पिछले प्रयोगों पर bootstrap intervals से इसकी जाँच करती है और testing से पहले चरम मानों को cap करती है।"
+ },
+ "stderr": {
+  "n": "Standard Error (मानक त्रुटि)",
+  "d": "Standard error किसी अनुमान का काल्पनिक दोहराए गए samples के पार standard deviation है। यह मापता है कि कोई statistic, अक्सर mean या अनुपात, उपलब्ध डेटा से कितनी सटीकता से अनुमानित हुआ है।\n\nSample mean के लिए यह डेटा के standard deviation को √n से भाग देने के बराबर है, इसलिए sample size चार गुना करने से अनिश्चितता आधी हो जाती है। किसी अनुपात p के लिए, जैसे test set पर accuracy, यह √(p(1 − p)/n) है। Standard errors confidence intervals, hypothesis testing और A/B testing के z- और t-statistics, और linear व logistic regression के लिए रिपोर्ट की जाने वाली coefficient तालिकाओं की आधारशिला हैं। जब कोई सूत्र उपलब्ध न हो, तो bootstrap resampling से इसका अनुमान लगाता है।\n\nआम भ्रम standard deviation से है। Standard deviation डेटा के फैलाव का वर्णन करता है और अधिक samples से नहीं घटता; standard error अनुमान की अनिश्चितता का वर्णन करता है और घटता है।",
+  "u": [
+   "Benchmark accuracy के लिए error bars",
+   "Regression coefficients की significance",
+   "लक्षित सटीकता के लिए sample size तय करना"
+  ],
+  "x": "एक evaluation टीम 1,000 प्रश्नों वाले benchmark पर मॉडल accuracy को उसके standard error के साथ रिपोर्ट करती है। जब दो मॉडलों में लगभग दो standard errors से कम अंतर हो, तो release notes सुधार का दावा करने के बजाय उन्हें तुलनीय बताते हैं।"
+ },
+ "confint": {
+  "n": "Confidence Interval (विश्वास्यता अंतराल)",
+  "d": "Confidence interval डेटा से निकाली गई एक range है जो दोहराए गए sampling में किसी parameter के वास्तविक मान को मामलों के एक बताए गए अंश में, जैसे 95%, शामिल करती। यह एक अकेले बिंदु के बजाय अनुमान की अनिश्चितता व्यक्त करता है।\n\nसामान्य रूप है अनुमान ± critical value × standard error, जहाँ 95% normal interval के लिए critical value 1.96 है। Wilson intervals 0 या 1 के पास के अनुपातों के लिए उपयुक्त हैं; bootstrap percentile intervals उन statistics के लिए काम करते हैं जिनका कोई सरल सूत्र नहीं है, जैसे AUC या F1। Confidence intervals A/B testing के परिणामों, benchmark scores, regression coefficients और मॉडल तुलनाओं के लिए उपयोग होते हैं।\n\nमानक ग़लत व्याख्या यह है कि कोई विशिष्ट निकाला गया 95% interval वास्तविक मान को 95% probability से शामिल करता है। 95% कई samples पर प्रक्रिया को संदर्भित करता है; parameter के बारे में probability कथन के लिए Bayesian credible interval चाहिए।",
+  "u": [
+   "A/B test lifts की अनिश्चितता रिपोर्ट करना",
+   "AUC और F1 के लिए bootstrap intervals",
+   "Leaderboard scores पर error ranges"
+  ],
+  "x": "एक model evaluation टीम हर customer segment पर ROC-AUC के लिए bootstrap 95% confidence intervals प्रकाशित करती है। कम positive मामलों वाले segments को चौड़े intervals मिलते हैं, जिससे product managers वहाँ मॉडल versions के बीच छोटे अंतरों की अति-व्याख्या नहीं करते।"
+ },
+ "hyptest": {
+  "n": "Hypothesis Testing और p-value",
+  "d": "Hypothesis testing यह तय करने की प्रक्रिया है कि क्या डेटा एक डिफ़ॉल्ट दावे, null hypothesis, जैसे 'दोनों मॉडलों की accuracy बराबर है', के विरुद्ध पर्याप्त साक्ष्य देता है। p-value वह probability है, null को सत्य मानते हुए, कि देखे गए परिणाम जितना या उससे अधिक चरम परिणाम मिले।\n\nडेटा से एक test statistic (t, z, chi-squared) निकाला जाता है और null के तहत उसके distribution से तुलना की जाती है; यदि p-value पहले से चुने गए significance level α से नीचे आता है, अक्सर 0.05, तो null को अस्वीकार किया जाता है। Practitioners A/B testing में t-tests और z-tests, एक ही test set पर दो classifiers की तुलना के लिए McNemar's test, feature–target स्वतंत्रता के लिए chi-squared tests, और data drift के लिए Kolmogorov–Smirnov tests उपयोग करते हैं।\n\np-value यह probability नहीं है कि null सत्य है, और छोटे p-value का अर्थ बड़ा या महत्वपूर्ण प्रभाव नहीं है। बिना correction के कई tests चलाने से false positives भी बढ़ जाते हैं।",
+  "u": [
+   "A/B test के परिणाम तय करना",
+   "McNemar's test से दो classifiers की तुलना",
+   "KS tests से feature drift पकड़ना"
+  ],
+  "x": "एक ML platform हर input feature पर two-sample Kolmogorov–Smirnov test चलाता है, जिसमें कल के traffic की training डेटा से तुलना की जाती है। क्योंकि रोज़ सैकड़ों features का परीक्षण होता है, टीम false discovery rate correction लगाती है और drift alert भेजने से पहले न्यूनतम effect size भी अनिवार्य करती है।"
+ },
+ "abtest": {
+  "n": "A/B Testing",
+  "d": "A/B testing एक randomized controlled प्रयोग है जिसमें users को randomly एक control version (A) या treatment version (B) में बाँटा जाता है, और पहले से चुने गए metric की समूहों के बीच तुलना की जाती है। Randomization समूहों को तुलनीय बनाता है, इसलिए significant अंतर का श्रेय स्वयं बदलाव को दिया जा सकता है।\n\nटीम launch से पहले primary metric, minimum detectable effect, significance level और sample size तय करती है, इसे पूरे साप्ताहिक चक्रों तक चलाती है, फिर अंतर पर hypothesis test और confidence interval लगाती है। Production में नए ranking मॉडल, recommendation algorithm, pricing नियम या LLM prompt को validate करने का यह मानक तरीका है, क्योंकि offline metrics अक्सर online प्रभाव का अनुमान लगाने में विफल रहते हैं।\n\nक्लासिक ख़तरा peeking है: परिणामों को बार-बार जाँचना और p < 0.05 होते ही रोक देना false positives को बहुत बढ़ा देता है, जब तक कोई sequential testing तरीका उपयोग न हो। Novelty effects, sample ratio mismatch और users के बीच interference अन्य आम जाल हैं।",
+  "u": [
+   "नए ranking या recommendation मॉडलों को online validate करना",
+   "Pricing, UI और prompt बदलावों का परीक्षण",
+   "Offline metrics से आगे वास्तविक प्रभाव मापना"
+  ],
+  "x": "एक streaming सेवा नया recommendation मॉडल तभी लागू करती है जब एक A/B test में users के एक random हिस्से को वह मिल चुका हो। टीम पहले दिन sample ratio mismatch जाँचती है और novelty effects से बचने के लिए पूरे दो हफ़्तों तक watch time का मूल्यांकन करती है।"
+ },
+ "kldiv": {
+  "n": "KL Divergence",
+  "d": "Kullback–Leibler (KL) divergence मापता है कि एक probability distribution P एक संदर्भ distribution Q से कितना भिन्न है। यह P के samples को Q के लिए optimize किए गए code से encode करने में लगने वाले अतिरिक्त bits (या nats) की अपेक्षित संख्या है।\n\nयह हमेशा ऋणेतर होता है और केवल तब शून्य होता है जब P, Q के बराबर हो, पर यह symmetric नहीं है और वास्तविक दूरी नहीं है। Cross-entropy, P की entropy और KL(P‖Q) के योग के बराबर है, इसलिए स्थिर labels के विरुद्ध cross-entropy loss को न्यूनतम करना KL को न्यूनतम करता है। KL VAE loss में prior की ओर regularizer के रूप में, RLHF में policy को reference मॉडल के पास रखने वाली penalty के रूप में, teacher और student outputs के बीच knowledge distillation में, और drift monitoring में दिखता है।\n\nदिशा मायने रखती है। Forward KL(P‖Q) mean-covering है और P के किसी भी mode को चूकने पर Q को दंडित करता है, जबकि reverse KL(Q‖P) mode-seeking है। जहाँ P नहीं पर Q शून्य probability देता है, वहाँ KL अनंत भी हो जाता है।",
+  "u": [
+   "RLHF में reference मॉडल की ओर KL penalty",
+   "VAEs के latent space का regularization",
+   "Teacher के output distribution का distillation"
+  ],
+  "x": "PPO से एक chat मॉडल fine-tune करने वाली टीम reward में policy और frozen SFT मॉडल के बीच प्रति-token KL penalty जोड़ती है। Training के दौरान औसत KL की निगरानी दिखाती है कि policy कब इतनी दूर drift करने लगती है कि reward model की कमज़ोरियों का फ़ायदा उठाए।"
+ },
+ "mutualinfo": {
+  "n": "Mutual Information (पारस्परिक सूचना)",
+  "d": "Mutual information मापता है कि एक variable को जानने से दूसरे के बारे में अनिश्चितता कितनी घटती है। यह X और Y के joint distribution और उनके marginals के गुणनफल के बीच KL divergence है, इसलिए यह ठीक तब शून्य होता है जब दोनों स्वतंत्र हों।\n\nCorrelation coefficient के विपरीत, mutual information किसी भी प्रकार की निर्भरता पकड़ता है, रैखिक हो या नहीं, और categorical variables के लिए भी काम करता है। यह Y की entropy में से X दिए होने पर Y की conditional entropy घटाने के बराबर है, जो वही मात्रा है जिसे information gain decision trees में splits चुनने के लिए उपयोग करता है। Practitioners इसे feature selection के लिए, EDA के दौरान non-linear संबंध पकड़ने के लिए, InfoNCE जैसे contrastive learning objectives में जो इसे bound करते हैं, और clustering मूल्यांकन में उपयोग करते हैं।\n\nContinuous variables के लिए mutual information का अनुमान लगाना कठिन है। Histogram अनुमान bin के चुनाव पर निर्भर करते हैं, nearest-neighbor estimators उच्च आयामों में noisy होते हैं, और अलग-अलग entropies वाले features के बीच कच्चे मान तुलनीय नहीं होते।",
+  "u": [
+   "Non-linear निर्भरताओं के साथ feature selection",
+   "Decision tree splits के लिए information gain",
+   "Normalized mutual information से clusterings की तुलना"
+  ],
+  "x": "एक fraud टीम training से पहले सैकड़ों candidate features को fraud label के साथ उनकी अनुमानित mutual information के अनुसार rank करती है। लगभग शून्य correlation पर ऊँची mutual information वाले कई features threshold जैसे प्रभाव वाले निकलते हैं, जिनका एक gradient-boosted मॉडल फ़ायदा उठाता है।"
+ },
+ "montecarlo": {
+  "n": "Monte Carlo Estimation",
+  "d": "Monte Carlo estimation किसी expected value, integral या probability को random samples पर औसत लेकर अनुमानित करता है। किसी integral को विश्लेषणात्मक रूप से हल करने के बजाय, आप संबंधित distribution से samples लेते हैं, हर एक पर मात्रा का मान निकालते हैं, और mean लेते हैं।\n\nLaw of large numbers के अनुसार अनुमान वास्तविक मान की ओर converge होता है, और इसका standard error आयाम की परवाह किए बिना 1/√N की तरह घटता है, जिससे यह तरीका उन उच्च-आयामी समस्याओं के लिए व्यावहारिक बनता है जहाँ grids असंभव हैं। Machine learning में mini-batch gradients पूरे gradient के Monte Carlo अनुमान हैं, MC dropout अनिश्चितता के लिए random dropout masks पर predictions का औसत लेता है, reinforcement learning sample किए गए episodes से returns का अनुमान लगाता है, VAEs sampled latents उपयोग करते हैं, और bootstrap Monte Carlo resampling है।\n\nख़तरा धीमा अभिसरण है: error आधा करने के लिए चार गुना samples चाहिए। दुर्लभ घटनाओं की probabilities के लिए बहुत बड़ी संख्या में samples चाहिए, इसीलिए importance sampling जैसी variance reduction तकनीकें मौजूद हैं।",
+  "u": [
+   "Predictive अनिश्चितता के लिए MC dropout",
+   "Reinforcement learning में returns का अनुमान",
+   "जोखिम और demand परिदृश्यों का simulation"
+  ],
+  "x": "एक supply-chain टीम forecasting मॉडल के predictive distribution से लिए गए हज़ारों demand परिदृश्यों का simulation करती है ताकि हर reorder policy के तहत stockout की probability का अनुमान लगाया जा सके। Simulations की संख्या तब तक बढ़ाई जाती है जब तक अनुमानित stockout probabilities runs के बीच अर्थपूर्ण रूप से बदलना बंद न कर दें।"
+ },
+ "markovchain": {
+  "n": "Markov Chain (मार्कोव श्रृंखला)",
+  "d": "Markov chain एक random प्रक्रिया है जो states के बीच चलती है, जहाँ अगले state की probability केवल वर्तमान state पर निर्भर करती है, इस पर नहीं कि प्रक्रिया वहाँ कैसे पहुँची। यह पूरी तरह अपनी transition probabilities से वर्णित होती है, जो एक transition matrix में एकत्र होती हैं जिसकी हर row का योग 1 होता है।\n\nहल्की शर्तों के तहत chain एक stationary distribution की ओर converge होती है जो फिर एक चरण से दूसरे चरण में नहीं बदलता। PageRank एक web random walk का stationary distribution है, Metropolis-Hastings और Gibbs sampling जैसे MCMC तरीके ऐसी chains बनाते हैं जिनका stationary distribution लक्षित posterior होता है, reinforcement learning environments को Markov decision processes के रूप में मॉडल करता है, और n-gram मॉडल और hidden Markov models, Markov chains हैं।\n\nMarkov गुण एक धारणा है, डेटा के बारे में तथ्य नहीं। वास्तविक sequences में अक्सर लंबी दूरी की निर्भरताएँ होती हैं, इसीलिए transformers केवल पिछले token के बजाय पूरे context पर condition करते हैं।",
+  "u": [
+   "Bayesian posteriors से MCMC sampling",
+   "Random walks से pages या users को rank करना",
+   "User navigation और churn states को मॉडल करना"
+  ],
+  "x": "एक subscription व्यवसाय हर ग्राहक की मासिक स्थिति को active, paused और churned जैसे states पर Markov chain के रूप में मॉडल करता है, और इतिहास से transition probabilities का अनुमान लगाता है। Stationary distribution और multi-step transition probabilities अलग-अलग retention offers के तहत दीर्घकालिक churn का पूर्वानुमान देती हैं।"
+ },
+ "causation": {
+  "n": "Correlation बनाम Causation",
+  "d": "Correlation का अर्थ है कि दो variables साथ-साथ बदलते हैं; causation का अर्थ है कि एक को बदलने से दूसरा बदल जाएगा। Correlation बिना किसी कारण-संबंध के भी उत्पन्न हो सकता है, किसी साझा कारण, उलटे causation, selection effects या संयोग से, इसलिए केवल देखा गया संबंध यह नहीं दिखाता कि कोई intervention क्या करेगा।\n\nयह अंतर तय करता है कि मॉडलों का उपयोग कैसे किया जा सकता है। Observational डेटा पर train किया गया predictive मॉडल correlations सीखता है, जो forecasting के लिए ठीक है पर कार्यों के निर्णय के लिए नहीं: churn predict करने वाला feature बदलने पर churn घटाए, यह ज़रूरी नहीं। Randomized A/B testing causal प्रभावों को सीधे स्थापित करता है; जब प्रयोग असंभव हों, तो propensity score matching, instrumental variables, difference-in-differences या uplift modeling जैसे causal inference तरीके स्पष्ट धारणाओं के तहत इसका अनुमान लगाते हैं। SHAP values मॉडल का वर्णन करते हैं, दुनिया का नहीं।\n\nआम ख़तरा किसी मज़बूत partial dependence plot या regression coefficient को intervention के प्रभाव के रूप में पढ़ना है, जो केवल तब मान्य है जब confounding को ख़ारिज कर दिया गया हो।",
+  "u": [
+   "तय करना कि A/B test कब ज़रूरी है",
+   "लक्षित interventions के लिए uplift modeling",
+   "SHAP और feature importance की ज़िम्मेदार व्याख्या"
+  ],
+  "x": "एक retailer के churn मॉडल ने दिखाया कि support से संपर्क करने वाले ग्राहकों के churn होने की संभावना अधिक थी, और इसके बाद support संपर्कों को हतोत्साहित करने का प्रस्ताव आया। सक्रिय support outreach के एक randomized test ने उलटा प्रभाव दिखाया, क्योंकि नाख़ुश ग्राहक support से संपर्क भी करते हैं और churn भी होते हैं।"
+ },
+ "confounder": {
+  "n": "Confounding Variable",
+  "d": "Confounding variable एक तीसरा कारक है जो किसी कथित कारण और परिणाम दोनों को प्रभावित करता है, जिससे उनके बीच ऐसा संबंध बनता है जो causal प्रभाव नहीं है। उदाहरण के लिए, उम्र दवा के उपयोग और स्वास्थ्य परिणामों दोनों को प्रभावित करती है।\n\nयदि किसी confounder को विश्लेषण से बाहर छोड़ दिया जाए, तो रुचि के variable का अनुमानित प्रभाव उसका प्रभाव सोख लेता है, जो omitted-variable bias का एक रूप है। चरम मामलों में confounder को नियंत्रित करने पर संबंध की दिशा उलट सकती है, जिसे Simpson's paradox कहते हैं। A/B testing जैसे randomized प्रयोग डिज़ाइन से ही confounding तोड़ देते हैं; observational अध्ययन मापे गए confounders के लिए stratification, regression या propensity score matching से समायोजन करते हैं। Machine learning में confounders shortcut learning भी पैदा करते हैं, जैसे कोई classifier रोग से correlated scanner marker पर निर्भर हो जाए।\n\nसमायोजन केवल मापे गए confounders को संभालता है, और treatment के परिणाम के लिए समायोजन करना bias हटाने के बजाय जोड़ देता है।",
+  "u": [
+   "Propensity scores से observational विश्लेषणों का समायोजन",
+   "समेकित reports में Simpson's paradox की व्याख्या",
+   "Classifiers में shortcut features पकड़ना"
+  ],
+  "x": "एक medical imaging टीम ने पाया कि उसका pneumonia classifier portable scanners के विशिष्ट markers पर निर्भर था, जो मुख्य रूप से अधिक बीमार inpatients के लिए उपयोग होते थे। Scanner का प्रकार एक confounder था, इसलिए टीम ने मूल्यांकन को scanner के अनुसार stratify किया और devices के पार संतुलित training डेटा जोड़ा।"
+ },
+ "samplingbias": {
+  "n": "Sampling Bias (नमूनाकरण पूर्वाग्रह)",
+  "d": "Sampling bias तब होता है जब एकत्र किया गया डेटा उस आबादी का प्रतिनिधि नहीं होता जिसका वर्णन मॉडल या विश्लेषण को करना है, क्योंकि कुछ सदस्यों के शामिल होने की संभावना दूसरों से अधिक थी। तब अनुमान और मॉडल वास्तविकता के बजाय sample की विचित्रताओं को दर्शाते हैं।\n\nइसके रूपों में selection bias (केवल स्वीकृत loan आवेदकों के पास repayment labels होते हैं), survivorship bias (केवल अभी बिक रहे products का विश्लेषण), surveys में non-response bias, और एक क्षेत्र या device प्रकार के डेटा जैसे convenience samples शामिल हैं। Machine learning में इससे ऐसे मॉडल बनते हैं जो उसी तरह लिए गए validation डेटा पर अच्छा प्रदर्शन करते हैं पर production में विफल होते हैं, और समूहों के कम प्रतिनिधित्व पर fairness समस्याएँ आती हैं। उपायों में stratified sampling, inverse inclusion probability से reweighting, और छूटे हुए segments से डेटा एकत्र करना शामिल है।\n\nबड़ा dataset sampling bias को ठीक नहीं करता। उसी विकृत प्रक्रिया से अधिक डेटा एकत्र करना केवल एक ग़लत अनुमान को अधिक आत्मविश्वासी बनाता है।",
+  "u": [
+   "केवल स्वीकृत आवेदकों पर train किए गए credit मॉडल",
+   "Surveys और logged डेटा को आबादी के अनुसार reweight करना",
+   "User समूहों के पार dataset coverage का audit"
+  ],
+  "x": "एक speech recognition टीम ने देखा कि कुछ accents के लिए production में error rates validation की तुलना में बहुत अधिक थीं। Training और validation recordings कुछ क्षेत्रों के volunteers से एकत्र की गई थीं, इसलिए टीम ने लक्षित डेटा संग्रह जोड़ा और हर accent समूह के लिए error rates रिपोर्ट कीं।"
+ },
+ "heterosked": {
+  "n": "Heteroscedasticity (विषमविचलनता)",
+  "d": "Heteroscedasticity का अर्थ है कि किसी मॉडल में errors का variance स्थिर नहीं है बल्कि inputs या predicted मान के साथ बदलता है। इसका उलटा, स्थिर error variance, homoscedasticity कहलाता है।\n\nयह तब आम है जब target का scale बदलता है: महँगे घरों और बड़े ग्राहकों के लिए घर की कीमतों या revenue के अनुमान में errors बड़ी होती हैं। Funnel के आकार का residuals-versus-fitted plot इसका क्लासिक संकेत है, और Breusch–Pagan व White tests औपचारिक रूप से इसकी जाँच करते हैं। Linear regression में ordinary least squares के coefficients unbiased रहते हैं, पर सामान्य standard errors, confidence intervals और p-values ग़लत हो जाते हैं। आम उपाय हैं heteroscedasticity-robust (sandwich) standard errors, weighted least squares, log-transformed target को मॉडल करना, या variance का स्पष्ट रूप से अनुमान लगाना, उदाहरण के लिए Gaussian negative log-likelihood या quantile regression से।\n\nएक ग़लतफ़हमी यह है कि heteroscedasticity स्वयं predictions को biased करती है। यह मुख्य रूप से अनिश्चितता अनुमानों और एकसमान prediction intervals को भ्रामक बनाती है।",
+  "u": [
+   "Regression में residual plots का निदान",
+   "Coefficient inference के लिए robust standard errors",
+   "Forecasts के लिए input-निर्भर prediction intervals बनाना"
+  ],
+  "x": "एक property valuation टीम ने पाया कि स्थिर चौड़ाई वाला prediction interval luxury घरों के लिए बहुत संकरा और छोटे apartments के लिए बहुत चौड़ा था। उन्होंने interval की सीमाओं के लिए quantile regression अपनाया ताकि उसकी चौड़ाई predicted कीमत के साथ बढ़े।"
+ }
+}

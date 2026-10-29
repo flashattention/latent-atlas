@@ -37,7 +37,8 @@
     "darkMode": "Mode sombre",
     "zoom": "Zoom",
     "zoomIn": "Zoom avant",
-    "zoomOut": "Zoom arrière"
+    "zoomOut": "Zoom arrière",
+    "appendix": "Annexe"
   },
   "cats": {
     "found": "Fondamentaux",
@@ -57,6 +58,13 @@
     "llm": "Entraînement et alignement des LLM",
     "inf": "Inférence et efficacité",
     "app": "Systèmes LLM et raisonnement",
-    "front": "Tendances de pointe"
+    "front": "Tendances de pointe",
+    "zstat": "Statistiques et probabilités",
+    "zdata": "Données et visualisation",
+    "zmath": "Algèbre linéaire et calcul",
+    "ztrain": "Entraînement et optimisation",
+    "znn": "Briques des réseaux de neurones",
+    "zlang": "Modèles de langage et RL",
+    "zprod": "Le ML en production"
   }
 }

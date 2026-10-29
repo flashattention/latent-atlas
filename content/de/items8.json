@@ -1,0 +1,462 @@
+{
+ "histogram": {
+  "n": "Histogramm",
+  "d": "Ein Histogramm zeigt die Verteilung einer numerischen Variable, indem es ihren Wertebereich in Bins (Klassen) unterteilt und für jeden Bin einen Balken zeichnet, dessen Höhe der Anzahl (oder dem Anteil) der Werte darin entspricht. An der Form lässt sich ablesen, wo sich die Werte konzentrieren, ob die Verteilung symmetrisch oder schief ist, ob sie einen oder mehrere Gipfel hat und ob einige Extremwerte weit vom Rest entfernt liegen.\n\nIn der explorativen Datenanalyse sind Histogramme die erste Prüfung jedes numerischen Features: Sie zeigen Schiefe, die vor einer linearen Regression eine Log-Transformation nahelegt, Häufungen bei Standardwerten wie 0 oder 999 sowie abgeschnittene Wertebereiche. Der Vergleich von Histogrammen aus Training und Produktion ist ein einfacher Weg, Data Drift zu erkennen. Die größte Falle ist die Bin-Breite: Zu wenige Bins verbergen Strukturen wie Bimodalität, zu viele machen den Plot zu Rauschen. Probieren Sie daher mehrere Breiten aus oder nutzen Sie eine Regel wie Freedman–Diaconis.",
+  "u": [
+   "Prüfen der Feature-Schiefe vor der Wahl von Transformationen",
+   "Vergleich von Feature-Verteilungen in Training und Produktion",
+   "Erkennen von Standardwerten und Häufungen durch Dateneingabe"
+  ],
+  "x": "Ein Payment-Team erstellt jede Woche Histogramme der Transaktionsbeträge, sowohl für den Trainingsdatensatz als auch für den Live-Traffic. Als eine neue Händlerkategorie hinzukommt, entwickelt das Live-Histogramm einen zweiten Gipfel, was eine Prüfung auslöst, ob das Betrugsmodell neu trainiert werden muss."
+ },
+ "boxplot": {
+  "n": "Boxplot",
+  "d": "Ein Boxplot fasst eine numerische Variable mit fünf Kennzahlen zusammen: dem Median, dem ersten und dritten Quartil, die die Box bilden, und Whiskern, die bis zu den extremsten Werten innerhalb des 1,5-Fachen des Interquartilsabstands (IQR) von der Box reichen. Punkte jenseits der Whisker werden einzeln als mögliche Ausreißer eingezeichnet.\n\nWeil er wenig Platz braucht, ist der Boxplot der Standardweg, eine Variable über viele Gruppen hinweg zu vergleichen, etwa den Modellfehler pro Region oder die Latenz pro Server. Im Machine Learning unterstützt er das Screening auf Ausreißer, die Prüfung, ob ein Feature die Klassen trennt, und den Vergleich von Kreuzvalidierungs-Scores verschiedener Modelle. Ein verbreiteter Irrtum ist, jeder Punkt außerhalb der Whisker sei ein Fehler, den man löschen müsse. Die 1,5×IQR-Regel markiert bei schiefen oder Heavy-Tailed-Daten viele legitime Werte, und ein Boxplot verbirgt zudem Bimodalität. Kombinieren Sie ihn daher mit einem Histogramm.",
+  "u": [
+   "Vergleich von Kreuzvalidierungs-Scores verschiedener Kandidatenmodelle",
+   "Screening numerischer Features auf Extremwerte",
+   "Vergleich einer Kennzahl über Gruppen oder Segmente"
+  ],
+  "x": "Ein MLOps-Team zeichnet Boxplots des Vorhersagefehlers pro Filiale für ein Modell zur Nachfrageprognose. Eine Handvoll Filialen mit deutlich breiteren Boxen wird untersucht; sie melden ihre Daten unregelmäßig und erhalten daher ein eigenes Modell."
+ },
+ "scatterplot": {
+  "n": "Streudiagramm (Scatterplot)",
+  "d": "Ein Streudiagramm zeichnet für jede Beobachtung einen Punkt an den Koordinaten zweier numerischer Variablen, sodass die Form der Punktwolke zeigt, wie die Variablen zusammenhängen. Eine schräge, schmale Wolke deutet auf einen starken linearen Zusammenhang hin, ein gekrümmtes Band auf einen nichtlinearen, getrennte Häufungen auf Cluster, und isolierte Punkte sind Ausreißer.\n\nPraktiker nutzen Streudiagramme, um vor einer linearen Regression ein Feature gegen die Zielgröße aufzutragen, vorhergesagte gegen tatsächliche Werte darzustellen, Residuen auf Muster zu prüfen und 2D-Embeddings aus PCA, t-SNE oder UMAP nach Klasse eingefärbt zu betrachten. Eine häufige Falle ist Overplotting: Bei Hunderttausenden Punkten wird die Wolke zu einem einfarbigen Fleck, der die Dichte verbirgt. Helfen Transparenz, kleine Marker, Stichproben oder ein 2D-Histogramm. Und ein klares Muster in einem Streudiagramm zeigt einen Zusammenhang, keine Kausalität.",
+  "u": [
+   "Vorhergesagte gegen tatsächliche Werte nach einer Regression",
+   "Prüfen von Residuen auf Krümmung oder wechselnde Streuung",
+   "Betrachten von nach Klasse eingefärbten 2D-Embeddings"
+  ],
+  "x": "Ein Team für Immobilienbewertung trägt für jeden Validierungs-Fold vorhergesagte gegen tatsächliche Verkaufspreise auf. Dass sich die Punkte bei hohen Preisen auffächern, zeigt, dass die Fehler mit dem Preis wachsen, und das Team modelliert daher stattdessen den Logarithmus des Preises."
+ },
+ "heatmap": {
+  "n": "Heatmap",
+  "d": "Eine Heatmap stellt eine Matrix von Zahlen als Raster farbiger Zellen dar, wobei die Farbe jeder Zelle ihren Wert kodiert. So wird aus einer großen Tabelle ein Bild, in dem Blöcke, Verläufe und Ausreißer sofort ins Auge springen.\n\nIm Machine Learning sind die häufigsten Heatmaps Korrelationsmatrizen von Features, Konfusionsmatrizen von Klassifikatoren, Attention-Gewichte einer Transformer-Schicht, Scores einer Grid Search über Hyperparameter und Karten fehlender Werte, in denen jede Zelle markiert, ob ein Wert fehlt. Werden Zeilen und Spalten vor dem Plotten geclustert, liegen ähnliche Variablen beieinander und Blockstrukturen werden sichtbar. Die größte Falle ist die Farbskala: Eine divergierende Colormap braucht einen Mittelpunkt bei einem sinnvollen Wert, etwa null bei Korrelationen, und ein automatisch skalierter Bereich kann winzige Unterschiede dramatisch aussehen lassen. Beschriften Sie die Zellen mit ihren Werten, wenn es auf genaue Zahlen ankommt.",
+  "u": [
+   "Visualisierung von Feature-Korrelationsmatrizen in der EDA",
+   "Lesen der Konfusionsmatrix eines Klassifikators",
+   "Untersuchung von Attention-Gewichten oder Grid-Search-Scores"
+  ],
+  "x": "Ein Kreditrisiko-Team plottet vor dem Training einer logistischen Regression eine geclusterte Heatmap der Feature-Korrelationen. Mehrere helle Blöcke zeigen Gruppen nahezu identischer Saldo-Features, und das Team behält pro Block nur ein Feature, um die Multikollinearität zu verringern."
+ },
+ "qqplot": {
+  "n": "Q-Q-Plot (Quantil-Quantil-Plot)",
+  "d": "Ein Q-Q-Plot vergleicht die Quantile einer Stichprobe mit den Quantilen einer Referenzverteilung, meist der Normalverteilung, indem er die einen gegen die anderen aufträgt. Folgen die Daten der Referenzverteilung, liegen die Punkte auf einer Geraden; systematische Krümmungen zeigen, wie sie davon abweichen.\n\nDie Form ist leicht zu lesen, wenn man sie einmal kennt. Eine S-Form, bei der beide Enden von der Geraden wegbiegen, bedeutet Heavy Tails; eine Kurve, die nur in eine Richtung biegt, bedeutet Schiefe; einige wenige Punkte abseits der Geraden an den Enden sind Ausreißer. Praktiker nutzen Q-Q-Plots, um die Normalverteilungsannahme der Residuen in der linearen Regression zu prüfen, um zu entscheiden, ob eine Log- oder Box-Cox-Transformation nötig ist, und um zwei Stichproben direkt zu vergleichen. Eine häufige Falle ist, sich stattdessen auf einen formalen Normalitätstest zu verlassen: Bei großen Stichproben verwerfen solche Tests winzige, harmlose Abweichungen, während der Q-Q-Plot zeigt, wie groß die Abweichung tatsächlich ist.",
+  "u": [
+   "Prüfen der Normalverteilung von Residuen der linearen Regression",
+   "Entscheiden, ob ein Feature eine Transformation braucht",
+   "Vergleich des Tail-Verhaltens zweier Stichproben"
+  ],
+  "x": "Ein quantitatives Analytics-Team passt ein lineares Modell an tägliche Renditen an und betrachtet einen Q-Q-Plot der Residuen. Die Enden biegen stark von der Geraden ab und zeigen Heavy Tails, daher wechselt das Team für Risikoschätzungen zu einem Fehlermodell mit Student-t-Verteilung."
+ },
+ "feature": {
+  "n": "Feature (Merkmal)",
+  "d": "Ein Feature ist eine messbare Eingabevariable, die ein Modell für eine Vorhersage nutzt, etwa das Alter eines Kunden, die Anzahl der Wörter in einer E-Mail oder die Intensität eines Pixels. Ein Datensatz wird meist als Matrix mit einer Zeile pro Beispiel und einer Spalte pro Feature angeordnet, und das Modell lernt, wie die Zielgröße von diesen Spalten abhängt.\n\nFeatures können numerisch, kategorial oder Text sein oder gelernte Repräsentationen wie Embeddings. Ein Großteil des klassischen Machine Learning ist Feature Engineering: aussagekräftige Features bauen, Kategorien kodieren, skalieren und fehlende Werte behandeln. Feature-Wichtigkeit und SHAP-Werte beschreiben, welche Features die Vorhersagen treiben. Eine zentrale Falle ist ein Feature, das zum Vorhersagezeitpunkt nicht verfügbar ist oder mithilfe der Zielgröße berechnet wird. Das ist Data Leakage und erzeugt Modelle, die in der Validierung hervorragend aussehen und in Produktion versagen.",
+  "u": [
+   "Eingaben für Gradient-Boosted-Tree-Modelle aufbauen",
+   "Aussagekräftige Spalten aus Rohlogs auswählen",
+   "Vorhersagen über Feature-Wichtigkeit erklären"
+  ],
+  "x": "Ein Abo-Unternehmen baut für sein Churn-Modell Features wie die Tage seit dem letzten Login, die Zahl der Support-Tickets im letzten Monat und den Tarif. Jedes Feature wird nur aus Daten bis zum Vorhersagedatum berechnet, sodass das Modell genau das sieht, was auch in Produktion verfügbar sein wird."
+ },
+ "label": {
+  "n": "Label (Zielgröße)",
+  "d": "Ein Label, auch Zielgröße (Target) genannt, ist die bekannte Antwort, die ein überwachtes Modell für jedes Beispiel vorherzusagen lernt: eine Klasse wie Spam oder kein Spam oder eine Zahl wie ein Verkaufspreis. Das Modell wird so trainiert, dass seine Ausgaben zu den Labels passen; das Label legt also fest, worauf das Modell tatsächlich optimiert.\n\nLabels stammen von menschlichen Annotatoren, aus Geschäftsereignissen wie einem späteren Kauf oder Zahlungsausfall oder aus automatischen Regeln. In der Klassifikation werden sie oft als Ganzzahlen oder One-Hot-Vektoren kodiert, in der Regression sind sie kontinuierliche Werte. Die Wahl des Labels prägt alles Nachgelagerte, einschließlich Verlustfunktion, Evaluationsmetrik und Klassenungleichgewicht. Eine häufige Falle ist ein Label, das nicht zum eigentlichen Ziel passt, etwa Klicks vorherzusagen, wenn es dem Geschäft um Käufe geht. Eine weitere ist Label Leakage, bei der ein Feature aus dem Label oder aus danach erfassten Informationen abgeleitet ist.",
+  "u": [
+   "Festlegen der Zielgröße für überwachtes Lernen",
+   "Sammeln menschlicher Annotationen für Klassifikationsaufgaben",
+   "Ableiten von Ergebnis-Labels aus Geschäftsereignis-Logs"
+  ],
+  "x": "Eine Kreditplattform definiert ihr Label danach, ob ein Kredit innerhalb von 12 Monaten nach Vergabe mehr als 90 Tage im Zahlungsverzug ist. Weil sich dieses Ergebnis erst nach einem Jahr beobachten lässt, trainiert das Team nur auf Krediten, die alt genug sind, um ein endgültiges Label zu haben."
+ },
+ "tabular": {
+  "n": "Tabellarische Daten",
+  "d": "Tabellarische Daten sind als Tabelle organisiert, mit einer Zeile pro Beispiel und einer Spalte pro Variable, wobei die Spalten numerische, kategoriale, Datums- und Texttypen mischen können. Tabellenkalkulationen, relationale Datenbanktabellen und CSV-Exporte sind ihre alltägliche Form, und die meisten geschäftlichen Vorhersageprobleme beginnen hier.\n\nAnders als bei Bildern oder Text haben die Spalten einer Tabelle keine räumliche oder sequenzielle Ordnung, und jede hat ihre eigene Skala und Bedeutung. Das begünstigt Modelle, die gut mit heterogenen Spalten umgehen: Gradient-Boosted Trees wie XGBoost, LightGBM und CatBoost sind auf den meisten tabellarischen Benchmarks weiterhin die stärkste Standardwahl, mit logistischer Regression und Random Forests als solide Baselines. Die Aufbereitung tabellarischer Daten umfasst Joins, Aggregation, Kodierung kategorialer Features, den Umgang mit fehlenden Werten und sorgfältiges zeitbasiertes Splitten. Ein verbreiteter Irrtum ist, ein tiefes neuronales Netz schlage Boosted Trees auf Tabellen von selbst; es braucht meist viel mehr Tuning und verliert oft trotzdem.",
+  "u": [
+   "Kreditscoring aus Tabellen von Kundenkonten",
+   "Churn-Vorhersage aus CRM- und Nutzungsdaten",
+   "Nachfrageprognose aus Verkaufstransaktionen"
+  ],
+  "x": "Ein Versicherer führt Policen-, Schaden- und Kundentabellen zu einer Zeile pro Police zusammen und trainiert ein LightGBM-Modell, das die Wahrscheinlichkeit eines Schadensfalls vorhersagt. Das Team bevorzugt Boosted Trees, weil sie gemischte Spaltentypen und fehlende Werte mit wenig Vorverarbeitung bewältigen."
+ },
+ "numcat": {
+  "n": "Numerische vs. kategoriale Features",
+  "d": "Numerische Features sind Größen, mit denen Rechnen sinnvoll ist, etwa Einkommen oder Temperatur, während kategoriale Features Werte aus einer Menge von Bezeichnungen annehmen, etwa Land oder Produkttyp, deren Werte keine numerische Bedeutung haben. Die Unterscheidung entscheidet, wie ein Feature kodiert werden muss, bevor ein Modell es nutzen kann.\n\nNumerische Features brauchen für lineare Modelle, SVMs, k-NN und neuronale Netze oft eine Skalierung und bei Schiefe manchmal eine Log-Transformation. Kategoriale Features müssen in Zahlen umgewandelt werden: One-Hot-Encoding bei wenigen Kategorien, Target Encoding oder Embeddings bei vielen, oder die native Unterstützung kategorialer Features in CatBoost und LightGBM. Zahlen können verkappte Kategorien sein. Postleitzahlen, Nutzer-IDs und Produktcodes werden als Ganzzahlen gespeichert, doch behandelt man sie als Größen, erfindet man eine Ordnung und Abstände, die es nicht gibt. Umgekehrt funktioniert ein numerisches Feature mit nur wenigen Werten als Kategorie manchmal besser.",
+  "u": [
+   "Auswahl der Encoder in einer Vorverarbeitungs-Pipeline",
+   "Erkennen von als Ganzzahlen gespeicherten ID-Spalten",
+   "Entscheiden, welche Spalten skaliert werden müssen"
+  ],
+  "x": "Eine Reisebuchungsseite baut einen ColumnTransformer in scikit-learn, der Preis und Reisedauer skaliert, Zielregion und Gerätetyp aber per One-Hot-Encoding kodiert. Eine frühe Version behandelte als Ganzzahlen gespeicherte Flughafencodes als numerisch; sie als kategorial zu behandeln, verbesserte das Modell."
+ },
+ "ordinal": {
+  "n": "Ordinale vs. nominale Variablen",
+  "d": "Nominale Variablen sind Kategorien ohne natürliche Ordnung, etwa Farbe oder Land, während ordinale Variablen Kategorien mit einer sinnvollen Reihenfolge, aber ohne festen Abstand sind, etwa Bildungsgrad oder eine Bewertung als niedrig, mittel, hoch. Beide sind kategorial, doch die Ordnung verändert, wie sie kodiert werden sollten.\n\nBei einer ordinalen Variable erhält die Abbildung der Kategorien auf aufsteigende Ganzzahlen (niedrig=0, mittel=1, hoch=2) die Reihenfolge und erlaubt es einem Baum, darauf zu splitten, oder einem linearen Modell, einen monotonen Effekt anzupassen. Bei einer nominalen Variable würden Ganzzahlcodes eine Ordnung und Abstände erfinden, die die Daten nicht haben, daher nutzt man stattdessen One-Hot-Encoding, Target Encoding oder Embeddings. Eine häufige Falle ist, den OrdinalEncoder von scikit-learn mit seiner standardmäßig alphabetischen Reihenfolge auf eine echte ordinale Variable anzuwenden: \"high\" wird dann vor \"low\" einsortiert, daher muss die Reihenfolge der Kategorien explizit übergeben werden.",
+  "u": [
+   "Kodieren von Umfrageantworten und Zufriedenheitsbewertungen",
+   "Kodieren von Produktgrößen oder Kundenstufen",
+   "Wahl zwischen One-Hot- und Ganzzahlkodierung"
+  ],
+  "x": "Ein HR-Analytics-Team, das Mitarbeiterfluktuation vorhersagt, kodiert die Karrierestufe als geordnete Ganzzahl, weil höhere Stufen mehr Seniorität bedeuten. Die Abteilung, die keine Ordnung hat, wird dagegen per One-Hot-Encoding kodiert."
+ },
+ "cardinality": {
+  "n": "Kardinalität",
+  "d": "Die Kardinalität eines kategorialen Features ist die Anzahl der verschiedenen Werte, die es annimmt. Ein Feature wie Geschlecht oder Gerätetyp hat eine niedrige Kardinalität, während Nutzer-ID, Postleitzahl oder Produkt-SKU Tausende oder Millionen Werte haben können und als hochkardinal gelten.\n\nDie Kardinalität entscheidet, wie ein Feature kodiert werden kann. One-Hot-Encoding funktioniert für eine Handvoll Werte, erzeugt bei hochkardinalen Features aber riesige dünn besetzte Matrizen. Alternativen sind das Zusammenfassen seltener Werte in einer Kategorie „Sonstige“, Target Encoding mit Glättung und Out-of-Fold-Anpassung, Frequency Encoding, der Hashing-Trick und gelernte Embeddings in neuronalen Netzen. CatBoost nutzt genau für diesen Fall geordnete Target-Statistiken. Eine Falle ist, dass hochkardinale Features Baummodellen das Auswendiglernen ermöglichen: Eine Kategorie, die nur wenige Male vorkommt, lässt sich perfekt ihren Labels zuordnen, was die Trainings-Scores aufbläht, und naives Target Encoding auf denselben Zeilen lässt das Label durchsickern.",
+  "u": [
+   "Wahl eines Encoders für jede kategoriale Spalte",
+   "Erkennen ID-artiger Spalten beim Data Profiling",
+   "Bündeln seltener Kategorien vor dem One-Hot-Encoding"
+  ],
+  "x": "Ein Ad-Tech-Team hat ein Feature für die Publisher-Domain mit Hunderttausenden Werten. Für sein Modell mit logistischer Regression hasht es die Domain in eine feste Anzahl von Buckets, und in seinem neuronalen Ranking-Modell lernt es dafür ein Embedding."
+ },
+ "missingval": {
+  "n": "Fehlende Werte (MCAR, MAR, MNAR)",
+  "d": "Fehlende Werte sind Einträge ohne erfassten Wert, und der Grund für ihr Fehlen bestimmt, wie man mit ihnen umgehen kann. Daten fehlen völlig zufällig (MCAR), wenn das Fehlen mit keinen Daten zusammenhängt, zufällig (MAR), wenn es nur von anderen beobachteten Variablen abhängt, und nicht zufällig (MNAR), wenn es vom unbeobachteten Wert selbst abhängt, etwa wenn Personen mit hohem Einkommen die Frage nach dem Einkommen überspringen.\n\nUnter MCAR kostet das Löschen von Zeilen Daten, verzerrt aber keine Schätzungen. Unter MAR kann eine Imputation mithilfe anderer Spalten, etwa iterative oder k-NN-Imputation, unverzerrte Schätzungen liefern. Unter MNAR behebt keine Methode die Verzerrung vollständig ohne zusätzliche Annahmen. In der prädiktiven Modellierung hilft oft ein binärer Indikator „fehlte“, weil das Fehlen selbst ein Signal trägt. Eine häufige Falle ist, den Imputer vor dem Splitten auf dem gesamten Datensatz anzupassen, wodurch Statistiken der Testdaten ins Training durchsickern.",
+  "u": [
+   "Imputation von Lücken in Sensor- und Patientendaten",
+   "Hinzufügen von Fehlend-Indikatoren zu tabellarischen Modellen",
+   "Prüfen von Umfragedaten auf Verzerrung durch Nichtantwort"
+  ],
+  "x": "Ein Modell für Krankenhaus-Wiederaufnahmen stellt fest, dass Laborwerte oft bei Patienten fehlen, die nicht als krank genug für einen Test galten. Das Team fügt für jeden Laborwert einen Fehlend-Indikator hinzu, weil schon das Ausbleiben eines Tests prädiktiv ist."
+ },
+ "duplicates": {
+  "n": "Doppelte Datensätze (Duplikate)",
+  "d": "Doppelte Datensätze sind Zeilen, die dieselbe reale Entität oder dasselbe Ereignis mehr als einmal beschreiben, entweder als exakte Kopien oder als Beinahe-Duplikate, die sich in Formatierung, Zeitstempeln oder kleinen Änderungen unterscheiden. Sie entstehen durch wiederholte Datenladevorgänge, Joins, die Zeilen vervielfachen, Wiederholungsversuche beim Event-Logging und gescrapten Webtext.\n\nDuplikate verzerren Statistiken zugunsten der wiederholten Einträge und, schwerwiegender, sie verfälschen die Evaluation: Landet dasselbe Beispiel sowohl im Trainings- als auch im Test-Split, wird das Modell auf Daten bewertet, die es auswendig gelernt hat, und die Validierungsmetriken fallen zu optimistisch aus. Exakte Duplikate findet man durch Hashen von Zeilen oder Schlüsselspalten; Beinahe-Duplikate erfordern Fuzzy Matching, MinHash oder Embedding-Ähnlichkeit. Das Pretraining großer Sprachmodelle stützt sich stark auf Deduplizierung. Eine Falle ist, zu deduplizieren, ohne an Gruppierung zu denken: Mehrere Datensätze desselben Kunden sind keine Duplikate, brauchen aber trotzdem einen gruppenbewussten Split wie GroupKFold.",
+  "u": [
+   "Entfernen wiederholter Zeilen nach Joins in Datenpipelines",
+   "Deduplizieren von Webtext für das Pretraining von Sprachmodellen",
+   "Vermeiden von Überschneidungen zwischen Trainings- und Testdaten"
+  ],
+  "x": "Ein Team, das ein Modell zur Code-Vervollständigung baut, stellt fest, dass viele Dateien seines Evaluationsdatensatzes mit winzigen Änderungen auch im Trainingskorpus vorkommen. Es führt eine MinHash-Erkennung von Beinahe-Duplikaten über beide Datensätze aus und entfernt überlappende Dateien, bevor es Ergebnisse berichtet."
+ },
+ "labelnoise": {
+  "n": "Labelrauschen (Label Noise)",
+  "d": "Labelrauschen bedeutet, dass einige Trainingslabels falsch sind: ein Katzenbild, das als Hund getaggt ist, eine legitime Transaktion, die als Betrug markiert ist, oder eine Rezension mit falsch annotierter Stimmung. Es entsteht durch Fehler von Annotatoren, mehrdeutige Beispiele, automatische Labeling-Regeln und Labels, die erfasst wurden, bevor ein Ergebnis feststand.\n\nRauschen kann zufällig sein, wobei Labels gleichmäßig vertauscht werden, oder systematisch, wobei bestimmte Klassen oder Annotatoren durchgängig verwechselt werden. Systematisches Rauschen ist weit schädlicher, weil das Modell die Verzerrung lernt. Große, flexible Modelle wie tiefe neuronale Netze können verrauschte Labels auswendig lernen, was die Generalisierung beeinträchtigt. Abhilfe schaffen mehrere Annotatoren mit Übereinstimmungsprüfung, Confident Learning zum Aufspüren wahrscheinlich falsch gelabelter Beispiele, Label Smoothing, robuste Verlustfunktionen und Early Stopping. Eine häufige Falle ist, Rauschen im Testdatensatz zu ignorieren: Sind die Evaluationslabels falsch, werden Modellvergleiche und Accuracy-Schätzungen unzuverlässig, egal wie sauber die Trainingsdaten sind.",
+  "u": [
+   "Prüfen von Crowdsourcing-Annotationen vor dem Training",
+   "Aufspüren falsch gelabelter Beispiele mit Out-of-Fold-Vorhersagen",
+   "Training robuster Klassifikatoren auf schwach gelabelten Daten"
+  ],
+  "x": "Ein Team für Content-Moderation markiert Trainingsbeispiele, bei denen ein kreuzvalidierter Klassifikator mit hoher Konfidenz vom menschlichen Label abweicht. Prüfer annotieren diese Einträge neu, und viele erweisen sich als echte Labeling-Fehler, verursacht durch eine veraltete Richtlinie."
+ },
+ "sparsedata": {
+  "n": "Dünn besetzte Daten (Sparse Data)",
+  "d": "Dünn besetzte Daten sind Daten, deren Einträge größtenteils null sind oder fehlen, etwa eine Bag-of-Words-Matrix, in der jedes Dokument nur einen winzigen Bruchteil des Vokabulars nutzt, eine Nutzer-Item-Bewertungsmatrix oder per One-Hot-Encoding kodierte Kategorien. Speichert man nur die von null verschiedenen Werte und ihre Positionen, wie in den Formaten CSR oder COO, spart das Speicher und Rechenaufwand um Größenordnungen.\n\nViele Methoden nutzen dünne Besetzung direkt aus: lineare Modelle, logistische Regression und lineare SVMs auf TF-IDF-Features, Factorization Machines und Matrixfaktorisierung für Empfehlungen sowie Gradient-Boosted Trees, die Nullen überspringen. Eine häufige Falle ist, eine dünn besetzte Matrix versehentlich in eine dichte umzuwandeln, etwa durch Zentrieren mit StandardScaler, der den Mittelwert abzieht und jede Null durch einen von null verschiedenen Wert ersetzt; skalieren Sie stattdessen ohne Zentrierung oder mit MaxAbsScaler. Dünn besetzte Daten brauchen außerdem Regularisierung, da viele Features nur wenige Male vorkommen.",
+  "u": [
+   "Textklassifikation mit TF-IDF-Features",
+   "Empfehlungen aus Nutzer-Item-Interaktionsmatrizen",
+   "Per One-Hot-Encoding kodierte hochkardinale kategoriale Features"
+  ],
+  "x": "Ein Router für Support-Tickets stellt jedes Ticket als TF-IDF-Vektor über ein Vokabular von Hunderttausenden Begriffen dar. Im dünn besetzten Format passt die gesamte Matrix in den Speicher, und ein linearer Klassifikator trainiert in wenigen Minuten."
+ },
+ "interaction": {
+  "n": "Feature-Interaktion",
+  "d": "Eine Feature-Interaktion liegt vor, wenn der Effekt eines Features auf die Zielgröße vom Wert eines anderen Features abhängt. Ein Rabatt kann zum Beispiel die Käufe von Neukunden stark steigern, die von Stammkunden aber kaum; keines der beiden Features allein erfasst dieses Muster.\n\nEine einfache lineare Regression addiert getrennte Effekte und kann Interaktionen nicht abbilden, sofern sie nicht explizit als Produktterme wie x₁·x₂ oder über polynomiale Features hinzugefügt werden. Entscheidungsbäume, Gradient-Boosted Trees und neuronale Netze lernen Interaktionen automatisch, weil ein Split auf einem Feature verändert, wie sich der nächste Split verhält. Factorization Machines modellieren paarweise Interaktionen effizient für dünn besetzte Daten. SHAP-Interaktionswerte und Partial Dependence Plots helfen, sie zu erkennen. Eine Falle ist, alle paarweisen Produkte von Hand hinzuzufügen: Die Zahl der Features wächst quadratisch, was Overfitting und Multikollinearität begünstigt. Fügen Sie daher nur Interaktionen mit klarer fachlicher Begründung hinzu oder nutzen Sie ein Modell, das sie selbst findet.",
+  "u": [
+   "Produktterme in linearen Preismodellen",
+   "Erkennen von Interaktionen mit SHAP-Interaktionswerten",
+   "Klickvorhersage mit Factorization Machines"
+  ],
+  "x": "Ein Marketing-Analytics-Team stellt fest, dass ein lineares Uplift-Modell übersieht, dass E-Mail-Kampagnen nur bei Kunden auf Mobilgeräten wirken. Ein Produktterm aus Kampagnen-Flag und Gerätetyp erfasst das Muster und macht den Koeffizienten direkt interpretierbar."
+ },
+ "baseline": {
+  "n": "Baseline-Modell",
+  "d": "Ein Baseline-Modell ist ein bewusst einfaches Referenzmodell, dessen Score jedes vorgeschlagene Modell schlagen muss, damit sich seine Komplexität lohnt. Typische Baselines sagen die Mehrheitsklasse, den Trainingsmittelwert oder den letzten beobachteten Wert einer Zeitreihe vorher oder sind eine einfache logistische oder lineare Regression.\n\nBaselines geben Metrikwerten erst eine Bedeutung. Eine Accuracy von 95 % klingt stark, bis die Mehrheitsklassen-Baseline auf einem unausgewogenen Datensatz ebenfalls 95 % erreicht; ein Prognosefehler ist nur im Vergleich mit der naiven saisonalen Prognose aussagekräftig. Zuerst eine Baseline zu bauen, testet außerdem die gesamte Pipeline vom Laden der Daten bis zur Evaluation, bevor Zeit ins Tuning fließt. Ein häufiger Fehler ist eine schwache Baseline, die jedes Modell gut aussehen lässt. Berichten Sie eine triviale Baseline und eine starke einfache Baseline, etwa ein getuntes lineares Modell oder Gradient-Boosted Trees mit Standardeinstellungen, und evaluieren Sie beide auf demselben Split.",
+  "u": [
+   "Plausibilitätsprüfung von Metriken bei unausgewogener Klassifikation",
+   "Naive und saisonal-naive Prognosen für Zeitreihen",
+   "Benchmarking tiefer Modelle gegen lineare Modelle"
+  ],
+  "x": "Ein Team, das ein Transformer-Modell zur Ticket-Klassifikation vorschlägt, trainiert zuerst eine Baseline aus TF-IDF und logistischer Regression. Der Transformer wird erst übernommen, nachdem er die Baseline auf demselben zurückgehaltenen Datensatz klar schlägt, was seine höheren Serving-Kosten rechtfertigt."
+ },
+ "timeseries": {
+  "n": "Zeitreihendaten",
+  "d": "Zeitreihendaten sind eine Folge von Beobachtungen in zeitlicher Reihenfolge, meist in regelmäßigen Abständen erfasst, etwa die stündliche Stromlast, tägliche Verkäufe oder sekündliche Sensormesswerte. Ihre bestimmende Eigenschaft ist, dass benachbarte Beobachtungen voneinander abhängen, sodass die Reihenfolge der Zeilen Information trägt.\n\nEine Zeitreihe wird oft als Kombination aus Trend, Saisonalität und Rauschen beschrieben, und viele Methoden modellieren diese Teile explizit: ARIMA, exponentielle Glättung, Prophet und Gradient-Boosted Trees auf Lag-Features sowie rekurrente und Transformer-basierte Prognosemodelle. Nützliche Werkzeuge sind Autokorrelationsplots, Differenzieren und Stationaritätstests. Die wichtigste Falle ist die Evaluation: Zufällige K-Fold-Kreuzvalidierung mischt zukünftige Zeilen in die Trainingsdaten und lässt Information durchsickern. Die Validierung muss daher immer auf der Vergangenheit trainieren und auf der Zukunft testen, etwa mit einem Expanding-Window- oder Rolling-Origin-Split.",
+  "u": [
+   "Prognose von Produktnachfrage und Lagerbedarf",
+   "Erkennen von Anomalien in Server- und Sensormetriken",
+   "Vorhersage der Energielast für die Netzplanung"
+  ],
+  "x": "Eine Supermarktkette prognostiziert die tägliche Nachfrage pro Produkt und Filiale mit Lag-Features und einem Gradient-Boosting-Modell. Die Validierung nutzt Rolling-Origin-Splits, die stets auf früheren Wochen trainieren und auf den folgenden Wochen testen, genau wie Prognosen in Produktion erstellt werden."
+ },
+ "trend": {
+  "n": "Trend",
+  "d": "Ein Trend ist die langfristige Richtung einer Zeitreihe: ein anhaltender Anstieg, Rückgang oder Niveauwechsel, der über saisonale Zyklen und kurzfristiges Rauschen hinaus besteht. Über mehrere Jahre steigende Abonnentenzahlen oder eine allmählich nachlassende Sensorempfindlichkeit sind Trends.\n\nTrends werden durch Glättung geschätzt, etwa mit einem gleitenden Durchschnitt oder LOESS, durch Anpassen einer Geraden oder Kurve über die Zeit oder als Komponente einer Zerlegung wie STL. Prognoseverfahren behandeln den Trend explizit: Holts exponentielle Glättung fügt einen Trendterm hinzu, ARIMA entfernt ihn durch Differenzieren, und Prophet passt einen stückweise linearen Trend mit Changepoints an. Ein Trend macht eine Reihe nichtstationär, daher muss er für viele Modelle zuerst entfernt werden. Eine bemerkenswerte Falle betrifft baumbasierte Modelle wie Random Forests und Gradient-Boosted Trees: Sie können nicht extrapolieren und sagen auf einer Reihe mit Trend keine höheren Werte vorher als die im Training gesehenen. Entfernen Sie den Trend zuerst oder modellieren Sie ihn separat.",
+  "u": [
+   "Entfernen langfristigen Wachstums vor einer Saisonanalyse",
+   "Hochrechnen des Nutzerwachstums für die Kapazitätsplanung",
+   "Erkennen schleichender Verschlechterung in Sensormesswerten"
+  ],
+  "x": "Ein Cloud-Anbieter passt einen Trend an die monatliche Speichernutzung an, um Hardwarekäufe zu planen. Weil sein Gradient-Boosting-Prognosemodell nicht über frühere Niveaus hinaus extrapolieren kann, modelliert das Team den Trend mit einem linearen Term und lässt die Bäume nur die verbleibende Variation lernen."
+ },
+ "seasonality": {
+  "n": "Saisonalität",
+  "d": "Saisonalität ist ein Muster in einer Zeitreihe, das sich mit einer festen, bekannten Periode wiederholt, etwa höhere Einzelhandelsumsätze jeden Dezember, Verkehrsspitzen zu denselben Tageszeiten oder geringere Aktivität am Wochenende. Die Periode wird durch den Kalender oder den Prozess bestimmt, nicht durch zufällige Schwankungen der Daten.\n\nSaisonalität zeigt sich als regelmäßige Spitzen in einem Autokorrelationsplot bei der Periode und ihren Vielfachen. Man behandelt sie mit saisonaler Zerlegung (STL), saisonalem Differenzieren, SARIMA- und Holt-Winters-Modellen, Fourier-Termen wie in Prophet oder Kalender-Features wie Stunde, Wochentag und Monat für Gradient-Boosted Trees. Viele Reihen haben mehrere Saisonalitäten zugleich, etwa tägliche und wöchentliche Zyklen in Stundendaten. Eine Falle ist, Saisonalität mit Zyklen zu verwechseln: Konjunkturzyklen steigen und fallen ebenfalls, aber mit unregelmäßiger Länge, sodass ein Modell mit fester Periode sie falsch vorhersagt. Feiertage mit wechselndem Datum brauchen zudem explizite Features.",
+  "u": [
+   "Kalender-Features in Modellen zur Nachfrageprognose",
+   "Entfernen wöchentlicher Zyklen vor der Anomalieerkennung",
+   "Personalplanung rund um tägliche und wöchentliche Spitzen"
+  ],
+  "x": "Ein Callcenter prognostiziert das stündliche Anrufaufkommen mit täglichen und wöchentlichen saisonalen Termen sowie Feiertagsindikatoren. Nach dem Entfernen des saisonalen Musters kann das Team außerdem ungewöhnliche Spitzen markieren, die auf einen Ausfall an anderer Stelle im Unternehmen hinweisen."
+ },
+ "whitenoise": {
+  "n": "Weißes Rauschen",
+  "d": "Weißes Rauschen ist eine Folge von Zufallswerten mit Mittelwert null, konstanter Varianz und keiner Korrelation zwischen zwei beliebigen Zeitpunkten. Vergangene Werte geben keinerlei Information über den nächsten, daher ist weißes Rauschen die Definition einer unvorhersagbaren Reihe.\n\nIn der Zeitreihenmodellierung ist es der Zielzustand für Residuen: Hat ein Prognosemodell wie ARIMA alle Struktur erfasst, sollten seine Residuen wie weißes Rauschen aussehen, ohne signifikante Spitzen im Autokorrelationsplot. Der Ljung-Box-Test prüft das formal. Weißes Rauschen ist außerdem der Baustein anderer Prozesse: Ein Random Walk ist die kumulierte Summe weißen Rauschens, und ARMA-Modelle sind gefiltertes weißes Rauschen. Ein verbreiteter Irrtum ist, weißes Rauschen müsse normalverteilt sein. Gaußsches weißes Rauschen ist nur ein Spezialfall; die Definition verlangt lediglich verschwindende Autokorrelation, weder Unabhängigkeit noch Normalverteilung.",
+  "u": [
+   "Prüfen von Prognoseresiduen auf verbleibende Struktur",
+   "Test auf Autokorrelation mit dem Ljung-Box-Test",
+   "Simulation von Rauschen für synthetische Zeitreihen"
+  ],
+  "x": "Ein Versorgungsunternehmen validiert sein Modell zur Lastprognose, indem es jeden Monat einen Ljung-Box-Test auf den Residuen ausführt. Als der Test bei einem Lag von 24 Stunden beginnt, weißes Rauschen zu verwerfen, entdeckt das Team, dass eine geänderte Zeitzone bei der Zählererfassung das Tagesmuster verschoben hat."
+ },
+ "randomwalk": {
+  "n": "Random Walk (Irrfahrt)",
+  "d": "Ein Random Walk ist eine Zeitreihe, in der jeder Wert dem vorherigen Wert plus einem zufälligen Schritt entspricht, sodass die Reihe umherwandert, ohne zu einem festen Niveau zurückzukehren. Er ist die kumulierte Summe weißen Rauschens, und die beste Prognose für den Wert von morgen ist schlicht der Wert von heute.\n\nWeil Schocks nie abklingen, wächst die Varianz eines Random Walks mit der Zeit, und die Reihe ist nichtstationär; ihre Autokorrelation fällt nur sehr langsam ab. Vermögenspreise werden oft als Random Walk angenähert, weshalb die naive Prognose mit dem letzten Wert im Finanzbereich eine schwer zu schlagende Baseline ist. Einmaliges Differenzieren eines Random Walks liefert die Schritte aus weißem Rauschen zurück; das ist die Idee hinter dem integrierten Teil (I) von ARIMA. Eine große Falle ist die Scheinregression: Zwei unabhängige Random Walks, die aufeinander regressiert werden, zeigen oft ein hohes R² und signifikante Koeffizienten. Testen Sie daher vor der Regression von Reihen mit Trend mit einem Augmented-Dickey-Fuller-Test auf Stationarität.",
+  "u": [
+   "Naive Letzter-Wert-Baseline für Preisprognosen",
+   "Test auf Einheitswurzeln vor einer Regression",
+   "Simulation von Preispfaden und Sensordrift"
+  ],
+  "x": "Ein Trading-Research-Team prüft jedes Kandidatensignal gegen eine Random-Walk-Prognose des Preises am nächsten Tag. Signale, die die Letzter-Wert-Prognose out of sample nicht schlagen, werden verworfen, selbst wenn sie im Trainingszeitraum stark aussehen."
+ },
+ "differencing": {
+  "n": "Differenzieren (Differencing)",
+  "d": "Differenzieren wandelt eine Zeitreihe in die Änderungen zwischen aufeinanderfolgenden Beobachtungen um, indem jeder Wert durch seinen Wert minus den vorherigen ersetzt wird. Es entfernt einen stochastischen Trend oder Niveausprünge und macht eine nichtstationäre Reihe oft stationär.\n\nEinfaches Differenzieren entfernt einen linearen Trend oder einen Random Walk; zweifaches Differenzieren entfernt einen quadratischen Trend. Saisonales Differenzieren zieht den Wert eine Saison zuvor ab, y_t − y_{t−m}, um ein wiederkehrendes Muster zu entfernen. Differenzieren ist das „I“ in ARIMA, wobei d angibt, wie oft es angewendet wird, und es ist üblich, bevor man Regressionen oder Gradient-Boosted Trees an Reihen mit Trend anpasst. Prognosen auf der differenzierten Skala müssen wieder auf das ursprüngliche Niveau kumuliert werden. Eine Falle ist Überdifferenzierung: Auf eine bereits stationäre Reihe angewandt, fügt Differenzieren negative Autokorrelation hinzu und erhöht die Varianz. Prüfen Sie daher mit einem Augmented-Dickey-Fuller- oder KPSS-Test und differenzieren Sie nur so oft wie nötig.",
+  "u": [
+   "Eine Reihe vor ARIMA stationär machen",
+   "Entfernen jährlicher Saisonalität mit Differenzen bei Lag 12",
+   "Änderungen statt Niveaus für Baummodelle modellieren"
+  ],
+  "x": "Das Gradient-Boosting-Prognosemodell eines Händlers sagt die Umsatzänderung gegenüber der Vorwoche statt des Niveaus vorher, was das langfristige Wachstum entfernt, das Bäume nicht extrapolieren können. Die vorhergesagten Änderungen werden zur zuletzt beobachteten Woche addiert, um die endgültige Prognose zu erhalten."
+ },
+ "horizon": {
+  "n": "Prognosehorizont",
+  "d": "Der Prognosehorizont gibt an, wie weit in die Zukunft eine Prognose reicht, gemessen in Zeitschritten ab dem letzten beobachteten Punkt, etwa einen Tag oder 13 Wochen voraus. Er wird durch die Entscheidung bestimmt, die die Prognose unterstützt: die Last der nächsten Stunde für die Netzsteuerung, die Nachfrage des nächsten Quartals für den Einkauf.\n\nDer Fehler wächst fast immer mit dem Horizont, weil sich Unsicherheit aufsummiert und weniger aktuelle Eingaben aussagekräftig bleiben. Die Genauigkeit sollte daher pro Horizontschritt statt als ein einziger Durchschnitt berichtet werden. Mehrschrittprognosen lassen sich rekursiv erstellen, indem jede Vorhersage wieder als Eingabe dient, was Fehler aufschaukelt; direkt, mit einem eigenen Modell pro Horizont; oder mit Modellen mit mehreren Ausgaben wie Sequence-to-Sequence-Netzen. Eine häufige Falle ist, auf einem anderen Horizont zu validieren als in Produktion, etwa Ein-Schritt-Prognosen mit Lag-1-Features zu evaluieren, wenn echte Entscheidungen Prognosen vier Wochen im Voraus brauchen, bei denen diese jüngsten Lags noch gar nicht bekannt sind.",
+  "u": [
+   "Festlegen von Bestellvorlaufzeiten in der Bestandsplanung",
+   "Angabe des Prognosefehlers pro Horizontschritt",
+   "Wahl zwischen rekursiven und direkten Mehrschrittstrategien"
+  ],
+  "x": "Ein Modehändler muss Ware acht Wochen vor ihrer Ankunft bestellen, daher wird sein Nachfragemodell ausschließlich bei einem Horizont von acht Wochen evaluiert. Die Features sind auf Informationen beschränkt, die acht Wochen vor der jeweiligen Zielwoche verfügbar sind."
+ },
+ "vector": {
+  "n": "Vektor",
+  "d": "Ein Vektor ist eine geordnete Liste von Zahlen, etwa (3.2, −1.0, 0.5), die sich als Punkt oder Pfeil in einem Raum mit einer Achse pro Eintrag lesen lässt. Die Anzahl der Einträge ist seine Dimension, und Vektoren lassen sich eintragsweise addieren und mit einem Skalar multiplizieren.\n\nFast alles, was ein Modell verarbeitet, ist ein Vektor: eine Zeile von Features, die Gewichte einer linearen Regression, ein Wort- oder Satz-Embedding, ein Gradient, die Ausgabewahrscheinlichkeiten eines Klassifikators. Die Geometrie von Vektoren liefert die Kernoperationen des Machine Learning, darunter Skalarprodukt, Vektornormen, euklidische Distanz und Kosinus-Ähnlichkeit, auf denen k-Nächste-Nachbarn, k-Means und Vektorsuche beruhen. Eine häufige Fehlerquelle sind verwechselte Shapes: In NumPy ist ein 1D-Array der Shape (d,) weder Zeilen- noch Spaltenvektor, und kombiniert man es mit Arrays der Shape (d, 1), entsteht durch Broadcasting stillschweigend eine d×d-Matrix.",
+  "u": [
+   "Darstellung eines Beispiels als Feature-Vektor",
+   "Speichern von Text- und Bild-Embeddings für die Suche",
+   "Halten von Modellgewichten und Gradienten"
+  ],
+  "x": "Ein Musikstreamingdienst stellt jeden Titel als 128-dimensionalen Embedding-Vektor dar, der aus Hörsitzungen gelernt wurde. Empfehlungen entstehen, indem die Titelvektoren gesucht werden, die dem Vektor des jüngsten Hörverlaufs des Nutzers am nächsten liegen."
+ },
+ "matrix": {
+  "n": "Matrix",
+  "d": "Eine Matrix ist ein rechteckiges Zahlenschema aus Zeilen und Spalten; eine m×n-Matrix hat m Zeilen und n Spalten. Man kann sie entweder als Datentabelle lesen oder als lineare Abbildung, die per Matrix-Vektor-Multiplikation n-dimensionale Vektoren in m-dimensionale überführt.\n\nBeide Lesarten sind im Machine Learning allgegenwärtig. Ein Datensatz ist eine Designmatrix X mit einer Zeile pro Beispiel und einer Spalte pro Feature. Die Gewichte einer linearen Schicht bilden eine Matrix W, sodass eine Dense-Schicht Wx + b berechnet. Kovarianzmatrizen, Konfusionsmatrizen, Matrizen von Attention-Scores und Nutzer-Item-Bewertungsmatrizen sind weitere Beispiele. Zentrale Operationen sind Transposition, Matrixmultiplikation, Inversion und Zerlegungen wie die Eigenzerlegung und die SVD, die PCA und Low-Rank-Methoden wie LoRA zugrunde liegen. Eine Falle ist, Matrizen explizit zu invertieren, um lineare Gleichungssysteme zu lösen; Solver wie np.linalg.solve oder die Methode der kleinsten Quadrate sind schneller und numerisch stabiler.",
+  "u": [
+   "Speichern eines Datensatzes als Designmatrix",
+   "Gewichte vollständig verbundener Schichten neuronaler Netze",
+   "Nutzer-Item-Bewertungsmatrizen für Empfehlungen"
+  ],
+  "x": "Ein E-Commerce-Unternehmen speichert implizites Feedback als dünn besetzte Nutzer-Produkt-Matrix und faktorisiert sie in zwei schmale Matrizen aus Nutzer- und Produktfaktoren. Ihr Produkt nähert die ursprüngliche Matrix an und liefert Scores für Produkte, die ein Nutzer noch nicht gesehen hat."
+ },
+ "tensor": {
+  "n": "Tensor",
+  "d": "Im Machine Learning ist ein Tensor ein mehrdimensionales Zahlenarray: Ein Skalar hat 0 Achsen, ein Vektor 1, eine Matrix 2, und Tensoren höherer Ordnung haben 3 oder mehr. Die Shape gibt die Größe jeder Achse an, etwa (batch, channels, height, width) für einen Batch von Bildern.\n\nDeep-Learning-Frameworks wie PyTorch, TensorFlow und JAX sind um Tensoren herum gebaut. Ein Tensor trägt eine Shape, einen Datentyp wie float32 oder bfloat16 und ein Gerät wie CPU oder GPU, und Operationen auf ihm lassen sich automatisch differenzieren. Typische Shapes sind (batch, sequence, hidden) für Transformer-Aktivierungen und (batch, heads, seq, seq) für Attention-Scores. Broadcasting erlaubt es, Tensoren kompatibler Shapes ohne Kopien zu kombinieren. Eine häufige Falle ist die Annahme einer bestimmten Achsenreihenfolge: Frameworks und Bibliotheken unterscheiden sich, etwa bei Bildern mit Channels-first gegenüber Channels-last, und eine stille Verwechslung kann fehlerfrei trainieren und trotzdem Unsinn lernen.",
+  "u": [
+   "Bild-Batches in Convolutional Neural Networks",
+   "Aktivierungen, die durch Transformer-Schichten fließen",
+   "GPU-Berechnungen mit automatischer Differentiation"
+  ],
+  "x": "Ein Computer-Vision-Team portiert ein Modell aus einer Channels-last-Bildpipeline nach PyTorch, das Channels-first-Tensoren erwartet. Eine am Modelleingang hinzugefügte Shape-Assertion fängt einen transponierten Batch ab, der sonst ohne jeden Fehler trainiert hätte."
+ },
+ "dotproduct": {
+  "n": "Skalarprodukt",
+  "d": "Das Skalarprodukt zweier gleich langer Vektoren ist die Summe der Produkte ihrer einander entsprechenden Einträge und ergibt eine einzelne Zahl. Geometrisch entspricht es dem Produkt der beiden Längen mit dem Kosinus des Winkels zwischen ihnen. Es ist daher groß und positiv, wenn die Vektoren in dieselbe Richtung zeigen, null, wenn sie orthogonal sind, und negativ, wenn sie in entgegengesetzte Richtungen zeigen.\n\nDas Skalarprodukt ist das Arbeitspferd des Machine Learning. Der Score eines linearen Modells ist das Skalarprodukt w·x plus ein Bias; jedes Neuron berechnet eines; eine Matrixmultiplikation ist ein Raster von Skalarprodukten; die Attention-Scores im Transformer sind Skalarprodukte zwischen Queries und Keys. Eine Falle ist, das rohe Skalarprodukt als Ähnlichkeitsmaß zu verwenden, wenn die Vektorlängen variieren: Längere Vektoren erzielen unabhängig von der Richtung höhere Werte. Kommt es nur auf die Richtung an, normalisiert man daher zuerst, was die Kosinus-Ähnlichkeit ergibt.",
+  "u": [
+   "Bewertung von Beispielen in linearen und logistischen Modellen",
+   "Berechnung von Query-Key-Attention-Scores in Transformern",
+   "Ranking von Items nach Embedding-Ähnlichkeit"
+  ],
+  "x": "Ein Empfehlungsteam bewertet Kandidaten-Items mit dem Skalarprodukt zwischen einem Nutzer-Embedding und jedem Item-Embedding, das ein Vektorindex für Millionen Items schnell berechnet. Das Team behält das rohe Skalarprodukt statt der Kosinus-Ähnlichkeit bei, weil die Länge der Item-Vektoren darauf trainiert wurde, die Popularität widerzuspiegeln."
+ },
+ "matmul": {
+  "n": "Matrixmultiplikation",
+  "d": "Die Matrixmultiplikation verknüpft eine m×k-Matrix A und eine k×n-Matrix B zu einer m×n-Matrix C, deren Eintrag Cᵢⱼ das Skalarprodukt von Zeile i von A mit Spalte j von B ist. Die inneren Dimensionen müssen übereinstimmen, und das Ergebnis entspricht der Anwendung erst der linearen Abbildung B und dann A.\n\nSie ist der rechnerische Kern des Deep Learning. Eine Dense-Schicht auf einem Batch ist eine einzige Matrixmultiplikation des Eingabe-Batches mit der Gewichtsmatrix; Attention berechnet QKᵀ und multipliziert dann mit V. GPUs und TPUs sind um sie herum gebaut, und ihre Kosten von etwa 2·m·k·n Gleitkommaoperationen dominieren den Rechenaufwand beim Training. Ein verbreiteter Irrtum ist, sie sei kommutativ: AB unterscheidet sich im Allgemeinen von BA, und BA ist womöglich nicht einmal definiert. Eine weitere Falle ist die Verwechslung mit dem elementweisen Produkt, das in NumPy und PyTorch als * geschrieben wird, die Matrixmultiplikation dagegen als @.",
+  "u": [
+   "Forward Pass von Dense-Schichten neuronaler Netze",
+   "Berechnung von Attention in Transformer-Modellen",
+   "Abschätzen des Trainingsaufwands in FLOPs"
+  ],
+  "x": "Ein Inferenz-Team profiliert ein Sprachmodell und stellt fest, dass der Großteil der GPU-Zeit auf einige wenige große Matrixmultiplikationen in den Attention- und MLP-Blöcken entfällt. Diese auf bfloat16 umzustellen und kleine Multiplikationen zu größeren gebatchten zusammenzufassen, erhöht den Durchsatz, ohne das Modell zu verändern."
+ },
+ "vecnorm": {
+  "n": "Vektornorm (L1, L2)",
+  "d": "Eine Vektornorm ordnet einem Vektor eine nichtnegative Länge zu. Die L2-Norm ist die vertraute geradlinige Länge, die Wurzel aus der Summe der quadrierten Einträge; die L1-Norm ist die Summe der Beträge; die L∞-Norm ist der größte Betrag eines Eintrags. Alle sind Spezialfälle der Lp-Norm.\n\nNormen tauchen im Machine Learning überall auf. L2- und L1-Strafterme auf den Gewichten ergeben Ridge-Regression und Lasso; der L1-Strafterm treibt manche Gewichte exakt auf null und betreibt so Feature-Selektion, während L2 alle Gewichte gleichmäßig schrumpft. Gradient Clipping skaliert Gradienten herunter, deren L2-Norm einen Schwellenwert überschreitet. Embeddings werden vor der Suche nach Kosinus-Ähnlichkeit L2-normalisiert, und Normen von Differenzen definieren die euklidische und die Manhattan-Distanz. Häufig verwechselt werden die L2-Norm und ihr Quadrat: Ridge-Regression bestraft die quadrierte Norm ‖w‖₂², deren Gradient einfacher ist, während Clipping und Normalisierung die Norm selbst verwenden.",
+  "u": [
+   "L1- und L2-Regularisierung von Modellgewichten",
+   "Clipping der Gradientennorm beim Training von Netzen",
+   "Normalisieren von Embeddings vor der Ähnlichkeitssuche"
+  ],
+  "x": "Ein Team, das einen großen Transformer trainiert, begrenzt die globale L2-Norm der Gradienten bei jedem Schritt auf 1.0. Das Protokollieren der Gradientennorm vor dem Clipping liefert zudem ein Frühwarnsignal, weil plötzliche Spitzen oft einer Divergenz des Loss vorausgehen."
+ },
+ "euclidean": {
+  "n": "Euklidische Distanz",
+  "d": "Die euklidische Distanz ist der geradlinige Abstand zwischen zwei Punkten, berechnet als Wurzel aus der Summe der quadrierten Differenzen über alle Koordinaten. Sie ist die L2-Norm des Differenzvektors und entspricht in zwei oder drei Dimensionen dem gewöhnlichen geometrischen Abstand.\n\nViele Algorithmen beruhen direkt auf ihr: k-Nächste-Nachbarn findet die nächstgelegenen Trainingspunkte, k-Means ordnet jeden Punkt dem nächsten Zentroid zu und minimiert die quadrierte euklidische Distanz, RBF-Kernel in SVMs fallen mit ihr ab, und Vektordatenbanken bieten sie oft als Suchmetrik an. Weil jede Koordinate auf ihrer eigenen Skala beiträgt, müssen Features zuerst standardisiert werden; sonst dominiert ein in Dollar gemessenes Feature eines, das in Jahren gemessen wird. In hochdimensionalen Räumen konzentrieren sich die Distanzen, sodass nächster und entferntester Nachbar fast gleich weit entfernt sind. Für L2-normalisierte Vektoren gilt: Die quadrierte euklidische Distanz ist 2 − 2·cos θ, sie ordnet Nachbarn also genau wie die Kosinus-Ähnlichkeit.",
+  "u": [
+   "Nächste-Nachbarn-Suche in k-NN-Modellen",
+   "Zuordnung von Punkten zu Clustern in k-Means",
+   "Vektorsuche über normalisierte Embeddings"
+  ],
+  "x": "Eine Immobilienplattform empfiehlt vergleichbare Häuser mit k-Nächste-Nachbarn anhand von Größe, Alter, Lage und Preis. Weil die rohen Features sehr unterschiedliche Skalen hatten, standardisiert das Team sie vor der Berechnung der euklidischen Distanzen, sodass der Preis das Ergebnis nicht mehr dominiert."
+ },
+ "cosine": {
+  "n": "Kosinus-Ähnlichkeit",
+  "d": "Die Kosinus-Ähnlichkeit misst, wie genau zwei Vektoren in dieselbe Richtung zeigen, berechnet als ihr Skalarprodukt geteilt durch das Produkt ihrer Längen. Sie reicht von −1 für entgegengesetzte Richtungen über 0 für orthogonale Vektoren bis 1 für identische Richtungen und ignoriert die Vektorlänge vollständig.\n\nSie ist das Standard-Ähnlichkeitsmaß für Text und Embeddings, weil die Richtung eines Embeddings die Bedeutung kodiert, während seine Länge oft Häufigkeit oder Dokumentgröße widerspiegelt. Semantische Suche, Retrieval für RAG, Duplikaterkennung und Empfehlungssysteme vergleichen Satz- oder Item-Embeddings per Kosinus-Ähnlichkeit; Vektorindizes implementieren sie meist als Skalarprodukt auf L2-normalisierten Vektoren. Die Kosinus-Distanz ist definiert als 1 − Kosinus-Ähnlichkeit. Eine Falle ist, den Score als kalibrierte Wahrscheinlichkeit zu lesen oder Schwellenwerte zwischen Modellen zu vergleichen: Jedes Embedding-Modell hat seinen eigenen typischen Wertebereich, manche liefern durchweg hohe Scores, daher müssen Schwellenwerte pro Modell abgestimmt werden.",
+  "u": [
+   "Semantische Suche über Satz-Embeddings",
+   "Abrufen von Kontextpassagen für RAG-Systeme",
+   "Erkennen beinahe doppelter Dokumente und Fragen"
+  ],
+  "x": "Eine Kundensupport-Plattform bettet jede eingehende Frage ein und vergleicht sie per Kosinus-Ähnlichkeit mit bereits beantworteten Fragen. Treffer oberhalb eines auf gelabelten Paaren abgestimmten Schwellenwerts werden den Agenten vorgeschlagen, und der Schwellenwert wird bei jedem Wechsel des Embedding-Modells neu abgestimmt."
+ },
+ "distmetric": {
+  "n": "Distanzmetrik",
+  "d": "Eine Distanzmetrik ist eine Funktion, die misst, wie weit zwei Objekte voneinander entfernt sind, und vier Regeln erfüllt: Distanzen sind nichtnegativ, nur für identische Objekte null, symmetrisch und genügen der Dreiecksungleichung d(x, z) ≤ d(x, y) + d(y, z). Euklidische, Manhattan-, Tschebyschow-, Hamming- und Jaccard-Distanz sind gängige Metriken.\n\nDie Wahl der Metrik legt fest, was „ähnlich“ für k-Nächste-Nachbarn, k-Means, hierarchisches Clustering, DBSCAN und Vektorsuche bedeutet. Die Manhattan-Distanz wird weniger von einzelnen großen Differenzen dominiert als die euklidische; Hamming eignet sich für binäre Codes; Jaccard vergleicht Mengen; die Mahalanobis-Distanz berücksichtigt korrelierte Features. Einige verbreitete Maße sind keine echten Metriken: Kosinus-Distanz und quadrierte euklidische Distanz verletzen die Dreiecksungleichung, und die KL-Divergenz ist nicht einmal symmetrisch. Das ist wichtig, weil Indexstrukturen wie Ball Trees und manche Garantien beim Clustering eine echte Metrik voraussetzen, und eine unpassende Wahl kann stillschweigend falsche Nachbarn liefern.",
+  "u": [
+   "Wahl der Metrik für k-NN und Clustering",
+   "Vergleich binärer Fingerprints mit der Hamming-Distanz",
+   "Messen von Mengenüberlappung mit der Jaccard-Distanz"
+  ],
+  "x": "Eine chemische Forschungsgruppe durchsucht eine Substanzbibliothek, indem sie jedes Molekül als binären Fingerprint kodiert und Fingerprints mit der Jaccard-Distanz (Tanimoto) vergleicht. Die Metrik spiegelt gemeinsame Substrukturen weit besser wider als die euklidische Distanz auf denselben Bits."
+ },
+ "projection": {
+  "n": "Projektion",
+  "d": "Eine Projektion bildet einen Vektor auf eine Gerade, eine Ebene oder einen anderen Unterraum ab, indem sie den nächstgelegenen Punkt in diesem Unterraum bestimmt. Die Projektion von x auf eine Richtung u ist die Komponente von x entlang u; der Rest, x minus seine Projektion, ist orthogonal zum Unterraum.\n\nDie Projektion ist die Geometrie hinter mehreren Kernmethoden. Die lineare Regression mit der Methode der kleinsten Quadrate projiziert den Zielvektor auf den von den Feature-Spalten aufgespannten Raum, und das Residuum ist zu jedem Feature orthogonal. PCA projiziert Daten auf die wenigen Richtungen größter Varianz, um die Dimension zu verringern. Zufallsprojektionen, gerechtfertigt durch das Johnson-Lindenstrauss-Lemma, erhalten Distanzen näherungsweise, während sie die Dimension verkleinern. In neuronalen Netzen sind die Query-, Key- und Value-Projektionen schlicht gelernte lineare Schichten. Eine Falle ist, auf eine Richtung ohne Einheitslänge zu projizieren, ohne durch ihre quadrierte Norm zu teilen, was das Ergebnis falsch skaliert.",
+  "u": [
+   "Dimensionsreduktion mit PCA vor der Modellierung",
+   "Anpassung nach der Methode der kleinsten Quadrate in der linearen Regression",
+   "Zufallsprojektion zum Verkleinern hochdimensionaler Features"
+  ],
+  "x": "Ein Suchteam speichert 768-dimensionale Dokument-Embeddings, projiziert sie aber mit einer auf einer Stichprobe des Korpus angepassten PCA auf 128 Dimensionen. Die kleineren Vektoren senken den Speicherbedarf des Index erheblich, und der Recall wird vor dem Rollout auf einem gelabelten Query-Set geprüft."
+ },
+ "orthogonal": {
+  "n": "Orthogonalität",
+  "d": "Zwei Vektoren sind orthogonal, wenn ihr Skalarprodukt null ist; sie stehen dann im rechten Winkel zueinander und enthalten keine Komponente des jeweils anderen. Eine Menge paarweise orthogonaler Einheitsvektoren heißt orthonormal, und eine quadratische Matrix mit orthonormalen Spalten ist eine orthogonale Matrix: Sie dreht oder spiegelt Vektoren, ohne ihre Länge zu ändern, und ihre Inverse ist einfach ihre Transponierte.\n\nOrthogonalität taucht im Machine Learning überall auf. Die Hauptkomponenten in der PCA sind orthogonale Richtungen, sodass die transformierten Features unkorreliert sind. Die Residuen der Methode der kleinsten Quadrate sind orthogonal zu jeder Feature-Spalte. Orthogonale Initialisierung hält die Signalnormen in tiefen und rekurrenten Netzen stabil, und die QR-Zerlegung erzeugt Orthonormalbasen für stabile numerische Solver. In hochdimensionalen Räumen sind Zufallsvektoren nahezu orthogonal, weshalb unzusammenhängende Embeddings eine Kosinus-Ähnlichkeit nahe null haben. Häufig wird orthogonal mit unabhängig gleichgesetzt: Bei zentrierten Daten bedeutet Orthogonalität Korrelation null, was nichtlineare Abhängigkeit nicht ausschließt.",
+  "u": [
+   "Unkorrelierte Komponenten aus der PCA",
+   "Orthogonale Initialisierung rekurrenter Netzgewichte",
+   "Stabiles Lösen kleinster Quadrate per QR-Zerlegung"
+  ],
+  "x": "Ein Team, das ein tiefes rekurrentes Modell für Sensorsequenzen trainiert, initialisiert seine rekurrente Gewichtsmatrix als orthogonale Matrix. Weil sie Vektorlängen erhält, explodieren oder verschwinden Aktivierungen und Gradienten über lange Sequenzen nicht so schnell."
+ },
+ "eigen": {
+  "n": "Eigenwerte und Eigenvektoren",
+  "d": "Ein Eigenvektor einer quadratischen Matrix A ist ein von null verschiedener Vektor, dessen Richtung sich nicht ändert, wenn A auf ihn angewendet wird; er wird nur skaliert, und der Skalierungsfaktor ist sein Eigenwert λ. Es gilt also Av = λv: Entlang eines Eigenvektors wirkt die Matrix wie eine einfache Multiplikation mit einer Zahl.\n\nFür eine symmetrische Matrix wie eine Kovarianzmatrix sind die Eigenvektoren orthogonal und die Eigenwerte reell, sodass sich die Matrix als QΛQᵀ schreiben lässt. Genau das nutzt PCA: Die Eigenvektoren der Kovarianzmatrix sind die Hauptkomponenten, und die Eigenwerte sind die Varianzen entlang dieser Richtungen. Eigenwerte beschreiben auch die Trainingsdynamik: Der größte Eigenwert der Hesse-Matrix begrenzt die stabile Lernrate beim Gradientenabstieg, und Eigenwerte rekurrenter Gewichtsmatrizen über 1 führen zu explodierenden Signalen. Ein Irrtum ist, jede Matrix habe reelle Eigenwerte; nichtsymmetrische Matrizen wie Rotationen können komplexe haben.",
+  "u": [
+   "Hauptkomponenten aus der Kovarianzmatrix",
+   "Spektrales Clustering auf Graph-Laplace-Matrizen",
+   "Analyse von Krümmung und Stabilität im Training"
+  ],
+  "x": "Ein Betrugsanalyse-Team führt spektrales Clustering auf einem Graphen von Konten aus, die sich Geräte teilen. Die Eigenvektoren der Graph-Laplace-Matrix mit den kleinsten Eigenwerten trennen eng verbundene Kontogruppen, die als mögliche Betrugsringe an Ermittler weitergegeben werden."
+ },
+ "matrank": {
+  "n": "Rang einer Matrix",
+  "d": "Der Rang einer Matrix ist die Anzahl linear unabhängiger Zeilen, die stets gleich der Anzahl linear unabhängiger Spalten ist. Er zählt, wie viele wirklich verschiedene Richtungen die Matrix enthält; eine m×n-Matrix hat höchstens den Rang min(m, n) und hat vollen Rang, wenn sie diese Schranke erreicht.\n\nDer Rang spielt immer dann eine Rolle, wenn Features oder Parameter redundant sind. Ist eine Designmatrix rangdefizient, etwa wenn eine vollständige One-Hot-Kodierung neben einem Achsenabschnitt steht, hat die lineare Regression keine eindeutige Lösung; Regularisierung wie Ridge-Regression oder das Weglassen einer Spalte behebt das. Low-Rank-Struktur wird auch gezielt genutzt: abgeschnittene SVD, Matrixfaktorisierung und LoRA, das ein großes Modell feinabstimmt, indem es ein Gewichtsupdate mit kleinem Rang r lernt. Eine Falle ist, den Rang auf Gleitkommadaten exakt zu berechnen: Rauschen macht fast jede Matrix formal vollrangig, daher beurteilt man den numerischen Rang danach, wie viele Singulärwerte eine Toleranz überschreiten.",
+  "u": [
+   "Erkennen redundanter Features in der linearen Regression",
+   "Low-Rank-Matrixfaktorisierung für Empfehlungen",
+   "Low-Rank-Adapter wie LoRA für das Fine-Tuning"
+  ],
+  "x": "Ein Analyst erhält bei einer Preisregression instabile, riesige Koeffizienten und stellt fest, dass die Designmatrix rangdefizient ist, weil sich die per One-Hot-Encoding kodierten Regionsspalten zur Achsenabschnittsspalte aufsummieren. Das Weglassen einer Kategorie pro Feature stellt vollen Rang und stabile Schätzungen wieder her."
+ },
+ "covmatrix": {
+  "n": "Kovarianzmatrix",
+  "d": "Eine Kovarianzmatrix sammelt die Kovarianzen zwischen allen Variablenpaaren eines Datensatzes: Eintrag (i, j) ist die Kovarianz von Feature i mit Feature j, und auf der Diagonalen steht die Varianz jedes Features. Für d Features ist sie eine symmetrische d×d-Matrix, die stets positiv semidefinit ist.\n\nSie fasst die lineare Streuung und das gemeinsame Schwanken der Daten insgesamt zusammen. PCA nimmt ihre Eigenvektoren als Hauptkomponenten; die multivariate Normalverteilung, Gaußsche Mischmodelle und LDA werden durch sie parametrisiert; die Mahalanobis-Distanz nutzt ihre Inverse, um Abstände in Einheiten zu messen, die korrelierte Features berücksichtigen; Whitening transformiert Daten so, dass ihre Kovarianz zur Einheitsmatrix wird. Teilt man durch die Standardabweichungen, wird sie zur Korrelationsmatrix. Eine zentrale Falle ist die Schätzung mit wenigen Stichproben im Verhältnis zur Zahl der Features: Die Stichprobenkovarianz wird verrauscht oder singulär und lässt sich nicht invertieren, daher nutzt man stattdessen Shrinkage-Schätzer wie Ledoit-Wolf.",
+  "u": [
+   "Berechnung der Hauptkomponenten für PCA",
+   "Mahalanobis-Distanz für multivariate Anomalieerkennung",
+   "Schätzung des Portfoliorisikos aus Renditen von Anlagen"
+  ],
+  "x": "Ein Qualitätsteam in der Fertigung passt eine Kovarianzmatrix an Messwerte vieler korrelierter Sensoren im Normalbetrieb an. Neue Messwerte werden markiert, wenn ihre Mahalanobis-Distanz ungewöhnlich groß ist, und ein Ledoit-Wolf-Schätzer hält die Inverse trotz begrenzter Normaldaten stabil."
+ },
+ "derivative": {
+  "n": "Ableitung",
+  "d": "Die Ableitung einer Funktion an einer Stelle ist ihre momentane Änderungsrate: wie stark sich die Ausgabe pro Einheit Änderung der Eingabe verändert, bei einer infinitesimal kleinen Änderung. Geometrisch ist sie die Steigung der Tangente an die Kurve an dieser Stelle.\n\nAbleitungen sind der Weg, auf dem Modelle lernen. Das Training minimiert einen Loss, und die Ableitung des Loss nach einem Parameter sagt, in welche Richtung und wie steil sich der Loss ändert, wenn man diesen Parameter leicht verschiebt. Der Gradientenabstieg macht Schritte entgegen dieser Steigung. Backpropagation wendet die Kettenregel an, die Ableitungen verschachtelter Funktionen multipliziert, um Ableitungen durch jede Schicht eines neuronalen Netzes zu erhalten, und Frameworks berechnen sie per automatischer Differentiation statt mit symbolischen Formeln oder finiten Differenzen. Eine Falle ist die Annahme, jede im Training verwendete Funktion sei überall differenzierbar: ReLU und der Betrag haben bei null einen Knick, an dem Frameworks per Konvention einfach einen Subgradienten wählen.",
+  "u": [
+   "Berechnung von Loss-Steigungen für gradientenbasiertes Training",
+   "Kettenregel durch die Schichten bei der Backpropagation",
+   "Prüfen analytischer Gradienten mit finiten Differenzen"
+  ],
+  "x": "Ein Engineer, der einen eigenen Loss für ein Ranking-Modell schreibt, überprüft seine Implementierung, indem er die Ableitung aus PyTorchs Autograd mit einer Schätzung per finiten Differenzen auf zufälligen Eingaben vergleicht. Eine Abweichung deckt einen fehlenden Faktor in einer handgeschriebenen Backward-Funktion auf."
+ },
+ "partialderiv": {
+  "n": "Partielle Ableitung",
+  "d": "Eine partielle Ableitung misst, wie sich eine Funktion mehrerer Variablen ändert, wenn eine Eingabe variiert und alle anderen festgehalten werden. Für f(x, y) ist ∂f/∂x die Steigung in x-Richtung an einem Punkt, berechnet, indem man y als Konstante behandelt.\n\nDer Loss eines Modells hängt von vielen Parametern zugleich ab, oft Millionen oder Milliarden, und die partielle Ableitung nach jedem Parameter gibt an, wie der Loss auf die Änderung allein dieses Parameters reagiert. Fasst man alle partiellen Ableitungen zusammen, erhält man den Gradienten, dem Gradientenabstieg und Adam folgen; Backpropagation berechnet sie alle effizient in einem einzigen Backward Pass. Eine Falle ist, eine partielle Ableitung als Gesamteffekt einer Eingabe zu lesen: Sind Eingaben korreliert, verschiebt die Änderung der einen meist auch andere, sodass die Steigung bei Änderung nur einer Größe für die Interpretation irreführend sein kann.",
+  "u": [
+   "Loss-Steigungen pro Parameter beim Training von Netzen",
+   "Herleiten von Update-Regeln für lineare Modelle",
+   "Sensitivitätsanalyse von Modellausgaben bezüglich der Eingaben"
+  ],
+  "x": "Ein Pricing-Team berechnet die partielle Ableitung der Ausgabe eines Nachfragemodells nach dem Preis bei festgehaltenen übrigen Eingaben, um die lokale Preissensitivität pro Produkt zu schätzen. Es behandelt das Ergebnis mit Vorsicht, weil der Preis in den Trainingsdaten mit Aktionen korreliert ist."
+ },
+ "gradient": {
+  "n": "Gradient",
+  "d": "Der Gradient einer Funktion mehrerer Variablen ist der Vektor all ihrer partiellen Ableitungen. An jedem Punkt zeigt er in die Richtung, in der die Funktion am schnellsten wächst, und seine Länge ist die Rate dieses Anstiegs; eine Bewegung senkrecht zu ihm lässt die Funktion in erster Ordnung unverändert.\n\nEin Modell zu trainieren heißt, dem negativen Gradienten des Loss nach den Parametern zu folgen: Gradientenabstieg, SGD, Momentum und Adam nutzen ihn alle, und Backpropagation berechnet ihn für neuronale Netze effizient. Auch Gradienten nach den Eingaben sind nützlich, etwa für Saliency Maps, Adversarial Examples und Integrated Gradients. Praktische Probleme drehen sich um die Größe des Gradienten: Verschwindende Gradienten bringen das Lernen in tiefen Netzen zum Stillstand, explodierende lassen es divergieren, und Gradient Clipping, Normalisierungsschichten und Residualverbindungen wirken beidem entgegen. Eine Falle ist, in PyTorch zu vergessen, akkumulierte Gradienten zwischen Schritten zurückzusetzen, wodurch Gradienten stillschweigend über Batches hinweg aufsummiert werden.",
+  "u": [
+   "Parameter-Updates in Gradientenabstieg und Adam",
+   "Saliency Maps aus Gradienten nach den Eingaben",
+   "Überwachen von Gradientennormen für stabiles Training"
+  ],
+  "x": "Ein Team, das ein großes Modell feinabstimmt, protokolliert die Gradientennorm jeder Schicht. Als ein Lernraten-Warmup versehentlich entfernt wurde, zeigten die Logs in den ersten Schritten sprunghaft ansteigende Gradientennormen, was erklärte, warum der Loss divergiert war."
+ },
+ "jacobian": {
+  "n": "Jacobi-Matrix",
+  "d": "Die Jacobi-Matrix einer Funktion, die n Eingaben auf m Ausgaben abbildet, ist die m×n-Matrix aller partiellen Ableitungen erster Ordnung: Zeile i enthält den Gradienten der Ausgabe i. Sie ist die beste lineare Näherung der Funktion in der Nähe eines Punktes und beschreibt, wie eine kleine Änderung jeder Eingabe jede Ausgabe verschiebt.\n\nBackpropagation ist eine Kette von Jacobi-Produkten: Die Jacobi-Matrix jeder Schicht bildet Änderungen ihrer Eingabe auf Änderungen ihrer Ausgabe ab, und automatische Differentiation im Reverse Mode multipliziert vom Loss aus rückwärts einen Zeilenvektor mit diesen Jacobi-Matrizen, weshalb sie nie vollständige Jacobi-Matrizen explizit aufbauen muss. Ihre Determinante misst, wie die Funktion Volumen streckt, was Normalizing Flows für exakte Likelihoods nutzen. Ihre Norm bezüglich der Eingaben misst die Sensitivität. Eine Falle ist, für ein großes Netz die vollständige Jacobi-Matrix zu materialisieren: Ihre Größe ist Ausgaben mal Eingaben, daher nutzt man stattdessen Vektor-Jacobi- oder Jacobi-Vektor-Produkte.",
+  "u": [
+   "Automatische Differentiation im Reverse Mode im Deep Learning",
+   "Likelihoods per Variablenwechsel in Normalizing Flows",
+   "Messen der Eingabesensitivität für Robustheitsanalysen"
+  ],
+  "x": "Ein Forschungsteam, das einen Normalizing Flow zur Dichteschätzung baut, entwirft jede Schicht so, dass ihre Jacobi-Matrix dreieckig ist. Die Log-Determinante reduziert sich dann auf eine Summe über die Diagonale, was die exakte Berechnung der Likelihood auch für hochdimensionale Eingaben günstig hält."
+ },
+ "hessian": {
+  "n": "Hesse-Matrix",
+  "d": "Die Hesse-Matrix einer skalaren Funktion mehrerer Variablen ist die quadratische Matrix ihrer partiellen Ableitungen zweiter Ordnung. Eintrag (i, j) ist ∂²f/∂xᵢ∂xⱼ, und die Matrix beschreibt die Krümmung der Funktion: wie sich der Gradient selbst ändert, wenn man sich in jede Richtung bewegt.\n\nAn einem Punkt, an dem der Gradient null ist, klassifiziert die Hesse-Matrix diesen: Ausschließlich positive Eigenwerte bedeuten ein lokales Minimum, ausschließlich negative ein Maximum, gemischte Vorzeichen einen Sattelpunkt, wie er in Verlustlandschaften neuronaler Netze häufig vorkommt. Das Newton-Verfahren nutzt die inverse Hesse-Matrix für krümmungsbewusste Schritte, Quasi-Newton-Verfahren wie L-BFGS nähern sie an, und Solver für logistische Regression sowie das Boosting zweiter Ordnung in XGBoost nutzen sie direkt. Der größte Eigenwert begrenzt die stabile Lernrate beim Gradientenabstieg. Die Falle ist die Größe: Bei d Parametern hat sie d² Einträge, daher verwendet man für tiefe Netze Hesse-Vektor-Produkte statt der vollständigen Matrix.",
+  "u": [
+   "Newton- und L-BFGS-Optimierung konvexer Modelle",
+   "Gradient Boosting zweiter Ordnung in XGBoost",
+   "Analyse von Krümmung und Schärfe der Verlustlandschaft"
+  ],
+  "x": "Ein Team, das eine logistische Regression auf einigen hundert Features trainiert, nutzt einen Newton-artigen Solver, der in jedem Schritt die Hesse-Matrix aufbaut. Er konvergiert in wenigen Iterationen, was wichtig ist, weil das Modell stündlich auf frischen Daten neu trainiert wird."
+ },
+ "logsumexp": {
+  "n": "Log-Sum-Exp und numerische Stabilität",
+  "d": "Log-Sum-Exp berechnet log(Σ exp(xᵢ)) so, dass Überlauf und Unterlauf vermieden werden, indem zuerst der Maximalwert abgezogen wird, gemäß der Identität log Σ exp(xᵢ) = m + log Σ exp(xᵢ − m). Numerische Stabilität bedeutet allgemein, eine Berechnung so anzuordnen, dass der begrenzte Wertebereich und die begrenzte Genauigkeit von Gleitkommazahlen das Ergebnis nicht verfälschen.\n\nDer Trick ist im Machine Learning allgegenwärtig. Softmax zieht vor dem Exponenzieren den maximalen Logit ab; der Kreuzentropieverlust wird aus Logits über Log-Softmax berechnet statt durch den Logarithmus von Softmax-Wahrscheinlichkeiten; Gaußsche Mischmodelle und HMMs kombinieren Wahrscheinlichkeiten im Log-Raum. Verwandte Gewohnheiten sind, Log-Likelihoods zu summieren, statt kleine Wahrscheinlichkeiten zu multiplizieren, und Loss Scaling beim Mixed-Precision-Training. Ein häufiger Fehler ist, Softmax und danach log anzuwenden oder eine Sigmoid-Funktion gefolgt von binärer Kreuzentropie, statt der fusionierten Funktionen: Bei großen Logits ergibt das log(0) und NaN-Losses.",
+  "u": [
+   "Stabiles Softmax und Kreuzentropie aus Logits",
+   "Summieren von Wahrscheinlichkeiten im Log-Raum für Mischmodelle",
+   "Vermeiden von NaN-Losses beim Mixed-Precision-Training"
+  ],
+  "x": "Ein Team beobachtet beim Training eines Klassifikators in float16 gelegentlich NaN-Losses. Ursache ist ein manueller Logarithmus von Softmax-Ausgaben, die auf null unterlaufen; der Wechsel zur fusionierten Kreuzentropie des Frameworks auf rohen Logits beseitigt die NaNs."
+ },
+ "nonlinearity": {
+  "n": "Linearität vs. Nichtlinearität",
+  "d": "Eine Funktion ist linear, wenn eine Skalierung der Eingabe die Ausgabe um denselben Faktor skaliert und die Ausgabe für eine Summe von Eingaben der Summe der Ausgaben entspricht; praktisch heißt das, die Ausgaben sind gewichtete Summen der Eingaben, gegebenenfalls plus eine Konstante. Eine nichtlineare Funktion verletzt diese Regeln, etwa bei Quadraten, Schwellenwerten, Produkten von Features oder einer ReLU.\n\nDie Unterscheidung entscheidet, was ein Modell abbilden kann. Lineare und logistische Regression erzeugen lineare Entscheidungsfunktionen und können daher XOR-artige Muster oder Interaktionen nicht erfassen, sofern keine nichtlinearen Features hinzugefügt werden. Übereinandergestapelte lineare Schichten in einem neuronalen Netz ergeben immer noch eine einzige lineare Abbildung, weshalb Aktivierungsfunktionen wie ReLU, GELU oder Sigmoid zwischen die Schichten gesetzt werden; mit ihnen kann ein Netz jede stetige Funktion approximieren. Ein Irrtum ist, die logistische Regression sei wegen ihrer Sigmoid-Funktion nichtlinear: Ihre Entscheidungsgrenze ist im Feature-Raum dennoch eine gerade Hyperebene.",
+  "u": [
+   "Aktivierungsfunktionen zwischen Schichten neuronaler Netze",
+   "Polynom- und Spline-Features für lineare Modelle",
+   "Kernel-Methoden für gekrümmte Entscheidungsgrenzen"
+  ],
+  "x": "Ein Analytics-Team stellt fest, dass seine logistische Regression für Kreditzusagen ein Muster übersieht, bei dem das Risiko nur steigt, wenn sowohl Verschuldung als auch Kreditauslastung hoch sind. Ein Gradient-Boosted-Tree-Modell erfasst diese nichtlineare Interaktion ohne manuelles Feature Engineering."
+ },
+ "highdim": {
+  "n": "Hochdimensionaler Raum",
+  "d": "Ein hochdimensionaler Raum ist ein Vektorraum mit vielen Koordinaten, von Dutzenden bis zu vielen Tausenden, etwa ein 768-dimensionales Satz-Embedding oder ein TF-IDF-Vektor über ein großes Vokabular. Die Geometrie verhält sich dort ganz anders als in den zwei oder drei Dimensionen, die sich Menschen vorstellen können.\n\nDas Volumen einer Kugel konzentriert sich nahe ihrer Oberfläche, Zufallsvektoren sind nahezu orthogonal, und die Distanzen zwischen zufälligen Punkten werden fast gleich, sodass das Verhältnis zwischen nächstem und entferntestem Nachbarn gegen eins geht. Das ist der Fluch der Dimensionalität: Distanzbasierte Methoden wie k-Nächste-Nachbarn und k-Means verlieren an Kontrast, und die Datenmenge, die zur Abdeckung des Raums nötig ist, wächst exponentiell. Reale Daten liegen meist nahe einer viel niedrigerdimensionalen Mannigfaltigkeit, weshalb PCA, UMAP und gelernte Embeddings funktionieren und approximative Nächste-Nachbarn-Suche auf Embeddings nützlich bleibt. Ein Irrtum ist, mehr Features würden immer helfen; irrelevante Dimensionen fügen den Distanzen Rauschen hinzu und begünstigen Overfitting.",
+  "u": [
+   "Vektorsuche in dichten Embedding-Räumen",
+   "Dimensionsreduktion vor Clustering oder k-NN",
+   "Regularisierung von Modellen mit vielen Features und wenigen Stichproben"
+  ],
+  "x": "Ein Genomik-Team mit Zehntausenden Genexpressions-Features pro Patient und nur einigen hundert Patienten wendet vor dem Clustering PCA an. Ohne Reduktion wurden die Distanzen in k-Means von Rauschgenen dominiert und lieferten instabile Cluster."
+ }
+}
