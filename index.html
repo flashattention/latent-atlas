@@ -88,7 +88,7 @@ html[dir="rtl"] .langmenu { right: auto; left: 0; }
 .langmenu .code { margin-inline-start: auto; font-size: 12px; color: var(--ink-3); }
 
 /* shell */
-.shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: 0 56px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); max-width: 1480px; margin: 0 auto; }
+.shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: 0 56px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
 @media (min-width: 901px) {
   :root[data-rail="off"] .shell { grid-template-columns: 40px minmax(0, 1fr); gap: 0 24px; }
   :root[data-rail="off"] .rail h2, :root[data-rail="off"] .rail ol { display: none; }
@@ -98,7 +98,7 @@ html[dir="rtl"] .langmenu { right: auto; left: 0; }
 .railtog { width: 40px; height: 36px; margin-block: -6px; border-radius: 8px; display: grid; place-items: center; font-size: 34px; line-height: 1; color: var(--ink-3); }
 .railtog:hover { background: var(--paper-2); color: var(--ink); }
 html[dir="rtl"] .railtog { transform: scaleX(-1); }
-.rail { position: sticky; top: calc(60px + env(safe-area-inset-top, 0px)); align-self: start; height: calc(100vh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; padding-block: 28px 40px; scrollbar-width: thin; }
+.rail { position: sticky; top: calc(60px + env(safe-area-inset-top, 0px)); align-self: start; height: calc(100vh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; padding-block: 28px 40px; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
 .rail h2 { font: 500 13px var(--sans); color: var(--ink-3); }
 .rail ol { list-style: none; margin: 0; padding: 0; }
 .rail > ol > li { border-top: 1px solid var(--rule); }
@@ -113,7 +113,7 @@ html[dir="rtl"] .sub { padding: 0 32px 10px 0; }
 .sub a[aria-current="page"] { color: var(--ink); font-weight: 500; }
 .sub a[aria-current="page"]::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--acc); margin-inline-end: 7px; vertical-align: 2px; }
 
-main { min-width: 0; padding-block: 24px 80px; }
+main { min-width: 0; width: 100%; max-width: 1124px; justify-self: center; padding-block: 24px 80px; }
 
 /* stage */
 .stagewrap { position: relative; }
