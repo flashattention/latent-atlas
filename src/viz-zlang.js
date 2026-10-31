@@ -322,33 +322,41 @@
     return [{ c: 'acc', t: 'Aligned outputs' }, { c: 'ink', t: 'Base model outputs' }];
   };
 
-  /* MDP: states, actions, stochastic transitions with probabilities and rewards */
+  /* MDP: states, actions, stochastic transitions with probabilities and rewards (vertical plane, actions in front) */
   B.mdp = (g) => {
-    const S = { s0: [-4.4, 0, 0.4], s1: [1.0, 0, -1.8], s2: [0.4, 0, 2.6], s3: [4.0, 0, 0.6] };
-    const name = { s0: 's₀', s1: 's₁', s2: 's₂', s3: 's₃' };
+    const R = 0.62, za = 1.0;
+    const S = { s0: [-4.2, 1.6, 0], s1: [3.4, 3.4, 0], s2: [3.4, -0.2, 0] };
+    const name = { s0: 's₀', s1: 's₁', s2: 's₂' };
+    const circ = (c, r, n = 56) => { const P = []; for (let i = 0; i <= n; i++) { const a = 2 * Math.PI * i / n; P.push([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r, c[2]]); } return P; };
     Object.keys(S).forEach((k) => {
-      g.add(K.line(ring(S[k], 0.45), { w: 1.6 }));
-      lab(g, name[k], [S[k][0], 0.05, S[k][2]], { size: 0.36 });
+      g.add(K.line(circ(S[k], R), { w: 2.2 }));
+      lab(g, name[k], S[k], { size: 0.56 });
     });
-    const A = [-2.0, 0, 0.4];
-    g.add(K.arrow([-3.9, 0, 0.4], [-2.2, 0, 0.4], { c: 'acc', w: 2 }));
-    g.add(K.dots([A], { r: 0.16, c: 'acc' }));
-    lab(g, 'a', [A[0] - 0.2, 0.45, A[2] - 0.45], { size: 0.38, c: 'acc' });
-    const tr = (to, h, pr, rw, lo) => {
-      const b = S[to], d = [b[0] - A[0], b[2] - A[2]], L = Math.hypot(...d), e = [b[0] - 0.5 * d[0] / L, 0, b[2] - 0.5 * d[1] / L];
-      g.add(K.arc(A, e, h, { c: 'acc', w: 1.8 }));
-      g.add(K.arrow([e[0] - 0.25 * d[0] / L, 0.08, e[2] - 0.25 * d[1] / L], e, { c: 'acc', w: 1.8, head: 0.22 }));
-      const m = [(A[0] + e[0]) / 2 + lo[0], h * 0.5 + lo[1], (A[2] + e[2]) / 2 + lo[2]];
-      lab(g, pr, m, { size: 0.3, mono: true, c: 'acc' });
-      if (rw) lab(g, rw, [b[0] + 1.25, 0.1, b[2]], { size: 0.32, mono: true });
+    const A1 = [-0.8, 2.6, za], A2 = [-0.8, 0.2, za];
+    const edge = (a, b, rr, o) => { // arrow from a to the rim of a circle/dot at b
+      const v = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...v), u = v.map((q) => q / L);
+      const s0 = o.r0 || 0;
+      g.add(K.arrow(a.map((q, i) => q + u[i] * s0), b.map((q, i) => q - u[i] * rr), Object.assign({ head: 0.3 }, o)));
     };
-    tr('s1', 1.3, '0.8', 'r=+1', [0.3, 0.45, 0]);
-    tr('s2', 1.0, '0.2', 'r=0', [-0.7, 0.1, 0.2]);
-    // other transitions faint
-    g.add(K.arc([1.4, 0, -1.6], [3.6, 0, 0.35], 0.7, { o: 0.3, w: 1 }));
-    g.add(K.arc([0.85, 0, 2.4], [3.6, 0, 0.85], 0.7, { o: 0.3, w: 1 }));
-    g.add(K.arc([0.5, 0, 2.15], [0.95, 0, -1.35], 0.9, { o: 0.3, w: 1 }));
-    floorGrid(g, -5.2, 5.2, -2.6, 3.4, 1, -0.01, 0.12);
+    // actions available in s₀
+    edge(S.s0, A1, 0.22, { c: 'acc', w: 2.4, r0: R });
+    edge(S.s0, A2, 0.22, { w: 1.4, o: 0.35, r0: R });
+    g.add(K.dots([A1], { r: 0.22, c: 'acc' }));
+    g.add(K.dots([A2], { r: 0.18, o: 0.35 }));
+    lab(g, 'a₁', [A1[0], A1[1] + 0.6, za], { size: 0.5, c: 'acc' });
+    lab(g, 'a₂', [A2[0], A2[1] - 0.6, za], { size: 0.46, o: 0.45 });
+    // stochastic outcomes of a₁ with probabilities
+    edge(A1, S.s1, R, { c: 'acc', w: 2.4, r0: 0.22 });
+    edge(A1, S.s2, R, { c: 'acc', w: 1.6, r0: 0.22 });
+    lab(g, 'p=0.8', [1.15, 3.55, 0.6], { size: 0.42, mono: true, c: 'acc' });
+    lab(g, 'p=0.2', [1.55, 0.95, 0.6], { size: 0.42, mono: true, c: 'acc' });
+    // a₂ leads to s₂ deterministically
+    edge(A2, S.s2, R, { w: 1.4, o: 0.35, r0: 0.18 });
+    lab(g, '1.0', [1.2, -0.45, 0.6], { size: 0.38, mono: true, o: 0.45 });
+    // rewards next to the states they reach
+    lab(g, 'r=+1', [S.s1[0] + 1.55, S.s1[1], 0], { size: 0.46, mono: true });
+    lab(g, 'r=0', [S.s2[0] + 1.45, S.s2[1], 0], { size: 0.46, mono: true });
+    g.rotation.y = 0.45;
     return [{ c: 'acc', t: 'Action and transitions' }, { c: 'ink', t: 'States' }];
   };
 

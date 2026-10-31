@@ -134,57 +134,61 @@
     const g = G(), kind = p.kind || 'w2v', r = K.rng(31);
     let legend;
     if (kind === 'w2v') {
-      g.add(K.frame({ s: 3.5, y: 0, n: 7, h: 4.2 }));
-      const O = [-3.5, 0, -3.5];
-      const man = [-1.6, 1.2, 0.4], gender = [1.25, 0.25, 2.1], royal = [2.7, 2.4, -1.4];
+      g.rotation.y = 0.35;
+      g.add(K.frame({ s: 2.8, y: 0, n: 6, h: 3.6 }));
+      // parallelogram laid out roughly facing the default camera
+      const man = [-2.0, 0.7, 0.8], gender = [3.6, 0.15, -0.7], royal = [0.25, 2.7, -0.4];
       const woman = add3(man, gender), king = add3(man, royal), queen = add3(king, gender);
-      const pred = add3(queen, [0.22, -0.18, 0.15]);
-      // faint cloud of other words
+      const pred = add3(queen, [0.22, -0.2, 0.18]);
       const cloud = [];
-      for (let i = 0; i < 40; i++) cloud.push([r.range(-3, 3), r.range(0.3, 4.2), r.range(-3, 3)]);
-      g.add(K.dots(cloud, { r: 0.045, o: 0.22 }));
-      [man, woman, king, queen].forEach((v) => arr(g, O, v, { o: 0.28, w: 1, head: 0.18 }));
-      g.add(K.dots([man, woman, king, queen], { r: 0.1 }));
-      // parallelogram
-      g.add(K.line([man, king], { o: 0.4, w: 1, dash: true }));
-      g.add(K.line([woman, queen], { o: 0.4, w: 1, dash: true }));
-      arr(g, man, woman, { c: 'acc', o: 1, w: 2.4, head: 0.3 });
-      arr(g, king, pred, { c: 'acc', o: 1, w: 2.4, head: 0.3 });
-      g.add(K.dots([pred], { r: 0.16, c: 'acc', hollow: true }));
-      lab(g, 'man', add3(man, [-0.45, -0.3, 0]));
-      lab(g, 'woman', add3(woman, [0.1, -0.38, 0.2]));
-      lab(g, 'king', add3(king, [-0.5, 0.3, 0]));
-      lab(g, 'queen', add3(queen, [0.15, 0.42, 0]));
-      lab(g, 'king − man + woman ≈ queen', [0.2, 5.2, 0], { size: 0.34, c: 'acc' });
+      for (let i = 0; i < 34; i++) cloud.push([r.range(-2.7, 2.7), r.range(0.3, 4.0), r.range(-2.7, 2.7)]);
+      g.add(K.dots(cloud, { r: 0.04, o: 0.18 }));
+      // faint drops to the floor anchor the points in 3D
+      g.add(K.segs([man, woman, king, queen].map((v) => [v, [v[0], 0, v[2]]]), { o: 0.12 }));
+      g.add(K.dots([man, woman, king, queen], { r: 0.13 }));
+      // parallel sides: the same offset
+      g.add(K.line([man, king], { o: 0.4, w: 1.2, dash: true }));
+      g.add(K.line([woman, queen], { o: 0.4, w: 1.2, dash: true }));
+      arr(g, man, woman, { c: 'acc', o: 1, w: 2.6, head: 0.34 });
+      arr(g, king, pred, { c: 'acc', o: 1, w: 2.6, head: 0.34 });
+      g.add(K.dots([pred], { r: 0.24, c: 'acc', hollow: true }));
+      lab(g, 'man', add3(man, [-0.55, -0.42, 0]), { size: 0.55 });
+      lab(g, 'woman', add3(woman, [0.35, -0.45, 0]), { size: 0.55 });
+      lab(g, 'king', add3(king, [-0.6, 0.4, 0]), { size: 0.55 });
+      lab(g, 'queen', add3(queen, [0.5, 0.5, 0]), { size: 0.55 });
+      lab(g, 'king − man + woman ≈ queen', [0.2, 4.6, 0], { size: 0.5, c: 'acc' });
       legend = [{ c: 'acc', t: 'Analogy offset' }, { c: 'ink', t: 'Word vectors' }];
     } else if (kind === 'clip') {
-      const R = 2.6;
-      wsphere(g, R, { o: 0.07 });
-      const cam = K.V(1, 0.62, 1.25).normalize();
-      const dirs = [];
-      for (let i = 0; i < 6; i++) {
-        const v = K.V(cam.x + r.range(-0.9, 0.9), cam.y + r.range(-0.8, 0.8), cam.z + r.range(-0.9, 0.9)).normalize();
-        dirs.push(v);
-      }
+      const D = K.V(1, 0.62, 1.25).normalize(), Rt = K.V(1.25, 0, -1).normalize(), Up = D.clone().cross(Rt).normalize();
+      const R = 2.4, C = K.V(-1.2, 0, 0.6);
+      const sph = G(); sph.position.copy(C); g.add(sph);
+      wsphere(sph, R, { o: 0.08 });
+      const ab = [[-0.62, 0.42], [0.55, 0.5], [-0.45, -0.5], [0.5, -0.42]];
       const img = [], txt = [];
-      dirs.forEach((d) => {
-        const j = () => K.V(r.range(-0.22, 0.22), r.range(-0.22, 0.22), r.range(-0.22, 0.22));
-        img.push(d.clone().add(j()).normalize().multiplyScalar(R));
-        txt.push(d.clone().add(j()).normalize().multiplyScalar(R));
+      ab.forEach(([a, b]) => {
+        const d = D.clone().multiplyScalar(0.75).add(Rt.clone().multiplyScalar(a)).add(Up.clone().multiplyScalar(b)).normalize();
+        const t = Rt.clone().multiplyScalar(0.7).add(Up.clone().multiplyScalar(0.3)).normalize().multiplyScalar(0.2);
+        img.push(d.clone().sub(t).normalize().multiplyScalar(R).add(C));
+        txt.push(d.clone().add(t).normalize().multiplyScalar(R).add(C));
       });
-      img.forEach((v) => g.add(K.box(v.x, v.y, v.z, 0.2, 0.2, 0.2, { fill: 0.7, fc: 'b', c: 'b' })));
-      g.add(K.dots(txt, { r: 0.12 }));
-      img.forEach((v, i) => g.add(K.line([v, txt[i]], { c: 'acc', w: 2.4 })));
-      // similarity matrix
-      const n = 6, cs = 0.42, mx = 5.2, my = 0.2, mz = -1.2;
+      img.forEach((v, i) => {
+        g.add(K.line([v, txt[i]], { c: 'acc', w: 2.8 }));
+        g.add(K.box(v.x, v.y, v.z, 0.3, 0.3, 0.3, { fill: 0.75, fc: 'b', c: 'b' }));
+      });
+      g.add(K.dots(txt, { r: 0.17 }));
+      lab(g, 'I₁', img[0].clone().add(Rt.clone().multiplyScalar(-0.45)), { size: 0.42, c: 'b' });
+      lab(g, 'T₁', txt[0].clone().add(Rt.clone().multiplyScalar(0.45)).add(Up.clone().multiplyScalar(0.2)), { size: 0.42 });
+      // I x T similarity matrix, turned to face the viewer
+      const M = G(); M.position.set(3.6, 0.1, -1.4); M.rotation.y = Math.atan2(1, 1.25); g.add(M);
+      const n = 4, cs = 0.66;
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-        const x = mx + (j - 2.5) * cs, y = my + (2.5 - i) * cs;
-        const on = i === j;
-        g.add(K.rect(x, y, mz, cs * 0.9, cs * 0.9, 'xy', on ? { fill: 0.75, fc: 'acc', c: 'acc', o: 0.9 } : { fill: r.range(0.02, 0.12), o: 0.18 }));
+        const x = (j - 1.5) * cs, y = (1.5 - i) * cs;
+        M.add(K.rect(x, y, 0, cs * 0.9, cs * 0.9, 'xy', i === j ? { fill: 0.75, fc: 'acc', c: 'acc', o: 0.9 } : { fill: r.range(0.03, 0.12), o: 0.2 }));
       }
-      lab(g, 'I', [mx - 3.4 * cs, my, mz], { size: 0.4, c: 'b' });
-      lab(g, 'T', [mx, my + 3.5 * cs, mz], { size: 0.4 });
-      lab(g, 'I·T', [mx + 3.6 * cs, my - 3.3 * cs, mz], { size: 0.32, o: 0.6 });
+      for (let i = 0; i < n; i++) {
+        M.add(K.label('I' + ['₁', '₂', '₃', '₄'][i], [-2.55 * cs, (1.5 - i) * cs, 0], { size: 0.36, c: 'b' }));
+        M.add(K.label('T' + ['₁', '₂', '₃', '₄'][i], [(i - 1.5) * cs, 2.45 * cs, 0], { size: 0.36 }));
+      }
       legend = [{ c: 'acc', t: 'Matching pairs' }, { c: 'b', t: 'Image embeddings' }, { c: 'ink', t: 'Text embeddings' }];
     } else if (kind === 'contrastive') {
       const R = 2.8;
@@ -264,27 +268,35 @@
       g.add(K.dots(hits.map((i) => [P[i][0], 0, P[i][1]]), { r: 0.12, c: 'acc' }));
       legend = [{ c: 'acc', t: 'Search path & hits' }, { c: 'ink', t: 'Layered graph' }];
     } else { // sem
-      g.add(K.frame({ s: 3.2, y: -0.3, n: 6, axes: false }));
-      const cents = [K.V(0.9, 0.55, 0.25), K.V(-0.2, 0.75, 0.95), K.V(0.6, 0.2, -0.9)];
-      const pts = [];
-      cents.forEach((c, ci) => {
-        const d = c.clone().normalize();
-        for (let i = 0; i < 11; i++) pts.push(d.clone().add(K.V(r.n() * 0.09, r.n() * 0.09, r.n() * 0.09)).normalize().multiplyScalar(3.0 + r.n() * 0.12));
-        g.add(K.dots([d.clone().multiplyScalar(3.0)], { r: 0.42, hollow: true, o: 0.25 }));
+      const D = K.V(1, 0.62, 1.25).normalize(), Rt = K.V(1.25, 0, -1).normalize(), Up = D.clone().cross(Rt).normalize();
+      const O = K.V(0, -1.6, 0), R = 3.4;
+      const at = (deg, rad, dz) => { const a = deg * Math.PI / 180; return O.clone().add(Rt.clone().multiplyScalar(Math.cos(a) * rad)).add(Up.clone().multiplyScalar(Math.sin(a) * rad)).add(D.clone().multiplyScalar(dz || 0)); };
+      // faint unit arc: embeddings are normalised, only direction matters
+      const arcP = []; for (let k = 0; k <= 48; k++) arcP.push(at(180 * k / 48, R));
+      g.add(K.line(arcP, { o: 0.15, w: 1 }));
+      g.add(K.line([at(180, R + 0.3), at(0, R + 0.3)], { o: 0.15, w: 1 }));
+      const cl = [158, 88, 18], pts = [];
+      cl.forEach((c, ci) => {
+        const offs = ci === 1 ? [-17, -13, 13, 18, -21, 22] : [-14, -9, -4, 4, 9, 14, -11, 11];
+        offs.forEach((o) => pts.push(at(c + o + r.n() * 1.5, R + r.n() * 0.3, r.n() * 0.5)));
       });
-      g.add(K.dots(pts, { r: 0.075, o: 0.8 }));
-      const O = K.V(0, -0.3, 0);
-      const a = pts[1], b = pts[6], c = pts[13];
-      g.add(K.dots([O], { r: 0.08 }));
-      arr(g, O, a, { c: 'acc', o: 1, w: 2.2 });
-      arr(g, O, b, { c: 'acc', o: 1, w: 2.2 });
-      arr(g, O, c, { o: 0.5, w: 1.2 });
-      const arcA = slerpArc(a.clone().sub(O), b.clone().sub(O), 1.5, 20).map((v) => v.add(O));
-      g.add(K.line(arcA, { c: 'acc', w: 2 }));
-      const arcB = slerpArc(a.clone().sub(O), c.clone().sub(O), 1.0, 30).map((v) => v.add(O));
-      g.add(K.line(arcB, { o: 0.45, w: 1, dash: true }));
-      lab(g, 'cos θ ≈ 0.95', arcA[10].clone().add(K.V(0.9, 0.35, 0.2)), { size: 0.34, c: 'acc' });
-      lab(g, 'cos θ ≈ 0.1', arcB[15].clone().add(K.V(-0.2, -0.5, 0.1)), { size: 0.3, o: 0.6 });
+      g.add(K.dots(pts, { r: 0.09, o: 0.7 }));
+      g.add(K.dots([O], { r: 0.09 }));
+      const q = at(88, R), n1 = at(80, R - 0.1, 0.25), n2 = at(96, R + 0.1, -0.25), far = at(18, R);
+      arr(g, O, q, { c: 'acc', o: 1, w: 2.6, head: 0.3 });
+      g.add(K.line([O, n1], { c: 'acc', o: 0.6, w: 1.2 }));
+      g.add(K.line([O, n2], { c: 'acc', o: 0.6, w: 1.2 }));
+      g.add(K.line([O, far], { o: 0.5, w: 1.2, dash: true }));
+      g.add(K.dots([q], { r: 0.2, c: 'acc' }));
+      g.add(K.dots([n1, n2], { r: 0.14, c: 'acc' }));
+      g.add(K.dots([far], { r: 0.13 }));
+      const a1 = []; for (let k = 0; k <= 12; k++) a1.push(at(80 + 16 * k / 12, 2.4));
+      g.add(K.line(a1, { c: 'acc', w: 2 }));
+      const a2 = []; for (let k = 0; k <= 30; k++) a2.push(at(18 + 70 * k / 30, 1.3));
+      g.add(K.line(a2, { o: 0.5, w: 1.2, dash: true }));
+      lab(g, 'q', at(88, R + 0.55), { size: 0.5, c: 'acc' });
+      lab(g, 'cos ≈ 0.99', at(100, 2.4).add(Rt.clone().multiplyScalar(-1.05)), { size: 0.42, c: 'acc' });
+      lab(g, 'cos ≈ 0.3', at(45, 1.3).add(Rt.clone().multiplyScalar(0.95)).add(Up.clone().multiplyScalar(-0.1)), { size: 0.38, o: 0.65 });
       legend = [{ c: 'acc', t: 'High cosine similarity' }, { c: 'ink', t: 'Sentence embeddings' }];
     }
     return { g, legend };
@@ -441,25 +453,32 @@
       };
       legend = [{ c: 'acc', t: 'Vector field paths' }, { c: 'ink', t: 'Noise and data samples' }];
     } else { // dlm
-      const words = ['the', 'cat', 'sat', 'on', 'the', 'warm', 'mat', '.'];
-      const step = [3, 1, 2, 2, 3, 3, 1, 2]; // step at which each is revealed (1..3)
-      const n = words.length, w = 0.82, sp = 0.98;
+      g.rotation.y = 0.45;
+      const words = ['the', 'cat', 'sat', 'on', 'mat'];
+      const step = [2, 1, 3, 2, 1]; // denoising step at which each position is revealed
+      const n = words.length, w = 0.95, sp = 1.15, X = (i) => (i - (n - 1) / 2) * sp;
+      const Y = (s) => s * 1.25, Z = (s) => -s * 0.7;
       for (let s = 0; s <= 3; s++) {
-        const y = s * 1.15, z = -s * 0.55;
+        const y = Y(s), z = Z(s);
+        g.add(K.rect(0, y - 0.4, z, n * sp + 0.3, 1.0, 'xz', { o: 0.12, w: 1 }));
         for (let i = 0; i < n; i++) {
-          const x = (i - (n - 1) / 2) * sp;
-          if (step[i] > s) {
-            g.add(K.box(x, y, z, w, 0.55, 0.55, { fill: 0.02, o: 0.28 }));
-            g.add(K.dots([[x, y, z + 0.28]], { r: 0.05, o: 0.35 }));
-          } else if (step[i] === s) {
-            g.add(K.box(x, y, z, w, 0.55, 0.55, { fill: 0.55, fc: 'acc', c: 'acc' }));
-            lab(g, words[i], [x, y + 0.55, z], { size: 0.32, mono: true, c: 'acc' });
-          } else g.add(K.box(x, y, z, w, 0.55, 0.55, { fill: 0.12, o: 0.6 }));
+          const x = X(i);
+          if (step[i] > s) { // still masked
+            g.add(K.box(x, y, z, w, 0.55, 0.45, { fill: 0.02, o: 0.3 }));
+            g.add(K.dots([[x, y, z + 0.23]], { r: 0.05, o: 0.4 }));
+          } else if (step[i] === s) { // revealed in parallel at this step
+            g.add(K.box(x, y, z, w, 0.55, 0.45, { fill: 0.4, fc: 'acc', c: 'acc' }));
+            lab(g, words[i], [x, y, z + 0.25], { size: 0.36, mono: true, c: 'acc' });
+            g.add(K.line([[x, Y(s - 1) + 0.3, Z(s - 1)], [x, y - 0.3, z]], { c: 'acc', o: 0.7, w: 1.4 }));
+          } else {
+            g.add(K.box(x, y, z, w, 0.55, 0.45, { fill: 0.06, o: 0.55 }));
+            lab(g, words[i], [x, y, z + 0.25], { size: 0.36, mono: true, o: 0.75 });
+          }
         }
       }
-      lab(g, '[M]', [(-(n - 1) / 2) * sp - 1.0, 0, 0], { size: 0.32, mono: true, o: 0.55 });
-      g.add(K.arrow([(n - 1) / 2 * sp + 0.8, 0, 0], [(n - 1) / 2 * sp + 0.8, 3 * 1.15, -3 * 0.55], { o: 0.4, w: 1, head: 0.2 }));
-      lab(g, 't', [(n - 1) / 2 * sp + 1.15, 1.8, -0.9], { size: 0.38, o: 0.6 });
+      lab(g, '[M]', [X(0) - 1.05, Y(0), Z(0)], { size: 0.34, mono: true, o: 0.6 });
+      const ax = X(n - 1) + 0.95;
+      g.add(K.arrow([ax, Y(0), Z(0)], [ax, Y(3), Z(3)], { o: 0.4, w: 1, head: 0.22 }));
       legend = [{ c: 'acc', t: 'Newly unmasked tokens' }, { c: 'ink', t: 'Masked tokens' }];
     }
     return { g, legend, tick };
@@ -474,27 +493,61 @@
     let legend;
     const cw = 0.24; // width per character
     if (kind === 'split') {
-      const toks = [['un', 1, 403], ['believ', 1, 12387], ['able', 1, 540], ['▁token', 0, 11241], ['s', 0, 82]];
-      const widths = toks.map((t) => Math.max(0.6, t[0].length * cw + 0.3));
-      const gap = 0.18, total = widths.reduce((a, b) => a + b, 0) + gap * (toks.length - 1);
+      g.rotation.y = 0.45;
+      // pieces: [text, raw chars, id, word index]
+      const toks = [['un', 2, 403, 0], ['believ', 6, 12387, 0], ['able', 4, 540, 0], ['▁token', 6, 11241, 1], ['s', 1, 82, 1]];
+      const widths = toks.map((t) => Math.max(0.8, t[0].length * 0.2 + 0.4));
+      const gaps = [0.3, 0.3, 0.85, 0.3];
+      const total = widths.reduce((a, b) => a + b, 0) + gaps.reduce((a, b) => a + b, 0);
       // raw text
-      g.add(K.box(0, 2.3, -0.8, total, 0.6, 0.12, { fill: 0.04, o: 0.4 }));
-      lab(g, 'unbelievable tokens', [0, 2.3, -0.72], { size: 0.36, mono: true });
-      let x = -total / 2;
+      const chW = 0.19, nch = 19, tw = nch * chW + 0.5, yT = 2.7;
+      g.add(K.rect(0, yT, 0, tw, 0.7, 'xy', { fill: 0.04, o: 0.45 }));
+      lab(g, 'unbelievable tokens', [0, yT, 0.02], { size: 0.42, mono: true });
+      let x = -total / 2, ch = 0;
       toks.forEach((t, i) => {
         const w = widths[i], cx = x + w / 2;
-        tok(g, cx, 0.8, 0, w, t[0], { c: t[1] ? 'acc' : undefined, mono: true, size: 0.32, fill: t[1] ? 0.35 : 0.07, lc: t[1] ? 'acc' : undefined });
-        g.add(K.line([[cx, 2.0, -0.75], [cx, 1.1, -0.1]], { o: 0.22, w: 1 }));
-        g.add(K.line([[cx, 0.5, 0.1], [cx, -0.35, 0.6]], { o: 0.22, w: 1 }));
-        lab(g, String(t[2]), [cx, -0.6, 0.65], { size: 0.28, mono: true, o: 0.6 });
-        x += w + gap;
-      });
-      // cut marks inside "unbelievable"
-      [0, 1].forEach((i) => {
-        let xx = -total / 2; for (let k = 0; k <= i; k++) xx += widths[k] + gap; xx -= gap / 2;
-        g.add(K.line([[xx, 0.35, 0.45], [xx, 1.25, 0.45]], { c: 'acc', w: 2 }));
+        const tx = -nch * chW / 2 + (ch + t[1] / 2) * chW;
+        // raw span -> piece
+        g.add(K.line([[tx - t[1] * chW / 2 + 0.03, yT - 0.42, 0], [tx + t[1] * chW / 2 - 0.03, yT - 0.42, 0]], { c: 'acc', w: 1.6, o: 0.8 }));
+        g.add(K.line([[tx, yT - 0.42, 0], [cx, 1.42, 0]], { c: 'acc', o: 0.45, w: 1 }));
+        tok(g, cx, 1.05, 0, w, t[0], { c: 'acc', mono: true, size: 0.4, fill: 0.2, lc: 'acc', h: 0.7, d: 0.3 });
+        // piece -> integer id
+        arr(g, [cx, 0.62, 0], [cx, 0.0, 0], { o: 0.45, w: 1, head: 0.16 });
+        g.add(K.rect(cx, -0.38, 0, w, 0.62, 'xy', { o: 0.5, fill: 0.05 }));
+        lab(g, String(t[2]), [cx, -0.38, 0.02], { size: 0.36, mono: true });
+        x += w + (gaps[i] || 0); ch += t[1];
       });
       legend = [{ c: 'acc', t: 'Subword pieces' }, { c: 'ink', t: 'Token ids' }];
+    } else if (kind === 'selfsup') {
+      g.rotation.y = 0.45;
+      // one unlabeled sentence produces both the input and its own target
+      const words = ['the', 'cat', 'sat', 'on', 'mat'], hid = 1;
+      const sp = 1.05, n = words.length, X = (i) => -3.2 + i * sp, yD = 3.0, yI = 1.0;
+      g.add(K.rect((X(0) + X(n - 1)) / 2, yD, -0.3, n * sp + 0.3, 0.95, 'xy', { o: 0.3, fill: 0.025 }));
+      lab(g, 'x', [X(0) - 0.95, yD, 0], { size: 0.46 });
+      words.forEach((w, i) => {
+        const h = i === hid;
+        tok(g, X(i), yD, 0, 0.88, w, { c: h ? 'acc' : undefined, fill: h ? 0.35 : 0.05, mono: true, size: 0.36, lc: h ? 'acc' : undefined });
+        if (!h) g.add(K.line([[X(i), yD - 0.32, 0], [X(i), yI + 0.32, 0]], { o: 0.25, w: 1 }));
+        // derived input: same tokens, one hidden
+        if (h) {
+          g.add(K.box(X(i), yI, 0, 0.88, 0.55, 0.55, { fill: 0.02, c: 'acc', o: 0.6 }));
+          lab(g, '[M]', [X(i), yI, 0.3], { size: 0.3, mono: true, c: 'acc' });
+        } else tok(g, X(i), yI, 0, 0.88, null, { fill: 0.05, o: 0.45 });
+      });
+      // model -> prediction
+      const fx = X(n - 1) + 1.75;
+      g.add(K.line([[X(n - 1) + 0.5, yI, 0], [fx - 0.75, yI, 0]], { o: 0.45, w: 1 }));
+      mod(g, fx, yI, 0, 1.3, 1.1, 1.1, 'f', { size: 0.5 });
+      arr(g, [fx + 0.7, yI, 0], [fx + 1.5, yI, 0], { o: 0.7, head: 0.2 });
+      lab(g, 'ŷ', [fx + 1.85, yI, 0], { size: 0.48 });
+      // the target is copied from the data itself
+      carr(g, [[X(hid), yD + 0.35, 0], [X(hid) + 1.5, yD + 1.35, 0], [fx + 0.5, yD + 1.25, 0], [fx + 1.75, yD + 0.45, 0]], { c: 'acc', w: 2.2, o: 1, head: 0.24 });
+      tok(g, fx + 1.85, yD, 0, 0.88, 'cat', { c: 'acc', fill: 0.4, mono: true, size: 0.36, lc: 'acc' });
+      lab(g, 'y', [fx + 2.6, yD, 0], { size: 0.46, c: 'acc' });
+      g.add(K.line([[fx + 1.85, yD - 0.35, 0], [fx + 1.85, yI + 0.35, 0]], { c: 'acc', o: 0.6, w: 1.2, dash: true }));
+      lab(g, 'ℒ', [fx + 2.25, (yD + yI) / 2, 0], { size: 0.42, c: 'acc' });
+      legend = [{ c: 'acc', t: 'Target from the data' }, { c: 'ink', t: 'Unlabeled input' }];
     } else if (kind === 'bpe') {
       const rows = [['h', 'u', 'g', 's'], ['hu', 'g', 's'], ['hug', 's'], ['hugs']];
       const merged = [-1, 0, 0, 0];
@@ -658,21 +711,43 @@
       carr(g, [[-3.4, 0.5, 0], [-1.2, 1.7, 0], [0.85, 0.8, 0]], { c: 'acc', w: 1.8, o: 0.85 });
       return { legend: [{ c: 'acc', t: 'In-context examples' }, { c: 'ink', t: 'Frozen model' }] };
     },
-    pretrain(g, p, r) {
-      const curve = new T.CatmullRomCurve3([K.V(-5.5, -1.2, -6), K.V(-4.5, 0.6, -3.5), K.V(-3.2, -0.3, -1.2), K.V(-1.3, 0, 0)]);
-      const n = 70;
-      for (let i = 0; i < n; i++) {
-        const q = curve.getPoint(i / (n - 1));
-        g.add(K.box(q.x, q.y, q.z, 0.22, 0.22, 0.22, { fill: 0.08, o: 0.15 + 0.55 * i / n }));
+    pretrain(g) {
+      g.rotation.y = 0.45;
+      // massive unlabeled corpus: a tall stack of pages
+      const cx = -5.4, nP = 12;
+      for (let k = 0; k < nP; k++) {
+        const y = -0.55 + k * 0.24;
+        g.add(K.box(cx, y, 0, 1.5, 0.05, 1.7, { fill: 0.06, o: 0.25 + 0.35 * k / nP }));
       }
-      lab(g, 'x₁ … xₜ', [-3.6, 0.55, -1.2], { size: 0.38 });
-      mod(g, 0.4, 0, 0, 2.2, 2.0, 2.0, 'LLM', { size: 0.5 });
-      arr(g, [1.55, 0, 0], [2.6, 0, 0], { c: 'acc', o: 0.9, w: 1.8 });
-      // next-token distribution
-      const ps = [0.12, 0.3, 0.9, 0.2, 0.08, 0.15, 0.05];
-      ps.forEach((v, i) => g.add(K.box(3.0 + i * 0.32, -0.9 + v * 1.0, 0, 0.24, v * 2.0, 0.24, i === 2 ? { fill: 0.7, fc: 'acc', c: 'acc' } : { fill: 0.07, o: 0.4 })));
-      g.add(K.line([[2.85, -0.9, 0], [5.2, -0.9, 0]], { o: 0.4, w: 1 }));
-      lab(g, 'xₜ₊₁', [3.64, 1.35, 0], { size: 0.42, c: 'acc' });
+      const top = -0.55 + (nP - 1) * 0.24 + 0.03, lines = [];
+      for (let j = 0; j < 5; j++) {
+        const z = -0.6 + j * 0.3; let x = cx - 0.6;
+        while (x < cx + 0.55) { const w = 0.12 + ((j * 7 + Math.round(x * 10)) % 4) * 0.06; lines.push([[x, top, z], [Math.min(x + w, cx + 0.62), top, z]]); x += w + 0.08; }
+      }
+      g.add(K.segs(lines, { o: 0.45 }));
+      lab(g, '10¹²', [cx, top + 0.5, 0], { size: 0.4, o: 0.7 });
+      // a stream of tokens flowing from the corpus into the sequence
+      for (let i = 0; i < 5; i++) {
+        const t = i / 4;
+        g.add(K.box(cx + 1.05 + t * 1.05, 0.55 - t * 0.5, 0, 0.22, 0.22, 0.22, { fill: 0.1, o: 0.25 + 0.4 * t }));
+      }
+      const words = ['the', 'cat', 'sat', 'on', 'the', 'mat'];
+      const sp = 1.12, X = (i) => -2.7 + i * sp, n = 5;
+      // inputs
+      for (let i = 0; i < n; i++) {
+        tok(g, X(i), 0, 0, 0.9, words[i], { mono: true, size: 0.36 });
+        g.add(K.line([[X(i), 0.3, 0], [X(i), 1.05, 0]], { o: 0.3, w: 1 }));
+      }
+      const lx = (X(0) + X(n - 1)) / 2;
+      mod(g, lx, 1.55, 0, n * sp + 0.3, 0.9, 1.2, 'LLM', { size: 0.46, lz: 0.62 });
+      // next-token targets, shifted by one position
+      for (let i = 0; i < n; i++) {
+        arr(g, [X(i), 2.02, 0], [X(i), 2.75, 0], { c: 'acc', o: 0.9, w: 1.5, head: 0.18 });
+        tok(g, X(i), 3.05, 0, 0.9, words[i + 1], { c: 'acc', fill: 0.3, mono: true, size: 0.36, lc: 'acc' });
+      }
+      // prediction distribution for the last position, receding in depth
+      const ps = [0.85, 0.3, 0.18, 0.1, 0.06], bx = X(n - 1) + 0.85;
+      ps.forEach((v, j) => g.add(K.box(bx + j * 0.3, 2.78 + v * 0.75, 0, 0.22, v * 1.5, 0.22, j === 0 ? { fill: 0.65, fc: 'acc', c: 'acc' } : { fill: 0.07, o: 0.4 })));
       return { legend: [{ c: 'acc', t: 'Next-token target' }, { c: 'ink', t: 'Token stream' }] };
     },
     sft(g) {
@@ -710,24 +785,34 @@
       return { legend: [{ c: 'acc', t: 'Reward loop' }, { c: 'ink', t: 'Policy model' }], tick: (t) => mv((t % 2.5) / 2.5) };
     },
     dpo(g) {
-      tok(g, -4.6, 0, 0, 0.7, 'x', { size: 0.36 });
-      tok(g, -2.7, 1.0, 0, 0.8, 'y_w', { c: 'acc', size: 0.3, fill: 0.45 });
-      tok(g, -2.7, -1.0, 0, 0.8, 'y_l', { c: 'b', size: 0.3, fill: 0.45 });
-      arr(g, [-4.15, 0.2, 0], [-3.2, 0.85, 0], { o: 0.5, w: 1 });
-      arr(g, [-4.15, -0.2, 0], [-3.2, -0.85, 0], { o: 0.5, w: 1 });
-      arr(g, [-2.2, 1.0, 0], [-0.4, 0.3, 0], { c: 'acc', o: 0.9 });
-      arr(g, [-2.2, -1.0, 0], [-0.4, -0.3, 0], { c: 'b', o: 0.9 });
-      mod(g, 0.6, 0, 0, 1.6, 1.6, 1.6, 'π', { size: 0.56 });
-      mod(g, 0.6, 0, -2.8, 1.3, 1.3, 1.3, 'π_ref', { size: 0.34, o: 0.4 });
-      g.add(K.line([[0.6, 0, -2.1], [0.6, 0, -0.85]], { o: 0.4, w: 1, dash: true }));
-      // log-ratio bars
-      const bx = 3.4;
-      g.add(K.line([[bx - 0.8, 0, 0], [bx + 1.4, 0, 0]], { o: 0.5, w: 1 }));
-      g.add(K.box(bx, 0.8, 0, 0.5, 1.6, 0.5, { fill: 0.55, fc: 'acc', c: 'acc' }));
-      g.add(K.box(bx + 0.8, -0.65, 0, 0.5, 1.3, 0.5, { fill: 0.55, fc: 'b', c: 'b' }));
-      arr(g, [bx - 0.45, 1.0, 0], [bx - 0.45, 1.9, 0], { c: 'acc', o: 1, w: 2 });
-      arr(g, [bx + 1.25, -0.6, 0], [bx + 1.25, -1.6, 0], { c: 'b', o: 1, w: 2 });
-      lab(g, 'log π / π_ref', [bx + 0.4, 2.3, 0], { size: 0.32 });
+      g.rotation.y = 0.45;
+      // prompt and its preference pair
+      tok(g, -5.0, 0, 0, 0.7, 'x', { size: 0.4, mono: true, d: 0.3 });
+      tok(g, -3.2, 1.0, 0, 1.1, 'y_w', { c: 'acc', size: 0.38, fill: 0.2, mono: true, lc: 'acc', d: 0.3 });
+      tok(g, -3.2, -1.0, 0, 1.1, 'y_l', { c: 'b', size: 0.38, fill: 0.2, mono: true, lc: 'b', d: 0.3 });
+      arr(g, [-4.6, 0.2, 0], [-3.7, 0.85, 0], { o: 0.45, w: 1, head: 0.16 });
+      arr(g, [-4.6, -0.2, 0], [-3.7, -0.85, 0], { o: 0.45, w: 1, head: 0.16 });
+      // trainable policy (front) and frozen reference (above, faint)
+      const px = -0.6;
+      mod(g, px, -0.2, 0, 1.6, 1.4, 1.4, 'π', { size: 0.56 });
+      mod(g, px, 2.0, 0, 1.3, 1.0, 1.0, 'π_ref', { size: 0.38, o: 0.35, lo: 0.6, lz: 0.5 });
+      lab(g, '❄', [px + 0.95, 2.45, 0], { size: 0.34, o: 0.55 });
+      arr(g, [-2.7, 1.0, 0], [px - 0.85, 0.1, 0], { c: 'acc', o: 0.9, head: 0.18 });
+      arr(g, [-2.7, -1.0, 0], [px - 0.85, -0.5, 0], { c: 'b', o: 0.9, head: 0.18 });
+      g.add(K.line([[-2.7, 1.15, 0], [px - 0.7, 1.9, 0]], { o: 0.3, w: 1, dash: true }));
+      // both feed the log-ratio
+      arr(g, [px + 0.85, -0.2, 0], [1.85, 0.25, 0], { o: 0.6, w: 1.2, head: 0.18 });
+      g.add(K.line([[px + 0.7, 2.0, 0], [1.4, 2.0, 0], [1.85, 0.55, 0]], { o: 0.3, w: 1, dash: true }));
+      // log π/π_ref per response: chosen goes up, rejected goes down
+      const bx = 2.9, y0 = 0.4;
+      g.add(K.line([[2.2, y0, 0], [4.9, y0, 0]], { o: 0.5, w: 1 }));
+      g.add(K.box(bx, y0 + 0.8, 0, 0.6, 1.6, 0.5, { fill: 0.55, fc: 'acc', c: 'acc' }));
+      g.add(K.box(bx + 1.2, y0 - 0.7, 0, 0.6, 1.4, 0.5, { fill: 0.55, fc: 'b', c: 'b' }));
+      arr(g, [bx - 0.6, y0 + 0.5, 0], [bx - 0.6, y0 + 1.7, 0], { c: 'acc', o: 1, w: 2.2, head: 0.26 });
+      arr(g, [bx + 1.8, y0 - 0.4, 0], [bx + 1.8, y0 - 1.6, 0], { c: 'b', o: 1, w: 2.2, head: 0.26 });
+      lab(g, 'y_w', [bx, y0 - 0.5, 0], { size: 0.38, c: 'acc', mono: true });
+      lab(g, 'y_l', [bx + 1.2, y0 + 0.5, 0], { size: 0.38, c: 'b', mono: true });
+      lab(g, 'log π/π_ref', [bx + 0.6, y0 + 2.4, 0], { size: 0.4 });
       return { legend: [{ c: 'acc', t: 'Chosen response' }, { c: 'b', t: 'Rejected response' }] };
     },
     rlvr(g) {

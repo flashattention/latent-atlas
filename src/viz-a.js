@@ -185,35 +185,65 @@
     const add = (o) => { g.add(o); return o; };
 
     if (kind === 'valley') {
-      const s2 = Math.SQRT1_2;
-      const f = (x, z) => { const u = (x + z) * s2, v = (x - z) * s2; return 0.018 * u * u + 0.2 * v * v; };
-      const Y = (x, z) => 0.5 * f(x, z);
-      floor(g, R, R, 0, 3.4, { x: 'β₁', z: 'β₂', y: 'L' });
-      add(wire(Y, R, R, { o: 0.24 }));
-      add(K.segs([0.15, 0.4, 0.8, 1.4, 2.2].flatMap((l) => iso(f, l, R, R, 40, 0.005)), { o: 0.35 }));
-      const val = []; for (let i = 0; i <= 40; i++) { const t = -4 + 8 * i / 40; val.push([t, Y(t, t) + 0.03, t]); }
-      add(K.line(val, { c: 'acc', w: 2.6 }));
-      add(K.line(val.map(([x, , z]) => [x, 0.01, z]), { c: 'acc', w: 1.4, o: 0.6, dash: true }));
-      legend = [{ c: 'acc', t: 'Flat valley floor' }];
+      // left card: two strongly correlated features; right: loss over (β₁, β₂) with a long flat valley
+      const rr = K.rng(17), ox = 1.5, B = 3, s2 = Math.SQRT1_2;
+      const f = (b1, b2) => { const u = (b1 + b2) * s2, v = (b1 - b2) * s2; return 0.26 * u * u + 0.006 * v * v; };
+      const Y = (x, z) => 0.55 * f(x - ox, z);
+      const XR = [ox - B, ox + B], ZR = [-B, B];
+      floor(g, XR, ZR, 0, 3.2, { x: 'β₁', z: 'β₂', y: 'L' });
+      add(wire(Y, XR, ZR, { o: 0.2, n: 24 }));
+      add(K.segs([0.25, 0.7, 1.4, 2.4].flatMap((l) => iso((x, z) => f(x - ox, z), l, XR, ZR, 40, 0.005)), { o: 0.3 }));
+      const val = []; for (let i = 0; i <= 40; i++) { const t = -B + 2 * B * i / 40; val.push([ox + t, Y(ox + t, -t) + 0.03, -t]); }
+      add(K.line(val, { c: 'acc', w: 2.4 }));
+      add(K.line(val.map(([x, , z]) => [x, 0.01, z]), { c: 'acc', w: 1.2, o: 0.5, dash: true }));
+      // refits on resampled data land anywhere along the valley floor
+      const est = [-2.4, -1.5, -0.7, 0.3, 1.1, 1.9, 2.6].map((t) => { const b1 = t + 0.08 * rr.n(), b2 = -t + 0.08 * rr.n(); return [ox + b1, Y(ox + b1, b2) + 0.06, b2]; });
+      add(K.dots(est, { r: 0.12, c: 'acc' }));
+      add(K.label('β̂', [est[0][0] - 0.1, est[0][1] + 0.5, est[0][2]], { size: 0.36, c: 'acc' }));
+      // data card: x₁ vs x₂ almost on a line
+      const cx = -3.9, cy = 2.1, cz = -1.6, W = 3.5;
+      add(K.rect(cx, cy, cz, W, W, 'xy', { o: 0.35, fill: 0.04 }));
+      const pts = []; let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, n = 26;
+      for (let i = 0; i < n; i++) { const t = rr.range(-1, 1), a = t + 0.09 * rr.n(), b = t + 0.09 * rr.n(); pts.push([a, b]); sx += a; sy += b; sxx += a * a; syy += b * b; sxy += a * b; }
+      const cov = sxy / n - sx * sy / n / n, r2 = cov * cov / ((sxx / n - (sx / n) ** 2) * (syy / n - (sy / n) ** 2));
+      const h = W / 2 - 0.25;
+      add(K.dots(pts.map(([a, b]) => [cx + a * h, cy + b * h, cz + 0.02]), { r: 0.07 }));
+      add(K.line([[cx - h, cy - h, cz + 0.02], [cx + h, cy + h, cz + 0.02]], { w: 1, o: 0.45, dash: true }));
+      add(K.label('x₁', [cx, cy - W / 2 - 0.35, cz], { size: 0.34, o: 0.75 }));
+      add(K.label('x₂', [cx - W / 2 - 0.35, cy, cz], { size: 0.34, o: 0.75 }));
+      add(K.label('VIF = 1/(1-R²) ≈ ' + Math.round(1 / (1 - r2)), [cx, cy + W / 2 + 0.45, cz], { size: 0.32 }));
+      legend = [{ c: 'acc', t: 'Equally good coefficients' }, { c: 'ink', t: 'Correlated features' }];
     } else if (kind === 'harmonic') {
+      // P on x (x = −4 ↔ P = 1), R on z (z = −4 ↔ R = 1); F1 surface vs the arithmetic mean along one slice
       const toPR = (x) => (4 - x) / 8;
       const F = (x, z) => { const P = toPR(x), Rr = toPR(z); return P + Rr > 0 ? 2 * P * Rr / (P + Rr) : 0; };
-      const H = 3.4, Y = (x, z) => H * F(x, z);
+      const H = 4, Y = (x, z) => H * F(x, z);
       floor(g, R, R, 0, 0, {}, {});
       g.add(K.line([[4, 0, 4], [-4, 0, 4]], { o: 0.45, w: 1 })); g.add(K.line([[4, 0, 4], [4, 0, -4]], { o: 0.45, w: 1 }));
       g.add(K.line([[-4, 0, -4], [-4, H + 0.4, -4]], { o: 0.45, w: 1 }));
-      g.add(K.label('P', [-4.5, 0, 4.2], { size: 0.36, o: 0.75 })); g.add(K.label('R', [4.3, 0, -4.5], { size: 0.36, o: 0.75 }));
+      g.add(K.label('P', [0, 0, 4.6], { size: 0.36, o: 0.75 })); g.add(K.label('R', [4.6, 0, 0], { size: 0.36, o: 0.75 }));
       g.add(K.label('F1', [-4, H + 0.8, -4], { size: 0.36, o: 0.75 }));
+      add(wire(Y, R, R, { o: 0.15, n: 24 }));
+      [0.2, 0.4, 0.6, 0.8].forEach((l) => add(K.segs(iso(F, l, R, R, 48, (x, z) => H * l + 0.01), { o: 0.4 })));
+      [0.2, 0.4, 0.6, 0.8].forEach((l) => add(K.segs(iso(F, l, R, R, 48, 0.005), { o: 0.16 })));
+      // slice at P = 0.9: F1 (accent, on the surface) vs (P+R)/2 (dashed)
+      const P0 = 0.9, xs = 4 - 8 * P0, am = (z) => H * (P0 + toPR(z)) / 2;
+      const f1c = [], amc = [];
+      for (let i = 0; i <= 60; i++) { const z = -4 + 8 * i / 60; f1c.push([xs, Y(xs, z) + 0.03, z]); amc.push([xs, am(z), z]); }
+      add(K.line(amc, { w: 1.4, o: 0.7 }));
+      add(K.line(f1c, { c: 'acc', w: 2.8 }));
+      const R0 = 0.1, z0 = 4 - 8 * R0, yF = Y(xs, z0), yA = am(z0);
+      add(K.line([[xs, yF, z0], [xs, yA, z0]], { c: 'acc', w: 2.2 }));
+      add(K.dots([[xs, yA, z0]], { r: 0.13 }));
+      add(K.dots([[xs, yF + 0.03, z0]], { r: 0.15, c: 'acc' }));
+      add(K.line([[xs, 0, z0], [xs, yF, z0]], { w: 1, o: 0.35, dash: true }));
+      add(K.label('P = 0.9, R = 0.1', [xs - 1.0, -0.7, z0 + 1.9], { size: 0.3, o: 0.8 }));
+      g.add(K.label('0', [4.3, 0, 4.3], { size: 0.3, o: 0.6 }));
+      add(K.label('(P+R)/2 ≈ 0.5', [xs - 1.0, yA + 0.45, z0 + 0.3], { size: 0.32 }));
+      add(K.label('F1 ≈ 0.2', [xs - 1.5, yF - 0.1, z0 + 0.5], { size: 0.34, c: 'acc' }));
+      add(K.dots([[-4, H + 0.03, -4]], { r: 0.09, o: 0.7 }));
       g.add(K.label('1', [-4.4, H, -4], { size: 0.3, o: 0.6 }));
-      add(wire(Y, R, R, { o: 0.22, n: 24 }));
-      [0.2, 0.4, 0.6, 0.8].forEach((l) => add(K.segs(iso(F, l, R, R, 48, (x, z) => H * l + 0.01), { o: 0.6 })));
-      [0.2, 0.4, 0.6, 0.8].forEach((l) => add(K.segs(iso(F, l, R, R, 48, 0.005), { o: 0.18 })));
-      const rid = []; for (let i = 0; i <= 30; i++) { const t = -4 + 8 * i / 30; rid.push([t, Y(t, t) + 0.03, t]); }
-      add(K.line(rid, { c: 'acc', w: 2.6 }));
-      add(K.dots([[-4, H + 0.03, -4]], { r: 0.11, c: 'acc' }));
-      const am = (x, z) => H * (toPR(x) + toPR(z)) / 2;
-      add(K.line([[4, am(4, -4), -4], [-4, am(-4, -4), -4], [-4, am(-4, 4), 4]], { w: 1, o: 0.35, dash: true }));
-      legend = [{ c: 'acc', t: 'Balanced P and R' }, { c: 'ink', t: 'Equal F1 contours' }];
+      legend = [{ c: 'acc', t: 'F1 (harmonic mean)' }, { c: 'ink', t: 'Arithmetic mean' }];
     } else if (kind === 'pdp') {
       const f = (x, z) => 1.5 + 0.85 * Math.sin(0.8 * x) + 0.16 * x * z * 0.5 + 0.1 * z;
       floor(g, R, R, 0, 3.4, { x: 'x₁', z: 'x₂', y: 'f̂' });
@@ -329,28 +359,41 @@
       add(K.line(fr.map(([x, , z]) => [x, 0.01, z]), { c: 'acc', w: 1.2, o: 0.5, dash: true }));
       legend = [{ c: 'acc', t: 'Compute-optimal frontier' }, { c: 'ink', t: 'Fixed compute budget' }];
     } else if (kind === 'twobowl') {
-      const A = [-2.2, -1.4], B = [2.0, 1.6];
-      const LA = (x, z) => 0.13 * ((x - A[0]) ** 2 + 1.3 * (z - A[1]) ** 2);
-      const LB = (x, z) => 0.13 * (1.4 * (x - B[0]) ** 2 + (z - B[1]) ** 2);
-      const sA = 0.42, YA = (x, z) => sA * LA(x, z);
-      floor(g, R, R, 0, 4, { x: 'θ₁', z: 'θ₂', y: 'L_A' });
-      add(wire(YA, R, R, { o: 0.22, n: 26 }));
-      add(K.segs([0.3, 0.9, 1.8, 3].flatMap((l) => iso(LB, l, R, R, 50, 0.005)), { o: 0.4 }));
-      add(K.dots([[B[0], 0.02, B[1]]], { r: 0.09 }));
-      const path = optim(LB, A, { lr: 0.9, n: 40 });
-      const P3 = path.map(([x, z]) => [x, YA(x, z) + 0.04, z]);
-      add(K.line(P3, { c: 'acc', w: 2.6 }));
+      // two task losses, each a basin; training on B walks θ out of A's basin
+      const A = [-2.3, 1.7], B = [2.3, -1.7], Hb = 2.8, sw = 5.5;
+      const bowlF = (C) => (x, z) => Hb * (1 - Math.exp(-((x - C[0]) ** 2 + (z - C[1]) ** 2) / sw));
+      const LA = bowlF(A), LB = bowlF(B);
+      floor(g, R, R, 0, 3.4, { x: 'θ₁', z: 'θ₂', y: 'L' }, { grid: false });
+      const bowl = (C, col, o) => {
+        const lv = [0.35, 0.85, 1.35, 1.85, 2.3], rad = (L) => Math.sqrt(-sw * Math.log(1 - L / Hb));
+        lv.forEach((L) => add(K.line(circlePts([C[0], L, C[1]], rad(L), 56), { c: col, w: 1, o })));
+        const mer = [];
+        for (let k = 0; k < 10; k++) {
+          const a = 2 * Math.PI * k / 10, c = [];
+          for (let i = 0; i <= 14; i++) { const L = 2.3 * i / 14, rr = rad(L); c.push([C[0] + rr * Math.cos(a), L, C[1] + rr * Math.sin(a)]); }
+          for (let i = 0; i < c.length - 1; i++) mer.push([c[i], c[i + 1]]);
+        }
+        add(K.segs(mer, { c: col, o: o * 0.6 }));
+      };
+      bowl(A, 'ink', 0.4); bowl(B, 'b', 0.45);
+      const path = []; for (let i = 0; i <= 60; i++) { const u = i / 60; path.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u]); }
+      const PA = path.map(([x, z]) => [x, LA(x, z) + 0.04, z]), PB = path.map(([x, z]) => [x, LB(x, z) + 0.04, z]);
       add(K.line(path.map(([x, z]) => [x, 0.02, z]), { c: 'acc', w: 1.2, o: 0.55, dash: true }));
-      const e = P3[P3.length - 1];
-      add(K.line([[e[0], 0.02, e[2]], [e[0], e[1], e[2]]], { c: 'acc', w: 1.4, dash: true }));
-      add(K.label('ΔL_A', [e[0] + 0.75, e[1] * 0.5, e[2]], { size: 0.34, c: 'acc' }));
-      add(K.dots([[A[0], 0.07, A[1]]], { r: 0.13 }));
-      add(K.dots([e], { r: 0.13, c: 'acc' }));
-      add(K.label('θ*_A', [A[0] - 0.9, 0.35, A[1]], { size: 0.32 }));
-      add(K.label('θ*_B', [B[0] + 0.4, -0.05, B[1] + 0.75], { size: 0.32 }));
-      const m = marker(P3, { r: 0.1 }); add(m.obj);
-      tick = (t) => m.set(((t % 5) / 4));
-      legend = [{ c: 'acc', t: 'Training on task B' }, { c: 'ink', t: 'Task A loss' }];
+      add(K.line(PB, { c: 'b', w: 1.8, dash: true }));
+      add(K.line(PA, { c: 'acc', w: 2.8 }));
+      const e = PA[PA.length - 1], eb = path[path.length - 1];
+      add(K.line([[e[0], 0.02, e[2]], [e[0], e[1], e[2]]], { c: 'acc', w: 1.6 }));
+      add(K.label('ΔL_A', [e[0] + 0.8, e[1] * 0.5, e[2] + 0.4], { size: 0.34, c: 'acc' }));
+      add(K.dots([[A[0], 0.05, A[1]]], { r: 0.14 }));
+      add(K.dots([[eb[0], 0.05, eb[1]]], { r: 0.12, c: 'b' }));
+      add(K.dots([e], { r: 0.14, c: 'acc' }));
+      add(K.label('θ*_A', [A[0] - 0.5, -0.35, A[1] + 0.5], { size: 0.32 }));
+      add(K.label('θ*_B', [B[0] + 0.6, -0.35, B[1] + 0.3], { size: 0.32, c: 'b' }));
+      add(K.label('L_A', [A[0] - 2.6, 2.6, A[1] - 1.4], { size: 0.34, o: 0.8 }));
+      add(K.label('L_B', [B[0] + 1.6, 2.8, B[1] - 2.9], { size: 0.34, c: 'b' }));
+      const m = marker(PA, { r: 0.11 }); add(m.obj);
+      tick = (t) => m.set(K.ease(Math.min(1, (t % 5) / 4)));
+      legend = [{ c: 'acc', t: 'Training on task B' }, { c: 'ink', t: 'Task A loss' }, { c: 'b', t: 'Task B loss' }];
     } else if (kind === 'merge') {
       const t1 = [-1.9, 1.0], t2 = [1.9, -0.7], t0 = [-0.6, -3];
       const f = (x, z) => 0.055 * (x * x + 2.4 * (z - 0.1 * x) ** 2) + 0.7
@@ -374,18 +417,26 @@
       add(K.label('½(θ_A+θ_B)', [mid[0], S(mid)[1] + 0.6, mid[1]], { size: 0.32, c: 'acc' }));
       legend = [{ c: 'acc', t: 'Merged weights' }, { c: 'ink', t: 'Fine-tuned models' }];
     } else { // bowl (convex)
-      const f = (x, z) => 0.11 * (x * x + 0.8 * z * z) + 0.2;
+      const f = (x, z) => 0.1 * (x * x + 0.8 * z * z) + 0.2;
       floor(g, R, R, 0, 3.6, { x: 'θ₁', z: 'θ₂', y: 'L' });
-      add(wire(f, R, R, { o: 0.24 }));
-      add(K.segs([0.5, 1, 1.6, 2.3].flatMap((l) => iso(f, l, R, R, 40, 0.005)), { o: 0.25 }));
-      const a = [-3.4, -1.5], b = [2.6, 3.2];
-      add(K.line([[a[0], f(...a), a[1]], [b[0], f(...b), b[1]]], { w: 1.4, o: 0.7, dash: true }));
-      add(K.dots([[a[0], f(...a), a[1]], [b[0], f(...b), b[1]]], { r: 0.08, o: 0.8 }));
-      add(K.dots([[0, 0.27, 0]], { r: 0.16, c: 'acc' }));
-      add(K.line([[0, 0, 0], [0, 0.2, 0]], { c: 'acc', w: 1.4 }));
+      add(wire(f, R, R, { o: 0.17 }));
+      add(K.segs([0.5, 1, 1.6, 2.3].flatMap((l) => iso(f, l, R, R, 40, 0.005)), { o: 0.22 }));
+      // chord between two surface points, roughly across the view so the gap below it is visible
+      const a = [-3.4, 2.2], b = [3.4, -1.6];
+      const at = (u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+      const A3 = [a[0], f(...a), a[1]], B3 = [b[0], f(...b), b[1]];
+      const sec = []; for (let i = 0; i <= 50; i++) { const [x, z] = at(i / 50); sec.push([x, f(x, z) + 0.02, z]); }
+      add(K.line(sec, { w: 2 }));
+      add(K.line([A3, B3], { c: 'acc', w: 2.6 }));
+      const gaps = []; [0.2, 0.35, 0.5, 0.65, 0.8].forEach((u) => { const [x, z] = at(u); gaps.push([[x, f(x, z) + 0.02, z], [x, A3[1] + (B3[1] - A3[1]) * u, z]]); });
+      add(K.segs(gaps, { c: 'acc', o: 0.45 }));
+      add(K.dots([A3, B3], { r: 0.12 }));
+      add(K.label('a', [A3[0] - 0.35, A3[1] + 0.4, A3[2]], { size: 0.36 }));
+      add(K.label('b', [B3[0] + 0.35, B3[1] + 0.4, B3[2]], { size: 0.36 }));
+      add(K.dots([[0, 0.25, 0]], { r: 0.16, c: 'acc' }));
       add(K.line(circlePts([0, 0.01, 0], 0.4), { c: 'acc', w: 1.6 }));
-      add(K.label('θ*', [0.1, 0.85, -0.2], { size: 0.38, c: 'acc' }));
-      legend = [{ c: 'acc', t: 'Unique minimum' }, { c: 'ink', t: 'Chord above surface' }];
+      add(K.label('θ*', [0.5, 0.75, 0.3], { size: 0.38, c: 'acc' }));
+      legend = [{ c: 'acc', t: 'Chord above surface' }, { c: 'acc', t: 'Unique minimum' }];
     }
     return { g, legend, tick };
   };
@@ -437,19 +488,40 @@
       main = optim(f, start, { opt: 'adam', lr: 0.12, n: 130 });
       other = optim(f, start, { lr: 0.3, n: 60 });
       legend = [{ c: 'acc', t: 'Adam path' }, { c: 'ink', t: 'Plain gradient descent' }];
-    } else if (opt === 'decay') {
-      const ws = [2.6, 2.0];
+    } else if (opt === 'decay' || opt === 'adamw') {
+      const ws = opt === 'adamw' ? [2.4, -1.0] : [2.6, 2.0];
+      if (opt === 'adamw') { xr = [-1.6, 4.6]; zr = [-4.6, 1.6]; }
       const fd = (x, z) => 0.06 * ((x - ws[0]) ** 2 + 1.4 * (z - ws[1]) ** 2);
       f = fd; Y = (x, z) => fd(x, z) * 0.95 + 0.05;
       g.clear();
       floor(g, xr, zr, 0, H, { x: 'θ₁', z: 'θ₂', y: 'L' }, { grid: false });
       add(K.surface(Y, { xr, zr, n: 30, o: 0.2 }));
       add(K.segs([0.1, 0.4, 0.9, 1.6, 2.5].flatMap((l) => iso(fd, l, xr, zr, 50, 0.005)), { o: 0.22 }));
-      start = [-3.4, 3.4];
-      main = optim(fd, start, { lr: 3, n: 40, decay: 0.11 });
-      other = optim(fd, start, { lr: 3, n: 40 });
-      // origin and pull
+      start = opt === 'adamw' ? [0.4, -3.8] : [-3.4, 3.4];
       [0.6, 1.2, 1.8].forEach((rr) => add(K.line(circlePts([0, 0.01, 0], rr), { o: 0.2, w: 1 })));
+      if (opt === 'adamw') {
+        // AdamW: a normalised (Adam-like) step toward w*, then a SEPARATE shrink θ ← (1 − ηλ)θ toward 0.
+        // Adam + L2: λθ folded into the gradient, so the decay is rescaled with it and lands elsewhere.
+        const s = 1.1, c = 0.5, P = [start.slice()], sh = [];
+        let q = start.slice();
+        for (let k = 0; k < 4; k++) {
+          const dx = ws[0] - q[0], dz = ws[1] - q[1], d = Math.hypot(dx, dz), st = Math.min(s, d);
+          const h = [q[0] + st * dx / d, q[1] + st * dz / d]; P.push(h);
+          q = [h[0] * (1 - c), h[1] * (1 - c)]; P.push(q); sh.push([h, q]);
+        }
+        main = P;
+        other = optim((x, z) => fd(x, z) + 0.006 * (x * x + z * z), start, { lr: 4, n: 60 });
+        sh.slice(0, 3).forEach(([a, b]) => add(K.arrow([a[0], Y(...a) + 0.07, a[1]], [b[0], Y(...b) + 0.07, b[1]], { c: 'acc', w: 2.4, head: 0.26 })));
+        sh.slice(0, 3).forEach(([a]) => add(K.line([[a[0], 0.02, a[1]], [0, 0.02, 0]], { c: 'acc', w: 1, o: 0.18 })));
+        const [a0, b0] = sh[0];
+        add(K.label('−ηλθ', [a0[0] + 0.75, Y(...a0) + 0.15, a0[1] + 0.25], { size: 0.32, c: 'acc' }));
+        const e2 = other[other.length - 1];
+        add(K.dots([[e2[0], Y(...e2) + 0.05, e2[1]]], { r: 0.1 }));
+        add(K.label('Adam+L2', [e2[0] + 0.2, Y(...e2) - 0.45, e2[1] + 0.9], { size: 0.3, o: 0.75 }));
+      } else {
+        main = optim(fd, start, { lr: 3, n: 40, decay: 0.11 });
+        other = optim(fd, start, { lr: 3, n: 40 });
+      }
       const e = main[main.length - 1];
       add(K.line([[e[0], 0.02, e[1]], [0, 0.02, 0]], { c: 'acc', w: 1.2, o: 0.6, dash: true }));
       add(K.line([[ws[0], 0.02, ws[1]], [e[0], 0.02, e[1]]], { w: 1, o: 0.5, dash: true }));
@@ -457,7 +529,7 @@
       add(K.dots([[0, 0.03, 0]], { r: 0.06 }));
       add(K.label('w*', [ws[0] + 0.3, 0.75, ws[1] - 0.3], { size: 0.34 }));
       add(K.label('0', [-0.45, 0.25, 0.45], { size: 0.32, o: 0.7 }));
-      legend = [{ c: 'acc', t: 'Path with weight decay' }, { c: 'ink', t: 'Unregularised path' }];
+      legend = opt === 'adamw' ? [{ c: 'acc', t: 'AdamW path' }, { c: 'ink', t: 'Adam + L2 path' }] : [{ c: 'acc', t: 'Path with weight decay' }, { c: 'ink', t: 'Unregularised path' }];
     } else if (opt === 'lrhigh') {
       start = [-3.6, 2.4];
       main = optim(f, start, { lr: 5.15, n: 9 });
@@ -505,45 +577,55 @@
     const g = new T.Group(), add = (o) => { g.add(o); return o; };
     const kind = p.k || 'l2', lam = p['λ'] == null ? 1 : p['λ'];
     const al = kind === 'l1' ? 1 : kind === 'en' ? 0.7 : 0;
-    const ws = [3.1, 1.3], phi = -0.45, l1 = 1, l2 = 0.3;
+    const ws = [3.5, 1.5], phi = -0.45, l1 = 1, l2 = 0.3;
     const c = Math.cos(phi), s = Math.sin(phi);
     const Q = (x, z) => { const dx = x - ws[0], dz = z - ws[1]; const u = c * dx + s * dz, v = -s * dx + c * dz; return l1 * u * u + l2 * v * v; };
     const hY = 0.3;
     // constraint ball: alpha*s*|d|1 + (1-alpha)*s^2*|d|2^2 <= t
-    const t = Math.min(4, 2.2 / Math.pow(lam, 0.8));
+    const t = Math.min(3.1, 2.6 / Math.pow(lam, 0.8));
     const tt = al * t + (1 - al) * t * t;
     const rad = (th) => { const dx = Math.cos(th), dz = Math.sin(th), n1 = Math.abs(dx) + Math.abs(dz); const A = (1 - al), B = al * n1; return A < 1e-9 ? tt / B : (-B + Math.sqrt(B * B + 4 * A * tt)) / (2 * A); };
     const N = 360, bd = [];
     for (let i = 0; i <= N; i++) { const th = 2 * Math.PI * i / N, rr = rad(th); bd.push([rr * Math.cos(th), rr * Math.sin(th)]); }
     let best = 0; bd.forEach((q, i) => { if (Q(q[0], q[1]) < Q(bd[best][0], bd[best][1])) best = i; });
     const sol = bd[best], Ls = Q(sol[0], sol[1]), ys = Ls * hY;
-    const S = 4.3;
+    const S = 4.2;
     floor(g, [-S, S], [-S, S], 0, 0, { x: 'w₁', z: 'w₂' }, { n: 8 });
     g.add(K.line([[-S, 0, 0], [S, 0, 0]], { o: 0.35, w: 1 }));
     g.add(K.line([[0, 0, -S], [0, 0, S]], { o: 0.35, w: 1 }));
     // loss rings stacked as a bowl
-    const ring = (L, y, o) => { const P = []; const k = Math.sqrt(L); for (let i = 0; i <= 72; i++) { const a = 2 * Math.PI * i / 72; const u = k * Math.cos(a) / Math.sqrt(l1), v = k * Math.sin(a) / Math.sqrt(l2); P.push([ws[0] + c * u - s * v, y, ws[1] + s * u + c * v]); } return K.line(P, o); };
-    for (let k = 1; k <= 6; k++) { const L = Math.pow(k * 0.6, 2); if (L * hY > 2.8) break; add(ring(L, L * hY, { w: 1, o: 0.35 })); add(ring(L, 0.005, { w: 1, o: 0.13 })); }
-    add(ring(Ls, ys, { w: 2 }));
-    add(ring(Ls, 0.006, { w: 1.2, o: 0.6, dash: true }));
+    // loss ellipses, clipped to the floor square so the figure stays compact
+    const ring = (L, y, o, nc) => {
+      const P = [], k = Math.sqrt(L);
+      for (let i = 0; i <= 96; i++) { const a = 2 * Math.PI * i / 96; const u = k * Math.cos(a) / Math.sqrt(l1), v = k * Math.sin(a) / Math.sqrt(l2); P.push([ws[0] + c * u - s * v, y, ws[1] + s * u + c * v]); }
+      const pr = []; for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (nc || Math.max(Math.abs(a[0]), Math.abs(a[2]), Math.abs(b[0]), Math.abs(b[2])) <= S) pr.push([a, b]); }
+      return K.segs(pr, o);
+    };
+    for (let k = 1; k <= 7; k++) { const L = Math.pow(k * 0.55, 2); if (L * hY > 2.6) break; add(ring(L, L * hY, { w: 1, o: 0.3 })); add(ring(L, 0.005, { w: 1, o: 0.2 })); }
+    add(ring(Ls, ys, { w: 1.2, o: 0.6 }, true));
+    add(ring(Ls, 0.006, { w: 2, o: 0.9 }, true));
     add(K.dots([[ws[0], 0.03, ws[1]]], { r: 0.1 }));
     add(K.label('ŵ', [ws[0] + 0.35, 0.35, ws[1] + 0.2], { size: 0.36 }));
     // region
-    add(polyFill(bd, 0.01, { c: 'acc', fill: 0.18 }));
-    add(K.line(bd.map(([x, z]) => [x, 0.012, z]), { c: 'acc', w: 2.2 }));
+    add(polyFill(bd, 0.01, { c: 'acc', fill: 0.24 }));
+    add(K.line(bd.map(([x, z]) => [x, 0.012, z]), { c: 'acc', w: 2.8 }));
     add(K.line(bd.map(([x, z]) => [x, ys, z]), { c: 'acc', w: 1, o: 0.45 }));
     const vert = [];
     if (al === 1) [[t, 0], [0, t], [-t, 0], [0, -t]].forEach(([x, z]) => vert.push([[x, 0, z], [x, ys, z]]));
     else for (let i = 0; i < 12; i++) { const q = bd[Math.round(i * N / 12)]; vert.push([[q[0], 0, q[1]], [q[0], ys, q[1]]]); }
     add(K.segs(vert, { c: 'acc', o: 0.3 }));
-    add(K.dots([[sol[0], ys, sol[1]]], { r: 0.15, c: 'acc' }));
-    add(K.dots([[sol[0], 0.02, sol[1]]], { r: 0.1, c: 'acc' }));
+    add(K.dots([[sol[0], ys, sol[1]]], { r: 0.17, c: 'acc' }));
+    add(K.dots([[sol[0], 0.02, sol[1]]], { r: 0.13, c: 'acc' }));
+    add(K.line(circlePts([sol[0], 0.02, sol[1]], 0.32), { c: 'acc', w: 1.6 }));
     add(K.line([[sol[0], 0, sol[1]], [sol[0], ys, sol[1]]], { c: 'acc', w: 1.4 }));
     if (kind === 'l1' && Math.abs(sol[1]) < 0.05) add(K.label('w₂ = 0', [sol[0] + 0.2, ys + 0.6, sol[1]], { size: 0.36, c: 'acc' }));
     add(K.label(kind === 'l1' ? '‖w‖₁ ≤ t' : kind === 'l2' ? '‖w‖₂² ≤ t' : 'L1 + L2 ≤ t', [-1.2, 0.05, -t - 0.9], { size: 0.32, c: 'acc' }));
     const lg = { l1: 'L1 constraint region', l2: 'L2 constraint region', en: 'Elastic net region' }[kind];
+    // stand the (w₁, w₂) plane upright so it faces the camera; loss height recedes behind it
+    g.rotation.x = -Math.PI / 2;
+    const outer = new T.Group(); outer.add(g);
     return {
-      g, legend: [{ c: 'acc', t: lg }, { c: 'acc', t: kind === 'l1' ? 'Sparse solution' : 'Regularised solution' }, { c: 'ink', t: 'Loss contours' }],
+      g: outer, legend: [{ c: 'acc', t: lg }, { c: 'acc', t: kind === 'l1' ? 'Sparse solution' : 'Regularised solution' }, { c: 'ink', t: 'Loss contours' }],
       ctl: [{ key: 'λ', label: 'λ', min: 0.3, max: 2, step: 0.1, value: lam }],
     };
   };
@@ -607,16 +689,34 @@
     } else if (mode === 'outlier') {
       FL(0);
       if (p.lof) {
-        const dense = blobs(r, [[-1.6, 2, -0.8]], 40, 0.38).map((d) => d.p);
-        const sparse = blobs(r, [[1.8, 2.2, 1.2]], 24, 1.05).map((d) => d.p);
-        const outs = [[-0.2, 2.4, -0.9], [-1.8, 3.6, 1.6]];
-        const all = dense.concat(sparse).concat(outs);
-        const kd = (q) => { const ds = all.map((o) => d3(q, o)).sort((a, b) => a - b); return ds[5]; };
-        add(K.dots(dense.concat(sparse), { r: 0.065, o: 0.85 }));
-        const show = [dense[0], dense[7], dense[15], sparse[2], sparse[9], sparse[14]];
-        show.forEach((q) => add(K.line(circlePts(q, kd(q), 40, 'xy'), { w: 1, o: 0.35 })));
-        outs.forEach((q) => { add(K.line(circlePts(q, kd(q), 48, 'xy'), { c: 'acc', w: 1.6 })); });
-        add(K.dots(outs, { r: 0.13, c: 'acc' }));
+        // 2D data on the floor; stem height = LOF score. A point near a DENSE cluster but outside it scores high,
+        // while points of a SPARSE cluster have large radii yet LOF ≈ 1.
+        const rr = K.rng(31), P2 = [];
+        for (let i = 0; i < 30; i++) P2.push([0.9 + 0.42 * rr.n(), 1.5 + 0.42 * rr.n()]);
+        for (let i = 0; i < 16; i++) P2.push([-1.9 + 0.95 * rr.n(), -1.6 + 0.95 * rr.n()]);
+        const oi = P2.length; P2.push([2.6, -0.2]);
+        const k = 5, dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+        const nn = P2.map((q, i) => P2.map((o, j) => [dist(q, o), j]).filter((x) => x[1] !== i).sort((a, b) => a[0] - b[0]).slice(0, k));
+        const kd = nn.map((l) => l[k - 1][0]);
+        const lrd = nn.map((l) => 1 / (l.reduce((s, [d, j]) => s + Math.max(d, kd[j]), 0) / k));
+        const lof = nn.map((l, i) => l.reduce((s, [, j]) => s + lrd[j], 0) / k / lrd[i]);
+        const hs = 0.9, F = (q, y) => [q[0], y, q[1]];
+        const stems = P2.map((q, i) => (i === oi ? null : [F(q, 0), F(q, hs * lof[i])])).filter(Boolean);
+        add(K.segs(stems, { o: 0.22 }));
+        add(K.dots(P2.filter((_, i) => i !== oi).map((q) => F(q, 0.04)), { r: 0.07 }));
+        add(K.dots(P2.filter((_, i) => i !== oi).map((q, i) => F(q, hs * lof[i < oi ? i : i + 1])), { r: 0.035, o: 0.5 }));
+        // reachability radii: the outlier's (large, accent) vs its dense neighbours' (small) and one sparse point's
+        const o = P2[oi];
+        add(K.line(circlePts([o[0], 0.02, o[1]], kd[oi], 64), { c: 'acc', w: 2 }));
+        nn[oi].slice(0, 3).forEach(([, j]) => add(K.line(circlePts([P2[j][0], 0.02, P2[j][1]], kd[j], 40), { w: 1.2, o: 0.6 })));
+        let sp = 30; for (let i = 31; i < oi; i++) if (Math.hypot(P2[i][0] + 1.9, P2[i][1] + 1.6) < Math.hypot(P2[sp][0] + 1.9, P2[sp][1] + 1.6)) sp = i;
+        add(K.line(circlePts([P2[sp][0], 0.02, P2[sp][1]], kd[sp], 56), { w: 1, o: 0.4, dash: true }));
+        add(K.segs(nn[oi].map(([, j]) => [F(o, 0.03), F(P2[j], 0.03)]), { c: 'acc', o: 0.5 }));
+        add(K.line([F(o, 0), F(o, hs * lof[oi])], { c: 'acc', w: 2.4 }));
+        add(K.dots([F(o, 0.05)], { r: 0.13, c: 'acc' }));
+        add(K.dots([F(o, hs * lof[oi])], { r: 0.1, c: 'acc' }));
+        add(K.label('LOF ≈ ' + lof[oi].toFixed(1), [o[0] + 0.3, hs * lof[oi] + 0.45, o[1]], { size: 0.34, c: 'acc' }));
+        add(K.label('LOF ≈ 1', [P2[sp][0], hs * lof[sp] + 0.45, P2[sp][1]], { size: 0.3, o: 0.7 }));
         legend = [{ c: 'acc', t: 'Low local density' }, { c: 'ink', t: 'Neighbourhood radius' }];
       } else {
         const inl = blobs(r, [[0, 2.2, 0]], 90, 0.75).map((d) => d.p);
@@ -629,36 +729,63 @@
       }
     } else if (mode === 'smote') {
       FL(0);
-      const maj = blobs(r, [[-1.4, 2.2, -1.2]], 80, 1.0).map((d) => d.p);
-      const mino = blobs(r, [[2.2, 2.0, 2.2]], 9, 0.85).map((d) => d.p);
-      add(K.dots(maj, { r: 0.07, o: 0.4, hollow: true }));
-      add(K.dots(mino, { r: 0.12 }));
-      const pairs = [], syn = [];
-      mino.forEach((q, i) => {
-        const nb = mino.map((o, j) => [d3(q, o), j]).filter((x) => x[1] !== i).sort((a, b) => a[0] - b[0]).slice(0, 2);
-        nb.forEach(([, j]) => { if (j > i || !nb.some(() => false)) pairs.push([q, mino[j]]); const u = r.range(0.2, 0.8); syn.push(q.map((v, a) => v + u * (mino[j][a] - v))); });
+      const maj = blobs(r, [[-2.2, 1.8, -1.8]], 60, 0.85).map((d) => d.p);
+      const mino = [[0.6, 1.4, 0.4], [2.4, 2.3, -0.2], [1.6, 1.0, 2.2], [3.3, 1.5, 1.6], [2.1, 3.1, 1.0], [0.5, 2.7, 2.0]];
+      add(K.dots(maj, { r: 0.06, o: 0.28, hollow: true }));
+      const pairs = new Map();
+      mino.forEach((q, i) => mino.map((o, j) => [d3(q, o), j]).filter((x) => x[1] !== i).sort((a, b) => a[0] - b[0]).slice(0, 2)
+        .forEach(([, j]) => pairs.set(Math.min(i, j) + '-' + Math.max(i, j), [Math.min(i, j), Math.max(i, j)])));
+      const segs = [], syn = [], us = [0.5, 0.3, 0.7, 0.4, 0.6, 0.35, 0.65];
+      [...pairs.values()].forEach(([i, j], n) => {
+        segs.push([mino[i], mino[j]]);
+        const u = us[n % us.length]; syn.push(mino[i].map((v, a) => v + u * (mino[j][a] - v)));
       });
-      add(K.segs(pairs, { o: 0.35 }));
-      add(K.dots(syn, { r: 0.09, c: 'acc' }));
+      add(K.segs(segs, { w: 1.4, o: 0.55 }));
+      add(K.dots(syn, { r: 0.11, c: 'acc' }));
+      add(K.dots(mino, { r: 0.15 }));
+      mino.forEach((q) => add(K.line([[q[0], 0, q[2]], q], { w: 1, o: 0.2, dash: true })));
+      const [i0, j0] = [...pairs.values()][0];
+      add(K.label('xᵢ', [mino[i0][0] - 0.1, mino[i0][1] + 0.5, mino[i0][2]], { size: 0.36 }));
+      add(K.label('xⱼ', [mino[j0][0] + 0.1, mino[j0][1] + 0.5, mino[j0][2]], { size: 0.36 }));
       legend = [{ c: 'acc', t: 'Synthetic minority samples' }, { c: 'ink', t: 'Original minority samples' }];
     } else if (mode === 'under') {
       FL(0);
-      const maj = blobs(r, [[-1, 2.2, -0.6]], 100, 1.1).map((d) => d.p);
-      const mino = blobs(r, [[2.2, 2.6, 1.9]], 14, 0.6).map((d) => d.p);
+      const maj = blobs(r, [[-2.0, 2.0, -1.0]], 84, 0.85).map((d) => d.p);
+      const mino = blobs(r, [[2.0, 1.6, 2.3]], 12, 0.55).map((d) => d.p);
       const keep = maj.filter((_, i) => i % 7 === 0), drop = maj.filter((_, i) => i % 7 !== 0);
-      const dropObj = add(K.dots(drop, { r: 0.07, c: 'acc', o: 0.45, hollow: true }));
-      add(K.dots(keep, { r: 0.1 }));
-      add(K.dots(mino, { r: 0.1, c: 'b' }));
-      tick = (t) => { const u = (t % 5) / 5; const o = u < 0.4 ? 0.45 : u < 0.7 ? 0.45 * (1 - (u - 0.4) / 0.3) : 0.45 * ((u - 0.7) / 0.3); dropObj.traverse((m) => { if (m.material) m.material.opacity = Math.max(0.05, o); }); };
+      add(K.dots(drop, { r: 0.065, c: 'acc', o: 0.45, hollow: true }));
+      add(K.dots(keep, { r: 0.12 }));
+      add(K.dots(mino, { r: 0.12, c: 'b' }));
+      // class counts: removed part (outline) on top of the kept part, next to the minority bar
+      const sc = 0.05, bx = 1.6, bz = -3.2, bw = 0.55;
+      const hk = keep.length * sc, hd = drop.length * sc;
+      add(K.box(bx, hk / 2, bz, bw, hk, bw, { fill: 0.85, fc: 'ink' }));
+      add(K.box(bx, hk + hd / 2, bz, bw, hd, bw, { c: 'acc', o: 0.6, fill: 0.06, fc: 'acc' }));
+      add(K.box(bx + 0.75, hk / 2, bz, bw, hk, bw, { c: 'b', fill: 0.85, fc: 'b' }));
+      add(K.line([[bx - 0.5, hk, bz], [bx + 1.25, hk, bz]], { w: 1, o: 0.5, dash: true }));
+      add(K.label(String(drop.length), [bx, hk + hd + 0.35, bz], { size: 0.32, c: 'acc' }));
+      add(K.label(String(keep.length), [bx - 0.6, hk / 2, bz], { size: 0.32 }));
+      add(K.label(String(mino.length), [bx + 1.35, hk / 2, bz], { size: 0.32, c: 'b' }));
       legend = [{ c: 'acc', t: 'Removed majority samples' }, { c: 'b', t: 'Minority class' }, { c: 'ink', t: 'Kept majority samples' }];
     } else if (mode === 'augment') {
-      FL(0);
-      const orig = blobs(r, [[-1.6, 2.2, -1], [1.8, 2.6, 1.2]], 7, 0.9).map((d) => d.p);
-      const aug = [], links = [];
-      orig.forEach((q) => { for (let i = 0; i < 4; i++) { const a = [q[0] + 0.32 * r.n(), q[1] + 0.32 * r.n(), q[2] + 0.32 * r.n()]; aug.push(a); links.push([q, a]); } });
-      add(K.segs(links, { c: 'acc', o: 0.35 }));
-      add(K.dots(aug, { r: 0.075, c: 'acc' }));
-      add(K.dots(orig, { r: 0.13 }));
+      // each original "image" (a card with a glyph) spawns rotated / scaled / shifted / flipped copies: same label, more variety
+      const G7 = [[-0.32, 0.38], [0.32, 0.38], [-0.08, -0.42]], G4 = [[0.18, -0.42], [0.18, 0.42], [-0.3, -0.05], [0.34, -0.05]];
+      const card = (glyph, pos, rot, scl, flip, col, w) => {
+        const cg = new T.Group();
+        cg.add(K.rect(0, 0, 0, 1.1, 1.1, 'xy', { c: col, o: col === 'acc' ? 0.8 : 1, w: 1.2, fill: col === 'acc' ? 0.06 : 0.05, fc: col }));
+        cg.add(K.line(glyph.map(([x, y]) => [x, y, 0.01]), { c: col, w }));
+        cg.position.set(...pos); cg.rotation.z = rot; cg.scale.set(scl * (flip ? -1 : 1), scl, 1);
+        ag.add(cg); return cg;
+      };
+      const tf = [[0.45, 0.85, false, [-1.5, 1.2, 0.5]], [-0.5, 1.0, false, [1.4, 1.2, -0.6]], [0.1, 0.65, false, [1.3, -1.3, 0.8]], [-0.25, 1.1, false, [-1.4, -1.25, -0.5]]];
+      const ag = add(new T.Group()); ag.rotation.y = 0.67;
+      const origin = [[-2.8, 2.4, 0, G7], [2.8, 2.4, 0, G4]];
+      const links = [];
+      origin.forEach(([x, y, z, gl]) => {
+        card(gl, [x, y, z], 0, 1.1, false, 'ink', 2.4);
+        tf.forEach(([rot, s, fl, d]) => { const q = [x + d[0], y + d[1], z + d[2]]; card(gl, q, rot, s, fl, 'acc', 1.8); links.push([[x, y, z], q]); });
+      });
+      ag.add(K.segs(links.map(([a, b]) => { const v = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...v); return [a.map((c, i) => c + v[i] * 0.6 / L), b.map((c, i) => c - v[i] * 0.55 / L)]; }), { c: 'acc', o: 0.35 }));
       legend = [{ c: 'acc', t: 'Augmented copies' }, { c: 'ink', t: 'Original samples' }];
     } else if (mode === 'knn') {
       FL(0);
@@ -678,22 +805,61 @@
       legend = [{ c: 'acc', t: 'Query and k neighbours' }, { c: 'ink', t: 'Two classes' }];
       ctl = [{ key: 'k', label: 'k', min: 1, max: 15, step: 1, value: k }];
     } else if (mode === 'dbscan') {
+      // 2D on the floor: core (solid accent), border (hollow accent), noise (hollow ink, faint); ε-discs on a few points
       FL(0);
-      const P = [];
-      for (let i = 0; i < 70; i++) { const a = Math.PI * (0.05 + 0.9 * i / 70) + 0.08 * r.n(); P.push([-1 + 2.2 * Math.cos(a) + 0.15 * r.n(), 1.6 + 0.2 * r.n() + 0.4 * Math.sin(a), -0.5 + 2.2 * Math.sin(a) * 0.9 + 0.15 * r.n()]); }
-      for (let i = 0; i < 40; i++) P.push([2.4 + 0.42 * r.n(), 2.6 + 0.35 * r.n(), 1.7 + 0.42 * r.n()]);
-      for (let i = 0; i < 14; i++) P.push([r.range(-3.8, 3.8), r.range(0.4, 4.6), r.range(-3.8, 3.8)]);
-      const eps = 0.62, mp = 5;
-      const nbr = P.map((q) => P.map((o, j) => [d3(q, o), j]).filter((x) => x[0] < eps).map((x) => x[1]));
-      const core = nbr.map((n) => n.length >= mp);
-      const border = P.map((_, i) => !core[i] && nbr[i].some((j) => core[j]));
-      add(K.dots(P.filter((_, i) => core[i]), { r: 0.085, c: 'acc' }));
-      add(K.dots(P.filter((_, i) => border[i]), { r: 0.09, c: 'acc', hollow: true }));
-      add(K.dots(P.filter((_, i) => !core[i] && !border[i]), { r: 0.09, hollow: true, o: 0.75 }));
-      const ci = P.findIndex((_, i) => core[i]);
-      add(K.line(circlePts(P[ci], eps, 40, 'xy'), { c: 'acc', w: 1, o: 0.6 }));
-      add(K.label('ε', [P[ci][0], P[ci][1] + eps + 0.3, P[ci][2]], { size: 0.36, c: 'acc' }));
+      const rr = K.rng(12), P2 = [];
+      for (let i = 0; i < 34; i++) { const a = Math.PI * (0.08 + 0.84 * i / 33); P2.push([-1.2 + 2.3 * Math.cos(a) + 0.16 * rr.n(), -0.4 - 2.0 * Math.sin(a) + 0.16 * rr.n()]); }
+      for (let i = 0; i < 16; i++) P2.push([2.2 + 0.5 * rr.n(), 1.9 + 0.5 * rr.n()]);
+      [[-3.3, 2.6], [0.4, 2.9], [3.3, -2.9], [-0.6, 0.6], [3.4, -0.6], [-3.4, -3.3], [1.2, -3.5]].forEach((q) => P2.push(q));
+      const eps = 0.62, mp = 4, dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+      const nbr = P2.map((q) => P2.map((o, j) => [dist(q, o), j]).filter((x) => x[0] <= eps).map((x) => x[1]));
+      const core = nbr.map((n) => n.length >= mp), border = P2.map((_, i) => !core[i] && nbr[i].some((j) => core[j]));
+      const F = (q, y = 0.06) => [q[0], y, q[1]];
+      const links = []; P2.forEach((q, i) => { if (core[i]) nbr[i].forEach((j) => { if (j > i && core[j]) links.push([F(q), F(P2[j])]); }); });
+      add(K.segs(links, { c: 'acc', o: 0.35 }));
+      add(K.dots(P2.filter((_, i) => core[i]).map((q) => F(q)), { r: 0.09, c: 'acc' }));
+      add(K.dots(P2.filter((_, i) => border[i]).map((q) => F(q)), { r: 0.11, c: 'acc', hollow: true }));
+      const noise = P2.filter((_, i) => !core[i] && !border[i]);
+      add(K.dots(noise.map((q) => F(q)), { r: 0.11, hollow: true, o: 0.55 }));
+      // ε-discs: a core point (≥ minPts inside), a border point, a noise point
+      const ci = P2.findIndex((q, i) => core[i] && i >= 34), bi = P2.findIndex((_, i) => border[i]), ni = P2.indexOf(noise[3] || noise[0]);
+      add(polyFill(circlePts([0, 0, 0], eps, 48).map(([x, , z]) => [P2[ci][0] + x, P2[ci][1] + z]), 0.02, { c: 'acc', fill: 0.12 }));
+      add(K.line(circlePts(F(P2[ci], 0.03), eps, 48), { c: 'acc', w: 1.8 }));
+      if (bi >= 0) add(K.line(circlePts(F(P2[bi], 0.03), eps, 48), { c: 'acc', w: 1.2, o: 0.6, dash: true }));
+      if (ni >= 0) add(K.line(circlePts(F(P2[ni], 0.03), eps, 48), { w: 1.2, o: 0.5, dash: true }));
+      add(K.line([F(P2[ci], 0.04), [P2[ci][0] + eps, 0.04, P2[ci][1]]], { c: 'acc', w: 1.2 }));
+      add(K.label('ε', [P2[ci][0] + eps + 0.35, 0.15, P2[ci][1]], { size: 0.38, c: 'acc' }));
+      add(K.label('minPts = ' + mp, [P2[ci][0], 0.5, P2[ci][1] - eps - 0.6], { size: 0.3, o: 0.75 }));
+      g.quaternion.setFromAxisAngle(V3(0.78, 0, -0.62).normalize(), 0.55); // tilt the floor toward the camera
       legend = [{ c: 'acc', t: 'Dense clusters' }, { c: 'ink', t: 'Noise points' }];
+    } else if (mode === 'gmm' && p.iter) {
+      // EM on 2D data, iterations stacked as layers: bad initial guess at the bottom, converged fit on top
+      const rr = K.rng(8), X = [];
+      const C = [{ m: [-2.0, -1.2], a: [[1.0, 0.35], [-0.18, 0.5]] }, { m: [1.9, -1.5], a: [[0.45, -0.3], [0.3, 0.55]] }, { m: [0.4, 2.0], a: [[0.95, 0.1], [-0.05, 0.42]] }];
+      C.forEach((c) => { for (let i = 0; i < 26; i++) { const u = rr.n(), v = rr.n(); X.push([c.m[0] + u * c.a[0][0] + v * c.a[1][0], c.m[1] + u * c.a[0][1] + v * c.a[1][1]]); } });
+      let mu = [[-0.6, 1.2], [1.2, -0.2], [-0.8, -0.6]], S = mu.map(() => [2.2, 0, 2.2]), pi = [1 / 3, 1 / 3, 1 / 3], R = [];
+      const pdf = (x, m, s) => { const det = s[0] * s[2] - s[1] * s[1], dx = x[0] - m[0], dz = x[1] - m[1]; const q = (s[2] * dx * dx - 2 * s[1] * dx * dz + s[0] * dz * dz) / det; return Math.exp(-0.5 * q) / (2 * Math.PI * Math.sqrt(det)); };
+      const snaps = [], at = [0, 1, 3, 25];
+      for (let it = 0; it <= 25; it++) {
+        R = X.map((x) => { const w = mu.map((m, k) => pi[k] * pdf(x, m, S[k])); const s = w.reduce((a, b) => a + b, 0) || 1; return w.map((v) => v / s); });
+        if (at.includes(it)) snaps.push({ mu: mu.map((m) => m.slice()), S: S.map((s) => s.slice()), R: R.map((r0) => r0.slice()) });
+        mu = mu.map((_, k) => { const nk = R.reduce((a, r0) => a + r0[k], 0); return [R.reduce((a, r0, i) => a + r0[k] * X[i][0], 0) / nk, R.reduce((a, r0, i) => a + r0[k] * X[i][1], 0) / nk]; });
+        S = mu.map((m, k) => { const nk = R.reduce((a, r0) => a + r0[k], 0); let a = 0, b = 0, c = 0; X.forEach((x, i) => { const dx = x[0] - m[0], dz = x[1] - m[1]; a += R[i][k] * dx * dx; b += R[i][k] * dx * dz; c += R[i][k] * dz * dz; }); return [a / nk + 0.02, b / nk, c / nk + 0.02]; });
+        pi = mu.map((_, k) => R.reduce((a, r0) => a + r0[k], 0) / X.length);
+      }
+      const ell2 = (m, s, y, sc) => { const tr = s[0] + s[2], dt = s[0] * s[2] - s[1] * s[1], l1 = tr / 2 + Math.sqrt(tr * tr / 4 - dt), l2 = tr / 2 - Math.sqrt(Math.max(0, tr * tr / 4 - dt)); const th = Math.abs(s[1]) < 1e-9 ? (s[0] >= s[2] ? 0 : Math.PI / 2) : Math.atan2(l1 - s[0], s[1]); const P = []; for (let i = 0; i <= 56; i++) { const t = 2 * Math.PI * i / 56, u = sc * Math.sqrt(l1) * Math.cos(t), v = sc * Math.sqrt(Math.max(l2, 1e-4)) * Math.sin(t); P.push([m[0] + u * Math.cos(th) - v * Math.sin(th), y, m[1] + u * Math.sin(th) + v * Math.cos(th)]); } return P; };
+      const dy = 1.35, top = snaps.length - 1;
+      snaps.forEach((sn, L) => {
+        const y = L * dy, fin = L === top;
+        add(K.rect(0, y, 0, 8, 8, 'xz', { o: fin ? 0.3 : 0.16, fill: fin ? 0.03 : 0.012 }));
+        add(K.dots(X.map(([x, z]) => [x, y + 0.03, z]), { r: 0.05, o: fin ? 0.75 : 0.3 }));
+        if (L === 1) add(K.segs(X.map((x, i) => { const k = sn.R[i].indexOf(Math.max(...sn.R[i])); return [[x[0], y + 0.03, x[1]], [sn.mu[k][0], y + 0.03, sn.mu[k][1]]]; }), { o: 0.07 }));
+        sn.mu.forEach((m, k) => add(K.line(ell2(m, sn.S[k], y + 0.03, 1.6), fin ? { c: 'acc', w: 2 } : { w: 1.2, o: 0.3 + 0.12 * L })));
+        add(K.dots(sn.mu.map(([x, z]) => [x, y + 0.05, z]), fin ? { r: 0.13, c: 'acc' } : { r: 0.08, o: 0.6 }));
+        add(K.label('t = ' + at[L], [-4.6, y + 0.1, 4.2], { size: 0.32, c: fin ? 'acc' : 'ink', o: fin ? 1 : 0.7 }));
+      });
+      mu.forEach((_, k) => add(K.line(snaps.map((sn, L) => [sn.mu[k][0], L * dy + 0.05, sn.mu[k][1]]), { c: 'acc', w: 1.2, o: 0.55, dash: true })));
+      legend = [{ c: 'acc', t: 'Converged components' }, { c: 'ink', t: 'Earlier EM iterations' }];
     } else if (mode === 'gmm') {
       FL(0);
       const comps = [
@@ -708,26 +874,9 @@
         const M = V3(...m), A = ax.map((v) => V3(...v).multiplyScalar(sc));
         add(K.line(ellPts(M, A[0], A[1]), o)); add(K.line(ellPts(M, A[0], A[2]), o)); add(K.line(ellPts(M, A[1], A[2]), o));
       };
-      if (p.iter) {
-        const init = [[-0.6, 2.6, 0.4], [0.6, 2.0, -0.2], [0, 3, 0.6]];
-        const its = [0, 0.5];
-        const mpath = comps.map(() => []);
-        its.forEach((u, k) => comps.forEach((c, ci) => {
-          const m = init[ci].map((v, a) => v + (c.m[a] - v) * u);
-          const ax = c.ax.map((v, a) => v.map((x, b) => x * u + (1 - u) * (a === b ? 1.4 : 0)));
-          const M = V3(...m), A = ax.map((v2) => V3(...v2).multiplyScalar(1.5));
-          add(K.line(ellPts(M, A[0], A[1]), { w: 1, o: 0.22 + 0.18 * k, dash: k === 0 }));
-          mpath[ci].push(m);
-        }));
-        comps.forEach((c, ci) => { mpath[ci].push(c.m); add(K.line(mpath[ci], { w: 1.2, o: 0.6, dash: true })); add(K.dots(mpath[ci].slice(0, -1), { r: 0.07, o: 0.6 })); });
-        comps.forEach((c) => ellip(c.m, c.ax, 1.5, { c: 'acc', w: 1.6 }));
-        add(K.dots(comps.map((c) => c.m), { r: 0.13, c: 'acc' }));
-        legend = [{ c: 'acc', t: 'Converged components' }, { c: 'ink', t: 'Earlier EM iterations' }];
-      } else {
-        comps.forEach((c) => { ellip(c.m, c.ax, 1.0, { c: 'acc', w: 1.8 }); ellip(c.m, c.ax, 2.0, { c: 'acc', w: 1, o: 0.4 }); });
-        add(K.dots(comps.map((c) => c.m), { r: 0.13, c: 'acc' }));
-        legend = [{ c: 'acc', t: 'Gaussian components' }];
-      }
+      comps.forEach((c) => { ellip(c.m, c.ax, 1.0, { c: 'acc', w: 1.8 }); ellip(c.m, c.ax, 2.0, { c: 'acc', w: 1, o: 0.4 }); });
+      add(K.dots(comps.map((c) => c.m), { r: 0.13, c: 'acc' }));
+      legend = [{ c: 'acc', t: 'Gaussian components' }];
     }
     return { g, legend, tick, ctl };
   };
@@ -931,19 +1080,29 @@
       add(K.label('x', xm.clone().add(V3(0.35, 0.4, 0)), { size: 0.34, c: 'acc' }));
       legend = [{ c: 'acc', t: 'Updated boundary' }, { c: 'ink', t: 'Previous boundary' }, clsLeg];
     } else if (mode === 'cf') {
-      cube();
-      draw(gen(50, 0.35, 2.2), { o: 0.35, r: 0.07 });
-      add(quad(V3(0, 0, 0), u, v, 3.3, 3.3, { fill: 0.06, w: 1.4, o: 0.6 }));
-      const x = u.clone().multiplyScalar(-0.6).addScaledVector(v, 0.5).addScaledVector(n, -1.6);
-      const xc = x.clone().addScaledVector(n, 1.6 + 0.18);
-      add(K.dots([x], { r: 0.17, c: 'b', hollow: true }));
-      add(K.dots([x], { r: 0.06, c: 'b' }));
-      add(K.arrow(x, xc, { c: 'acc', w: 2.4, head: 0.28 }));
-      add(K.dots([xc], { r: 0.15, c: 'acc' }));
-      // other, longer valid moves
-      [[1.6, 1.2], [-1.8, -0.6]].forEach(([a, b]) => { const y = x.clone().addScaledVector(u, a).addScaledVector(v, b).addScaledVector(n, 1.8); add(K.line([x, y], { w: 1, o: 0.35, dash: true })); add(K.dots([y], { r: 0.07, o: 0.4 })); });
-      add(K.label('x', x.clone().add(V3(-0.3, -0.45, 0)), { size: 0.36, c: 'b' }));
-      add(K.label("x′", xc.clone().add(V3(0.35, 0.4, 0)), { size: 0.36, c: 'acc' }));
+      // feature plane on the floor, decision boundary as a wall; the smallest move that crosses it
+      const S = 3.6, bd = [0.419, 0.908], nm = [0.908, -0.419], c0 = [0.2, 0.1], Hw = 2.0;
+      floor(g, [-S, S], [-S, S], 0, 0, { x: 'x₁', z: 'x₂' });
+      const at = (a, b) => [c0[0] + a * bd[0] + b * nm[0], c0[1] + a * bd[1] + b * nm[1]];
+      const clip = (q) => Math.abs(q[0]) <= S && Math.abs(q[1]) <= S;
+      const wl = []; for (let i = 0; i <= 40; i++) { const q = at(-6 + 12 * i / 40, 0); if (clip(q)) wl.push(q); }
+      const w0 = wl[0], w1 = wl[wl.length - 1];
+      add(quad(V3((w0[0] + w1[0]) / 2, Hw / 2, (w0[1] + w1[1]) / 2), V3(w1[0] - w0[0], 0, w1[1] - w0[1]).normalize(), V3(0, 1, 0), Math.hypot(w1[0] - w0[0], w1[1] - w0[1]) / 2, Hw / 2, { fill: 0.07, w: 1.2, o: 0.5 }));
+      add(K.line([[w0[0], 0.02, w0[1]], [w1[0], 0.02, w1[1]]], { w: 2.2 }));
+      const P = []; let guard = 0;
+      while (P.length < 44 && guard++ < 4000) { const q = [r.range(-S, S), r.range(-S, S)], sd = (q[0] - c0[0]) * nm[0] + (q[1] - c0[1]) * nm[1]; if (Math.abs(sd) < 0.45) continue; P.push({ q: V3(q[0], 0.06, q[1]), y: sd > 0 ? 1 : 0 }); }
+      draw(P, { o: 0.4, r: 0.075 });
+      const x = at(0.6, -1.9), xc = at(0.6, 0.22);
+      const X3 = V3(x[0], 0.08, x[1]), XC = V3(xc[0], 0.08, xc[1]);
+      add(K.line(circlePts([x[0], 0.03, x[1]], 2.12, 64), { w: 1, o: 0.3, dash: true }));
+      [[2.2, 0.6], [-1.9, 0.5]].forEach(([a, b]) => { const y = at(0.6 + a, b); add(K.line([X3, V3(y[0], 0.08, y[1])], { w: 1, o: 0.35, dash: true })); add(K.dots([[y[0], 0.08, y[1]]], { r: 0.07, o: 0.45 })); });
+      add(K.dots([X3], { r: 0.2, c: 'b', hollow: true }));
+      add(K.dots([X3], { r: 0.08, c: 'b' }));
+      add(K.arrow(X3, XC, { c: 'acc', w: 3, head: 0.32 }));
+      add(K.dots([XC], { r: 0.17, c: 'acc' }));
+      add(K.label('x', [x[0] - 0.1, 0.5, x[1] - 0.35], { size: 0.4, c: 'b' }));
+      add(K.label('x′', [xc[0] + 0.45, 0.5, xc[1] - 0.3], { size: 0.4, c: 'acc' }));
+      add(K.label('f(x) = 0', [w0[0], Hw + 0.4, w0[1]], { size: 0.32, o: 0.7 }));
       legend = [{ c: 'acc', t: 'Minimal change' }, clsLeg, { c: 'ink', t: 'Decision boundary' }];
     }
     return { g, legend, tick };

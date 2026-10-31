@@ -31,7 +31,7 @@
     counts.forEach((c, i) => {
       const s = o.stFn ? o.stFn(i, c) : o.st;
       if (!s) return;
-      bar(g, o.x0 + bw * (i + 0.5), o.z, bw * (o.gap == null ? 0.8 : o.gap), o.h * c / m, o.d == null ? 0.5 : o.d, s);
+      bar(g, o.x0 + bw * (i + 0.5), o.z, bw * (o.gap == null ? 0.8 : o.gap), o.h * c / m, o.d == null ? 0.5 : o.d, s, o.y0);
     });
   }
   function area2(top, bot, o) {
@@ -77,67 +77,76 @@
      BARS
      ===================================================================== */
   const BARS = {};
-  const BROT = { shap: 0.55 };
+  const BROT = { shap: 0.55, hist3: 0.5, bench: 0.45, importance: 0.45 };
 
+  /* EDA: three quick looks at a dataset, each revealing a problem (accent) */
   BARS.hist3 = function (p, g) {
-    const r = K.rng(11), N = 700, nb = 18;
-    const feats = [
-      { v: Array.from({ length: N }, () => r.n()), lo: -3.2, hi: 3.2 },
-      { v: Array.from({ length: N }, () => (r() < 0.45 ? -1.3 : 1.2) + r.n() * 0.55), lo: -3.2, hi: 3.2 },
-      { v: Array.from({ length: N }, () => r.range(-2.6, 2.6)), lo: -3.2, hi: 3.2 },
-      { v: Array.from({ length: N }, () => Math.exp(r.n() * 0.55) - 0.4).concat([7.6, 8.3]), lo: 0, hi: 8.6, skew: true },
-    ];
-    const zs = [-3, -1.2, 0.6, 2.6];
-    feats.forEach((f, k) => {
-      const c0 = hist(f.v, f.lo, f.hi, nb);
-      const c = f.skew ? c0.map((v) => (v ? Math.sqrt(v) : 0)) : c0;
-      const m = Math.max(...c);
-      histBars(g, c, {
-        x0: -4, x1: 4, z: zs[k], h: k === 3 ? 3.0 : 2.4, d: 0.55, max: m,
-        stFn: (i, n) => {
-          if (n === 0) return null;
-          if (f.skew && i >= 5) return ST.acc;
-          return k === 3 ? ST.ink : ST.faint;
-        },
-      });
-      hline(g, -4.1, 4.1, 0, zs[k], { o: 0.3 });
-      lab(g, 'x' + '₁₂₃₄'[k], [-4.7, 0.2, zs[k]], { size: 0.32, o: k === 3 ? 0.85 : 0.5 });
-    });
-    // outliers marked
-    const bw = 8 / nb;
-    [7.6, 8.3].forEach((v) => {
-      const i = Math.floor(v / 8.6 * nb);
-      g.add(K.dots([[-4 + bw * (i + 0.5), 0.55, 2.6 + 0.55]], { r: 0.09, c: 'acc' }));
-    });
-    rails(g, [-4.1, 4.1], -3.4, 3);
-    return [{ c: 'acc', t: 'Skewed tail, outliers' }];
+    const r = K.rng(11), H = 3.4, PW = 3.0;
+    const P = [{ cx: -3.7, z: -0.8 }, { cx: 0, z: 0 }, { cx: 3.7, z: 0.8 }];
+    const base = (k) => { const { cx, z } = P[k]; hline(g, cx - PW / 2 - 0.1, cx + PW / 2 + 0.1, 0, z, { o: 0.4 }); };
+    // 1) skewed histogram: long right tail
+    {
+      const { cx, z } = P[0], nb = 11;
+      const v = Array.from({ length: 900 }, () => Math.exp(r.n() * 0.55));
+      const c = hist(v, 0, 5, nb).map((n) => Math.pow(n, 0.55));
+      histBars(g, c, { x0: cx - PW / 2, x1: cx + PW / 2, z, h: H, d: 0.45, gap: 0.82, stFn: (i, n) => (n ? (i >= 5 ? ST.acc : ST.ink) : null) });
+      for (let i = 5; i < nb; i++) if (c[i] < 4) bar(g, cx - PW / 2 + PW / nb * (i + 0.5), z, PW / nb * 0.82, 0.1, 0.45, ST.acc);
+      base(0);
+      lab(g, 'x₁', [cx, -0.5, z], { o: 0.65 });
+    }
+    // 2) box plot with outliers
+    {
+      const { cx, z } = P[1], S = 0.5, y = (v) => 1.5 + v * S;
+      const q1 = -0.67, q3 = 0.67, md = 0.05, lo = -2.0, hi = 2.0;
+      g.add(K.box(cx + 0.3, (y(q1) + y(q3)) / 2, z, 1.1, y(q3) - y(q1), 0.45, ST.ink));
+      g.add(K.line([[cx - 0.25, y(md), z + 0.23], [cx + 0.85, y(md), z + 0.23]], { w: 2.2 }));
+      vline(g, cx + 0.3, y(lo), y(q1), z, { o: 0.7, w: 1.4 }); vline(g, cx + 0.3, y(q3), y(hi), z, { o: 0.7, w: 1.4 });
+      hline(g, cx + 0.02, cx + 0.58, y(lo), z, { o: 0.7, w: 1.4 }); hline(g, cx + 0.02, cx + 0.58, y(hi), z, { o: 0.7, w: 1.4 });
+      const pts = [];
+      for (let i = 0; i < 30; i++) pts.push([cx - 0.9 + r.range(-0.18, 0.18), y(clamp(r.n() * 0.9, lo, hi)), z]);
+      g.add(K.dots(pts, { r: 0.05, o: 0.4 }));
+      g.add(K.dots([[cx + 0.3, y(3.5), z], [cx + 0.42, y(3.95), z], [cx + 0.25, y(-2.8), z]], { r: 0.12, c: 'acc' }));
+      base(1);
+      lab(g, 'x₂', [cx, -0.5, z], { o: 0.65 });
+    }
+    // 3) missing-value map: rows × columns, one column full of gaps
+    {
+      const { cx, z } = P[2], nc = 5, nr = 12, cw = PW / nc, ch = H / nr;
+      const ok = [], gap = [];
+      for (let j = 0; j < nc; j++) for (let i = 0; i < nr; i++) {
+        const miss = j === 3 ? r() < 0.55 : r() < 0.04;
+        (miss ? gap : ok).push([cx - PW / 2 + cw * (j + 0.5), ch * (i + 0.5), z]);
+      }
+      ok.forEach((q) => g.add(K.rect(q[0], q[1], q[2], cw * 0.8, ch * 0.72, 'xy', { o: 0.35, fill: 0.12 })));
+      gap.forEach((q) => g.add(K.rect(q[0], q[1], q[2], cw * 0.8, ch * 0.72, 'xy', { c: 'acc', o: 0.9, fill: 0.6, fc: 'acc' })));
+      base(2);
+      lab(g, 'NaN', [cx - PW / 2 + cw * 3.5, H + 0.35, z], { c: 'acc', size: 0.34, mono: true });
+    }
+    return [{ c: 'acc', t: 'Problems found' }];
   };
 
+  /* Min-max: same shape, raw range [min, max] (top) squeezed onto [0, 1] (bottom) */
   BARS.scale = function (p, g) {
-    const r = K.rng(3), N = 400, nb = 12;
-    const raws = [
-      { v: Array.from({ length: N }, () => r.n()), x0: -4.4, x1: 4.4 },
-      { v: Array.from({ length: N }, () => Math.abs(r.n())), x0: -0.9, x1: 0.3 },
-      { v: Array.from({ length: N }, () => r.range(0, 1) + r.range(0, 1)), x0: 1.6, x1: 3.6 },
-    ];
-    const zb = [-3.4, -2.5, -1.6], zf = [1.4, 2.3, 3.2];
-    raws.forEach((f, k) => {
-      const lo = Math.min(...f.v), hi = Math.max(...f.v);
-      const c = hist(f.v, lo, hi, nb), m = Math.max(...c);
-      const bwRaw = (f.x1 - f.x0) / nb;
-      histBars(g, c, { x0: f.x0, x1: f.x1, z: zb[k], h: 1.9, d: 0.5, max: m, gap: Math.min(0.8, 0.4 / bwRaw + 0.2), st: ST.faint });
-      histBars(g, c, { x0: -2, x1: 2, z: zf[k], h: 1.9, d: 0.5, max: m, st: ST.accL });
-      hline(g, -4.6, 4.6, 0, zb[k], { o: 0.25 });
-      hline(g, -2.2, 2.2, 0, zf[k], { o: 0.25 });
-    });
-    // [0,1] bounds on the floor
-    [-2, 2].forEach((x) => g.add(K.line([[x, 0, 1.0], [x, 0, 3.7]], { c: 'acc', o: 0.8, w: 1.4 })));
-    [-2, 2].forEach((x) => vline(g, x, 0, 2.3, 3.6, { c: 'acc', o: 0.5, dash: true, w: 1.2 }));
-    lab(g, '0', [-2, -0.35, 3.9], { c: 'acc', size: 0.36 });
-    lab(g, '1', [2, -0.35, 3.9], { c: 'acc', size: 0.36 });
-    lab(g, 'x', [-5.0, 0.3, -2.5], { o: 0.55 });
-    lab(g, 'x′', [-2.9, 0.3, 2.3], { c: 'acc' });
-    return [{ c: 'acc', t: 'Rescaled to [0, 1]' }];
+    const r = K.rng(3), N = 900, nb = 14, H = 2.3;
+    const v = Array.from({ length: N }, () => (r() < 0.62 ? 38 + r.n() * 7 : 64 + r.n() * 6));
+    const lo = Math.min(...v), hi = Math.max(...v);
+    const c = hist(v, lo, hi, nb), m = Math.max(...c);
+    const zb = -1.0, zf = 1.0, yT = 3.3, R0 = -4.2, R1 = 4.2, F0 = -1.5, F1 = 1.5;
+    histBars(g, c, { x0: R0, x1: R1, z: zb, y0: yT, h: H, d: 0.45, max: m, gap: 0.8, st: ST.ink });
+    histBars(g, c, { x0: F0, x1: F1, z: zf, h: H, d: 0.45, max: m, gap: 0.8, st: ST.acc });
+    hline(g, R0 - 0.2, R1 + 0.2, yT, zb, { o: 0.45 }); hline(g, F0 - 0.4, F1 + 0.4, 0, zf, { o: 0.45 });
+    [R0, R1].forEach((x) => vline(g, x, yT - 0.18, yT + 0.18, zb, { o: 0.8, w: 1.4 }));
+    [F0, F1].forEach((x) => vline(g, x, -0.18, 0.18, zf, { c: 'acc', w: 1.6, o: 1 }));
+    // min -> 0, max -> 1
+    g.add(K.arrow([R0, yT - 0.25, zb], [F0, 0.25, zf], { c: 'acc', w: 1.5, o: 0.8, dash: true }));
+    g.add(K.arrow([R1, yT - 0.25, zb], [F1, 0.25, zf], { c: 'acc', w: 1.5, o: 0.8, dash: true }));
+    lab(g, 'min', [R0 - 0.6, yT, zb], { size: 0.34, o: 0.75, mono: true });
+    lab(g, 'max', [R1 + 0.65, yT, zb], { size: 0.34, o: 0.75, mono: true });
+    lab(g, '0', [F0, -0.5, zf], { c: 'acc', size: 0.44 });
+    lab(g, '1', [F1, -0.5, zf], { c: 'acc', size: 0.44 });
+    lab(g, 'x', [R0 + 0.2, yT + H * 0.7, zb], { o: 0.6 });
+    lab(g, 'x′', [F0 - 0.5, H * 0.7, zf], { c: 'acc' });
+    return [{ c: 'acc', t: 'Rescaled to [0, 1]' }, { c: 'ink', t: 'Original range' }];
   };
 
   BARS.robust = function (p, g) {
@@ -190,25 +199,25 @@
     return [{ c: 'acc', t: 'Log-transformed' }, { c: 'ink', t: 'Raw skewed feature' }];
   };
 
+  /* Box-Cox: skewed raw feature (top) -> transform with λ (bottom); the right λ makes it near-symmetric */
   BARS.boxcox = function (p, g) {
-    const r = K.rng(21), N = 900, nb = 22;
-    const x = Array.from({ length: N }, () => Math.exp(r.n() * 0.6 + 0.2));
-    const lams = [1, 0.5, 0, -0.5];
+    const r = K.rng(21), N = 1400, nb = 22, H = 2.4, BEST = 0.5, yT = 3.3;
+    const x = Array.from({ length: N }, () => Math.pow(Math.max(0.05, 1 + r.n() * 0.33), 2));
+    const lam = clamp(p.lambda == null ? BEST : +p.lambda, -1, 2);
     const bc = (v, l) => (Math.abs(l) < 1e-9 ? Math.log(v) : (Math.pow(v, l) - 1) / l);
-    const skew = (a) => { const m = a.reduce((s, v) => s + v, 0) / a.length; let m2 = 0, m3 = 0; a.forEach((v) => { m2 += (v - m) ** 2; m3 += (v - m) ** 3; }); m2 /= a.length; m3 /= a.length; return m3 / Math.pow(m2, 1.5); };
-    const tr = lams.map((l) => x.map((v) => bc(v, l)));
-    const sk = tr.map((a) => Math.abs(skew(a)));
-    const best = sk.indexOf(Math.min(...sk));
-    const zs = [-3.6, -1.2, 1.2, 3.6];
-    tr.forEach((a, k) => {
-      const s = a.slice().sort((u, v) => u - v);
-      const lo = s[2], hi = s[N - 3];
-      histBars(g, hist(a, lo, hi, nb), { x0: -3.6, x1: 3.6, z: zs[k], h: 2.5, d: 0.55, st: k === best ? ST.acc : ST.faint });
-      hline(g, -3.7, 3.7, 0, zs[k], { o: 0.3 });
-      lab(g, 'λ=' + lams[k], [-4.7, 0.3, zs[k]], { c: k === best ? 'acc' : 'ink', o: k === best ? 1 : 0.5, size: 0.32 });
-    });
-    rails(g, [-3.7, 3.7], -3.9, 3.9);
-    return [{ c: 'acc', t: 'Best λ' }];
+    const rng = (a) => { const s = a.slice().sort((u, w) => u - w); return [s[3], s[N - 4]]; };
+    const panel = (a, z, y0, st) => { const [lo, hi] = rng(a); histBars(g, hist(a, lo, hi, nb), { x0: -3.6, x1: 3.6, z, y0, h: H, d: 0.45, st }); hline(g, -3.8, 3.8, y0, z, { o: 0.45 }); };
+    const t = x.map((v) => bc(v, lam));
+    const good = Math.abs(lam - BEST) < 0.13;
+    panel(x, -1.0, yT, ST.ink);
+    panel(t, 1.0, 0, good ? ST.acc : ST.ink);
+    // median guide on the transformed panel: centred when symmetric
+    const s = t.slice().sort((u, w) => u - w), [lo, hi] = rng(t), md = s[N >> 1];
+    vline(g, -3.6 + 7.2 * (md - lo) / (hi - lo), 0, H + 0.3, 1.0, { c: good ? 'acc' : 'ink', o: 0.7, dash: true, w: 1.2 });
+    g.add(K.arrow([-4.3, yT - 0.15, -1.0], [-4.3, 0.6, 1.0], { o: 0.45, w: 1.2 }));
+    lab(g, 'x', [-4.35, yT + 0.4, -1.0], { o: 0.6 });
+    lab(g, 'λ=' + (+lam.toFixed(2)), [-4.9, 0.25, 1.0], { c: good ? 'acc' : 'ink', size: 0.38 });
+    return { legend: [{ c: 'acc', t: 'Best λ' }, { c: 'ink', t: 'Raw skewed feature' }], ctl: [{ key: 'lambda', label: 'λ', min: -1, max: 2, step: 0.25, value: lam }] };
   };
 
   BARS.target = function (p, g) {
@@ -288,24 +297,63 @@
     return [{ c: 'acc', t: 'Class-weighted minority' }];
   };
 
+  /* Feature selection: rank features by score, keep the top subset above the cut (accent), drop the rest */
   BARS.importance = function (p, g) {
-    const r = K.rng(14);
-    const imp = [0.27, 0.19, 0.14, 0.1, 0.08, 0.065, 0.05, 0.04, 0.03, 0.025];
-    const ids = ['x₇', 'x₂', 'x₉'];
-    const H = 12, n = imp.length, bw = 0.8;
-    const xs = imp.map((_, i) => -3.6 + 0.8 * i);
-    const zs = [-3.2, -2.4, -1.6, -0.8];
-    zs.forEach((z) => {
-      imp.forEach((v, i) => bar(g, xs[i], z, bw * 0.6, H * Math.max(0.005, v * (1 + r.n() * 0.35)), 0.45, ST.faint));
-      hline(g, -4.1, 3.9, 0, z, { o: 0.18 });
+    const imp = [0.24, 0.21, 0.18, 0.13, 0.09, 0.06, 0.05, 0.04, 0.035, 0.03, 0.02, 0.015];
+    const id = ['₂', '₈', '₅', '₁₁', '₄', '₁', '₉', '₇', '₁₂', '₃', '₆', '₁₀'];
+    const n = imp.length, H = 15, th = 0.11, z = 0;
+    const x = (i) => -4.4 + 0.8 * i;
+    imp.forEach((v, i) => {
+      const keep = v >= th;
+      bar(g, x(i), z, 0.5, H * v, 0.5, keep ? ST.acc : ST.ghost);
+      lab(g, 'x' + id[i], [x(i), -0.4, z + 0.45], keep ? { c: 'acc', size: 0.32 } : { size: 0.26, o: 0.35 });
     });
-    imp.forEach((v, i) => bar(g, xs[i], 1.2, bw * 0.7, H * v, 0.7, i < 3 ? ST.acc : ST.ink));
-    hline(g, -4.1, 3.9, 0, 1.2, { o: 0.4 });
-    // selection threshold
-    hline(g, -4.1, 3.9, H * 0.12, 1.2, { o: 0.4, dash: true, w: 1.2 });
-    ids.forEach((t, i) => lab(g, t, [xs[i], -0.4, 1.9], { c: 'acc', size: 0.34 }));
-    rails(g, [-4.1, 3.9], -3.5, 1.6);
-    return [{ c: 'acc', t: 'Top features' }, { c: 'ink', t: 'Per-tree importance' }];
+    hline(g, x(0) - 0.4, x(n - 1) + 0.4, 0, z, { o: 0.45 });
+    hline(g, x(0) - 0.4, x(n - 1) + 0.4, H * th, z, { o: 0.6, dash: true, w: 1.2 });
+    lab(g, 'τ', [x(n - 1) + 0.8, H * th, z], { size: 0.4, o: 0.75 });
+    return [{ c: 'acc', t: 'Selected features' }, { c: 'ink', t: 'Dropped features' }];
+  };
+
+  /* MDI: each split's impurity decrease ΔI is credited to its feature; summed over all trees -> importance */
+  BARS.mdi = function (p, g) {
+    // three small trees: [feature, ΔI] for root, left, right
+    const trees = [
+      [[0, 0.30], [2, 0.08], [1, 0.12]],
+      [[0, 0.25], [1, 0.10], [3, 0.05]],
+      [[1, 0.20], [0, 0.15], [2, 0.06]],
+    ];
+    const zt = -1.6, ty = 3.4, RS = 0.85;
+    const nodePos = (cx) => [[cx, ty + 1.7, zt], [cx - RS, ty + 0.8, zt], [cx + RS, ty + 0.8, zt]];
+    const tot = [0, 0, 0, 0], parts = [[], [], [], []];
+    trees.forEach((tr, t) => {
+      const P = nodePos(-3.2 + 3.2 * t);
+      const leaf = [];
+      [1, 2].forEach((c) => { leaf.push([P[c][0] - 0.38, ty, zt], [P[c][0] + 0.38, ty, zt]); });
+      g.add(K.segs([[P[0], P[1]], [P[0], P[2]], [P[1], leaf[0]], [P[1], leaf[1]], [P[2], leaf[2]], [P[2], leaf[3]]], { o: 0.35 }));
+      g.add(K.dots(leaf, { r: 0.06, o: 0.35, hollow: true }));
+      tr.forEach(([f, d], k) => {
+        const hl = f === 0;
+        g.add(K.dots([P[k]], { r: 0.07 + d * 0.5, c: hl ? 'acc' : 'ink', o: hl ? 1 : 0.6 }));
+        parts[f].push({ d, pos: P[k] });
+        tot[f] += d;
+      });
+    });
+    // importance bars: stacked ΔI contributions per feature, sorted
+    const order = [0, 1, 2, 3].sort((a, b) => tot[b] - tot[a]);
+    const S = 4.0, bx = (k) => -1.8 + 1.2 * k, bz = 1.2;
+    order.forEach((f, k) => {
+      let y = 0;
+      parts[f].forEach(({ d, pos }, j) => {
+        const hl = f === 0;
+        g.add(K.box(bx(k), y + d * S / 2, bz, 0.7, d * S - 0.05, 0.5, hl ? (j % 2 ? ST.accL : ST.acc) : (j % 2 ? ST.faint : ST.ink)));
+        if (hl) g.add(K.line([[pos[0], pos[1] - 0.2, pos[2]], [bx(k), y + d * S - 0.05, bz]], { c: 'acc', o: 0.35, w: 1, dash: true }));
+        y += d * S;
+      });
+      lab(g, 'x' + '₁₂₃₄'[f], [bx(k), -0.4, bz + 0.4], { size: 0.38, c: f === 0 ? 'acc' : 'ink', o: f === 0 ? 1 : 0.7 });
+    });
+    hline(g, bx(0) - 0.6, bx(3) + 0.6, 0, bz, { o: 0.45 });
+    lab(g, 'ΣΔI', [bx(0) - 1.0, tot[0] * S * 0.5, bz], { size: 0.38, c: 'acc' });
+    return [{ c: 'acc', t: 'Splits on top feature' }, { c: 'ink', t: 'Split nodes' }];
   };
 
   BARS.smooth = function (p, g) {
@@ -417,72 +465,77 @@
     return [{ c: 'acc', t: 'Above group mean' }, { c: 'b', t: 'Below group mean' }];
   };
 
+  /* INT4 quantization: a continuous weight distribution (top) snapped onto 16 discrete levels (bottom) */
   BARS.quant = function (p, g) {
-    const nb = 64, lo = -3.6, hi = 3.6, H = 3.4;
+    const lo = -3.6, hi = 3.6, H = 2.3, zb = -1.0, zf = 1.0, yT = 3.4;
     const pdf = (x) => Math.exp(-x * x / 2);
-    const c = Array.from({ length: nb }, (_, i) => pdf(lo + (hi - lo) * (i + 0.5) / nb));
-    const W = 8, X = (v) => -W / 2 + W * (v - lo) / (hi - lo);
-    histBars(g, c, { x0: -4, x1: 4, z: -1.4, h: H, d: 0.5, gap: 0.75, st: ST.faint });
-    // INT4 levels (absmax-ish clip at 3)
+    const X = (v) => -4 + 8 * (v - lo) / (hi - lo);
+    const pts = samp(pdf, lo, hi, 120).map(([u, v]) => [X(u), yT + H * v, zb]);
+    g.add(area(pts, yT, { o: 0.07 }));
+    g.add(K.line(pts, { w: 1.8, o: 0.85 }));
+    hline(g, -4.1, 4.1, yT, zb, { o: 0.45 });
     const L = 16, a = 3.0, step = 2 * a / (L - 1);
     const lev = Array.from({ length: L }, (_, k) => -a + k * step);
-    g.add(K.segs(lev.map((v) => [[X(v), 0, -1.4], [X(v), H * 1.05, -1.4]]), { c: 'acc', o: 0.6, w: 1.2 }));
-    g.add(K.segs(lev.map((v) => [[X(v), 0.005, -1.4], [X(v), 0.005, 1.4]]), { c: 'acc', o: 0.18 }));
-    // quantized histogram: mass collected at each level
-    const mass = lev.map((v) => { let m = 0; for (let t = v - step / 2; t < v + step / 2; t += step / 40) m += pdf(clamp(t, -a, a)) * step / 40; return m; });
-    // tails clip into the end levels
-    const mm = Math.max(...mass);
-    lev.forEach((v, k) => bar(g, X(v), 1.4, 0.13, H * mass[k] / mm, 0.5, ST.acc));
-    hline(g, -4.1, 4.1, 0, -1.4, { o: 0.3 }); hline(g, -4.1, 4.1, 0, 1.4, { o: 0.4 });
-    lab(g, 'w', [-4.6, 0.3, -1.4], { o: 0.6 });
-    lab(g, 'INT4', [-4.9, 0.3, 1.4], { c: 'acc', size: 0.34 });
-    lab(g, '−a', [X(-a), -0.4, 1.9], { size: 0.28, o: 0.6 });
-    lab(g, '+a', [X(a), -0.4, 1.9], { size: 0.28, o: 0.6 });
-    rails(g, [-4.1, 4.1], -1.7, 1.7);
+    const mass = lev.map((v) => { let m = 0; for (let t = v - step / 2; t < v + step / 2; t += step / 40) m += pdf(t) * step / 40; return m; });
+    mass[0] += 0.02; mass[L - 1] += 0.02; // clipped tails
+    const mm = Math.max(...mass), hq = (k) => H * mass[k] / mm;
+    lev.forEach((v, k) => bar(g, X(v), zf, 0.16, hq(k), 0.4, ST.acc));
+    hline(g, -4.1, 4.1, 0, zf, { o: 0.45 });
+    // the grid of allowed values, ticked on both axes
+    g.add(K.segs(lev.map((v) => [[X(v), yT - 0.12, zb], [X(v), yT, zb]]), { c: 'acc', o: 0.8 }));
+    // a few weights snapping to their nearest level
+    [-1.93, -0.71, 0.33, 1.52].forEach((w) => {
+      const k = lev.reduce((b, v, i) => (Math.abs(v - w) < Math.abs(lev[b] - w) ? i : b), 0);
+      g.add(K.dots([[X(w), yT, zb]], { r: 0.08 }));
+      g.add(K.arrow([X(w), yT - 0.05, zb], [X(lev[k]), hq(k) + 0.15, zf], { c: 'acc', w: 1.2, o: 0.6, head: 0.18 }));
+    });
+    const k0 = 12, yS = hq(k0) + 0.3;
+    g.add(K.line([[X(lev[k0]), yS, zf], [X(lev[k0 + 1]), yS, zf]], { c: 'acc', w: 1.4 }));
+    lab(g, 'Δ', [(X(lev[k0]) + X(lev[k0 + 1])) / 2 + 0.05, yS + 0.3, zf], { c: 'acc', size: 0.34 });
+    lab(g, 'w', [-4.6, yT + 0.3, zb], { o: 0.6 });
+    lab(g, 'INT4', [-4.95, 0.3, zf], { c: 'acc', size: 0.34 });
+    lab(g, '−a', [X(-a), -0.45, zf + 0.3], { size: 0.3, o: 0.65 });
+    lab(g, '+a', [X(a), -0.45, zf + 0.3], { size: 0.3, o: 0.65 });
     return [{ c: 'acc', t: 'INT4 levels' }, { c: 'ink', t: 'FP16 weights' }];
   };
 
+  /* Reranking: first-stage list (left) re-scored by a stronger model (right); relevant docs move up */
   BARS.rerank = function (p, g) {
-    const n = 8;
-    const sc = [3.6, 3.3, 3.0, 2.7, 2.4, 2.1, 1.8, 1.5];
-    const relBefore = [2, 4, 6];
-    // after: relevant first, then others in original order
-    const order = relBefore.concat([0, 1, 3, 5, 7]);
-    const x = (i) => -3.5 + 1.0 * i;
-    const zb = -2, zf = 2;
-    for (let i = 0; i < n; i++) {
-      const rel = relBefore.includes(i);
-      bar(g, x(i), zb, 0.55, sc[i], 0.55, rel ? ST.accL : ST.faint);
-    }
-    order.forEach((doc, rank) => {
-      const rel = relBefore.includes(doc);
-      bar(g, x(rank), zf, 0.55, sc[rank], 0.55, rel ? ST.acc : ST.ink);
-      g.add(K.line([[x(doc), 0.01, zb + 0.3], [x(rank), 0.01, zf - 0.3]], { c: rel ? 'acc' : 'ink', o: rel ? 0.75 : 0.15, w: rel ? 1.6 : 1 }));
-      lab(g, String(rank + 1), [x(rank), -0.35, zf + 0.6], { size: 0.28, o: 0.55 });
+    const n = 8, rel = [3, 5, 6];
+    const order = rel.concat([0, 1, 2, 4, 7]);          // new rank -> doc (first-stage index)
+    const y = (k) => 4.4 - 0.62 * k, CW = 2.4, CH = 0.42;
+    const XL = -2.8, XR = 2.8, zl = -0.6, zr = 0.6;
+    const card = (x, yy, z, hl, st) => g.add(K.box(x, yy, z, CW, CH, 0.18, hl ? ST.acc : st));
+    for (let i = 0; i < n; i++) card(XL, y(i), zl, rel.includes(i), ST.ink);
+    order.forEach((doc, k) => {
+      const hl = rel.includes(doc);
+      card(XR, y(k), zr, hl, ST.faint);
+      g.add(K.curve([[XL + CW / 2 + 0.05, y(doc), zl], [0, (y(doc) + y(k)) / 2, 0], [XR - CW / 2 - 0.05, y(k), zr]],
+        { c: hl ? 'acc' : 'ink', o: hl ? 0.9 : 0.2, w: hl ? 2 : 1, n: 30 }));
     });
-    hline(g, -4.1, 4.1, 0, zb, { o: 0.25 }); hline(g, -4.1, 4.1, 0, zf, { o: 0.4 });
-    return [{ c: 'acc', t: 'Relevant documents' }];
+    for (let k = 0; k < n; k++) lab(g, String(k + 1), [XL - CW / 2 - 0.45, y(k), zl], { size: 0.32, o: 0.6 });
+    lab(g, 'q', [XL, y(0) + 0.75, zl], { size: 0.42, o: 0.75 });
+    lab(g, '↑', [XR + CW / 2 + 0.45, y(1), zr], { size: 0.5, c: 'acc' });
+    return [{ c: 'acc', t: 'Relevant documents' }, { c: 'ink', t: 'First-stage order' }];
   };
 
+  /* LLM evaluation: a few benchmarks × model sizes; one model's profile highlighted */
   BARS.bench = function (p, g) {
-    const tasks = ['MMLU', 'GSM8K', 'MATH', 'HumanEval', 'ARC'];
-    const models = ['7B', '13B', '34B', '70B'];
-    const sc = [
-      [0.45, 0.2, 0.08, 0.15, 0.5],
-      [0.55, 0.32, 0.12, 0.2, 0.6],
-      [0.68, 0.52, 0.25, 0.42, 0.74],
-      [0.8, 0.78, 0.45, 0.62, 0.86],
-    ];
-    const H = 4.4, x = (i) => -3.6 + 1.8 * i, zs = [2.4, 0.8, -0.8, -2.4];
-    sc.forEach((row, m) => {
-      row.forEach((v, t) => bar(g, x(t), zs[m], 0.7, v * H, 0.7, m === 3 ? ST.acc : (m === 2 ? ST.ink : ST.faint)));
-      lab(g, models[m], [4.9, 0.3, zs[m]], { size: 0.3, c: m === 3 ? 'acc' : 'ink', o: m === 3 ? 1 : 0.55 });
-      hline(g, -4.4, 4.4, 0, zs[m], { o: 0.22 });
-    });
-    tasks.forEach((t, i) => lab(g, t, [x(i), -0.4, 3.4], { size: 0.27, o: 0.7 }));
-    rails(g, [-4.4, 4.4], -2.9, 2.9);
-    return [{ c: 'acc', t: 'Strongest model' }];
+    const tasks = ['MMLU', 'GSM8K', 'HumanEval', 'ARC'];
+    const models = ['7B', '13B', '70B'];
+    const sc = [[0.45, 0.2, 0.15, 0.5], [0.55, 0.32, 0.22, 0.6], [0.8, 0.78, 0.62, 0.86]];
+    const H = 4.2, gx = (t) => -3.3 + 2.2 * t, off = [-0.58, 0, 0.58], bw = 0.48;
+    [0.5, 1].forEach((v) => hline(g, -4.3, 4.3, v * H, -0.3, { o: v === 1 ? 0.25 : 0.14, dash: true }));
+    sc.forEach((row, m) => row.forEach((v, t) => bar(g, gx(t) + off[m], 0, bw, v * H, 0.4, m === 2 ? ST.acc : (m === 1 ? ST.ink : ST.faint))));
+    g.add(K.line(sc[2].map((v, t) => [gx(t) + off[2], v * H + 0.02, 0.21]), { c: 'acc', o: 0.6, w: 1.4, dash: true }));
+    hline(g, -4.3, 4.3, 0, 0, { o: 0.45 });
+    tasks.forEach((t, i) => lab(g, t, [gx(i), -0.5, 0.3], { size: 0.32, o: 0.8 }));
+    models.forEach((m, k) => lab(g, m, [gx(0) + off[k], sc[k][0] * H + 0.32, 0], { size: 0.29, c: k === 2 ? 'acc' : 'ink', o: k === 2 ? 1 : 0.65 }));
+    lab(g, '100', [-4.75, H, -0.3], { size: 0.28, o: 0.5 });
+    lab(g, '50', [-4.7, H / 2, -0.3], { size: 0.28, o: 0.5 });
+    return [{ c: 'acc', t: 'Strongest model' }, { c: 'ink', t: 'Smaller models' }];
   };
+
 
   BARS.load = function (p, g) {
     const un = [3.6, 0.35, 2.4, 0.2, 0.55, 0.3, 0.12, 0.4];
@@ -531,15 +584,17 @@
     K = Kk; T = K.THREE;
     const g = new T.Group();
     const fn = BARS[p.kind] || BARS.hist3;
-    const legend = fn(p, g);
-    return { g: turn(g, BROT[p.kind] == null ? 0.3 : BROT[p.kind]), legend };
+    const res = fn(p, g);
+    const out = turn(g, BROT[p.kind] == null ? 0.3 : BROT[p.kind]);
+    if (Array.isArray(res)) return { g: out, legend: res };
+    return Object.assign({}, res, { g: out });
   };
 
   /* =====================================================================
      CURVES
      ===================================================================== */
   const CV = {};
-  const ROT = 0.42;
+  const ROT = 0.42, CROT = { warmup: 0.62, ppo: 0.62 };
 
   CV.biasvar = function (p, g) {
     const W = 8, H = 4.2, xr = [0, 1], yr = [0, 1.25];
@@ -797,58 +852,63 @@
     return { legend: [{ c: 'acc', t: 'Warmup + cosine decay' }, { c: 'ink', t: 'Constant / step decay' }], tick };
   };
 
+  /* Warmup: η ramps up linearly before decaying (left); with it the loss falls smoothly, without it it spikes (right) */
   CV.warmup = function (p, g) {
-    const W = 8, xr = [0, 1];
-    const r = K.rng(23);
-    const nz = Array.from({ length: 201 }, () => r.n());
-    const lrN = () => 1, lrW = (t) => Math.min(1, t / 0.35);
-    const lossW = (t, i) => 0.25 + 0.65 * Math.exp(-3.2 * t) + 0.012 * nz[i];
-    const lossN = (t, i) => 0.25 + 0.65 * Math.exp(-3.2 * t) + 0.75 * Math.exp(-Math.pow((t - 0.08) / 0.05, 2)) + 0.28 * Math.exp(-Math.pow((t - 0.2) / 0.035, 2)) + 0.03 * nz[i];
-    const Mb = mapper(xr, [0, 1.1], W, 2.2, -2.8), Mf = mapper(xr, [0, 1.75], W, 4.2, 1.4);
-    axesL(g, Mb, xr, [0, 1.1], { o: 0.35 }); axesL(g, Mf, xr, [0, 1.75]);
-    g.add(K.line([Mb(0, 0), Mb(0, 1), Mb(1, 1)], { o: 0.45, w: 1.5 }));
-    plot(g, Mb, samp(lrW, 0, 1, 100), { c: 'acc', w: 2.4 });
+    const xr = [0, 1], wu = 0.15, W = 4.2, H = 3.4;
+    const lrW = (t) => (t < wu ? t / wu : 0.06 + 0.94 * 0.5 * (1 + Math.cos(Math.PI * (t - wu) / (1 - wu))));
+    const lrN = (t) => 0.06 + 0.94 * 0.5 * (1 + Math.cos(Math.PI * t));
+    const r = K.rng(23), nz = Array.from({ length: 201 }, () => r.n());
+    const lossW = (t, i) => 0.22 + 0.7 * Math.exp(-3.4 * Math.max(0, t - 0.04)) + 0.012 * nz[i];
+    const lossN = (t, i) => 0.22 + 0.7 * Math.exp(-3.4 * t) + 0.75 * Math.exp(-Math.pow((t - 0.07) / 0.03, 2)) + 0.4 * Math.exp(-Math.pow((t - 0.17) / 0.025, 2)) + 0.035 * nz[i];
+    const zl = -0.3, zr = 0.3;
+    const Ml = mapper(xr, [0, 1.1], W, H, zl, -2.6), Mr = mapper(xr, [0, 1.75], W, H, zr, 2.6);
+    axesL(g, Ml, xr, [0, 1.1]); axesL(g, Mr, xr, [0, 1.75]);
+    // warmup window shaded on both panels
+    [[Ml, 1.1, zl], [Mr, 1.75, zr]].forEach(([M, top]) => g.add(quad(M(0, 0), M(wu, 0), M(wu, top), M(0, top), { c: 'acc', o: 0.08 })));
+    plot(g, Ml, samp(lrN, 0, 1, 100), { o: 0.35, w: 1.3, dash: true });
+    plot(g, Ml, samp(lrW, 0, wu, 20), { c: 'acc', w: 3 });
+    plot(g, Ml, samp(lrW, wu, 1, 100), { w: 2 });
     const ts = Array.from({ length: 201 }, (_, i) => i / 200);
-    g.add(K.line(ts.map((t, i) => Mf(t, Math.min(1.72, lossN(t, i)))), { o: 0.45, w: 1.4 }));
-    g.add(K.line(ts.map((t, i) => Mf(t, lossW(t, i))), { c: 'acc', w: 2.4 }));
-    lab(g, 'η', [-4.4, 2.2, -2.8], { size: 0.38, o: 0.7 });
-    lab(g, 'L', [-4.4, 4.2, 1.4], { size: 0.38, o: 0.7 });
-    lab(g, 't', [4.35, -0.3, 1.4], { size: 0.36, o: 0.7 });
-    rails(g, [-4, 4], -3.0, 1.6);
+    g.add(K.line(ts.map((t, i) => Mr(t, Math.min(1.72, lossN(t, i)))), { o: 0.4, w: 1.3 }));
+    g.add(K.line(ts.map((t, i) => Mr(t, lossW(t, i))), { c: 'acc', w: 2.6 }));
+    lab(g, 'η', [Ml(0, 0)[0] - 0.35, H, zl], { size: 0.42, o: 0.75 });
+    lab(g, 'L', [Mr(0, 0)[0] - 0.35, H, zr], { size: 0.42, o: 0.75 });
+    lab(g, 't', [Mr(1, 0)[0] + 0.3, -0.25, zr], { size: 0.36, o: 0.7 });
+    lab(g, 'Tʷ', [Ml(wu, 0)[0], -0.35, zl], { size: 0.34, c: 'acc' });
     return [{ c: 'acc', t: 'With warmup' }, { c: 'ink', t: 'No warmup' }];
   };
 
+  /* UAT: a target curve rebuilt as a sum of n shifted ReLU bumps (faint, behind) */
   CV.uat = function (p, g) {
     const n = clamp(Math.round(p.n == null ? 6 : p.n), 2, 16);
-    const W = 8, H = 3.6, xr = [0, 1], yr = [-1.25, 1.25];
-    const tgt = (x) => 0.85 * Math.sin(2 * Math.PI * x * 1.15) * Math.exp(-0.5 * x) + 0.25 * Math.sin(9 * x);
+    const W = 9, H = 4.4, xr = [0, 1], yr = [0, 1.25];
+    const tgt = (x) => 0.62 + 0.36 * Math.sin(2 * Math.PI * 1.25 * x) * Math.exp(-0.4 * x) + 0.12 * Math.sin(8.5 * x);
     const knots = Array.from({ length: n + 1 }, (_, i) => i / n);
     const vals = knots.map(tgt);
-    const slopes = []; for (let i = 0; i < n; i++) slopes.push((vals[i + 1] - vals[i]) / (knots[i + 1] - knots[i]));
-    const coef = slopes.map((s, i) => (i === 0 ? s : s - slopes[i - 1]));
-    const relu = (v) => Math.max(0, v);
-    const approx = (x) => vals[0] + coef.reduce((s, c, i) => s + c * relu(x - knots[i]), 0);
-    // individual units: spread in depth, each a hinge c_i·ReLU(x−k_i) (clipped to panel)
-    const z0 = -2.8, z1 = -0.6;
-    coef.forEach((c, i) => {
-      const z = n === 1 ? z0 : z0 + (z1 - z0) * i / (n - 1);
-      const M = mapper(xr, yr, W, H, z, 0, 0);
-      const nm = 0.75 / Math.max(1e-6, Math.abs(c) * (1 - knots[i]));
-      const pts = samp((x) => c * relu(x - knots[i]) * nm, 0, 1, 60);
-      plot(g, M, pts, { w: 1, o: 0.35 });
-      g.add(K.dots([M(knots[i], 0)], { r: 0.05, o: 0.5 }));
+    // hat bump at knot i = (ReLU(x−k₋) − 2ReLU(x−k) + ReLU(x−k₊))/h, weighted by target value
+    const h = 1 / n;
+    const hat = (x, i) => Math.max(0, 1 - Math.abs(x - knots[i]) / h);
+    const zb = -1.2, zf = 0.4;
+    const Mb = mapper(xr, yr, W, H, zb), Mf = mapper(xr, yr, W, H, zf);
+    axesL(g, Mb, xr, yr, { o: 0.15 });
+    knots.forEach((k, i) => {
+      const pts = [[Math.max(0, k - h), 0], [k, vals[i]], [Math.min(1, k + h), 0]];
+      if (i === 0) pts.shift(); if (i === n) pts.pop();
+      if (i === 0) pts.unshift([0, 0]); if (i === n) pts.push([1, 0]);
+      g.add(K.line(pts.map(([u, v]) => Mb(u, v)), { w: 1.2, o: 0.35 }));
     });
-    const Mf = mapper(xr, yr, W, H, 1.2);
-    hline(g, -4, 4, Mf(0, 0)[1], 1.2, { o: 0.35 });
-    vline(g, -4, Mf(0, -1.25)[1], Mf(0, 1.25)[1], 1.2, { o: 0.35 });
-    plot(g, Mf, samp(tgt, 0, 1, 120), { w: 1.4, o: 0.55, dash: true });
-    g.add(K.line(knots.map((k, i) => Mf(k, vals[i])), { c: 'acc', w: 2.6 }));
+    axesL(g, Mf, xr, yr);
+    plot(g, Mf, samp(tgt, 0, 1, 160), { w: 1.6, o: 0.6, dash: true });
+    g.add(K.line(knots.map((k, i) => Mf(k, vals[i])), { c: 'acc', w: 3 }));
     g.add(K.dots(knots.map((k, i) => Mf(k, vals[i])), { r: 0.07, c: 'acc' }));
-    rails(g, [-4], z0, 1.2, 0.2);
-    lab(g, 'Σ', [4.45, Mf(1, approx(1))[1], 1.2], { c: 'acc', size: 0.42 });
-    lab(g, 'ReLU', [4.6, Mf(0, 0)[1] + 0.35, z0], { size: 0.28, o: 0.45 });
-    return { legend: [{ c: 'acc', t: 'Sum of ReLUs' }, { c: 'ink', t: 'Single ReLU unit' }], ctl: [{ key: 'n', label: 'n', min: 2, max: 16, step: 1, value: n }] };
+    // faint drop lines link each bump peak to its knot on the sum
+    g.add(K.segs(knots.map((k, i) => [Mb(k, vals[i]), Mf(k, vals[i])]), { o: 0.12 }));
+    lab(g, 'Σ', [W / 2 + 0.45, Mf(1, vals[n])[1], zf], { c: 'acc', size: 0.46 });
+    lab(g, 'f(x)', [-W / 2 + 0.2, H + 0.35, zf], { size: 0.38, o: 0.7 });
+    lab(g, 'x', [W / 2 + 0.35, -0.2, zf], { size: 0.36, o: 0.7 });
+    return { legend: [{ c: 'acc', t: 'Sum of ReLUs' }, { c: 'ink', t: 'Target' }], ctl: [{ key: 'n', label: 'n', min: 2, max: 16, step: 1, value: n }] };
   };
+
 
   CV.scaling = function (p, g) {
     const W = 8, H = 4.4, xr = [0, 9], yr = [0, 4.8];
@@ -878,33 +938,36 @@
     return [{ c: 'acc', t: 'Compute-optimal frontier' }, { c: 'ink', t: 'Fixed model size' }];
   };
 
+  /* PPO-clip: objective vs probability ratio r, for A>0 (left) and A<0 (right); flat beyond the trust band */
   CV.ppo = function (p, g) {
-    const W = 7.2, eps = 0.2, xr = [0, 2], H = 2.6;
-    const panel = (z, A, yr, y0) => {
-      const M = mapper(xr, yr, W, H, z, 0, y0 - H * (0 - yr[0]) / (yr[1] - yr[0]));
-      hline(g, -W / 2, W / 2, M(0, 0)[1], z, { o: 0.45 });
-      vline(g, -W / 2, M(0, yr[0])[1], M(0, yr[1])[1], z, { o: 0.45 });
-      vline(g, M(1, 0)[0], M(0, yr[0])[1], M(0, yr[1])[1], z, { o: 0.15, dash: true });
-      const lin = samp((rr) => rr * A, 0, 2, 40).filter(([, v]) => v >= yr[0] && v <= yr[1]);
-      plot(g, M, lin, { o: 0.3, w: 1.2, dash: true });
-      const Lc = (rr) => Math.min(rr * A, clamp(rr, 1 - eps, 1 + eps) * A);
+    const eps = 0.2, xr = [0, 2], W = 4.0, H = 3.2;
+    const panel = (cx, z, A) => {
+      const yr = A > 0 ? [0, 2] : [-2, 0];
+      const M = mapper(xr, yr, W, H, z, cx, A > 0 ? 0 : -H);
+      const y0 = M(0, 0)[1];
+      // trust band [1−ε, 1+ε]
+      g.add(quad(M(1 - eps, yr[0]), M(1 + eps, yr[0]), M(1 + eps, yr[1]), M(1 - eps, yr[1]), { o: 0.07 }));
+      [1 - eps, 1 + eps].forEach((u) => vline(g, M(u, 0)[0], M(0, yr[0])[1], M(0, yr[1])[1], z, { o: 0.35, w: 1, dash: true }));
+      // axes: r axis at L=0, L axis at r=0
+      hline(g, M(0, 0)[0], M(2, 0)[0] + 0.15, y0, z, { o: 0.55 });
+      vline(g, M(0, 0)[0], M(0, yr[0])[1], M(0, yr[1])[1], z, { o: 0.55 });
+      // unclipped r·A continues faintly where clipping takes over
       const [c0, c1] = A > 0 ? [1 + eps, 2] : [0, 1 - eps];
+      plot(g, M, samp((rr) => rr * A, c0, c1, 20), { o: 0.3, w: 1.2, dash: true });
+      // objective: linear part ink, flat clipped part accent
+      const Lc = (rr) => Math.min(rr * A, clamp(rr, 1 - eps, 1 + eps) * A);
       const [u0, u1] = A > 0 ? [0, 1 + eps] : [1 - eps, 2];
-      plot(g, M, samp(Lc, u0, u1, 40), { w: 2.2 });
-      plot(g, M, samp(Lc, c0, c1, 20), { c: 'acc', w: 3 });
-      g.add(quad(M(c0, yr[0]), M(c1, yr[0]), M(c1, yr[1]), M(c0, yr[1]), { c: 'acc', o: 0.1 }));
-      vline(g, M(c0 === 0 ? c1 : c0, 0)[0], M(0, yr[0])[1], M(0, yr[1])[1], z, { c: 'acc', o: 0.6, w: 1.2 });
+      plot(g, M, samp(Lc, u0, u1, 30), { w: 2.2 });
+      plot(g, M, samp(Lc, c0, c1, 20), { c: 'acc', w: 3.4 });
+      lab(g, A > 0 ? 'A>0' : 'A<0', [cx, A > 0 ? M(0, 2)[1] + 0.45 : M(0, 0)[1] + 0.45, z], { size: 0.4 });
+      lab(g, '1−ε', [M(1 - eps, 0)[0] - 0.1, (A > 0 ? M(0, 0)[1] : M(0, -2)[1]) - 0.35, z], { size: 0.28, o: 0.7 });
+      lab(g, '1+ε', [M(1 + eps, 0)[0] + 0.15, (A > 0 ? M(0, 0)[1] : M(0, -2)[1]) - 0.35, z], { size: 0.28, o: 0.7 });
+      lab(g, 'r', [M(2, 0)[0] + 0.4, y0, z], { size: 0.36, o: 0.7 });
       return M;
     };
-    const Mb = panel(-1.6, 1, [-0.15, 2.05], 0.6);
-    const Mf = panel(1.6, -1, [-2.05, 0.15], -0.6);
-    lab(g, 'A>0', [-W / 2 - 0.6, Mb(0, 1.6)[1], -1.6], { size: 0.34, o: 0.75 });
-    lab(g, 'A<0', [-W / 2 - 0.6, Mf(0, -1.6)[1], 1.6], { size: 0.34, o: 0.75 });
-    lab(g, '1+ε', [Mb(1 + eps, 0)[0], Mb(0, 2.05)[1] + 0.3, -1.6], { size: 0.32, c: 'acc' });
-    lab(g, '1−ε', [Mf(1 - eps, 0)[0], Mf(0, -2.05)[1] - 0.3, 1.6], { size: 0.32, c: 'acc' });
-    lab(g, 'r', [W / 2 + 0.4, Mf(0, 0)[1], 1.6], { size: 0.36, o: 0.7 });
-    lab(g, 'r', [W / 2 + 0.4, Mb(0, 0)[1], -1.6], { size: 0.36, o: 0.7 });
-    lab(g, 'L', [-W / 2, Mb(0, 2.05)[1] + 0.35, -1.6], { size: 0.34, o: 0.6 });
+    panel(-2.6, -0.3, 1);
+    panel(2.6, 0.3, -1);
+    lab(g, 'L', [-2.6 - W / 2, H + 0.4, -0.3], { size: 0.38, o: 0.7 });
     return [{ c: 'acc', t: 'Clipped region' }, { c: 'ink', t: 'Clipped objective' }];
   };
 
@@ -934,7 +997,7 @@
     const g = new T.Group();
     const fn = CV[p.kind] || CV.roc;
     const res = fn(p, g);
-    const out = turn(g, ROT);
+    const out = turn(g, CROT[p.kind] == null ? ROT : CROT[p.kind]);
     if (Array.isArray(res)) return { g: out, legend: res };
     return Object.assign({}, res, { g: out });
   };

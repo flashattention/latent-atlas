@@ -509,33 +509,19 @@
     /* ======================= HUBER LOSS ======================= */
     } else if (kind === 'huberloss') {
       const d = 1, hub = (r) => (Math.abs(r) <= d ? 0.5 * r * r : d * (Math.abs(r) - 0.5 * d));
-      const xr = [-3, 3], yr = [0, 3.6];
-      const m = panel(g, { cx: -2.6, z: 0.6, w: 4.6, h: 3.6, xr, yr, lx: 'r', ly: 'L', ax0: 0, ay0: 0 });
-      lines(g, fn(m, (r) => 0.5 * r * r, -3, 3, 80, 0, 3.6), { w: 1.4, o: 0.45 });
-      lines(g, fn(m, (r) => Math.abs(r), -3, 3, 2, 0, 3.6), { w: 1.2, o: 0.45, dash: true });
-      lines(g, fn(m, hub, -3, 3, 80, 0, 3.6), { c: 'acc', w: 2.6 });
-      [-d, d].forEach((x) => add(K.line([m(x, 0), m(x, 3.0)], { w: 1, o: 0.3, dash: true })));
-      L('−δ', [m(-d, 0)[0], -0.32, 0.6], { size: 0.3, o: 0.7 });
-      L('δ', [m(d, 0)[0], -0.32, 0.6], { size: 0.3, o: 0.7 });
-      L('r²/2', [m(-2.6, 3.4)[0] - 0.5, m(0, 3.4)[1], 0.6], { size: 0.3, o: 0.6 });
-      // fits with an outlier
-      const r = K.rng(14), xs = [], ys = [];
-      for (let i = 0; i < 10; i++) { const x = 0.5 + i; xs.push(x); ys.push(0.4 * x + 1 + 0.25 * r.n()); }
-      xs.push(9.2); ys.push(0.2);
-      const m2 = panel(g, { cx: 2.8, z: -0.8, w: 4.4, h: 3.6, xr: [0, 10.5], yr: [0, 6.5], lx: 'x', ly: 'y' });
-      const ls = polyfit(xs, ys, 1);
-      let a = 1, b = 0.4; // IRLS for Huber
-      for (let it = 0; it < 30; it++) {
-        let sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
-        xs.forEach((x, i) => { const res = ys[i] - (a + b * x), w = Math.abs(res) <= d * 0.6 ? 1 : d * 0.6 / Math.abs(res); sw += w; sx += w * x; sy += w * ys[i]; sxx += w * x * x; sxy += w * x * ys[i]; });
-        b = (sw * sxy - sx * sy) / (sw * sxx - sx * sx); a = (sy - b * sx) / sw;
-      }
-      add(K.line([m2(0, ls(0)), m2(10.5, ls(10.5))], { w: 1.4, o: 0.5, dash: true }));
-      add(K.line([m2(0, a), m2(10.5, a + b * 10.5)], { c: 'acc', w: 2.4 }));
-      add(K.dots(xs.slice(0, 10).map((x, i) => m2(x, ys[i])), { r: 0.08 }));
-      add(K.dots([m2(9.2, 0.2)], { r: 0.14, hollow: true }));
-      ground(g, [-5.2, 5.2], [-1.6, 1.8], 0, 8, 0.06);
-      legend = [{ c: 'acc', t: 'Huber loss and fit' }, { c: 'ink', t: 'Squared loss and fit' }];
+      const xr = [-3.2, 3.2], yr = [0, 4.2];
+      const m = panel(g, { cx: 0, z: 0, w: 9, h: 4.6, xr, yr, lx: 'r', ly: 'L', ax0: 0, ay0: 0, ls: 0.4 });
+      // quadratic zone |r| <= δ, lightly shaded
+      add(polyXY([m(-d, 0), m(d, 0), m(d, 4.0), m(-d, 4.0)].map((q) => [q[0], q[1]]), -0.01, { c: 'acc', fill: 0.07 }));
+      [-d, d].forEach((x) => add(K.line([m(x, 0), m(x, 4.0)], { c: 'acc', w: 1, o: 0.45, dash: true })));
+      lines(g, fn(m, (r) => 0.5 * r * r, xr[0], xr[1], 100, 0, 4.2), { w: 1.6, o: 0.4 });
+      lines(g, fn(m, hub, xr[0], xr[1], 120, 0, 4.2).map((P) => P.map((q) => [q[0], q[1], 0.02])), { c: 'acc', w: 3 });
+      L('−δ', [m(-d, 0)[0], -0.4, 0], { size: 0.4, c: 'acc', o: 0.9 });
+      L('δ', [m(d, 0)[0], -0.4, 0], { size: 0.4, c: 'acc', o: 0.9 });
+      L('r²/2', [m(2.75, 0)[0] - 0.75, m(0, 4.0)[1], 0], { size: 0.4, o: 0.55 });
+      L('δ(|r| − δ/2)', [m(2.3, 0)[0] + 0.1, m(0, hub(2.3))[1] - 0.55, 0], { size: 0.36, c: 'acc' });
+      ground(g, [-4.5, 4.5], [-0.8, 0.8], 0, 6, 0.06);
+      legend = [{ c: 'acc', t: 'Huber loss' }, { c: 'ink', t: 'Squared loss' }];
 
     /* ======================= FOCAL LOSS ======================= */
     } else if (kind === 'focalloss') {

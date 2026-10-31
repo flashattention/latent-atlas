@@ -438,26 +438,47 @@
       return { legend: [{ c: 'acc', t: 'No history yet' }, { c: 'ink', t: 'Known ratings' }] };
     },
 
-    /* sparse rating matrix R completed from user factors U and item factors V */
+    /* sparse rating matrix R (gaps) ≈ U (users × k) · Vᵀ (k × items); one missing cell filled from row u of U and column i of Vᵀ */
     collabfilter(g) {
-      const U = 5, I = 7, k = 2, s = 0.78, r = K.rng(17);
-      const X = (j) => (j - (I - 1) / 2) * s, Z = (i) => (i - (U - 1) / 2) * s;
+      const NU = 5, NI = 6, k = 2, s = 0.66, c = 0.54, r = K.rng(17);
+      const x0 = -0.2, y0 = 0.2;                       // R's lower-left cell centre
+      const X = (j) => x0 + j * s, Y = (i) => y0 + (NU - 1 - i) * s;  // row 0 on top
+      const UX = (q) => x0 - 1.0 - (k - 1 - q) * s;   // U columns left of R
+      const VY = (q) => Y(0) + 1.0 + (k - 1 - q) * s; // Vᵀ rows above R
       const u = [], v = [];
-      for (let i = 0; i < U; i++) u.push([r.range(0.3, 1), r.range(0.1, 1)]);
-      for (let j = 0; j < I; j++) v.push([r.range(0.2, 1), r.range(0.1, 1)]);
-      for (let i = 0; i < U; i++) for (let j = 0; j < I; j++) {
-        const val = (u[i][0] * v[j][0] + u[i][1] * v[j][1]) * 1.1;
-        const known = r() < 0.55;
-        bar(g, X(j), Z(i), 0.4, 0.4, val, 0, known ? { fill: 0.1, o: 0.5 } : { c: 'acc', fill: 0.4, o: 0.85 });
-        g.add(K.rect(X(j), 0.005, Z(i), 0.5, 0.5, 'xz', { o: 0.15 }));
+      for (let i = 0; i < NU; i++) u.push([r.range(0.3, 1), r.range(0.1, 1)]);
+      for (let j = 0; j < NI; j++) v.push([r.range(0.3, 1), r.range(0.1, 1)]);
+      const val = (i, j) => u[i][0] * v[j][0] + u[i][1] * v[j][1];
+      const TI = 1, TJ = 5;                             // the cell we predict
+      const D = 0.3;                                    // depth per unit rating (cells stick out toward the viewer)
+      const known = (i, j) => !(i === TI && j === TJ) && ((i * 7 + j * 3 + 1) % 5 > 1);
+      for (let i = 0; i < NU; i++) for (let j = 0; j < NI; j++) {
+        if (i === TI && j === TJ) continue;
+        if (known(i, j)) { const d = 0.06 + val(i, j) * D; g.add(K.box(X(j), Y(i), d / 2, c, c, d, { fill: 0.06 + 0.12 * val(i, j), o: 0.55 })); }
+        else g.add(K.rect(X(j), Y(i), 0, c, c, 'xy', { o: 0.22 }));
       }
-      lab(g, 'R', [X(I - 1) + 0.85, 0, Z(U - 1) + 0.5], { size: 0.46 });
-      // factors as flat tiles: U (users x k) on the left, Vᵀ (k x items) behind
-      for (let i = 0; i < U; i++) for (let c = 0; c < k; c++) g.add(K.box(X(0) - 1.3 - c * 0.5, u[i][c] * 0.3, Z(i), 0.38, u[i][c] * 0.6, 0.4, { fill: 0.15, o: 0.5 }));
-      lab(g, 'U', [X(0) - 1.55, 0, Z(U - 1) + 0.75], { size: 0.44 });
-      for (let j = 0; j < I; j++) for (let c = 0; c < k; c++) g.add(K.box(X(j), v[j][c] * 0.3, Z(0) - 1.2 - c * 0.5, 0.4, v[j][c] * 0.6, 0.38, { fill: 0.15, o: 0.5 }));
-      lab(g, 'Vᵀ', [X(I - 1) + 0.9, 0, Z(0) - 1.45], { size: 0.44 });
-      lab(g, 'R ≈ U Vᵀ', [X(0) - 1.0, 1.9, Z(0) - 1.2], { size: 0.42, o: 0.85 });
+      // predicted cell
+      const pv = val(TI, TJ), pd = 0.06 + pv * D;
+      g.add(K.box(X(TJ), Y(TI), pd / 2, c, c, pd, { fill: 0.7, fc: 'acc', c: 'acc' }));
+      // U and Vᵀ
+      for (let i = 0; i < NU; i++) for (let q = 0; q < k; q++) {
+        const hl = i === TI, d = 0.06 + u[i][q] * 0.2;
+        g.add(K.box(UX(q), Y(i), d / 2, c, c, d, hl ? { fill: 0.45, fc: 'acc', c: 'acc' } : { fill: 0.07, o: 0.4 }));
+      }
+      for (let j = 0; j < NI; j++) for (let q = 0; q < k; q++) {
+        const hl = j === TJ, d = 0.06 + v[j][q] * 0.2;
+        g.add(K.box(X(j), VY(q), d / 2, c, c, d, hl ? { fill: 0.45, fc: 'acc', c: 'acc' } : { fill: 0.07, o: 0.4 }));
+      }
+      // row of U and column of Vᵀ meet at the missing cell
+      const zf = 0.02;
+      g.add(K.line([[UX(k - 1) + c / 2 + 0.05, Y(TI), zf], [X(TJ) - c / 2 - 0.05, Y(TI), zf]], { c: 'acc', w: 1.3, o: 0.7, dash: true }));
+      g.add(K.line([[X(TJ), VY(k - 1) - c / 2 - 0.05, zf], [X(TJ), Y(TI) + c / 2 + 0.05, zf]], { c: 'acc', w: 1.3, o: 0.7, dash: true }));
+      lab(g, 'R', [X(NI - 1) / 2 + x0 / 2, Y(NU - 1) - 0.75, 0], { size: 0.48 });
+      lab(g, 'U', [(UX(0) + UX(1)) / 2, Y(NU - 1) - 0.75, 0], { size: 0.48 });
+      lab(g, 'Vᵀ', [X(NI - 1) + 0.8, (VY(0) + VY(1)) / 2, 0], { size: 0.48 });
+      lab(g, 'k', [(UX(0) + UX(1)) / 2, Y(0) + 0.65, 0], { size: 0.36, o: 0.6 });
+      lab(g, 'R ≈ U Vᵀ', [(UX(0) + UX(1)) / 2 - 0.2, (VY(0) + VY(1)) / 2, 0], { size: 0.44, o: 0.85 });
+      lab(g, 'r̂ = uᵤ·vᵢ', [X(TJ) + 1.35, Y(TI), 0], { size: 0.38, c: 'acc' });
       return { legend: [{ c: 'acc', t: 'Predicted ratings' }, { c: 'ink', t: 'Known ratings' }] };
     },
 
@@ -564,7 +585,7 @@
     },
   };
 
-  const ROT = { latency: 0.3, monitoring: 0.55, retraining: 0.55, fraud: 0.5, churn: 0.45, demandfc: 0.55, creditscore: 0.6, featurestore: 0.6, serving: 0.15 };
+  const ROT = { latency: 0.3, monitoring: 0.55, retraining: 0.55, fraud: 0.5, churn: 0.45, demandfc: 0.55, creditscore: 0.6, collabfilter: 0.5, featurestore: 0.6, serving: 0.15 };
   VIZ.zprod = function (p, KK) {
     K = KK; T = K.THREE;
     const g = new T.Group();

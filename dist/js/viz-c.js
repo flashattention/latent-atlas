@@ -230,21 +230,31 @@
     }
 
     else if (kind === 'greedy') {
-      const steps = [['the', 'a', 'cat', 'on', 'sat'], ['cat', 'dog', 'mat', 'sat', 'a'], ['sat', 'ran', 'is', 'on', 'the'], ['on', 'down', 'the', 'by', 'up']];
-      const r = K.rng(3), picked = [];
-      steps.forEach((toks, si) => {
-        const z = -2.7 + 1.8 * si;
-        let pr = toks.map(() => 0.2 + r()); const best = r.int(0, 4); pr[best] += 1.6;
-        const s = pr.reduce((a, b) => a + b, 0); pr = pr.map((v) => v / s);
-        S.ln([[-3.4, 0, z], [3.4, 0, z]], { o: 0.35, w: 1 });
-        pr.forEach((v, i) => S.bar(-2.6 + i * 1.3, z, 0.5, 0.5, v * 5, i === best ? fillA : fillI(0.08, 0.6)));
-        const x = -2.6 + best * 1.3; picked.push([x, pr[best] * 5 + 0.05, z]);
-        S.lab(toks[best], [x, pr[best] * 5 + 0.5, z], { c: 'acc', size: 0.36, weight: 600 });
+      // one panel per step: the next-token distribution; the argmax (accent) is taken and fed to the next step
+      const P = [[0.12, 0.52, 0.16, 0.12, 0.08], [0.1, 0.14, 0.11, 0.47, 0.18], [0.44, 0.2, 0.14, 0.12, 0.1], [0.15, 0.12, 0.49, 0.14, 0.1]];
+      const words = ['the', 'cat', 'sat', 'on'], Hs = 4.2, bw = 0.3, sp = 0.4, Xp = (t) => -4.2 + t * 2.8;
+      const tops = [];
+      P.forEach((pr, t) => {
+        const best = pr.indexOf(Math.max(...pr)), cx = Xp(t);
+        S.ln([[cx - 1.1, 0, 0], [cx + 1.1, 0, 0]], { o: 0.45, w: 1 });
+        pr.forEach((v, i) => {
+          const x = cx + (i - 2) * sp;
+          S.add(K.box(x, v * Hs / 2, 0, bw, v * Hs, 0.3, i === best ? fillA : fillI(0.08, 0.5)));
+        });
+        const bx = cx + (best - 2) * sp, top = pr[best] * Hs;
+        tops.push([bx, top + 0.45]);
+        S.lab(words[t], [bx, top + 0.45, 0], { c: 'acc', size: 0.4, weight: 600 });
+        S.lab(String(t + 1), [cx, -0.4, 0], { size: 0.3, mono: true, o: 0.5 });
       });
-      S.ln(picked, { c: 'acc', w: 1.4, dash: true });
-      S.add(K.arrow([4.0, -0.3, -2.7], [4.0, -0.3, 2.7], { o: 0.45, w: 1.2 }));
-      S.lab('t', [4.0, -0.3, 3.2], { size: 0.32, o: 0.6 });
-      legend = [{ c: 'acc', t: 'Argmax token' }];
+      for (let t = 0; t < P.length - 1; t++) {
+        const a = tops[t], b = Xp(t + 1) - 1.2;
+        S.add(K.curve([[a[0] + 0.4, a[1], 0], [(a[0] + b) / 2 + 0.3, a[1] + 0.25, 0.3], [b, 0.5, 0]], { c: 'acc', w: 1.3, o: 0.6 }));
+        S.add(K.arrow([b - 0.05, 0.62, 0], [b + 0.12, 0.35, 0], { c: 'acc', w: 1.3, o: 0.6, head: 0.18 }));
+      }
+      S.add(K.arrow([Xp(0) - 1.1, -0.85, 0], [Xp(3) + 1.1, -0.85, 0], { o: 0.4, w: 1 }));
+      S.lab('t', [Xp(3) + 1.45, -0.85, 0], { size: 0.32, o: 0.6 });
+      legend = [{ c: 'acc', t: 'Argmax token' }, { c: 'ink', t: 'Next-token distribution' }];
+      S.yaw(0.75);
     }
 
     else if (kind === 'beam') {
@@ -374,117 +384,155 @@
     }
 
     else if (kind === 'onehot') {
-      const cats = ['A', 'B', 'C', 'A', 'C', 'B'], u = ['A', 'B', 'C'], cs = 0.95, nr = cats.length;
-      const Yr = (i) => ((nr - 1) / 2 - i) * cs;
+      // categorical column → 0/1 matrix, exactly one accent cell per row
+      const cats = ['A', 'B', 'C', 'A', 'C', 'B'], u = ['A', 'B', 'C'], cs = 0.9, nr = cats.length;
+      const Yr = (i) => ((nr - 1) / 2 - i) * cs, Xc = (j) => 0.2 + j * cs, xcat = -2.6;
       cats.forEach((c, i) => {
-        S.add(K.rect(-3.4, Yr(i), 0, 0.85, 0.85, 'xy', { o: 0.5, w: 1, fill: 0.05 }));
-        S.lab(c, [-3.4, Yr(i), 0.05], { size: 0.38, mono: true, weight: 600 });
+        S.add(K.box(xcat, Yr(i), 0.1, 0.78, 0.74, 0.2, { fill: 0.06, o: 0.55 }));
+        S.lab(c, [xcat, Yr(i), 0.3], { size: 0.38, mono: true, weight: 600 });
+        S.ln([[xcat + 0.5, Yr(i), 0], [Xc(0) - 0.55, Yr(i), 0]], { o: 0.12, w: 1 });
+        u.forEach((cc, j) => {
+          if (c === cc) S.add(K.box(Xc(j), Yr(i), 0.2, cs * 0.8, cs * 0.76, 0.4, A));
+          else S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.8, cs * 0.76, 'xy', { o: 0.3, w: 1, fill: 0.03 }));
+        });
       });
-      S.add(K.arrow([-2.6, 0, 0], [-1.3, 0, 0], { w: 1.4, o: 0.6 }));
-      const G = grid(nr, 3, cs, (i, j) => cats[i] === u[j] ? { h: 0.9, style: A } : { flat: true, style: { o: 0.35, w: 1 } }, { x: 0.4, wall: true });
-      cats.forEach((c, i) => u.forEach((cc, j) => { if (c !== cc) S.lab('0', [G.X(j), G.Y(i), 0.05], { size: 0.26, mono: true, o: 0.35 }); else S.lab('1', [G.X(j), G.Y(i), 0.95], { size: 0.3, mono: true, c: 'acc' }); }));
-      u.forEach((c, j) => S.lab(c, [G.X(j), G.Y(0) + 0.8, 0], { size: 0.36, mono: true, weight: 600, o: 0.7 }));
+      S.add(K.arrow([-1.75, Yr(0) + 0.85, 0], [-0.55, Yr(0) + 0.85, 0], { w: 1.4, o: 0.55 }));
+      u.forEach((c, j) => S.lab(c, [Xc(j), Yr(0) + 0.85, 0], { size: 0.36, mono: true, weight: 600, o: 0.7 }));
+      S.add(K.rect(Xc(1), 0, -0.01, 3 * cs + 0.12, nr * cs + 0.1, 'xy', { o: 0.35, w: 1 }));
       legend = [{ c: 'acc', t: 'Ones' }, { c: 'ink', t: 'Zeros' }];
     }
 
     else if (kind === 'ln') {
-      const r = K.rng(4), nr = 6, nc = 8, cs = 0.8;
-      const v = range(nr).map(() => range(nc).map(() => 0.15 + r() * 0.8));
-      const qi = 2, fj = 5;
-      const G = grid(nr, nc, cs, (i, j) => ({ h: v[i][j], style: i === qi ? A : j === fj ? B : ctx(0.22) }), { wall: true });
-      const xa = G.X(0) - 0.6, xb = G.X(nc - 1) + 0.6, ya = G.Y(0) + 0.6, yb = G.Y(nr - 1) - 0.6;
-      S.add(K.arrow([xa, G.Y(qi), 0], [xb, G.Y(qi), 0], { c: 'acc', w: 2 }));
-      S.add(K.arrow([G.X(fj), ya, 0], [G.X(fj), yb, 0], { c: 'b', w: 2 }));
-      S.lab('LN', [xb + 0.55, G.Y(qi), 0], { c: 'acc', size: 0.42, weight: 600 });
-      S.lab('BN', [G.X(fj), yb - 0.45, 0], { c: 'b', size: 0.42, weight: 600 });
-      S.lab('d', [G.X(1), ya + 0.1, 0], { size: 0.34, mono: true, o: 0.55 });
-      S.lab('B', [xa - 0.3, G.Y(nr - 1), 0], { size: 0.34, mono: true, o: 0.55 });
+      // batch × feature grid: LN normalises one row (accent), BN one column (blue)
+      const nr = 4, nc = 6, cs = 0.9, qi = 1, fj = 4;
+      const Xc = (j) => (j - (nc - 1) / 2) * cs, Yr = (i) => ((nr - 1) / 2 - i) * cs;
+      for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) {
+        const inR = i === qi, inC = j === fj;
+        if (inR) S.add(K.box(Xc(j), Yr(i), 0.12, cs * 0.82, cs * 0.82, 0.24, inC ? { fill: 0.62, fc: 'acc', c: 'b' } : A));
+        else if (inC) S.add(K.box(Xc(j), Yr(i), 0.12, cs * 0.82, cs * 0.82, 0.24, B));
+        else S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.82, cs * 0.82, 'xy', { o: 0.3, w: 1, fill: 0.04 }));
+      }
+      const xa = Xc(0) - 0.75, xb = Xc(nc - 1) + 0.75, ya = Yr(0) + 0.75, yb = Yr(nr - 1) - 0.75;
+      S.add(K.arrow([xa, Yr(qi), 0.3], [xb, Yr(qi), 0.3], { c: 'acc', w: 2.2 }));
+      S.add(K.arrow([Xc(fj), ya, 0.3], [Xc(fj), yb, 0.3], { c: 'b', w: 2.2 }));
+      S.lab('LN', [xb + 0.5, Yr(qi), 0.3], { c: 'acc', size: 0.44, weight: 600 });
+      S.lab('BN', [Xc(fj), yb - 0.4, 0.3], { c: 'b', size: 0.44, weight: 600 });
+      S.lab('d', [Xc(1), ya + 0.05, 0], { size: 0.36, mono: true, o: 0.55 });
+      S.lab('B', [xa - 0.1, Yr(nr - 1), 0], { size: 0.36, mono: true, o: 0.55 });
+      S.add(K.arrow([Xc(0) - 0.3, ya, 0], [Xc(2) + 0.3, ya, 0], { o: 0.35, w: 1 }));
+      S.add(K.arrow([xa + 0.35, Yr(1) + 0.3, 0], [xa + 0.35, Yr(nr - 1) - 0.3, 0], { o: 0.35, w: 1 }));
       legend = [{ c: 'acc', t: 'LayerNorm: across features' }, { c: 'b', t: 'BatchNorm: across batch' }];
     }
 
     else if (kind === 'colsample') {
-      const r = K.rng(8), nt = 5, nf = 8, cs = 0.85;
-      for (let t = 0; t < nt; t++) {
-        const z = -3.0 + t * 1.5;
-        const pick = new Set(); while (pick.size < 3) pick.add(r.int(0, nf - 1));
-        for (let j = 0; j < nf; j++) {
-          const x = (j - (nf - 1) / 2) * cs - 0.6;
-          if (pick.has(j)) S.add(K.box(x, 0.3, z, cs * 0.75, 0.6, 0.6, A));
-          else S.add(K.rect(x, 0.005, z, cs * 0.75, 0.6, 'xz', { o: 0.25, w: 1 }));
-        }
-        const tx = (nf / 2) * cs + 0.2;
-        S.sg([[[tx, 0.9, z], [tx - 0.3, 0.5, z]], [[tx, 0.9, z], [tx + 0.3, 0.5, z]], [[tx + 0.3, 0.5, z], [tx + 0.1, 0.1, z]], [[tx + 0.3, 0.5, z], [tx + 0.5, 0.1, z]]], { o: 0.6, w: 1 });
-        S.add(K.dots([[tx, 0.9, z], [tx - 0.3, 0.5, z], [tx + 0.3, 0.5, z], [tx + 0.1, 0.1, z], [tx + 0.5, 0.1, z]], { r: 0.06 }));
+      // the full feature set (header), then each tree gets its own random subset of columns
+      const r = K.rng(8), nt = 4, nf = 8, cs = 0.78, m = 3;
+      const Xc = (j) => -3.6 + j * cs, Yh = 2.6, Yt = (t) => 1.2 - t * 1.05;
+      for (let j = 0; j < nf; j++) {
+        S.add(K.box(Xc(j), Yh, 0.08, cs * 0.8, 0.6, 0.16, { fill: 0.12, o: 0.6 }));
+        S.lab('x' + '₁₂₃₄₅₆₇₈'[j], [Xc(j), Yh + 0.62, 0], { size: 0.3, o: 0.6 });
+        S.ln([[Xc(j), Yh - 0.4, -0.02], [Xc(j), Yt(nt - 1) - 0.4, -0.02]], { o: 0.08, w: 1 });
       }
+      for (let t = 0; t < nt; t++) {
+        const y = Yt(t), pick = new Set(); while (pick.size < m) pick.add(r.int(0, nf - 1));
+        for (let j = 0; j < nf; j++) {
+          if (pick.has(j)) S.add(K.box(Xc(j), y, 0.15, cs * 0.8, 0.6, 0.3, A));
+          else S.add(K.rect(Xc(j), y, 0, cs * 0.8, 0.6, 'xy', { o: 0.22, w: 1 }));
+        }
+        S.add(K.arrow([Xc(nf - 1) + 0.55, y, 0], [Xc(nf - 1) + 1.25, y, 0], { c: 'acc', o: 0.6, w: 1.2 }));
+        const tx = Xc(nf - 1) + 1.95;
+        miniTree(S, K, fullTree(2), [tx, y + 0.42, 0], { dx: 0.24, dy: 0.32, r: 0.05, eo: 0.6 });
+      }
+      S.lab('m = 3', [Xc(0) - 1.3, Yt(0), 0], { size: 0.32, mono: true, c: 'acc' });
       legend = [{ c: 'acc', t: 'Sampled features' }, { c: 'ink', t: 'Unused features' }];
     }
 
     else if (kind === 'conf') {
-      const hl = p.hl || 'none', cs = 2.0, w = 1.4;
-      const cells = { TP: [0, 0, 2.6], FN: [0, 1, 0.9], FP: [1, 0, 0.6], TN: [1, 1, 2.1] };
+      // 2×2 matrix on a wall; the count of each cell extrudes toward the viewer
+      const hl = p.hl || 'none', cs = 2.3, w = 1.9;
+      const cells = { TP: [0, 0, 1.3], FN: [0, 1, 0.45], FP: [1, 0, 0.35], TN: [1, 1, 1.05] };
+      const F = { fill: 0.05, o: 0.3 };
       const style = (k) => {
-        const F = ctx(0.3);
         if (hl === 'acc') return k === 'TP' || k === 'TN' ? A : F;
         if (hl === 'prec') return k === 'TP' ? A : k === 'FP' ? B : F;
         if (hl === 'rec') return k === 'TP' ? A : k === 'FN' ? B : F;
         return k === 'TP' || k === 'TN' ? A : B;
       };
-      Object.entries(cells).forEach(([k, [i, j, h]]) => {
-        const x = (j - 0.5) * cs, z = (i - 0.5) * cs, st = style(k);
-        S.add(K.box(x, h / 2, z, w, h, w, st));
-        S.add(K.rect(x, 0.005, z, cs * 0.96, cs * 0.96, 'xz', { o: 0.2, w: 1 }));
-        S.lab(k, [x, h + 0.35, z], { size: 0.4, weight: 600, mono: true, c: st.c || 'ink', o: st.c ? 1 : 0.45 });
+      const Xc = (j) => (j - 0.5) * cs, Yr = (i) => (0.5 - i) * cs;
+      Object.entries(cells).forEach(([k, [i, j, dz]]) => {
+        const st = style(k);
+        S.add(K.box(Xc(j), Yr(i), dz / 2, w, w, dz, st));
+        S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.96, cs * 0.96, 'xy', { o: 0.2, w: 1 }));
+        S.lab(k, [Xc(j), Yr(i), dz + 0.08], { size: 0.46, weight: 600, mono: true, c: st === F ? 'ink' : 'ink', o: st === F ? 0.4 : 0.9 });
       });
-      S.lab('ŷ=1', [-0.5 * cs, 0.05, -cs - 0.4], { size: 0.3, o: 0.55 }); S.lab('ŷ=0', [0.5 * cs, 0.05, -cs - 0.4], { size: 0.3, o: 0.55 });
-      S.lab('y=1', [-cs - 0.65, 0.05, -0.5 * cs], { size: 0.3, o: 0.55 }); S.lab('y=0', [-cs - 0.65, 0.05, 0.5 * cs], { size: 0.3, o: 0.55 });
-      const fx = [cs + 0.4, 0.05, cs + 0.9];
+      S.lab('ŷ=1', [Xc(0), cs + 0.15, 0], { size: 0.32, o: 0.6 }); S.lab('ŷ=0', [Xc(1), cs + 0.15, 0], { size: 0.32, o: 0.6 });
+      S.lab('y=1', [-cs - 0.6, Yr(0), 0], { size: 0.32, o: 0.6 }); S.lab('y=0', [-cs - 0.6, Yr(1), 0], { size: 0.32, o: 0.6 });
+      const fx = [0, -cs - 0.55, 0];
       if (hl === 'prec') {
-        S.add(K.rect(-0.5 * cs, 0.01, 0, cs * 1.02, cs * 2.04, 'xz', { c: 'acc', w: 2.2 }));
-        S.lab('TP / (TP+FP)', fx, { size: 0.32, mono: true, c: 'acc' });
+        S.add(K.rect(Xc(0), 0, 0.02, cs * 1.04, cs * 2.08, 'xy', { c: 'acc', w: 2.4 }));
+        S.lab('TP / (TP+FP)', fx, { size: 0.36, mono: true, c: 'acc' });
         legend = [{ c: 'acc', t: 'True positives' }, { c: 'b', t: 'False positives' }];
       } else if (hl === 'rec') {
-        S.add(K.rect(0, 0.01, -0.5 * cs, cs * 2.04, cs * 1.02, 'xz', { c: 'acc', w: 2.2 }));
-        S.lab('TP / (TP+FN)', fx, { size: 0.32, mono: true, c: 'acc' });
+        S.add(K.rect(0, Yr(0), 0.02, cs * 2.08, cs * 1.04, 'xy', { c: 'acc', w: 2.4 }));
+        S.lab('TP / (TP+FN)', fx, { size: 0.36, mono: true, c: 'acc' });
         legend = [{ c: 'acc', t: 'True positives' }, { c: 'b', t: 'False negatives' }];
       } else if (hl === 'acc') {
-        S.lab('(TP+TN) / N', fx, { size: 0.32, mono: true, c: 'acc' });
+        S.ln([[Xc(0) - 0.9, Yr(0) + 0.9, 0.02], [Xc(1) + 0.9, Yr(1) - 0.9, 0.02]], { c: 'acc', w: 1.4, o: 0.5, dash: true });
+        S.lab('(TP+TN) / N', fx, { size: 0.36, mono: true, c: 'acc' });
         legend = [{ c: 'acc', t: 'Correct predictions' }, { c: 'ink', t: 'Errors' }];
       } else legend = [{ c: 'acc', t: 'Correct predictions' }, { c: 'b', t: 'Errors' }];
     }
 
     else if (kind === 'permute') {
-      const r = K.rng(31), nr = 7, nc = 5, cs = 0.85, pj = nc - 1;
-      const v = range(nr).map(() => range(nc).map(() => 0.2 + r() * 0.8));
-      const perm = [3, 5, 0, 6, 1, 4, 2];
-      const G = grid(nr, nc, cs, (i, j) => j === pj ? { h: v[perm[i]][pj], style: A } : { h: v[i][j], style: ctx(0.28) }, { x: -1.6, wall: true });
-      const bx0 = G.X(pj) + 0.55, bx1 = bx0 + 1.0;
-      S.sg(range(nr).map((i) => [[bx0, G.Y(i), 0], [bx1, G.Y(perm[i]), 0]]), { c: 'acc', w: 1.4, o: 0.7 });
-      S.add(K.dots(range(nr).map((i) => [bx0, G.Y(i), 0]).concat(range(nr).map((i) => [bx1, G.Y(i), 0])), { r: 0.05, c: 'acc' }));
-      S.lab('x₅', [G.X(pj), G.Y(0) + 0.75, 0], { size: 0.38, c: 'acc', weight: 600 });
-      const sx = bx1 + 1.4, y0 = G.Y(nr - 1) - cs / 2;
-      S.ln([[sx - 0.6, y0, 0], [sx + 1.6, y0, 0]], { o: 0.4, w: 1 });
-      S.add(K.box(sx, y0 + 1.3, 0, 0.55, 2.6, 0.4, ctx(0.8)));
-      S.add(K.box(sx + 1.0, y0 + 0.75, 0, 0.55, 1.5, 0.4, A));
-      S.ln([[sx, y0 + 2.6, 0], [sx + 1.0, y0 + 2.6, 0]], { c: 'acc', w: 1, dash: true });
-      S.add(K.arrow([sx + 1.0, y0 + 2.6, 0], [sx + 1.0, y0 + 1.6, 0], { c: 'acc', w: 1.4 }));
-      S.lab('Δ', [sx + 1.5, y0 + 2.1, 0], { size: 0.42, c: 'acc' });
+      // table → one column shuffled (rows crossed) → score drops; the drop is the importance
+      const r = K.rng(31), nr = 6, cs = 0.72, nc = 3;
+      const v = range(nr).map(() => range(nc).map(() => 0.15 + r() * 0.85));
+      const perm = [3, 0, 5, 1, 4, 2];
+      const Xc = (j) => -4.4 + j * cs, Yr = (i) => 2.0 - i * cs;
+      for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++)
+        S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.86, cs * 0.86, 'xy', { o: j === nc - 1 ? 0.6 : 0.3, w: 1, fill: 0.04 + 0.4 * v[i][j] }));
+      const px = Xc(nc - 1) + 2.0;
+      for (let i = 0; i < nr; i++) S.add(K.box(px, Yr(i), 0.1, cs * 0.86, cs * 0.86, 0.2, { fill: 0.15 + 0.65 * v[perm[i]][nc - 1], fc: 'acc', c: 'acc' }));
+      const ax = Xc(nc - 1) + cs * 0.5, bx = px - cs * 0.5;
+      S.sg(range(nr).map((i) => [[ax + 0.05, Yr(perm[i]), 0], [bx - 0.05, Yr(i), 0]]), { c: 'acc', w: 1.4, o: 0.75 });
+      ['x₁', 'x₂', 'x₃'].forEach((t, j) => S.lab(t, [Xc(j), Yr(0) + 0.6, 0], { size: 0.32, o: j === nc - 1 ? 0.85 : 0.55 }));
+      S.lab('π(x₃)', [px, Yr(0) + 0.6, 0], { size: 0.32, c: 'acc' });
+      // score before vs after
+      const sx = 1.6, y0 = Yr(nr - 1) - cs / 2, hb = 3.0, ha = 1.7;
+      S.ln([[sx - 0.6, y0, 0], [sx + 2.0, y0, 0]], { o: 0.4, w: 1 });
+      S.add(K.box(sx, y0 + hb / 2, 0.2, 0.6, hb, 0.4, { fill: 0.12, o: 0.75 }));
+      S.add(K.box(sx + 1.2, y0 + ha / 2, 0.2, 0.6, ha, 0.4, A));
+      S.ln([[sx + 0.3, y0 + hb, 0.2], [sx + 1.75, y0 + hb, 0.2]], { o: 0.5, w: 1, dash: true });
+      S.add(K.arrow([sx + 1.6, y0 + hb, 0.2], [sx + 1.6, y0 + ha + 0.02, 0.2], { c: 'acc', w: 2 }));
+      S.lab('Δ', [sx + 2.05, y0 + (ha + hb) / 2, 0.2], { size: 0.46, c: 'acc', weight: 600 });
+      S.lab('s', [sx, y0 - 0.35, 0], { size: 0.32, mono: true, o: 0.6 });
+      S.lab('s′', [sx + 1.2, y0 - 0.35, 0], { size: 0.32, mono: true, c: 'acc' });
       legend = [{ c: 'acc', t: 'Shuffled feature' }, { c: 'ink', t: 'Other features' }];
     }
 
     else if (kind === 'lookup') {
-      const r = K.rng(12), V = 9, d = 5, cs = 0.62;
-      const ids = [6, 1, 4], words = ['the', 'cat', 'sat'];
-      const vals = range(V).map(() => range(d).map(() => 0.12 + r() * 0.7));
-      const G = grid(V, d, cs, (i, j) => ({ h: vals[i][j], style: ids.includes(i) ? A : ctx(0.25) }), { wall: true });
-      for (let i = 0; i < V; i++) S.lab(String(i), [G.X(0) - 0.6, G.Y(i), 0], { size: 0.26, mono: true, o: ids.includes(i) ? 1 : 0.35, c: ids.includes(i) ? 'acc' : 'ink' });
-      const ox = G.X(d - 1) + 2.2;
-      ids.forEach((id, k) => {
-        const yy = 0.9 - k * 0.9;
-        S.lab(words[k], [ox + d * 0.5 + 0.7, yy, 0], { size: 0.36, weight: 600 });
-        for (let j = 0; j < d; j++) S.add(K.box(ox + j * 0.5, yy, vals[id][j] / 2, 0.4, 0.4, vals[id][j], A));
-        S.add(K.curve([[G.X(d - 1) + 0.4, G.Y(id), 0], [(G.X(d - 1) + ox) / 2 + 0.1, (G.Y(id) + yy) / 2, 0], [ox - 0.4, yy, 0]], { c: 'acc', o: 0.6, w: 1.2 }));
+      // token id → row of E (V×d) → that row pulled out as the token's vector
+      const r = K.rng(12), V = 8, d = 5, cs = 0.55;
+      const toks = [['cat', 1], ['sat', 4], ['the', 6]];
+      const ids = toks.map((t) => t[1]);
+      const vals = range(V).map(() => range(d).map(() => 0.1 + r() * 0.8));
+      const Xc = (j) => -1.2 + j * cs, Yr = (i) => ((V - 1) / 2 - i) * cs;
+      for (let i = 0; i < V; i++) for (let j = 0; j < d; j++) {
+        if (ids.includes(i)) S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.86, cs * 0.86, 'xy', { c: 'acc', o: 0.9, w: 1.2, fill: 0.12 + 0.5 * vals[i][j], fc: 'acc' }));
+        else S.add(K.rect(Xc(j), Yr(i), 0, cs * 0.86, cs * 0.86, 'xy', { o: 0.25, w: 1, fill: 0.03 + 0.18 * vals[i][j] }));
+      }
+      S.add(K.rect(Xc(2), 0, -0.01, d * cs + 0.1, V * cs + 0.1, 'xy', { o: 0.4, w: 1 }));
+      const ox = Xc(d - 1) + 2.0, zf = 0.9;
+      toks.forEach(([w, id]) => {
+        const y = Yr(id);
+        S.lab(w, [Xc(0) - 2.3, y, 0], { size: 0.36, weight: 600 });
+        S.lab(String(id), [Xc(0) - 1.35, y, 0], { size: 0.34, mono: true, c: 'acc' });
+        S.add(K.arrow([Xc(0) - 1.05, y, 0], [Xc(0) - cs * 0.55, y, 0], { c: 'acc', w: 1.4 }));
+        for (let j = 0; j < d; j++) S.add(K.box(ox + j * cs, y, zf, cs * 0.86, cs * 0.86, 0.3, { fill: 0.15 + 0.6 * vals[id][j], fc: 'acc', c: 'acc' }));
+        S.ln([[Xc(d - 1) + cs * 0.5, y, 0], [ox - cs * 0.5, y, zf]], { c: 'acc', w: 1.2, o: 0.6, dash: true });
       });
-      S.lab('E', [0, G.Y(0) + 0.7, 0], { size: 0.42, weight: 600, o: 0.7 });
+      S.lab('E', [Xc(2), Yr(0) + 0.6, 0], { size: 0.44, weight: 600, o: 0.75 });
+      S.lab('V × d', [Xc(2), Yr(V - 1) - 0.6, 0], { size: 0.3, mono: true, o: 0.55 });
       legend = [{ c: 'acc', t: 'Looked-up rows' }, { c: 'ink', t: 'Embedding table' }];
     }
 
@@ -496,20 +544,34 @@
         S.lab('Q', [G.X(0) - cs * 0.9, G.Y(N - 1) - cs * 0.9, 0], { size: 0.38, weight: 600, o: 0.7 });
       };
       let G;
-      if (kind === 'attn') {
-        const n = 7, cs = 0.85, q = 4;
-        const scores = range(n).map((i) => range(n).map((j) => r.n() * 0.8 + (i === j ? 1.2 : 0) + (Math.abs(i - j) === 1 ? 0.5 : 0)));
-        const Aw = scores.map(softmaxRow);
-        G = grid(n, n, cs, (i, j) => ({ h: Aw[i][j] * 3.0, style: i === q ? A : ctx(0.25) }), { wall: true });
-        words.forEach((t, j) => { S.lab(t, [G.X(j), G.Y(0) + 0.7, 0], { size: 0.28, o: 0.6 }); S.lab(t, [G.X(0) - 0.85, G.Y(j), 0], { size: 0.28, o: j === q ? 1 : 0.6, c: j === q ? 'acc' : 'ink' }); });
-        S.lab('Σ = 1', [G.X(n - 1) + 1.1, G.Y(q), 0], { size: 0.32, c: 'acc' });
-        legend = [{ c: 'acc', t: 'Attention of one query' }];
-      } else if (kind === 'causal') {
-        const n = 7, cs = 0.85;
-        G = grid(n, n, cs, (i, j) => j <= i ? { h: 0.2 + 0.5 * Math.abs(Math.sin(i * 3.1 + j * 1.7)), style: ctx(0.55) } : { flat: true, style: { fill: 0.45, fc: 'acc', c: 'acc', o: 0.8, w: 1 } }, { wall: true });
-        S.lab('−∞', [G.X(n - 2), G.Y(1), 0.1], { size: 0.42, c: 'acc' });
-        words.forEach((t, j) => { S.lab(t, [G.X(j), G.Y(0) + 0.7, 0], { size: 0.28, o: 0.6 }); S.lab(t, [G.X(0) - 0.85, G.Y(j), 0], { size: 0.28, o: 0.6 }); });
-        legend = [{ c: 'acc', t: 'Masked future' }, { c: 'ink', t: 'Visible past' }];
+      if (kind === 'attn' || kind === 'causal') {
+        // clean n×n grid on a wall: rows = queries, columns = keys, tokens on both axes
+        const toks = ['the', 'cat', 'sat', 'on', 'mat'], n = 5, cs = 0.95, q = 2;
+        const Xc = (j) => (j - (n - 1) / 2) * cs, Yr = (i) => ((n - 1) / 2 - i) * cs;
+        const causal = kind === 'causal';
+        const sc = range(n).map((i) => range(n).map((j) => 0.9 * Math.sin(i * 2.3 + j * 1.3) + (i === j ? 0.9 : 0) + (i === 2 && j === 1 ? 1.4 : 0)));
+        const Aw = sc.map((row, i) => softmaxRow(row.map((v, j) => (causal && j > i ? -1e9 : v))));
+        for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+          const x = Xc(j), y = Yr(i), w = Aw[i][j];
+          if (causal && j > i) S.add(K.box(x, y, 0.06, cs * 0.86, cs * 0.86, 0.12, { fill: 0.42, fc: 'acc', c: 'acc', o: 0.7 }));
+          else if (!causal && i === q) S.add(K.box(x, y, 0.05 + w * 0.9, cs * 0.86, cs * 0.86, 0.1 + w * 1.8, { fill: 0.12 + 0.7 * w, fc: 'acc', c: 'acc' }));
+          else S.add(K.rect(x, y, 0, cs * 0.86, cs * 0.86, 'xy', { o: 0.3, w: 1, fill: 0.03 + 0.55 * w }));
+        }
+        toks.forEach((t, j) => {
+          S.lab(t, [Xc(j), Yr(0) + 0.75, 0], { size: 0.32, o: 0.6 });
+          S.lab(t, [Xc(0) - 0.95, Yr(j), 0], { size: 0.32, o: !causal && j === q ? 1 : 0.6, c: !causal && j === q ? 'acc' : 'ink', weight: !causal && j === q ? 600 : 500 });
+        });
+        if (causal) {
+          // staircase boundary between visible past (diagonal and below) and masked future
+          const st = [];
+          for (let i = 0; i < n; i++) { const xr = Xc(i) + cs / 2, yt = Yr(i) + cs / 2, yb = Yr(i) - cs / 2; st.push([xr, yt, 0.14], [xr, yb, 0.14]); }
+          S.ln([[Xc(0) - cs / 2, Yr(0) + cs / 2, 0.14]].concat(st), { c: 'acc', w: 2.4 });
+          S.lab('−∞', [Xc(3.2), Yr(0.8), 0.25], { size: 0.5, c: 'acc', weight: 600 });
+          legend = [{ c: 'acc', t: 'Masked future' }, { c: 'ink', t: 'Visible past' }];
+        } else {
+          S.lab('Σ = 1', [Xc(n - 1) + 1.15, Yr(q), 0.4], { size: 0.36, c: 'acc' });
+          legend = [{ c: 'acc', t: 'Attention of one query' }];
+        }
       } else if (kind === 'alibi') {
         const n = 7, cs = 0.9, m = 0.42;
         S.add(K.rect(0, 0, 0, n * cs, n * cs, 'xz', { o: 0.35, w: 1 }));
@@ -599,57 +661,60 @@
     }
 
     else if (kind === 'paged') {
-      const pg = 4, cs = 0.36, pw = pg * cs + 0.3, ph = 0.7, nP = 6, nRow = 3;
-      const phys = (i, j) => [-(nP * pw) / 2 + (j + 0.5) * pw, -2.0 + i * 1.0];
-      const seq = [[1, 4], [0, 1], [2, 2], [1, 0]], len = 14;
-      const others = ['0,0', '0,3', '1,2', '2,4', '2,0', '0,5'];
-      const page = (cx, cz, n, st, edgeO) => {
-        S.add(K.rect(cx, 0.005, cz, pw - 0.1, ph, 'xz', { o: edgeO, w: 1 }));
-        for (let s2 = 0; s2 < pg; s2++) {
-          const x = cx - pw / 2 + 0.15 + (s2 + 0.5) * cs;
-          if (s2 < n) S.add(K.box(x, 0.11, cz, cs * 0.76, 0.22, ph * 0.66, st));
-        }
+      // logical KV blocks → block table → scattered physical pages
+      const pg = 4, cs = 0.3, len = 14, nb = 4;
+      const slot = (cx, cy, cz, n, st, eo) => {
+        S.add(K.rect(cx, cy, cz, pg * cs + 0.12, cs + 0.16, 'xy', { o: eo, w: 1 }));
+        for (let s2 = 0; s2 < n; s2++) S.add(K.box(cx - (pg - 1) * cs / 2 + s2 * cs, cy, cz + 0.08, cs * 0.78, cs * 0.8, 0.16, st));
       };
-      for (let i = 0; i < nRow; i++) for (let j = 0; j < nP; j++) {
-        const [x, z] = phys(i, j);
-        const mine = seq.findIndex((q) => q[0] === i && q[1] === j);
-        if (mine >= 0) page(x, z, Math.min(pg, len - mine * pg), A, 0.5);
-        else if (others.includes(i + ',' + j)) page(x, z, 2 + ((i + j) % 3), ctx(0.35), 0.3);
-        else page(x, z, 0, null, 0.18);
+      const Yl = (k) => 1.35 - k * 0.9, xl = -4.0, xt = -1.75;
+      const phys = [1, 3, 6, 9], others = [0, 4, 7, 11], cols = 4, rows = 3;
+      const Px = (q) => 0.9 + (q % cols) * 1.3, Py = (q) => 1.35 - Math.floor(q / cols) * 1.35;
+      for (let q = 0; q < cols * rows; q++) {
+        const k = phys.indexOf(q);
+        if (k >= 0) slot(Px(q), Py(q), 0, Math.min(pg, len - k * pg), A, 0.6);
+        else if (others.includes(q)) slot(Px(q), Py(q), 0, 2 + (q % 3), { fill: 0.1, o: 0.4 }, 0.3);
+        else slot(Px(q), Py(q), 0, 0, null, 0.2);
       }
-      seq.forEach(([i, j], k) => {
-        const lx = -(4 * pw) / 2 + (k + 0.5) * pw, lz = 2.4;
-        page(lx, lz, Math.min(pg, len - k * pg), A, 0.5);
-        S.lab(String(k), [lx, 0.1, lz + 0.7], { size: 0.3, mono: true, c: 'acc' });
-        const [px, pz] = phys(i, j);
-        S.add(K.arc([lx, 0.25, lz - 0.35], [px, 0.25, pz + 0.35], 0.9, { c: 'acc', o: 0.55, w: 1.2 }));
-      });
+      S.add(K.rect((Px(0) + Px(cols - 1)) / 2, Py(cols) , -0.02, cols * 1.3 + 0.2, rows * 1.35 + 0.1, 'xy', { o: 0.3, w: 1 }));
+      // block table
+      S.add(K.rect(xt, (Yl(0) + Yl(nb - 1)) / 2, 0, 0.8, nb * 0.9, 'xy', { o: 0.55, w: 1 }));
+      S.sg(range(nb - 1).map((k) => [[xt - 0.4, Yl(k) - 0.45, 0], [xt + 0.4, Yl(k) - 0.45, 0]]), { o: 0.3, w: 1 });
+      for (let k = 0; k < nb; k++) {
+        slot(xl, Yl(k), 0, Math.min(pg, len - k * pg), A, 0.6);
+        S.add(K.arrow([xl + 0.85, Yl(k), 0], [xt - 0.45, Yl(k), 0], { o: 0.45, w: 1 }));
+        S.lab(String(phys[k]), [xt, Yl(k), 0.05], { size: 0.34, mono: true, c: 'acc', weight: 600 });
+        const q = phys[k];
+        S.add(K.curve([[xt + 0.42, Yl(k), 0], [(xt + Px(q)) / 2, (Yl(k) + Py(q)) / 2, 0.7], [Px(q) - 0.75, Py(q), 0.1]], { c: 'acc', o: 0.65, w: 1.3 }));
+      }
+      S.lab('KV', [xl, Yl(0) + 0.65, 0], { size: 0.34, weight: 600, o: 0.6 });
       legend = [{ c: 'acc', t: 'One sequence’s pages' }, { c: 'ink', t: 'Other sequences' }];
     }
 
     else if (kind === 'batching') {
-      const T = 16, cw = 0.55, x0 = -4.4;
-      const lanes = [[5, 7, 4], [9, 6], [3, 4, 5, 4], [7, 3, 6]];
-      lanes.forEach((L, s) => {
-        const z = -1.95 + s * 1.3; let t = 0;
-        S.ln([[x0, 0, z], [x0 + T * cw, 0, z]], { o: 0.25, w: 1 });
-        L.forEach((len, k) => {
-          len = Math.min(len, T - t); if (len <= 0) return;
-          const x = x0 + (t + len / 2) * cw, joined = k > 0;
-          S.add(K.box(x, 0.15, z, len * cw - 0.12, 0.3, 0.7, joined ? A : ctx(0.65)));
-          t += len;
-        });
-        S.lab('GPU' + (s + 1), [x0 - 0.75, 0.15, z], { size: 0.28, mono: true, o: 0.5 });
+      // slots × time. Top: continuous — a freed slot is refilled at once. Bottom (faint): static — slots idle until the batch ends.
+      const T = 16, cw = 0.55, x0 = -4.4, X = (t) => x0 + t * cw, sh = 0.5;
+      const cont = [[5, 7, 4], [9, 7], [3, 4, 5, 4], [7, 3, 6]];
+      const stat = [5, 9, 3, 7], Ls = Math.max(...stat);
+      const blk = (t0, len, y, z, st) => S.add(K.box(X(t0 + len / 2), y, z, len * cw - 0.1, sh, 0.35, st));
+      cont.forEach((L, s) => {
+        const y = 3.6 - s * 0.7; let t = 0;
+        L.forEach((len, k) => { len = Math.min(len, T - t); if (len <= 0) return; blk(t, len, y, 0, k > 0 ? A : { fill: 0.14, o: 0.75 }); t += len; });
       });
-      S.add(K.arrow([x0, 0.01, 3.0], [x0 + T * cw + 0.3, 0.01, 3.0], { o: 0.5, w: 1.2 }));
-      S.lab('t', [x0 + T * cw + 0.7, 0.05, 3.0], { size: 0.34, o: 0.6 });
-      legend = [{ c: 'acc', t: 'Requests joining mid-batch' }, { c: 'ink', t: 'Initial requests' }];
+      const zs = -0.6;
+      stat.forEach((len, s) => {
+        const y = 0.2 - s * 0.7;
+        blk(0, len, y, zs, { fill: 0.08, o: 0.4 });
+        if (len < Ls) S.add(K.rect(X(len + (Ls - len) / 2), y, zs, (Ls - len) * cw - 0.1, sh, 'xy', { o: 0.5, w: 1 }));
+        const l2 = [4, 6, 3, 5][s]; blk(Ls, l2, y, zs, { fill: 0.08, o: 0.4 });
+      });
+      S.ln([[X(Ls), 0.65, zs], [X(Ls), -2.35, zs]], { o: 0.4, w: 1, dash: true });
+      S.add(K.arrow([x0, -2.75, 0], [X(T) + 0.3, -2.75, 0], { o: 0.5, w: 1.2 }));
+      S.lab('t', [X(T) + 0.7, -2.75, 0], { size: 0.34, o: 0.6 });
+      legend = [{ c: 'acc', t: 'Requests joining mid-batch' }, { c: 'ink', t: 'Static batching' }];
     }
 
-    if (['paged', 'batching'].includes(kind)) {
-      const piv = new S.T.Group(); while (g.children.length) piv.add(g.children[0]);
-      piv.rotation.x = Math.PI / 2; g.add(piv);
-    }
+    if (['onehot', 'ln', 'colsample', 'conf', 'permute', 'lookup', 'attn', 'causal', 'paged', 'batching'].includes(kind)) S.yaw(kind === 'conf' ? 0.5 : 0.75);
 
     return { g, legend, ctl, tick };
   };
@@ -764,27 +829,36 @@
     }
 
     else if (kind === 'arima') {
-      const n = 46, h = 10, N = n + h;
-      const ys = gen(n, (i) => 0.2 + i * 0.045 + 0.3 * Math.sin(i * 0.55) + 0.08 * r.n());
+      // y trends (not stationary) → difference once (Δ) → Δy is stationary, forecast it with AR → integrate (Σ) back to y
+      const n = 40, h = 10, N = n + h;
+      const ys = gen(n, (i) => 0.2 + i * 0.05 + 0.3 * Math.sin(i * 0.55) + 0.08 * r.n());
       const d = ys.slice(1).map((v, i) => v - ys[i]);
       const md = d.reduce((a, b) => a + b, 0) / d.length;
       const fd = []; let a = d[d.length - 1], b = d[d.length - 2];
       for (let k = 0; k < h; k++) { const nx = md + 0.6 * (a - md) - 0.25 * (b - md); fd.push(nx); b = a; a = nx; }
       const fy = []; let last = ys[n - 1]; fd.forEach((v) => { last += v; fy.push(last); });
-      const zf = 1.0, zb = -1.0, yb = 4.0, ds = 2.2;
-      axis(zf, 0, 0.35); plot(ys, zf, { n: N, w: 1.8 });
-      plot([ys[n - 1]].concat(fy), zf, { n: N, off: n - 1, c: 'acc', w: 2.4 });
-      axis(zb, yb, 0.35);
-      plot(d, zb, { n: N, off: 1, y0: yb, sc: ds, w: 1.2, o: 0.55 });
-      plot([d[d.length - 1]].concat(fd), zb, { n: N, off: n - 1, y0: yb, sc: ds, c: 'acc', w: 2 });
-      S.ln([[X(n - 1, N), 0, zf], [X(n - 1, N), 3.0, zf]], { o: 0.3, w: 1, dash: true });
-      S.ln([[X(n - 1, N), yb - 0.8, zb], [X(n - 1, N), yb + 0.8, zb]], { o: 0.3, w: 1, dash: true });
-      S.add(K.arrow([X(N - 3, N), yb - 0.5, zb], [X(N - 3, N), fy[h - 3] + 0.45, zf], { c: 'acc', w: 1.2, o: 0.7 }));
-      S.add(K.arrow([X(8, N), 1.9, zf], [X(8, N), yb - 0.6, zb], { w: 1.2, o: 0.4 }));
-      S.lab('Δ', [X(8, N) - 0.4, 2.9, 0], { size: 0.36, o: 0.6 });
-      S.lab('Σ', [X(N - 3, N) + 0.45, (yb + fy[h - 3]) / 2, 0], { size: 0.36, c: 'acc' });
-      S.lab('Δy', [x0 - 0.6, yb, zb], { size: 0.36, o: 0.7 }); S.lab('y', [x0 - 0.5, 0.6, zf], { size: 0.36 });
-      S.lab('AR(p)', [X(n + 4, N), yb + 1.0, zb], { size: 0.32, c: 'acc', mono: true });
+      const yT = 2.2, yB = 0.0, ds = 2.4, zB = -0.5;
+      // top: y with the integrated forecast
+      axis(0, yT, 0.35);
+      plot(ys, 0, { n: N, y0: yT, w: 1.9 });
+      plot([ys[n - 1]].concat(fy), 0, { n: N, off: n - 1, y0: yT, c: 'acc', w: 2.6 });
+      S.ln([[X(n - 1, N), yT, 0], [X(n - 1, N), yT + 3.0, 0]], { o: 0.3, w: 1, dash: true });
+      // bottom: Δy, flat mean, with AR forecast and the lags it uses
+      axis(zB, yB + md * ds, 0.3);
+      plot(d, zB, { n: N, off: 1, y0: yB, sc: ds, w: 1.3, o: 0.6 });
+      plot([d[d.length - 1]].concat(fd), zB, { n: N, off: n - 1, y0: yB, sc: ds, c: 'acc', w: 2.2 });
+      S.ln([[X(n - 1, N), yB + md * ds - 1.0, zB], [X(n - 1, N), yB + md * ds + 1.0, zB]], { o: 0.3, w: 1, dash: true });
+      const pF = [X(n, N), yB + fd[0] * ds, zB];
+      [1, 2].forEach((k) => S.add(K.arc([X(n - k, N), yB + d[d.length - k] * ds, zB], pF, 0.35 + 0.2 * k, { c: 'acc', w: 1.2, o: 0.7 })));
+      S.add(K.dots([pF], { r: 0.08, c: 'acc' }));
+      // operators
+      S.add(K.arrow([x0 - 0.5, yT + 0.4, 0], [x0 - 0.5, yB + md * ds + 0.2, zB], { w: 1.4, o: 0.55 }));
+      S.lab('Δ', [x0 - 0.95, (yT + yB) / 2 + 0.3, -0.25], { size: 0.4, o: 0.7 });
+      S.add(K.arrow([x0 + W + 0.45, yB + md * ds + 0.3, zB], [x0 + W + 0.45, yT + fy[h - 1] - 0.3, 0], { c: 'acc', w: 1.6 }));
+      S.lab('Σ', [x0 + W + 0.9, (yT + fy[h - 1] + yB) / 2, -0.25], { size: 0.4, c: 'acc' });
+      S.lab('y', [x0 - 0.55, yT + 1.6, 0], { size: 0.38 });
+      S.lab('Δy', [x0 - 0.65, yB - 0.55, zB], { size: 0.36, o: 0.75 });
+      S.lab('AR(p)', [X(n + 5, N), yB - 0.65, zB], { size: 0.32, c: 'acc', mono: true });
       legend = [{ c: 'acc', t: 'Forecast' }, { c: 'ink', t: 'History' }];
     }
 
@@ -908,29 +982,41 @@
     }
 
     else if (kind === 'tokens') {
-      const n = 32, ys = base.slice(4, 4 + n);
-      const mu = ys.reduce((a, b) => a + b, 0) / n, sc = ys.reduce((a, b) => a + Math.abs(b), 0) / n;
-      const sv = ys.map((v) => (v - mu) / sc * 1.4);
-      const bins = 8, lo = -2.2, hi = 2.2, bh = (hi - lo) / bins;
-      const q = sv.map((v) => Math.max(0, Math.min(bins - 1, Math.floor((v - lo) / bh))));
-      const Xi = (i) => -4.5 + i * 0.29;
-      // raw (back)
-      S.ln(ys.map((v, i) => [Xi(i), v * 1.0 + 3.6, -2.0]), { w: 1.6 });
-      S.ln([[Xi(0), 3.4, -2.0], [Xi(n - 1), 3.4, -2.0]], { o: 0.3, w: 1 });
-      // scaled + quantized (front): horizontal bin lines and quantized steps
-      const yb = (b) => 0.3 + (b + 0.5) * 0.45;
-      S.sg(range(bins + 1).map((b) => [[Xi(0) - 0.2, 0.3 + b * 0.45, 0.6], [Xi(n - 1) + 0.2, 0.3 + b * 0.45, 0.6]]), { o: 0.12 });
-      S.ln(sv.map((v, i) => [Xi(i), 0.3 + (v - lo) / bh * 0.45, 0.6]), { w: 1, o: 0.4 });
-      q.forEach((b, i) => S.add(K.box(Xi(i), yb(b), 0.6, 0.24, 0.4, 0.3, { fill: 0.6, fc: 'acc', c: 'acc' })));
-      // token ids along front
-      [0, 6, 12, 18, 24, 30].forEach((i) => S.lab(String(q[i]), [Xi(i), -0.1, 1.0], { size: 0.28, mono: true, c: 'acc' }));
-      S.lab('(x−μ)/s', [Xi(n - 1) + 1.3, 4.0, -0.7], { size: 0.3, mono: true, o: 0.6 });
-      S.add(K.arrow([Xi(n - 1) + 0.6, 3.6, -1.8], [Xi(n - 1) + 0.6, 2.6, 0.5], { w: 1.2, o: 0.5 }));
-      S.lab('V = ' + bins, [Xi(0) - 0.9, yb(bins - 1), 0.6], { size: 0.28, mono: true, o: 0.6 });
-      legend = [{ c: 'acc', t: 'Quantized tokens' }, { c: 'ink', t: 'Raw series' }];
+      // context series → scaled & patched into tokens → pretrained model (no training on this series) → forecast tokens → forecast
+      const n = 32, h = 12, ys = base.slice(6, 6 + n);
+      const fut = base.slice(6 + n, 6 + n + h);
+      const Xi = (i) => -4.6 + i * 0.2, yS = 0, sc = 0.9;
+      S.ln([[Xi(0), yS, 0], [Xi(n + h - 1), yS, 0]], { o: 0.3, w: 1 });
+      S.ln(ys.map((v, i) => [Xi(i), yS + v * sc, 0]), { w: 1.8 });
+      S.ln([[Xi(n - 1), yS + ys[n - 1] * sc, 0]].concat(fut.map((v, i) => [Xi(n + i), yS + v * sc, 0])), { c: 'acc', w: 2.4 });
+      S.ln([[Xi(n - 0.5), yS - 0.2, 0], [Xi(n - 0.5), yS + 2.6, 0]], { o: 0.3, w: 1, dash: true });
+      // patches → context tokens
+      const P = 8, np = n / P, yTk = 3.4;
+      for (let k = 0; k < np; k++) {
+        const cx = Xi(k * P + 3.5);
+        if (k > 0) S.ln([[Xi(k * P - 0.5), yS - 0.1, 0], [Xi(k * P - 0.5), yS + 2.4, 0]], { o: 0.25, w: 1, dash: true });
+        S.add(K.box(cx, yTk, 0, 1.3, 0.45, 0.4, { fill: 0.12, o: 0.75 }));
+        S.add(K.arrow([cx, yS + 2.3, 0], [cx, yTk - 0.3, 0], { o: 0.35, w: 1 }));
+      }
+      // forecast tokens
+      const nf = 2;
+      for (let k = 0; k < nf; k++) {
+        const cx = Xi(n + k * 6 + 2.5);
+        S.add(K.box(cx, yTk, 0, 1.0, 0.45, 0.4, fillA));
+        S.add(K.arrow([cx, yTk - 0.3, 0], [cx, yS + 2.5, 0], { c: 'acc', w: 1.4 }));
+      }
+      // the pretrained model spanning above
+      const mx0 = Xi(0) - 0.2, mx1 = Xi(n + h - 1) + 0.2, yM = 5.0;
+      S.add(K.box((mx0 + mx1) / 2, yM, 0, mx1 - mx0, 0.9, 0.9, { fill: 0.05, o: 0.75 }));
+      S.lab('TSFM', [(mx0 + mx1) / 2, yM, 0.5], { size: 0.42, weight: 600, o: 0.8 });
+      for (let k = 0; k < np; k++) S.ln([[Xi(k * P + 3.5), yTk + 0.25, 0], [Xi(k * P + 3.5), yM - 0.45, 0]], { o: 0.3, w: 1 });
+      for (let k = 0; k < nf; k++) S.ln([[Xi(n + k * 6 + 2.5), yTk + 0.25, 0], [Xi(n + k * 6 + 2.5), yM - 0.45, 0]], { c: 'acc', o: 0.7, w: 1.2 });
+      S.lab('(x−μ)/s', [Xi(0) - 0.9, 2.2, 0], { size: 0.28, mono: true, o: 0.6 });
+      S.lab('P = 8', [Xi(3.5), yS - 0.4, 0], { size: 0.28, mono: true, o: 0.55 });
+      legend = [{ c: 'acc', t: 'Zero-shot forecast' }, { c: 'ink', t: 'Context tokens' }];
     }
 
-    S.yaw(0.42);
+    S.yaw(['arima', 'tokens'].includes(kind) ? 0.75 : 0.42);
     return { g, legend, ctl, tick };
   };
 
@@ -1247,6 +1333,40 @@
         if (s2 < n - 1) S.add(K.arrow([x + 0.75, 0.0, 0.65], [x + dx - 0.75, 0.0, 0.65], { o: 0.3, w: 1 }));
       }
       legend = [{ c: 'acc', t: 'Misclassified (upweighted)' }, { c: 'ink', t: 'Weak learners' }];
+    } else if (mode === 'generic') {
+      // generic boosting: weak learners added one after another; each fixes what the sum so far still gets wrong
+      const m = Math.min(n, 4), sp = 2.7, X0 = -sp * (m - 1) / 2, pw = 2.2, ph = 1.6, npt = 9;
+      const tgt = range(npt).map((i) => 0.5 + 0.5 * Math.sin(i * 0.75) + 0.12 * Math.cos(i * 2.1));
+      // each learner adds a step; the ensemble prediction approaches the target
+      const steps = [[0, npt, 0.55], [5, npt, -0.4], [1, 3, 0.35], [3, 4, 0.45]];
+      let F = range(npt).map(() => 0);
+      for (let s2 = 0; s2 < m; s2++) {
+        const [a0, a1, v] = steps[s2];
+        F = F.map((f, i) => f + (i >= a0 && i < a1 ? v : 0));
+        const cx = X0 + s2 * sp, yP = 1.6, px = (i) => cx - pw / 2 + 0.15 + i * (pw - 0.3) / (npt - 1), py = (v2) => yP + 0.1 + v2 * ph * 0.95;
+        S.add(K.rect(cx, yP + ph / 2, 0, pw, ph + 0.3, 'xy', { o: 0.18, w: 1 }));
+        const ok = [], bad = [], res = [];
+        tgt.forEach((t, i) => {
+          const e = Math.abs(t - F[i]) > 0.18;
+          (e ? bad : ok).push([px(i), py(t), 0.02]);
+          if (e) res.push([[px(i), py(t), 0.02], [px(i), py(F[i]), 0.02]]);
+        });
+        if (ok.length) S.add(K.dots(ok, { r: 0.06, o: 0.75 }));
+        if (bad.length) S.add(K.dots(bad, { r: 0.08, c: 'acc' }));
+        if (res.length) S.sg(res, { c: 'acc', w: 1.6, o: 0.8 });
+        const step = []; F.forEach((f, i) => { const xl = i ? (px(i - 1) + px(i)) / 2 : px(0) - 0.1, xr = i < npt - 1 ? (px(i) + px(i + 1)) / 2 : px(i) + 0.1; step.push([xl, py(f), 0.03], [xr, py(f), 0.03]); });
+        S.ln(step, { w: 1.8 });
+        S.lab('F' + '₁₂₃₄'[s2], [cx, yP + ph + 0.5, 0], { size: 0.34, o: 0.7 });
+        // the weak learner of this round (a stump), and the running sum
+        miniTree(S, K, fullTree(1), [cx, 0.9, 0], { dx: 0.5, dy: 0.5, r: 0.07, eo: 0.7 });
+        S.lab('h' + '₁₂₃₄'[s2], [cx + 0.75, 0.75, 0], { size: 0.32, o: 0.6 });
+        S.add(K.arrow([cx, 1.0, 0], [cx, yP - 0.05, 0], { o: 0.35, w: 1, head: 0.14 }));
+        if (s2 > 0) {
+          S.lab('+', [cx - sp / 2, 0.65, 0], { size: 0.42, o: 0.6 });
+          S.add(K.arrow([cx - sp + pw / 2 + 0.05, yP + ph / 2, 0], [cx - pw / 2 - 0.05, yP + ph / 2, 0], { o: 0.35, w: 1 }));
+        }
+      }
+      legend = [{ c: 'acc', t: 'Remaining errors' }, { c: 'ink', t: 'Weak learners' }];
     } else {
       // GBM / XGB: trees left→right; above each, residual bars shrinking
       const nr = 7, base = range(nr).map(() => r.range(-1, 1));
@@ -1270,7 +1390,7 @@
       if (mode === 'xgb') S.lab('w* = −G/(H+λ)', [x0 - 1.7, 0.3, 0], { size: 0.28, mono: true, c: 'acc' });
       legend = mode === 'xgb' ? [{ c: 'acc', t: 'Residuals and leaf weights' }, { c: 'ink', t: 'Sequential trees' }] : [{ c: 'acc', t: 'Shrinking residuals' }, { c: 'ink', t: 'Sequential trees' }];
     }
-    S.yaw(0.5);
+    S.yaw(mode === 'generic' ? 0.75 : 0.5);
     return { g, legend };
   };
 
@@ -1285,30 +1405,82 @@
     let legend;
     const original = (z, y = 0) => { for (let i = 0; i < N; i++) { cubeI(X(i), y, z, { fill: 0.1, o: 0.75 }); S.lab(String(i + 1), [X(i), y + 0.6, z], { size: 0.24, mono: true, o: 0.5 }); } };
 
-    if (mode === 'boot' || mode === 'oob' || mode === 'sub') {
-      original(-2.4, 0);
-      const B = 4;
-      for (let b = 0; b < B; b++) {
-        const z = -0.6 + b * 1.3;
-        let idx;
-        if (mode === 'sub') { const pool = range(N); for (let k = N - 1; k > 0; k--) { const j = r.int(0, k); [pool[k], pool[j]] = [pool[j], pool[k]]; } idx = pool.slice(0, 6).sort((a, c) => a - c); }
-        else idx = range(N).map(() => r.int(0, N - 1)).sort((a, c) => a - c);
-        const count = range(N).fill(0); idx.forEach((i) => count[i]++);
-        for (let i = 0; i < N; i++) {
-          if (count[i] === 0) {
-            if (mode === 'oob') cubeI(X(i), 0, z, A);
-            else S.add(K.rect(X(i), -cs / 2, z, cs, cs, 'xz', { o: 0.22, w: 1 }));
-          } else for (let k = 0; k < count[i]; k++) cubeI(X(i), k * cs * 1.05, z, mode === 'oob' ? { fill: 0.06, o: 0.45 } : (k > 0 ? A : { fill: 0.12, o: 0.75 }));
-        }
-        S.ln([[X(0) - 0.6, -cs / 2, z], [X(N - 1) + 0.6, -cs / 2, z]], { o: 0.2, w: 1 });
+    if (mode === 'boot') {
+      // original D (8 items, one column each) and 3 bootstrap samples drawn with replacement:
+      // repeats stack up in the item's column (accent), never-drawn items leave an empty outline
+      const n = 8, c = 0.44, Xb = (i) => (i - (n - 1) / 2) * 0.95;
+      const counts = [[2, 0, 1, 1, 0, 3, 1, 0], [1, 1, 0, 2, 1, 0, 1, 2], [0, 2, 1, 0, 1, 1, 3, 0]];
+      const yD = 4.3, Yb = (b) => 2.3 - b * 1.85;
+      for (let i = 0; i < n; i++) {
+        cubeI(Xb(i), yD, 0, { fill: 0.12, o: 0.8 }, c);
+        S.lab(String(i + 1), [Xb(i), yD + 0.5, 0], { size: 0.28, mono: true, o: 0.55 });
+        S.ln([[Xb(i), yD - 0.35, -0.3], [Xb(i), Yb(2) - 0.3, -0.3]], { o: 0.07, w: 1 });
       }
-      S.lab('D', [X(0) - 1.0, 0, -2.4], { size: 0.4, weight: 600 });
-      ['D₁*', 'D₂*', 'D₃*', 'D₄*'].forEach((t, b) => S.lab(mode === 'sub' ? t.replace('*', '') : t, [X(0) - 1.0, 0, -0.6 + b * 1.3], { size: 0.34, o: 0.7 }));
-      if (mode === 'boot') legend = [{ c: 'acc', t: 'Repeated draws' }, { c: 'ink', t: 'Sampled once' }];
-      else if (mode === 'oob') legend = [{ c: 'acc', t: 'Out-of-bag samples' }, { c: 'ink', t: 'In-bag samples' }];
-      else { S.lab('n = 0.6·N', [X(N - 1) + 1.4, 0, 1.3], { size: 0.3, mono: true, o: 0.6 }); legend = [{ c: 'ink', t: 'Sampled rows (no repeats)' }]; }
+      S.lab('D', [Xb(0) - 0.95, yD, 0], { size: 0.4, weight: 600 });
+      counts.forEach((cnt, b) => {
+        const y0 = Yb(b) - c / 2;
+        S.ln([[Xb(0) - 0.5, y0 - 0.04, 0], [Xb(n - 1) + 0.5, y0 - 0.04, 0]], { o: 0.3, w: 1 });
+        cnt.forEach((m, i) => {
+          if (m === 0) S.add(K.rect(Xb(i), y0 + c / 2, 0, c, c, 'xy', { o: 0.3, w: 1 }));
+          for (let k = 0; k < m; k++) cubeI(Xb(i), y0 + c / 2 + k * (c + 0.04), 0, k > 0 ? A : { fill: 0.12, o: 0.8 }, c);
+        });
+        S.lab('D' + '₁₂₃'[b] + '*', [Xb(0) - 0.95, Yb(b), 0], { size: 0.34, o: 0.7 });
+      });
+      legend = [{ c: 'acc', t: 'Repeated draws' }, { c: 'ink', t: 'Sampled once' }];
     }
 
+    else if (mode === 'oob') {
+      // one bootstrap sample trains the tree; the ~37% never drawn (accent) are used to score it
+      const n = 8, c = 0.44, Xo = (i) => (i - (n - 1) / 2) * 0.95, yD = 3.4;
+      const cnt = [2, 0, 1, 2, 0, 1, 2, 0], oob = [1, 4, 7];
+      for (let i = 0; i < n; i++) cubeI(Xo(i), yD, 0, oob.includes(i) ? A : { fill: 0.12, o: 0.8 }, c);
+      S.lab('D', [Xo(0) - 0.95, yD, 0], { size: 0.4, weight: 600 });
+      // in-bag sample (with repeats) at left
+      const inb = range(n).filter((i) => cnt[i] > 0), Xi = (k) => -4.4 + k * 0.55, yS = 0.2;
+      inb.forEach((i, k) => {
+        for (let m = 0; m < cnt[i]; m++) cubeI(Xi(k), yS + m * (c + 0.04), 0, { fill: 0.12, o: 0.8 }, c);
+        S.ln([[Xo(i), yD - 0.3, 0], [Xi(k), yS + cnt[i] * (c + 0.04) - 0.1, 0]], { o: 0.15, w: 1 });
+      });
+      S.lab('D*', [Xi(2), yS - 0.75, 0], { size: 0.34, o: 0.7 });
+      // tree in the middle
+      const tx = 0.2;
+      miniTree(S, K, fullTree(2), [tx, 1.5, 0], { dx: 0.36, dy: 0.55, r: 0.07, eo: 0.7 });
+      S.add(K.arrow([Xi(inb.length - 1) + 0.4, 0.6, 0], [tx - 0.85, 0.6, 0], { w: 1.4, o: 0.6 }));
+      // out-of-bag items at right → evaluate the tree
+      const Xr = (k) => 3.0 + k * 0.6, yO = 0.3;
+      oob.forEach((i, k) => {
+        cubeI(Xr(k), yO, 0, A, c);
+        S.ln([[Xo(i), yD - 0.3, 0], [Xr(k), yO + 0.3, 0]], { c: 'acc', o: 0.45, w: 1.2, dash: true });
+      });
+      S.add(K.arrow([Xr(0) - 0.4, 0.6, 0], [tx + 0.85, 0.6, 0], { c: 'acc', w: 2 }));
+      S.lab('OOB ≈ 37%', [Xr(1), yO - 0.6, 0], { size: 0.32, c: 'acc' });
+      S.lab('err_oob', [tx, -0.55, 0], { size: 0.34, mono: true, c: 'acc' });
+      legend = [{ c: 'acc', t: 'Out-of-bag samples' }, { c: 'ink', t: 'In-bag samples' }];
+    }
+
+    else if (mode === 'sub') {
+      // each boosting round fits its tree on a fresh random 60% of the rows (no repeats)
+      const n = 10, R = 4, rh = 0.4, Yr = (i) => 3.6 - i * rh, Xm = (m) => -2.2 + m * 2.1;
+      const rr = K.rng(37);
+      for (let i = 0; i < n; i++) {
+        S.add(K.box(-4.6, Yr(i), 0, 0.8, rh * 0.75, 0.25, { fill: 0.12, o: 0.6 }));
+        S.ln([[-4.15, Yr(i), -0.15], [Xm(R - 1) + 0.6, Yr(i), -0.15]], { o: 0.07, w: 1 });
+      }
+      S.lab('D', [-4.6, Yr(0) + 0.5, 0], { size: 0.38, weight: 600 });
+      for (let m = 0; m < R; m++) {
+        const pool = range(n); for (let k = n - 1; k > 0; k--) { const j = rr.int(0, k); [pool[k], pool[j]] = [pool[j], pool[k]]; }
+        const pick = new Set(pool.slice(0, 6));
+        for (let i = 0; i < n; i++) {
+          if (pick.has(i)) S.add(K.box(Xm(m), Yr(i), 0.1, 1.0, rh * 0.75, 0.3, A));
+          else S.add(K.rect(Xm(m), Yr(i), 0, 1.0, rh * 0.75, 'xy', { o: 0.22, w: 1 }));
+        }
+        miniTree(S, K, fullTree(2), [Xm(m), Yr(n - 1) - 0.55, 0], { dx: 0.26, dy: 0.38, r: 0.055, eo: 0.6 });
+        S.add(K.arrow([Xm(m), Yr(n - 1) - 0.25, 0], [Xm(m), Yr(n - 1) - 0.47, 0], { c: 'acc', o: 0.6, w: 1, head: 0.12 }));
+        if (m > 0) S.lab('+', [(Xm(m) + Xm(m - 1)) / 2, Yr(n - 1) - 0.95, 0], { size: 0.38, o: 0.55 });
+      }
+      S.lab('60%', [Xm(R - 1) + 1.0, Yr(0), 0], { size: 0.3, mono: true, c: 'acc' });
+      legend = [{ c: 'acc', t: 'Sampled rows (no repeats)' }, { c: 'ink', t: 'Weak learners' }];
+    }
     else if (mode === 'batch') {
       const M = 24, bs = 6, nb = M / bs, rr = K.rng(3);
       const perm = range(M); for (let k = M - 1; k > 0; k--) { const j = rr.int(0, k); [perm[k], perm[j]] = [perm[j], perm[k]]; }
@@ -1351,7 +1523,7 @@
       S.add(K.box(gx + 2.5, 0.6, 0, 0.6, 0.6, 0.6, { fill: 0.08, o: 0.8 }));
       legend = [{ c: 'acc', t: 'Accumulated gradients' }, { c: 'ink', t: 'Micro-batches' }];
     }
-    S.yaw(0.35);
+    S.yaw(['boot', 'oob', 'sub'].includes(mode) ? 0.75 : 0.35);
     return { g, legend };
   };
 
@@ -1380,57 +1552,78 @@
       legend = [{ c: 'ink', t: 'Training set' }, { c: 'b', t: 'Validation set' }, { c: 'acc', t: 'Test set' }];
     }
 
-    else if (kind === 'kfold' || kind === 'strat') {
-      const k = 5;
+    else if (kind === 'kfold') {
+      // one row per round; the validation block (accent) walks along the diagonal
+      const k = 5, bw = W / k, Yr = (f) => (k - 1 - f) * 0.85, sc = [0.82, 0.78, 0.86, 0.8, 0.84];
       for (let f = 0; f < k; f++) {
-        const z = -2.4 + f * 1.2;
-        for (let j = 0; j < k; j++) {
-          const val = j === f;
-          if (kind === 'strat') {
-            // each fold block holds the same class mix: lower part class A, upper part class B
-            const a = j / k, b = (j + 1) / k, xc = x0 + W * (a + b) / 2, ww = W / k - 0.08;
-            S.add(K.box(xc, 0.3 * 0.7 / 2, z, ww, 0.3 * 0.7, d, val ? A : { fill: 0.5, fc: 'acc', c: 'acc', o: 0.35 }));
-            S.add(K.box(xc, 0.21 + 0.3 * 0.3 / 2 + 0.25, z, ww, 0.3 * 0.3 + 0.05, d, val ? Bs : { fill: 0.4, fc: 'b', c: 'b', o: 0.35 }));
-            if (val) S.add(K.box(xc, 0.3, z, ww + 0.06, 0.62, d + 0.06, { o: 0.9 }));
-          } else seg(j / k, (j + 1) / k, z, val ? A : Tr);
-        }
-        S.lab(String(f + 1), [x0 - 0.6, 0.25, z], { size: 0.3, mono: true, o: 0.6 });
+        const y = Yr(f);
+        for (let j = 0; j < k; j++) S.add(K.box(x0 + bw * (j + 0.5), y, 0, bw - 0.12, 0.56, 0.45, j === f ? A : Tr));
+        S.lab(String(f + 1), [x0 - 0.55, y, 0], { size: 0.32, mono: true, o: 0.6 });
+        const L = sc[f] * 1.6;
+        S.add(K.box(x0 + W + 0.45 + L / 2, y, 0, L, 0.22, 0.22, { fill: 0.3, fc: 'acc', c: 'acc', o: 0.6 }));
       }
-      if (kind === 'kfold') {
-        // validation scores averaged
-        const sc = [0.82, 0.79, 0.85, 0.8, 0.83];
-        sc.forEach((v, f) => S.add(K.box(x0 + W + 0.8, v * 2 / 2, -2.4 + f * 1.2, 0.35, v * 2, 0.35, { fill: 0.3, fc: 'acc', c: 'acc', o: 0.8 })));
-        S.lab('k = 5', [x0 + W / 2, 1.0, -3.4], { size: 0.34, mono: true, o: 0.6 });
-        legend = [{ c: 'acc', t: 'Validation fold' }, { c: 'ink', t: 'Training folds' }];
-      } else {
-        // overall dataset class mix at back for reference
-        S.add(K.box(x0 + W * 0.5, 0.21 / 2 + 0.0, -3.8, W, 0.21, d, { fill: 0.5, fc: 'acc', c: 'acc', o: 0.6 }));
-        S.add(K.box(x0 + W * 0.5, 0.21 + 0.09 / 2 + 0.25 - 0.21 + 0.05, -3.8, W, 0.14, d, { fill: 0.4, fc: 'b', c: 'b', o: 0.6 }));
-        S.lab('70 : 30', [x0 + W + 0.9, 0.3, -3.8], { size: 0.3, mono: true, o: 0.65 });
-        legend = [{ c: 'acc', t: 'Class A' }, { c: 'b', t: 'Class B' }];
+      const mx = x0 + W + 0.45 + 1.6 * sc.reduce((a, b) => a + b, 0) / k;
+      S.ln([[mx, Yr(0) + 0.45, 0], [mx, Yr(k - 1) - 0.45, 0]], { o: 0.55, w: 1.2, dash: true });
+      S.lab('s̄', [mx, Yr(k - 1) - 0.75, 0], { size: 0.34, o: 0.7 });
+      S.lab('k = 5', [x0 + W / 2, Yr(0) + 0.75, 0], { size: 0.34, mono: true, o: 0.6 });
+      legend = [{ c: 'acc', t: 'Validation fold' }, { c: 'ink', t: 'Training folds' }];
+    }
+
+    else if (kind === 'strat') {
+      // dataset 70:30 → every stratified fold keeps 70:30 (one straight boundary); a random split does not
+      const H = 1.5, k = 5, bw = W / k, d2 = 0.45;
+      const stack = (cx, y0, w, z, pA, sA, sB) => {
+        S.add(K.box(cx, y0 + H * pA / 2, z, w, H * pA, d2, sA));
+        S.add(K.box(cx, y0 + H * pA + H * (1 - pA) / 2, z, w, H * (1 - pA), d2, sB));
+      };
+      const yD = 2.9, yF = 0.5, yR = -1.9;
+      stack(0, yD, W, 0, 0.7, { fill: 0.55, fc: 'acc', c: 'acc' }, { fill: 0.45, fc: 'b', c: 'b' });
+      S.lab('D', [x0 - 0.55, yD + H / 2, 0], { size: 0.4, weight: 600 });
+      S.lab('70 : 30', [x0 + W + 0.95, yD + H / 2, 0], { size: 0.32, mono: true, o: 0.75 });
+      S.add(K.arrow([0, yD - 0.08, 0], [0, yF + H + 0.15, 0], { o: 0.45, w: 1.2 }));
+      for (let f = 0; f < k; f++) {
+        const cx = x0 + bw * (f + 0.5);
+        stack(cx, yF, bw - 0.3, 0, 0.7, { fill: 0.55, fc: 'acc', c: 'acc' }, { fill: 0.45, fc: 'b', c: 'b' });
+        S.lab(String(f + 1), [cx, yF - 0.35, 0], { size: 0.28, mono: true, o: 0.5 });
       }
+      S.ln([[x0 - 0.2, yF + H * 0.7, d2 / 2 + 0.02], [x0 + W + 0.2, yF + H * 0.7, d2 / 2 + 0.02]], { w: 1.4, o: 0.8, dash: true });
+      S.lab('70 : 30', [x0 + W + 0.95, yF + H / 2, 0], { size: 0.32, mono: true, c: 'acc' });
+      // random split behind and below: uneven ratios, faint ink
+      const pr = [0.5, 0.87, 0.62, 0.93, 0.6], zr = -0.6;
+      pr.forEach((pA, f) => stack(x0 + bw * (f + 0.5), yR, bw - 0.3, zr, pA, { fill: 0.2, o: 0.35 }, { fill: 0.03, o: 0.3 }));
+      S.ln(pr.map((pA, f) => [[x0 + bw * f + 0.15, yR + H * pA, zr + d2 / 2], [x0 + bw * (f + 1) - 0.15, yR + H * pA, zr + d2 / 2]]).flat(), { o: 0.4, w: 1 });
+      S.lab('≠', [x0 + W + 0.95, yR + H / 2, zr], { size: 0.42, o: 0.5 });
+      legend = [{ c: 'acc', t: 'Class A' }, { c: 'b', t: 'Class B' }, { c: 'ink', t: 'Random split' }];
     }
 
     else if (kind === 'leak') {
-      // train and test blocks; a scaler fitted on all data (incl. test) feeds statistics back into training
-      seg(0, 0.72, 0, Tr); seg(0.75, 1, 0, { fill: 0.08, o: 0.6 });
-      // global statistic box above, fed from both
-      const sx = x0 + W * 0.5, sy = 2.6;
-      S.add(K.box(sx, sy, 0, 1.6, 0.6, 0.7, { fill: 0.04, o: 0.8 }));
-      S.lab('μ, σ', [sx, sy, 0.4], { size: 0.34, mono: true, o: 0.8 });
-      S.add(K.arrow([x0 + W * 0.36, h + 0.1, 0], [sx - 0.4, sy - 0.35, 0], { o: 0.45, w: 1.2 }));
-      S.add(K.arrow([x0 + W * 0.875, h + 0.1, 0], [sx + 0.5, sy - 0.35, 0], { c: 'acc', w: 2 }));
-      S.add(K.arc([sx - 0.8, sy, 0], [x0 + W * 0.2, h + 0.1, 0], 0.8, { c: 'acc', w: 2, dash: true }));
-      // test information "inside" training rows: a few accent cubes within training block
-      const rr = K.rng(5);
-      for (let i = 0; i < 6; i++) S.add(K.box(x0 + W * rr.range(0.05, 0.68), h / 2, rr.range(-0.2, 0.2), 0.22, 0.22, 0.22, A));
-      // the honest pipeline in depth behind, faint
-      const zb = -2.2;
-      seg(0, 0.72, zb, { fill: 0.04, o: 0.3 }); seg(0.75, 1, zb, { fill: 0.04, o: 0.3 });
-      S.add(K.arrow([x0 + W * 0.36, h, zb], [x0 + W * 0.36, 1.6, zb], { o: 0.3, w: 1 }));
-      S.lab('μ, σ', [x0 + W * 0.36, 1.9, zb], { size: 0.3, mono: true, o: 0.4 });
-      S.lab('✓', [x0 + W + 0.6, 0.3, zb], { size: 0.36, o: 0.4 });
-      S.lab('✗', [x0 + W + 0.6, 0.3, 0], { size: 0.4, c: 'acc' });
+      // top (faint, ✓): statistics fit on train only.  bottom (✗): fit on train + test → test information flows into training
+      const xa = x0, xm = x0 + W * 0.66, xb = x0 + W, hb = 0.6, gap = 0.15;
+      const blocks = (y, z, stTr, stTe) => {
+        S.add(K.box((xa + xm) / 2, y, z, xm - xa - gap, hb, 0.45, stTr));
+        S.add(K.box((xm + xb) / 2, y, z, xb - xm - gap, hb, 0.45, stTe));
+      };
+      const cTr = (xa + xm) / 2, cTe = (xm + xb) / 2;
+      // honest pipeline
+      const yT = 3.0, zT = -0.6, sT = [cTr, yT + 1.5, zT];
+      blocks(yT, zT, { fill: 0.06, o: 0.4 }, { fill: 0.03, o: 0.35 });
+      S.add(K.box(sT[0], sT[1], zT, 1.5, 0.55, 0.4, { fill: 0.04, o: 0.45 }));
+      S.lab('μ, σ', [sT[0], sT[1], zT + 0.3], { size: 0.32, mono: true, o: 0.55 });
+      S.add(K.arrow([cTr, yT + hb / 2 + 0.05, zT], [cTr, sT[1] - 0.32, zT], { o: 0.4, w: 1.2 }));
+      S.add(K.arrow([sT[0] + 0.8, sT[1], zT], [cTe, yT + hb / 2 + 0.08, zT], { o: 0.4, w: 1.2, dash: true }));
+      S.lab('✓', [xb + 0.6, yT, zT], { size: 0.42, o: 0.5 });
+      // leaky pipeline
+      const yL = 0, sx = xm, sy = 1.7;
+      blocks(yL, 0, Tr, { fill: 0.08, o: 0.7 });
+      S.add(K.box(sx, sy, 0, 1.6, 0.6, 0.45, { fill: 0.45, fc: 'acc', c: 'acc' }));
+      S.lab('μ, σ', [sx, sy, 0.35], { size: 0.34, mono: true, weight: 600 });
+      S.add(K.arrow([cTr + 0.6, yL + hb / 2 + 0.05, 0], [sx - 0.5, sy - 0.33, 0], { o: 0.45, w: 1.2 }));
+      S.add(K.arrow([cTe, yL + hb / 2 + 0.05, 0], [sx + 0.55, sy - 0.33, 0], { c: 'acc', w: 2.4 }));
+      S.add(K.curve([[sx - 0.85, sy + 0.05, 0], [cTr - 0.4, sy + 0.25, 0], [cTr - 1.5, yL + hb / 2 + 0.55, 0]], { c: 'acc', w: 2.4 }));
+      S.add(K.arrow([cTr - 1.5, yL + hb / 2 + 0.55, 0], [cTr - 1.62, yL + hb / 2 + 0.04, 0], { c: 'acc', w: 2.4, head: 0.3 }));
+      S.lab('✗', [xb + 0.6, yL, 0], { size: 0.46, c: 'acc' });
+      S.lab('X_train', [cTr, yL - 0.6, 0], { size: 0.32, mono: true, o: 0.6 });
+      S.lab('X_test', [cTe, yL - 0.6, 0], { size: 0.32, mono: true, o: 0.6 });
       legend = [{ c: 'acc', t: 'Leaked test information' }, { c: 'ink', t: 'Training data' }];
     }
 
@@ -1447,7 +1640,7 @@
       }
       legend = [{ c: 'acc', t: 'Validation (future)' }, { c: 'ink', t: 'Training (past)' }];
     }
-    S.yaw(0.4);
+    S.yaw(['kfold', 'strat', 'leak'].includes(kind) ? 0.75 : 0.4);
     return { g, legend };
   };
 
@@ -1457,7 +1650,9 @@
     const R = 3.6;
     // score landscape: a narrow ridge in one dimension (important) and flat in the other
     const f = (x, z) => 2.6 * Math.exp(-((x - 1.1) ** 2) / 0.9) * (0.8 + 0.2 * Math.exp(-((z + 0.5) ** 2) / 6)) + 0.25;
-    S.add(K.frame({ s: R, n: 8, h: 3.4 }));
+    const searchK = kind === 'grid' || kind === 'random';
+    S.add(K.frame({ s: R, n: 8, h: 3.4, grid: !searchK }));
+    if (searchK) S.add(K.rect(0, 0, 0, 2 * R, 2 * R, 'xz', { o: 0.25, w: 1 }));
     S.lab('η', [R + 0.4, 0, -R], { size: 0.36, o: 0.6 });
     S.lab('λ', [-R, 0, R + 0.4], { size: 0.36, o: 0.6 });
     let legend;
@@ -1467,14 +1662,18 @@
       return [x, y, z];
     };
     if (kind === 'grid' || kind === 'random') {
-      S.add(K.surface(f, { xr: [-R, R], zr: [-R, R], n: 24, o: 0.12 }));
-      const pts = [];
-      if (kind === 'grid') { for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) pts.push([-R + 0.6 + i * (2 * R - 1.2) / 4, -R + 0.6 + j * (2 * R - 1.2) / 4]); }
-      else { const r = K.rng(8); for (let i = 0; i < 25; i++) pts.push([r.range(-R + 0.3, R - 0.3), r.range(-R + 0.3, R - 0.3)]); }
+      S.add(K.surface(f, { xr: [-R, R], zr: [-R, R], n: 24, o: 0.08 }));
+      const pts = [], gv = (i) => -R + 0.6 + i * (2 * R - 1.2) / 4;
+      if (kind === 'grid') {
+        for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) pts.push([gv(i), gv(j)]);
+        // the lattice itself, drawn on the floor so the regular grid of trials is unmistakable
+        S.sg(range(5).flatMap((i) => [[[gv(i), 0.005, gv(0)], [gv(i), 0.005, gv(4)]], [[gv(0), 0.005, gv(i)], [gv(4), 0.005, gv(i)]]]), { o: 0.45, w: 1 });
+      } else { const r = K.rng(8); for (let i = 0; i < 25; i++) pts.push([r.range(-R + 0.3, R - 0.3), r.range(-R + 0.3, R - 0.3)]); }
+      S.add(K.dots(pts.map(([x, z]) => [x, 0.01, z]), { r: 0.08, o: 0.85 }));
       const tops = pts.map(([x, z]) => [x, f(x, z), z]);
       const best = tops.reduce((a, b) => (b[1] > a[1] ? b : a));
       pts.forEach(([x, z]) => stem(x, z, null, false));
-      S.add(K.dots(tops.filter((q) => q !== best), { r: 0.08 }));
+      S.add(K.dots(tops.filter((q) => q !== best), { r: 0.06, o: 0.6 }));
       S.add(K.dots([best], { r: 0.15, c: 'acc' }));
       S.ln([[best[0], 0, best[2]], [best[0], best[1], best[2]]], { c: 'acc', w: 2 });
       // projections onto the important axis (back wall): distinct η values tried
@@ -1507,6 +1706,7 @@
       S.lab('μ ± σ', [R + 0.5, 1.6, R], { size: 0.32, mono: true, o: 0.6 });
       legend = [{ c: 'acc', t: 'Next point (acquisition)' }, { c: 'ink', t: 'Surrogate and uncertainty' }];
     }
+    if (searchK) { const piv = new S.T.Group(); while (g.children.length) piv.add(g.children[0]); piv.rotation.x = 0.32; g.add(piv); }
     return { g, legend };
   };
 
